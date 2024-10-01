@@ -38,7 +38,8 @@ extension View {
 }
 
 class ImagesUploads: ObservableObject {
-    @Published var images_to_upload: Array<UIImage> = []
+    /* MARK: Dictionary format: `String` - filename, `UIImage` - file data. */
+    @Published var images_to_upload: Array<[String: UIImage]> = []
 }
 
 struct RightSideMenuButtonStyle: ButtonStyle {
@@ -66,8 +67,15 @@ struct CoreApp: View {
     @State private var currentZoom: Double = 0.0
     @State private var localUpload: Bool = true
     
+    /* For every one category there can be multiple sets.
+     * The `key` to `categoriesAndSets` will be the category name, and the value (`Array<String>`)
+     * will be the array of sets pertaining to that category.
+     * */
+    @State private var categoriesAndSets: [String: Array<String>] = [:]
     @State private var categories: Array<String> = []
     @State private var sets: Array<String> = []
+    @State private var photos: Array<String> = []
+    @State private var briefDescriptions: Array<String> = []
     
     /* MARK: Custom divider for menu at top-right of screen. */
     @ViewBuilder
@@ -111,18 +119,98 @@ struct CoreApp: View {
                 localUpload: $localUpload,
                 section: $section,
                 lastSection: $lastSection,
+                categoriesAndSets: $categoriesAndSets,
                 categories: $categories,
                 sets: $sets,
+                photos: $photos,
+                briefDescriptions: $briefDescriptions,
                 prop: prop
             )
         } else if self.section == "review_new_categories" {
             ReviewNewCategories(
                 section: $section,
                 images_to_upload: images_to_upload,
-                categories: categories,
-                sets: sets,
+                categories: $categories,
+                sets: $sets,
+                briefDescriptions: $briefDescriptions,
+                photos: $photos,
                 prop: prop
             )
+        } else if self.section == "upload_error" {
+            VStack {
+                Text("SERVER ERROR")
+                    .font(
+                        .system(size: 35)
+                    )
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.red)
+                
+                Text("There was an internal server error.")
+                    .fontWeight(.bold)
+                    .font(
+                        .system(
+                            size: 25
+                        )
+                    )
+                    .multilineTextAlignment(.center)
+                    .frame(
+                        maxWidth: prop.isIpad
+                            ? prop.size.width - 520
+                            : 320,
+                        maxHeight: 80,
+                        alignment: .top
+                    )
+                    .foregroundStyle(Color.white)
+                Text("This can be due to the server being down, the server having a fualty bug or a faulty Wi-Fi Connection.")
+                    .fontWeight(.bold)
+                    .font(
+                        .system(
+                            size: 20
+                        )
+                    )
+                    .multilineTextAlignment(.center)
+                    .frame(
+                        maxWidth: prop.isIpad
+                            ? prop.size.width - 520
+                            : 320,
+                        maxHeight: 110,
+                        alignment: .top
+                    )
+                    .foregroundStyle(Color.white)
+                
+                Button(action: { self.section = "upload" }) {
+                    Text("Okay")
+                        .foregroundStyle(Color.white)
+                        .font(.system(size: 25))
+                        .frame(maxWidth: prop.size.width - 120, maxHeight: 25)
+                        .padding(5)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.EZNotesOrange)//(Color.EZNotesOrange)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.clear)
+                        .stroke(Color.EZNotesOrange, lineWidth: 1)
+                        .shadow(color: Color.EZNotesBlack, radius: 12)
+                )
+                
+                Button(action: { self.section = "report" }) {
+                    Text("Report")
+                        .foregroundStyle(Color.white)
+                        .font(.system(size: 25))
+                        .frame(maxWidth: prop.size.width - 120, maxHeight: 25)
+                        .padding(5)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.EZNotesOrange)//(Color.EZNotesOrange)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.clear)
+                        .stroke(Color.EZNotesOrange, lineWidth: 1)
+                        .shadow(color: Color.EZNotesBlack, radius: 12)
+                )
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         
         if self.section != "upload_review" && self.section != "review_new_categories" {

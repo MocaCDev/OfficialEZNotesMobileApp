@@ -42,6 +42,8 @@ struct UploadImagesData: Decodable {
     let category: String
     let set_name: String
     let image_content: String
+    let brief_description: String
+    let image_name: String
 }
 
 struct UploadImagesGoodResponse: Decodable {

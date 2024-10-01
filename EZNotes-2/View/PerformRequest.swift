@@ -44,7 +44,7 @@ struct ImageRequest : Encodable
 }
 
 struct UploadImages {
-    var imageUpload: [UIImage]
+    var imageUpload: Array<[String: UIImage]>
     
     func postApiDataWithMultipartForm<T:Decodable>(requestUrl: URL, request: ImageRequest, resultType: T.Type, completionHandler:@escaping(_ result: T)-> Void)
     {
@@ -89,14 +89,16 @@ struct UploadImages {
     
     func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
 
-        let url = URL(string: "http://192.168.0.8:8088/handle_uploads")
+        let url = URL(string: "http://192.168.1.114:8088/handle_uploads")
         let boundary = "Boundary-\(NSUUID().uuidString)"
         var request = URLRequest(url: url!)
         
         var mediaImages: Array<Media> = []
         
         for photo in imageUpload {
-            mediaImages.append(Media(withImage: photo, forKey: "file")!)
+            for k in photo.keys {
+                mediaImages.append(Media(withImage: photo[k]!, withName: k, forKey: "file")!)
+            }
         }
         
         //guard let mediaImage = Media(withImage: imageUpload, forKey: "file") else { return }
@@ -178,10 +180,10 @@ struct UploadImages {
         let data: Data
         let mimeType: String
 
-        init?(withImage image: UIImage, forKey key: String) {
+        init?(withImage image: UIImage, withName name: String, forKey key: String) {
             self.key = key
             self.mimeType = "image/jpg"
-            self.fileName = "\(arc4random()).jpeg"
+            self.fileName = name
 
             guard let data = image.jpegData(compressionQuality: 0.99) else { return nil }
             self.data = data

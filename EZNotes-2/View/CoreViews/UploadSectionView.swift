@@ -44,7 +44,7 @@ struct UploadSection: View {
                     .padding([.top, .trailing], 20)
                     .buttonStyle(.borderedProminent)
                     .tint(Color.EZNotesBlue)//.buttonStyle(MyButtonStyle())
-                    .opacity(images_to_upload.images_to_upload.count > 0 ? 1 : 0)
+                    .opacity(!self.images_to_upload.images_to_upload.isEmpty ? 1 : 0)
                     
                 }
                 .frame(width: 200, height: 40, alignment: .topTrailing)
@@ -63,10 +63,9 @@ struct UploadSection: View {
             VStack {
                 VStack {
                     Button(action: {
-                        images_to_upload.images_to_upload.append(
-                            UIImage(
-                                cgImage: model.frame!
-                            ))
+                        self.images_to_upload.images_to_upload.append(
+                            ["\(arc4random()).jpeg": UIImage(cgImage: self.model.frame!, scale: 2, orientation: .up)]
+                        )
                     }) {
                         ZStack {
                             /*RoundedRectangle(cornerRadius: 15)
