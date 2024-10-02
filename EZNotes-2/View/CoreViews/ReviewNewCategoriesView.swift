@@ -16,6 +16,9 @@ struct ReviewNewCategories: View {
     @Binding var briefDescriptions: Array<String>
     @Binding var photos: Array<String>
     
+    @State public var indexOfSetsToRemove: Array<Int> = []
+    @State public var indexOfCategoriesToRemove: Array<Int> = []
+    
     var prop: Properties
     
     private func findImage(for key: String) -> UIImage? {
@@ -45,17 +48,35 @@ struct ReviewNewCategories: View {
                                 //.shadow(color: Color.white, radius: 6)
                             
                             VStack {
-                                Text(self.categories[index])
-                                    .foregroundStyle(.white)
-                                    .font(.system(size: 28, design: .monospaced))
-                                    .fontWeight(.bold)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                if !self.indexOfCategoriesToRemove.contains(index) {
+                                    Text(self.categories[index])
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 28, design: .monospaced))
+                                        .fontWeight(.bold)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                } else {
+                                    Text(self.categories[index])
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 28, design: .monospaced))
+                                        .fontWeight(.bold)
+                                        .strikethrough()
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
                                 
-                                Text(self.sets[index])
-                                    .foregroundStyle(.white)
-                                    .font(.system(size: 20, design: .serif))
-                                    .fontWeight(.medium)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                if !self.indexOfSetsToRemove.contains(index) && !self.indexOfCategoriesToRemove.contains(index) {
+                                    Text(self.sets[index])
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 20, design: .serif))
+                                        .fontWeight(.medium)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                } else {
+                                    Text(self.sets[index])
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 20, design: .serif))
+                                        .fontWeight(.medium)
+                                        .strikethrough()
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
                                 
                                 Text(self.briefDescriptions[index])
                                     .foregroundStyle(.white)
@@ -63,6 +84,52 @@ struct ReviewNewCategories: View {
                                     .fontWeight(.light)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding([.top], 10)
+                                
+                                VStack {
+                                    Button(action: {
+                                        if !self.indexOfCategoriesToRemove.contains(index) { self.indexOfCategoriesToRemove.append(index) }
+                                        else {
+                                            self.indexOfCategoriesToRemove = self.indexOfCategoriesToRemove.filter { $0 != index }
+                                        }
+                                    }) {
+                                        Text(!self.indexOfCategoriesToRemove.contains(index) ? "Delete Category" : "Undo Removal")
+                                            .foregroundStyle(Color.white)
+                                            .font(.system(size: 18))
+                                            .fontWeight(.light)
+                                            .frame(maxWidth: prop.size.width - 220, maxHeight: 15)
+                                            .padding(5)
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(Color.clear)//(Color.EZNotesOrange)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(Color.clear)
+                                            .stroke(!self.indexOfCategoriesToRemove.contains(index) ? Color.red : Color.green, lineWidth: 1)
+                                    )
+                                    
+                                    Button(action: {
+                                        if !self.indexOfSetsToRemove.contains(index) { self.indexOfSetsToRemove.append(index) }
+                                        else {
+                                            self.indexOfSetsToRemove = self.indexOfSetsToRemove.filter { $0 != index }
+                                        }
+                                    }) {
+                                        Text(!self.indexOfSetsToRemove.contains(index) ? "Delete Set" : "Undo Removal")
+                                            .foregroundStyle(Color.white)
+                                            .font(.system(size: 18))
+                                            .fontWeight(.light)
+                                            .frame(maxWidth: prop.size.width - 220, maxHeight: 15)
+                                            .padding(5)
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(Color.clear)//(Color.EZNotesOrange)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(Color.clear)
+                                            .stroke(!self.indexOfSetsToRemove.contains(index) ? Color.red : Color.green, lineWidth: 1)
+                                    )
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: 50, alignment: .leading)
+                                .padding([.top], 20)
                             }
                             .frame(maxWidth: prop.size.width - 50, maxHeight: 200)
                         }
@@ -90,11 +157,11 @@ struct ReviewNewCategories: View {
                         .padding(5)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(Color.EZNotesOrange)//(Color.EZNotesOrange)
+                .tint(Color.EZNotesGreen)//(Color.EZNotesOrange)
                 .overlay(
                     RoundedRectangle(cornerRadius: 15)
                         .fill(Color.clear)
-                        .stroke(Color.EZNotesOrange, lineWidth: 1)
+                        .stroke(Color.EZNotesGreen, lineWidth: 1)
                         .shadow(color: Color.EZNotesBlack, radius: 12)
                 )
             }

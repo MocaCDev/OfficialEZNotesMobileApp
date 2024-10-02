@@ -89,7 +89,7 @@ struct UploadImages {
     
     func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
 
-        let url = URL(string: "http://192.168.1.114:8088/handle_uploads")
+        let url = URL(string: "http://192.168.0.8:8088/handle_uploads")
         let boundary = "Boundary-\(NSUUID().uuidString)"
         var request = URLRequest(url: url!)
         

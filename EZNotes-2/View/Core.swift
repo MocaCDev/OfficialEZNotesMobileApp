@@ -136,36 +136,58 @@ struct CoreApp: View {
                 photos: $photos,
                 prop: prop
             )
-        } else if self.section == "upload_error" {
+        } else if self.section == "home" {
+            HomeView(
+                section: $section
+            )
+            /*ZStack {
+                /* TODO: Implement `home` section. */
+                Text("HOME")
+                    .foregroundStyle(.white)
+                    .font(.system(size: 30))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(
+                Color.EZNotesBlack
+            )
+            .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                .onEnded({ value in
+                    if value.translation.width < 0 {
+                        self.section = "upload"
+                    }
+                })
+            )*/
+        } else if self.section == "chat" {
+            ZStack {
+                /* TODO: Implement `chat` section. */
+                Text("CHAT")
+                    .foregroundStyle(.white)
+                    .font(.system(size: 30))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.EZNotesBlack)
+            .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                .onEnded({ value in
+                    if value.translation.width > 0 {
+                        self.section = "upload"
+                    }
+                })
+            )
+        } else if self.section == "upload_error" || self.section == "confidential_upload_error" {
             VStack {
-                Text("SERVER ERROR")
+                Text(self.section == "upload_error" ? "Internal Server Error" : "Confidential Upload Error")
                     .font(
-                        .system(size: 35)
+                        .system(size: 35, design: .monospaced)
                     )
                     .fontWeight(.bold)
                     .foregroundStyle(Color.red)
                 
-                Text("There was an internal server error.")
+                Text(self.section == "upload_error" ? "This can be due to the server being down, the server having a fualty bug or a faulty Wi-Fi Connection." : "Try uploading images that do not contain any sort of confidential information")
                     .fontWeight(.bold)
                     .font(
                         .system(
-                            size: 25
-                        )
-                    )
-                    .multilineTextAlignment(.center)
-                    .frame(
-                        maxWidth: prop.isIpad
-                            ? prop.size.width - 520
-                            : 320,
-                        maxHeight: 80,
-                        alignment: .top
-                    )
-                    .foregroundStyle(Color.white)
-                Text("This can be due to the server being down, the server having a fualty bug or a faulty Wi-Fi Connection.")
-                    .fontWeight(.bold)
-                    .font(
-                        .system(
-                            size: 20
+                            size: 20,
+                            design: .serif
                         )
                     )
                     .multilineTextAlignment(.center)
@@ -194,61 +216,79 @@ struct CoreApp: View {
                         .shadow(color: Color.EZNotesBlack, radius: 12)
                 )
                 
-                Button(action: { self.section = "report" }) {
-                    Text("Report")
-                        .foregroundStyle(Color.white)
-                        .font(.system(size: 25))
-                        .frame(maxWidth: prop.size.width - 120, maxHeight: 25)
-                        .padding(5)
+                if self.section == "upload_error" {
+                    Button(action: { self.section = "report" }) {
+                        Text("Report")
+                            .foregroundStyle(Color.white)
+                            .font(.system(size: 25))
+                            .frame(maxWidth: prop.size.width - 120, maxHeight: 25)
+                            .padding(5)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color.EZNotesOrange)//(Color.EZNotesOrange)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.clear)
+                            .stroke(Color.EZNotesOrange, lineWidth: 1)
+                            .shadow(color: Color.EZNotesBlack, radius: 12)
+                    )
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(Color.EZNotesOrange)//(Color.EZNotesOrange)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.clear)
-                        .stroke(Color.EZNotesOrange, lineWidth: 1)
-                        .shadow(color: Color.EZNotesBlack, radius: 12)
-                )
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(
+                Image("Background8")
+                    .blur(radius: 3.5)
+            )
         }
         
         if self.section != "upload_review" && self.section != "review_new_categories" {
             VStack {
-                HStack(spacing: 20) {
+                HStack(spacing: 5) {
                     Spacer()
                     
                     Button(action: { self.section = "home" }) {
-                        Image(self.section != "home" ? "Home" : "Home-Active")
+                        Image(systemName: "house")
                             .resizable()
-                            .frame(width: 30, height: 30)
+                            .frame(width: 35, height: 30)
                             .padding([.top], 10)
+                            .foregroundStyle(self.section != "home" ? Color.EZNotesBlue : Color.white)
                     }
                     .buttonStyle(.borderless)
                     
+                    Spacer()
                     Spacer()
                     
                     Button(action: { self.section = "upload" }) {
-                        Image(self.section != "upload" ? "Upload" : "History-Icon")
-                            .resizable()
-                            .frame(width: self.section != "upload" ? 30 : 40, height: self.section != "upload" ? 30 : 40)
-                            .padding([.top], 10)
+                        if self.section != "upload" {
+                            Image(systemName: "plus")
+                                .resizable()
+                                .frame(width: 30, height: 30)
+                                .padding([.top], 10)
+                                .foregroundStyle(Color.EZNotesBlue)
+                        } else {
+                            Image("History-Icon")
+                                .resizable()
+                                .frame(width: 35, height: 45)
+                                .padding([.top], 10)
+                        }
                     }
                     .buttonStyle(.borderless)
                     
                     Spacer()
+                    Spacer()
                     
                     Button(action: { self.section = "chat" }) {
-                        Image(self.section != "chat" ? "Chat" : "Chat-Active")
+                        Image(systemName: "message")//self.section != "chat" ? "Chat" : "Chat-Active")
                             .resizable()
                             .frame(width: 30, height: 30)
                             .padding([.top], 10)
+                            .foregroundStyle(self.section != "chat" ? Color.EZNotesBlue : Color.white)
                     }
                     .buttonStyle(.borderless)
                     
                     Spacer()
                 }
-                .frame(maxWidth: .infinity, maxHeight: 60)
+                .frame(maxWidth: .infinity, maxHeight: 40)
                 .background(
                     Rectangle()
                         .fill(Color.EZNotesBlack.opacity(self.section == "upload" ? 0.85 : 1))

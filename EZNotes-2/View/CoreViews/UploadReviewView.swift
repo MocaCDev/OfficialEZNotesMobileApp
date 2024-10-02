@@ -176,6 +176,13 @@ struct UploadReview: View {
                         UploadImages(imageUpload: self.images_to_upload.images_to_upload)
                             .requestNativeImageUpload() { resp in
                                 if resp.Bad != nil {
+                                    if resp.Bad?.ErrorCode == 0x422 {
+                                        self.images_to_upload.images_to_upload.removeAll()
+                                        self.lastSection = self.section
+                                        self.section = "confidential_upload_error"
+                                        return
+                                    }
+                                    
                                     self.lastSection = self.section
                                     self.section = "upload_error"
                                     return
@@ -206,7 +213,7 @@ struct UploadReview: View {
                     }) {
                         Text("Upload")
                             .foregroundStyle(Color.white)
-                            .font(.system(size: 25))
+                            .font(.system(size: 16))
                             .frame(maxWidth: prop.size.width - 120, maxHeight: 25)
                             .padding(5)
                     }

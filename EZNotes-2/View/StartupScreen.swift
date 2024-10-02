@@ -89,6 +89,12 @@ extension Color {
         green: 40/255,
         blue: 40/255
     )
+    
+    static var EZNotesGreen: Color = Color (
+        red: 98/255,
+        green: 252/255,
+        blue: 175/255
+    )
 }
 
 struct StartupScreen: View {
