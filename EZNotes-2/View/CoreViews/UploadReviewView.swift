@@ -14,6 +14,7 @@ struct UploadReview: View {
     @Binding public var lastSection: String
     
     @Binding public var categoriesAndSets: [String: Array<String>]
+    @Binding public var categoryImages: [String: UIImage]
     @Binding public var categories: Array<String>
     @Binding public var sets: Array<String>
     @Binding public var photos: Array<String>
@@ -22,6 +23,15 @@ struct UploadReview: View {
     var prop: Properties
     
     @State private var uploadState: String = "review"
+    
+    private func findImage(for key: String) -> UIImage? {
+        for dictionary in self.images_to_upload.images_to_upload {
+            if let image = dictionary[key] {
+                return image
+            }
+        }
+        return nil
+    }
     
     var body: some View {
         //if self.uploadState == "review" {
@@ -45,7 +55,8 @@ struct UploadReview: View {
                                 Image("Back")
                                     .resizable()
                                     .frame(width: 20, height: 20)
-                                    .padding([.top, .leading], 20)
+                                    .padding([.leading], 20)
+                                    .padding([.top], prop.size.height / 2.5 > 300 ? 20 : -5)
                                 
                                 /*Text("Back")
                                  .foregroundStyle(Color.EZNotesBlue)
@@ -59,7 +70,7 @@ struct UploadReview: View {
                         Text("Review Uploads")
                             .foregroundStyle(Color.EZNotesBlack)
                             .font(.system(size: 30))
-                            .padding([.top], 10)
+                            .padding([.top], prop.size.height / 2.5 > 300 ? 10 : -10)
                             .padding([.leading], -30)
                         Spacer()
                     }
@@ -196,6 +207,10 @@ struct UploadReview: View {
                                         self.briefDescriptions.append(r.brief_description)
                                         self.photos.append(r.image_name)
                                         
+                                        if !self.categoryImages.keys.contains(r.category) {
+                                            self.categoryImages[r.category] = findImage(for: r.image_name)!
+                                        }
+                                        
                                         /* Append the category/set_name to the `categoriesAndSets` variable
                                          * so the `Home` view gets updated.
                                          * */
@@ -226,6 +241,10 @@ struct UploadReview: View {
                             .stroke(Color.EZNotesOrange, lineWidth: 1)
                             .shadow(color: Color.EZNotesBlack, radius: 12)
                     )
+                    
+                    if prop.size.height / 2.5 < 300 {
+                        Spacer()
+                    }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -21,6 +21,15 @@ struct FrameView: View {
                 .scaleEffect(handler.currentZoom + handler.frameScale)
             //.frame(maxWidth: .infinity, maxHeight: .infinity)
                 .aspectRatio(contentMode: .fill)
+        } else {
+            VStack {
+                ProgressView()
+                    .tint(Color.EZNotesBlue)
+                    .frame(width: 25, height: 25)
+                    .controlSize(.large)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.EZNotesLightBlack)
         }
     }
 }

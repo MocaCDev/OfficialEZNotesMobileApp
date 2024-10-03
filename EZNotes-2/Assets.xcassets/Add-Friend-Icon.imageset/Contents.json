@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "AI-Chat-Icon2.svg",
+      "filename" : "Add-Friend-Icon.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "AI-Chat-Icon2 1.svg",
+      "filename" : "Add-Friend-Icon 1.svg",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "AI-Chat-Icon2 2.svg",
+      "filename" : "Add-Friend-Icon 2.svg",
       "idiom" : "universal",
       "scale" : "3x"
     }

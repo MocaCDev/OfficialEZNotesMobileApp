@@ -72,6 +72,7 @@ struct CoreApp: View {
      * will be the array of sets pertaining to that category.
      * */
     @State private var categoriesAndSets: [String: Array<String>] = [:]
+    @State private var categoryImages: [String: UIImage] = [:] /* Key will be the category name, value will be the image data*/
     @State private var categories: Array<String> = []
     @State private var sets: Array<String> = []
     @State private var photos: Array<String> = []
@@ -120,6 +121,7 @@ struct CoreApp: View {
                 section: $section,
                 lastSection: $lastSection,
                 categoriesAndSets: $categoriesAndSets,
+                categoryImages: $categoryImages,
                 categories: $categories,
                 sets: $sets,
                 photos: $photos,
@@ -138,7 +140,11 @@ struct CoreApp: View {
             )
         } else if self.section == "home" {
             HomeView(
-                section: $section
+                section: $section,
+                images_to_upload: images_to_upload,
+                categoriesAndSets: categoriesAndSets,
+                categoryImages: categoryImages,
+                prop: prop
             )
             /*ZStack {
                 /* TODO: Implement `home` section. */
@@ -158,7 +164,12 @@ struct CoreApp: View {
                 })
             )*/
         } else if self.section == "chat" {
-            ZStack {
+            ChatView(
+                section: $section,
+                images_to_upload: images_to_upload,
+                prop: prop
+            )
+            /*ZStack {
                 /* TODO: Implement `chat` section. */
                 Text("CHAT")
                     .foregroundStyle(.white)
@@ -172,7 +183,7 @@ struct CoreApp: View {
                         self.section = "upload"
                     }
                 })
-            )
+            )*/
         } else if self.section == "upload_error" || self.section == "confidential_upload_error" {
             VStack {
                 Text(self.section == "upload_error" ? "Internal Server Error" : "Confidential Upload Error")
@@ -249,8 +260,8 @@ struct CoreApp: View {
                     Button(action: { self.section = "home" }) {
                         Image(systemName: "house")
                             .resizable()
-                            .frame(width: 35, height: 30)
-                            .padding([.top], 10)
+                            .frame(width: 30, height: 25)
+                            .padding([.top], prop.size.height / 2.5 > 300 ? 15 : 5)
                             .foregroundStyle(self.section != "home" ? Color.EZNotesBlue : Color.white)
                     }
                     .buttonStyle(.borderless)
@@ -262,14 +273,14 @@ struct CoreApp: View {
                         if self.section != "upload" {
                             Image(systemName: "plus")
                                 .resizable()
-                                .frame(width: 30, height: 30)
-                                .padding([.top], 10)
+                                .frame(width: 25, height: 25)
+                                .padding([.top], prop.size.height / 2.5 > 300 ? 15 : 5)
                                 .foregroundStyle(Color.EZNotesBlue)
                         } else {
                             Image("History-Icon")
                                 .resizable()
-                                .frame(width: 35, height: 45)
-                                .padding([.top], 10)
+                                .frame(width: 30, height: 30)
+                                .padding([.top], prop.size.height / 2.5 > 300 ? 15 : 5)
                         }
                     }
                     .buttonStyle(.borderless)
@@ -280,24 +291,28 @@ struct CoreApp: View {
                     Button(action: { self.section = "chat" }) {
                         Image(systemName: "message")//self.section != "chat" ? "Chat" : "Chat-Active")
                             .resizable()
-                            .frame(width: 30, height: 30)
-                            .padding([.top], 10)
+                            .frame(width: 25, height: 25)
+                            .padding([.top], prop.size.height / 2.5 > 300 ? 15 : 5)
                             .foregroundStyle(self.section != "chat" ? Color.EZNotesBlue : Color.white)
                     }
                     .buttonStyle(.borderless)
                     
                     Spacer()
                 }
-                .frame(maxWidth: .infinity, maxHeight: 40)
+                .frame(
+                    maxWidth: .infinity,
+                    maxHeight: prop.size.height / 2.5 > 300 ? 35 : 45
+                )
                 .background(
                     Rectangle()
-                        .fill(Color.EZNotesBlack.opacity(self.section == "upload" ? 0.85 : 1))
+                        .fill(Color.EZNotesLightBlack.opacity(self.section == "upload" ? 0.85 : 1))
                         .edgesIgnoringSafeArea(.bottom)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .border(width: 0.2, edges: [.top], color: .white)
                 )
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            
         }
         
         /*VStack {

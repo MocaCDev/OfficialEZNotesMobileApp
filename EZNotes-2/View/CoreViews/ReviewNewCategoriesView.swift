@@ -82,6 +82,7 @@ struct ReviewNewCategories: View {
                                     .foregroundStyle(.white)
                                     .font(.system(size: 14, design: .rounded))
                                     .fontWeight(.light)
+                                    .fixedSize(horizontal: false, vertical: true)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding([.top], 10)
                                 
@@ -107,31 +108,34 @@ struct ReviewNewCategories: View {
                                             .stroke(!self.indexOfCategoriesToRemove.contains(index) ? Color.red : Color.green, lineWidth: 1)
                                     )
                                     
-                                    Button(action: {
-                                        if !self.indexOfSetsToRemove.contains(index) { self.indexOfSetsToRemove.append(index) }
-                                        else {
-                                            self.indexOfSetsToRemove = self.indexOfSetsToRemove.filter { $0 != index }
+                                    if !self.indexOfCategoriesToRemove.contains(index) {
+                                        Button(action: {
+                                            if !self.indexOfSetsToRemove.contains(index) { self.indexOfSetsToRemove.append(index) }
+                                            else {
+                                                self.indexOfSetsToRemove = self.indexOfSetsToRemove.filter { $0 != index }
+                                            }
+                                        }) {
+                                            Text(!self.indexOfSetsToRemove.contains(index) ? "Delete Set" : "Undo Removal")
+                                                .foregroundStyle(Color.white)
+                                                .font(.system(size: 18))
+                                                .fontWeight(.light)
+                                                .frame(maxWidth: prop.size.width - 220, maxHeight: 15)
+                                                .padding(5)
                                         }
-                                    }) {
-                                        Text(!self.indexOfSetsToRemove.contains(index) ? "Delete Set" : "Undo Removal")
-                                            .foregroundStyle(Color.white)
-                                            .font(.system(size: 18))
-                                            .fontWeight(.light)
-                                            .frame(maxWidth: prop.size.width - 220, maxHeight: 15)
-                                            .padding(5)
+                                        .buttonStyle(.borderedProminent)
+                                        .tint(Color.clear)//(Color.EZNotesOrange)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.clear)
+                                                .stroke(!self.indexOfSetsToRemove.contains(index) ? Color.red : Color.green, lineWidth: 1)
+                                        )
                                     }
-                                    .buttonStyle(.borderedProminent)
-                                    .tint(Color.clear)//(Color.EZNotesOrange)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.clear)
-                                            .stroke(!self.indexOfSetsToRemove.contains(index) ? Color.red : Color.green, lineWidth: 1)
-                                    )
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: 50, alignment: .leading)
-                                .padding([.top], 20)
+                                .padding([.top], 30)
                             }
                             .frame(maxWidth: prop.size.width - 50, maxHeight: 200)
+                            .padding([.top], 15)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .padding([.bottom], 100)

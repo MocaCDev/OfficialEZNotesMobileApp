@@ -17,54 +17,35 @@ struct UploadSection: View {
     
     var body: some View {
         VStack {
-            VStack {
-                VStack {
-                    Button(action: {
-                        print("Uploading")
-                        /* TODO: Add screen the shows a loading circle while the images are being processed. */
-                        /* TODO: Since the user can upload multiple images that are the same thing, we need to add a screen that
-                         * TODO: enables users to review the upload to avoid repetitive categories from being created.
-                         * */
-                        /*UploadImages(imageUpload: images_to_upload)
-                         .requestNativeImageUpload() { resp in
-                         if resp.Bad != nil {
-                         print("BAD RESPONSE: \(resp.Bad!)")
-                         } else {
-                         print("Category: \(resp.Good!.category)\nSet Name: \(resp.Good!.set_name)\nContent: \(resp.Good!.image_content)")
-                         }
-                         }*/
-                        self.lastSection = self.section
-                        self.section = "upload_review"
-                    }) {
-                        Text("Review")
-                            .padding(5)
-                            .foregroundStyle(.white)
-                            .frame(width: 75, height: 20)
-                    }
-                    .padding([.top, .trailing], 20)
-                    .buttonStyle(.borderedProminent)
-                    .tint(Color.EZNotesBlue)//.buttonStyle(MyButtonStyle())
-                    .opacity(!self.images_to_upload.images_to_upload.isEmpty ? 1 : 0)
-                    
-                }
-                .frame(width: 200, height: 40, alignment: .topTrailing)
-                .background(
-                    RoundedRectangle(cornerRadius: 5)
-                        .fill(Color.EZNotesBlack)
-                        .stroke(.white, lineWidth: 1)
-                        .padding([.trailing], 28)
-                        .padding([.top], 54)
-                        .opacity(0.5)
-                )
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-            .background(.clear)
+            TopNavUpload(
+                section: $section,
+                lastSection: $lastSection,
+                images_to_upload: images_to_upload,
+                prop: prop,
+                backgroundColor: Color.clear
+            )
             
             VStack {
                 VStack {
                     Button(action: {
+                        let width = self.model.frame!.width
+                        let height = self.model.frame!.height
+                        
+                        // Calculate the cropped rectangle based on the zoom scale
+                        let cropWidth = CGFloat(width) / self.model.frameScale
+                        let cropHeight = CGFloat(height) / self.model.frameScale
+                        let cropRect = CGRect(x: (CGFloat(width) - cropWidth) / 2,
+                                              y: (CGFloat(height) - cropHeight) / 2,
+                                              width: cropWidth,
+                                              height: cropHeight)
+                        
+                        guard let croppedCGImage = self.model.frame!.cropping(to: cropRect) else {
+                            self.section = "picture_error"
+                            return
+                        }
+                        
                         self.images_to_upload.images_to_upload.append(
-                            ["\(arc4random()).jpeg": UIImage(cgImage: self.model.frame!, scale: 2, orientation: .up)]
+                            ["\(arc4random()).jpeg": UIImage(cgImage: croppedCGImage)]
                         )
                     }) {
                         ZStack {
@@ -81,9 +62,9 @@ struct UploadSection: View {
                     
                     Text(String(round(self.model.frameScale * 10.00) / 10.00) + "x")
                         .foregroundStyle(.white)
-                        .padding([.bottom], -10)
+                        .padding([.bottom], prop.size.height / 2.5 > 300 ? -10 : -40)
                 }
-                .padding([.bottom], 100)
+                .padding([.bottom], 80)
             }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

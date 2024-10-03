@@ -278,6 +278,7 @@ struct LoginScreen: View, KeyboardReadable {
                                 )
                             ).perform(action: "complete_login") { r in
                                 if r.Good == nil {
+                                    print(r.Bad!)
                                     self.loginError = true
                                     return
                                 } else {
