@@ -70,7 +70,7 @@ struct UploadSection: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             FrameView(handler: model, image: model.frame, prop: prop)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                //.frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea()
                 .gesture(MagnifyGesture()
                     .onChanged { value in

@@ -11,10 +11,12 @@ private extension View {
         self
             .frame(
                 maxWidth: .infinity,
-                maxHeight: prop.size.height / 2.5 > 300 ? 100 : 50
+                maxHeight: prop.size.height / 2.5 > 300 ? 50 : 50
             )
             .background(backgroundColor.blur(radius: 3.5))
             .edgesIgnoringSafeArea(.top)
+            .introspectTabBarController(controller in
+                                        controller.tabBar.configureMaterialBackground())
     }
 }
 
@@ -34,27 +36,53 @@ struct TopNavHome: View {
     
     var prop: Properties
     var backgroundColor: Color
+    @Binding public var show_categories_title: Bool
     
     var body: some View {
         HStack {
-            ProfileIconView(prop: prop)
-                .padding([.top], prop.size.height / 2.5 > 300 ? 40 : 5)
+            VStack {
+                ProfileIconView(prop: prop)
+                    //.padding([.top], prop.size.height / 2.5 > 300 ? 20 : 5)
+            }
+            .frame(maxWidth: 50, alignment: .leading)
+            .padding([.bottom], 10)
+            
+            if self.show_categories_title {
+                Spacer()
+                
+                VStack {
+                    Text("Categories")
+                        .foregroundStyle(.white)
+                        .font(.system(size: 35, design: .rounded))
+                        .fontWeight(.medium)
+                        //.padding([.top], prop.size.height / 2.5 > 300 ? 40 : 5)
+                        //.padding([.bottom], -5)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding([.bottom], 10)
+            }
             
             Spacer()
             
-            Button(action: { print("POPUP!") }) {
-                Image("AI-Chat-Icon")
-                    .resizable()
-                    .frame(
-                        width: prop.size.height / 2.5 > 300 ? 55 : 50,
-                        height: prop.size.height / 2.5 > 300 ? 55 : 50
-                    )
-                    .padding([.trailing], 20)
-                    .padding([.top], prop.size.height / 2.5 > 300 ? 45 : 15)
+            VStack {
+                Button(action: { print("POPUP!") }) {
+                    Image("AI-Chat-Icon")
+                        .resizable()
+                        .frame(
+                            width: prop.size.height / 2.5 > 300 ? 45 : 40,
+                            height: prop.size.height / 2.5 > 300 ? 45 : 40
+                        )
+                        .padding([.trailing], 20)
+                        //.padding([.top], prop.size.height / 2.5 > 300 ? 45 : 15)
+                }
+                .buttonStyle(.borderless)
             }
-            .buttonStyle(.borderless)
+            .frame(maxWidth: 50, alignment: .trailing)
+            .padding([.bottom], 10)
         }
         .topNavSettings(prop: prop, backgroundColor: .clear)
+        .padding([.top], 5)
+        .border(width: 1.5, edges: [.bottom], color: self.show_categories_title ? Color.EZNotesBlue : Color.clear)
     }
 }
 
@@ -69,8 +97,10 @@ struct TopNavUpload: View {
     
     var body: some View {
         HStack {
-            ProfileIconView(prop: prop)
-                .padding([.top], prop.size.height / 2.5 > 300 ? 40 : 5)
+            VStack {
+                ProfileIconView(prop: prop)
+            }
+            .padding([.bottom], 10)
             
             Spacer()
             
@@ -98,7 +128,7 @@ struct TopNavUpload: View {
                             .foregroundStyle(.white)
                             .frame(width: 75, height: 20)
                     }
-                    .padding([.top], prop.size.height / 2.5 > 300 ? 55 : 0)
+                    .padding([.top], prop.size.height / 2.5 > 300 ? 5 : 0)
                     .padding([.trailing], 20)
                     .buttonStyle(.borderedProminent)
                     .tint(Color.EZNotesBlue)//.buttonStyle(MyButtonStyle())
@@ -106,19 +136,20 @@ struct TopNavUpload: View {
                     
                 }
                 .frame(width: 200, height: 40, alignment: .topTrailing)
-                .background(
+                /*.background(
                     RoundedRectangle(cornerRadius: 5)
                         .fill(Color.EZNotesBlack)
                         .stroke(.white, lineWidth: 1)
                         .padding([.trailing], 28)
-                        .padding([.top], 54)
+                        //.padding([.top], 54)
                         .opacity(0.5)
-                )
+                )*/
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
             .background(.clear)
         }
         .topNavSettings(prop: prop, backgroundColor: .clear)
+        .padding([.top], 5)
     }
 }
 
@@ -131,28 +162,36 @@ struct TopNavChat: View {
     
     var body: some View {
         HStack {
-            ProfileIconView(prop: prop)
-                .padding([.top], prop.size.height / 2.5 > 300 ? 40 : 5)
+            VStack {
+                ProfileIconView(prop: prop)
+                //.padding([.top], prop.size.height / 2.5 > 300 ? 40 : 5)
+            }
+            .padding([.bottom], 10)
             
             Spacer()
             
-            Button(action: { print("Adding Friend!") }) {
-                Image("Add-Friend-Icon")
-                    .resizable()
-                    .frame(maxWidth: 25, maxHeight: 25)
-                    .padding([.top], prop.size.height / 2.5 > 300 ? 40 : 5)
-                    .foregroundStyle(.white)
-                
-                Text("Add Friend")
-                    .padding([.trailing], 20)
-                    .padding([.top], prop.size.height / 2.5 > 300 ? 42 : 5)
-                    .foregroundStyle(.white)
-                    .font(.system(size: 12, design: .rounded))
-                    .fontWeight(.bold)
+            VStack {
+                Button(action: { print("Adding Friend!") }) {
+                    Image("Add-Friend-Icon")
+                        .resizable()
+                        .frame(maxWidth: 25, maxHeight: 25)
+                        //.padding([.top], prop.size.height / 2.5 > 300 ? 40 : 5)
+                        .foregroundStyle(.white)
+                    
+                    Text("Add Friend")
+                        .padding([.trailing], 20)
+                        //.padding([.top], prop.size.height / 2.5 > 300 ? 42 : 5)
+                        .foregroundStyle(.white)
+                        .font(.system(size: 12, design: .rounded))
+                        .fontWeight(.bold)
+                }
+                .buttonStyle(.borderless)
             }
-            .buttonStyle(.borderless)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding([.bottom], 10)
         }
         .topNavSettings(prop: prop, backgroundColor: .clear)
+        .padding([.top], 5)
             
         /*
             if self.section == "upload" {

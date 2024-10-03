@@ -106,130 +106,114 @@ struct CoreApp: View {
     @State private var lastSection: String = "upload"
     
     var body: some View {
-        if self.section == "upload" {
-            UploadSection(
-                images_to_upload: images_to_upload,
-                model: model,
-                lastSection: $lastSection,
-                section: $section,
-                prop: prop
-            )
-        } else if self.section == "upload_review" {
-            UploadReview(
-                images_to_upload: images_to_upload,
-                localUpload: $localUpload,
-                section: $section,
-                lastSection: $lastSection,
-                categoriesAndSets: $categoriesAndSets,
-                categoryImages: $categoryImages,
-                categories: $categories,
-                sets: $sets,
-                photos: $photos,
-                briefDescriptions: $briefDescriptions,
-                prop: prop
-            )
-        } else if self.section == "review_new_categories" {
-            ReviewNewCategories(
-                section: $section,
-                images_to_upload: images_to_upload,
-                categories: $categories,
-                sets: $sets,
-                briefDescriptions: $briefDescriptions,
-                photos: $photos,
-                prop: prop
-            )
-        } else if self.section == "home" {
-            HomeView(
-                section: $section,
-                images_to_upload: images_to_upload,
-                categoriesAndSets: categoriesAndSets,
-                categoryImages: categoryImages,
-                prop: prop
-            )
-            /*ZStack {
-                /* TODO: Implement `home` section. */
-                Text("HOME")
-                    .foregroundStyle(.white)
-                    .font(.system(size: 30))
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(
-                Color.EZNotesBlack
-            )
-            .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
-                .onEnded({ value in
-                    if value.translation.width < 0 {
-                        self.section = "upload"
-                    }
-                })
-            )*/
-        } else if self.section == "chat" {
-            ChatView(
-                section: $section,
-                images_to_upload: images_to_upload,
-                prop: prop
-            )
-            /*ZStack {
-                /* TODO: Implement `chat` section. */
-                Text("CHAT")
-                    .foregroundStyle(.white)
-                    .font(.system(size: 30))
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.EZNotesBlack)
-            .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
-                .onEnded({ value in
-                    if value.translation.width > 0 {
-                        self.section = "upload"
-                    }
-                })
-            )*/
-        } else if self.section == "upload_error" || self.section == "confidential_upload_error" {
-            VStack {
-                Text(self.section == "upload_error" ? "Internal Server Error" : "Confidential Upload Error")
-                    .font(
-                        .system(size: 35, design: .monospaced)
-                    )
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color.red)
-                
-                Text(self.section == "upload_error" ? "This can be due to the server being down, the server having a fualty bug or a faulty Wi-Fi Connection." : "Try uploading images that do not contain any sort of confidential information")
-                    .fontWeight(.bold)
-                    .font(
-                        .system(
-                            size: 20,
-                            design: .serif
+        VStack {
+            if self.section == "upload" {
+                UploadSection(
+                    images_to_upload: images_to_upload,
+                    model: model,
+                    lastSection: $lastSection,
+                    section: $section,
+                    prop: prop
+                )
+            } else if self.section == "upload_review" {
+                UploadReview(
+                    images_to_upload: images_to_upload,
+                    localUpload: $localUpload,
+                    section: $section,
+                    lastSection: $lastSection,
+                    categoriesAndSets: $categoriesAndSets,
+                    categoryImages: $categoryImages,
+                    categories: $categories,
+                    sets: $sets,
+                    photos: $photos,
+                    briefDescriptions: $briefDescriptions,
+                    prop: prop
+                )
+            } else if self.section == "review_new_categories" {
+                ReviewNewCategories(
+                    section: $section,
+                    images_to_upload: images_to_upload,
+                    categories: $categories,
+                    sets: $sets,
+                    briefDescriptions: $briefDescriptions,
+                    photos: $photos,
+                    prop: prop
+                )
+            } else if self.section == "home" {
+                HomeView(
+                    section: $section,
+                    images_to_upload: images_to_upload,
+                    categoriesAndSets: categoriesAndSets,
+                    categoryImages: categoryImages,
+                    prop: prop
+                )
+                /*ZStack {
+                 /* TODO: Implement `home` section. */
+                 Text("HOME")
+                 .foregroundStyle(.white)
+                 .font(.system(size: 30))
+                 }
+                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                 .background(
+                 Color.EZNotesBlack
+                 )
+                 .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                 .onEnded({ value in
+                 if value.translation.width < 0 {
+                 self.section = "upload"
+                 }
+                 })
+                 )*/
+            } else if self.section == "chat" {
+                ChatView(
+                    section: $section,
+                    images_to_upload: images_to_upload,
+                    prop: prop
+                )
+                /*ZStack {
+                 /* TODO: Implement `chat` section. */
+                 Text("CHAT")
+                 .foregroundStyle(.white)
+                 .font(.system(size: 30))
+                 }
+                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                 .background(Color.EZNotesBlack)
+                 .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                 .onEnded({ value in
+                 if value.translation.width > 0 {
+                 self.section = "upload"
+                 }
+                 })
+                 )*/
+            } else if self.section == "upload_error" || self.section == "confidential_upload_error" {
+                VStack {
+                    Text(self.section == "upload_error" ? "Internal Server Error" : "Confidential Upload Error")
+                        .font(
+                            .system(size: 35, design: .monospaced)
                         )
-                    )
-                    .multilineTextAlignment(.center)
-                    .frame(
-                        maxWidth: prop.isIpad
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.red)
+                    
+                    Text(self.section == "upload_error" ? "This can be due to the server being down, the server having a fualty bug or a faulty Wi-Fi Connection." : "Try uploading images that do not contain any sort of confidential information")
+                        .fontWeight(.bold)
+                        .font(
+                            .system(
+                                size: 20,
+                                design: .serif
+                            )
+                        )
+                        .multilineTextAlignment(.center)
+                        .frame(
+                            maxWidth: prop.isIpad
                             ? prop.size.width - 520
                             : 320,
-                        maxHeight: 110,
-                        alignment: .top
-                    )
-                    .foregroundStyle(Color.white)
-                
-                Button(action: { self.section = "upload" }) {
-                    Text("Okay")
+                            maxHeight: 110,
+                            alignment: .top
+                        )
                         .foregroundStyle(Color.white)
-                        .font(.system(size: 25))
-                        .frame(maxWidth: prop.size.width - 120, maxHeight: 25)
-                        .padding(5)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Color.EZNotesOrange)//(Color.EZNotesOrange)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.clear)
-                        .stroke(Color.EZNotesOrange, lineWidth: 1)
-                        .shadow(color: Color.EZNotesBlack, radius: 12)
-                )
-                
-                if self.section == "upload_error" {
-                    Button(action: { self.section = "report" }) {
-                        Text("Report")
+                    
+                    Button(action: { self.section = "upload" }) {
+                        Text("Okay")
                             .foregroundStyle(Color.white)
                             .font(.system(size: 25))
                             .frame(maxWidth: prop.size.width - 120, maxHeight: 25)
@@ -243,77 +227,95 @@ struct CoreApp: View {
                             .stroke(Color.EZNotesOrange, lineWidth: 1)
                             .shadow(color: Color.EZNotesBlack, radius: 12)
                     )
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(
-                Image("Background8")
-                    .blur(radius: 3.5)
-            )
-        }
-        
-        if self.section != "upload_review" && self.section != "review_new_categories" {
-            VStack {
-                HStack(spacing: 5) {
-                    Spacer()
                     
-                    Button(action: { self.section = "home" }) {
-                        Image(systemName: "house")
-                            .resizable()
-                            .frame(width: 30, height: 25)
-                            .padding([.top], prop.size.height / 2.5 > 300 ? 15 : 5)
-                            .foregroundStyle(self.section != "home" ? Color.EZNotesBlue : Color.white)
+                    if self.section == "upload_error" {
+                        Button(action: { self.section = "report" }) {
+                            Text("Report")
+                                .foregroundStyle(Color.white)
+                                .font(.system(size: 25))
+                                .frame(maxWidth: prop.size.width - 120, maxHeight: 25)
+                                .padding(5)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Color.EZNotesOrange)//(Color.EZNotesOrange)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(Color.clear)
+                                .stroke(Color.EZNotesOrange, lineWidth: 1)
+                                .shadow(color: Color.EZNotesBlack, radius: 12)
+                        )
                     }
-                    .buttonStyle(.borderless)
-                    
-                    Spacer()
-                    Spacer()
-                    
-                    Button(action: { self.section = "upload" }) {
-                        if self.section != "upload" {
-                            Image(systemName: "plus")
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(
+                    Image("Background8")
+                        .blur(radius: 3.5)
+                )
+            }
+            
+            if self.section != "upload_review" && self.section != "review_new_categories" {
+                VStack {
+                    HStack(spacing: 5) {
+                        Spacer()
+                        
+                        Button(action: { self.section = "home" }) {
+                            Image(systemName: "house")
+                                .resizable()
+                                .frame(width: 30, height: 25)
+                                .padding([.top], prop.size.height / 2.5 > 300 ? 15 : 5)
+                                .foregroundStyle(self.section != "home" ? Color.EZNotesBlue : Color.white)
+                        }
+                        .buttonStyle(.borderless)
+                        
+                        Spacer()
+                        Spacer()
+                        
+                        Button(action: { self.section = "upload" }) {
+                            if self.section != "upload" {
+                                Image(systemName: "plus")
+                                    .resizable()
+                                    .frame(width: 25, height: 25)
+                                    .padding([.top], prop.size.height / 2.5 > 300 ? 15 : 5)
+                                    .foregroundStyle(Color.EZNotesBlue)
+                            } else {
+                                Image("History-Icon")
+                                    .resizable()
+                                    .frame(width: 30, height: 30)
+                                    .padding([.top], prop.size.height / 2.5 > 300 ? 15 : 5)
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                        
+                        Spacer()
+                        Spacer()
+                        
+                        Button(action: { self.section = "chat" }) {
+                            Image(systemName: "message")//self.section != "chat" ? "Chat" : "Chat-Active")
                                 .resizable()
                                 .frame(width: 25, height: 25)
                                 .padding([.top], prop.size.height / 2.5 > 300 ? 15 : 5)
-                                .foregroundStyle(Color.EZNotesBlue)
-                        } else {
-                            Image("History-Icon")
-                                .resizable()
-                                .frame(width: 30, height: 30)
-                                .padding([.top], prop.size.height / 2.5 > 300 ? 15 : 5)
+                                .foregroundStyle(self.section != "chat" ? Color.EZNotesBlue : Color.white)
                         }
+                        .buttonStyle(.borderless)
+                        
+                        Spacer()
                     }
-                    .buttonStyle(.borderless)
-                    
-                    Spacer()
-                    Spacer()
-                    
-                    Button(action: { self.section = "chat" }) {
-                        Image(systemName: "message")//self.section != "chat" ? "Chat" : "Chat-Active")
-                            .resizable()
-                            .frame(width: 25, height: 25)
-                            .padding([.top], prop.size.height / 2.5 > 300 ? 15 : 5)
-                            .foregroundStyle(self.section != "chat" ? Color.EZNotesBlue : Color.white)
-                    }
-                    .buttonStyle(.borderless)
-                    
-                    Spacer()
+                    .frame(
+                        maxWidth: .infinity,
+                        maxHeight: prop.size.height / 2.5 > 300 ? 35 : 45
+                    )
+                    .background(
+                        Rectangle()
+                            .fill(Color.EZNotesLightBlack.opacity(self.section == "upload" ? 0.85 : 1))
+                            .edgesIgnoringSafeArea(.bottom)
+                            .frame(maxWidth: .infinity, maxHeight: 35)
+                            .border(width: 0.2, edges: [.top], color: .white)
+                    )
                 }
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: prop.size.height / 2.5 > 300 ? 35 : 45
-                )
-                .background(
-                    Rectangle()
-                        .fill(Color.EZNotesLightBlack.opacity(self.section == "upload" ? 0.85 : 1))
-                        .edgesIgnoringSafeArea(.bottom)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .border(width: 0.2, edges: [.top], color: .white)
-                )
+                .frame(maxWidth: .infinity, maxHeight: 30, alignment: .bottom)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-            
         }
+        .frame(maxWidth: prop.size.width, maxHeight: prop.size.height)
         
         /*VStack {
             if section == "upload" {

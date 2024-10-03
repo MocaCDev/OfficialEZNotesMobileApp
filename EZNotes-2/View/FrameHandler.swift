@@ -10,7 +10,7 @@ import CoreImage
 
 class FrameHandler: NSObject, ObservableObject {
     @Published var frame: CGImage?
-    @Published var frameScale: Double = 1.1
+    @Published var frameScale: Double = 1.01
     @Published var currentZoom: Double = 0.0
     private var permissionGranted = true
     private let captureSession = AVCaptureSession()
