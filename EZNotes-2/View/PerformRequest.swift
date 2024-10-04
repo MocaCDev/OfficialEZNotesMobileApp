@@ -88,10 +88,10 @@ struct UploadImages {
     }
     
     func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
-        let localServer1 = "http://192.168.1.114:8088"
-        //let localServer2 = "http://192.168.0.8:8088"
+        //let localServer1 = "http://192.168.1.114:8088"
+        let localServer2 = "http://192.168.0.8:8088"
         
-        let url = URL(string: "\(localServer1)/handle_uploads")
+        let url = URL(string: "\(localServer2)/handle_uploads")
         let boundary = "Boundary-\(NSUUID().uuidString)"
         var request = URLRequest(url: url!)
         

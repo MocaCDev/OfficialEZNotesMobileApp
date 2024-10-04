@@ -13,14 +13,12 @@ private extension View {
                 maxWidth: .infinity,
                 maxHeight: prop.size.height / 2.5 > 300 ? 50 : 50
             )
-            .background(backgroundColor.blur(radius: 3.5))
+            .background(backgroundColor.opacity(0.1).blur(radius: 3.5))
             .edgesIgnoringSafeArea(.top)
-            .introspectTabBarController(controller in
-                                        controller.tabBar.configureMaterialBackground())
     }
 }
 
-private struct ProfileIconView: View {
+struct ProfileIconView: View {
     var prop: Properties
     
     var body: some View {
@@ -45,22 +43,22 @@ struct TopNavHome: View {
                     //.padding([.top], prop.size.height / 2.5 > 300 ? 20 : 5)
             }
             .frame(maxWidth: 50, alignment: .leading)
-            .padding([.bottom], 10)
+            .padding([.top], 30)//.padding([.bottom], 10)
             
-            if self.show_categories_title {
-                Spacer()
+            Spacer()
                 
-                VStack {
-                    Text("Categories")
-                        .foregroundStyle(.white)
-                        .font(.system(size: 35, design: .rounded))
-                        .fontWeight(.medium)
-                        //.padding([.top], prop.size.height / 2.5 > 300 ? 40 : 5)
-                        //.padding([.bottom], -5)
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding([.bottom], 10)
+            /* TODO: Change the below `Text` to a search bar (`TextField`) where user can search for specific categories.
+             * */
+            VStack {
+                Text("View Categories")
+                    .foregroundStyle(.white)
+                    .font(.system(size: 25, design: .serif))
+                    .fontWeight(.medium)
+                //.padding([.top], prop.size.height / 2.5 > 300 ? 40 : 5)
+                //.padding([.bottom], -5)
             }
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding([.top], 30)//.padding([.bottom], 10)
             
             Spacer()
             
@@ -78,11 +76,15 @@ struct TopNavHome: View {
                 .buttonStyle(.borderless)
             }
             .frame(maxWidth: 50, alignment: .trailing)
-            .padding([.bottom], 10)
+            .padding([.top], 30)//.padding([.bottom], 10)
         }
-        .topNavSettings(prop: prop, backgroundColor: .clear)
-        .padding([.top], 5)
-        .border(width: 1.5, edges: [.bottom], color: self.show_categories_title ? Color.EZNotesBlue : Color.clear)
+        .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 100 : 50, alignment: .top)
+        .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+        .edgesIgnoringSafeArea(.top)
+        //.topNavSettings(prop: prop, backgroundColor: .clear)
+        //.background(Color.clear.blur(radius: 10))
+        //.padding([.top], 5)
+        //.border(width: 1.5, edges: [.bottom], color: self.show_categories_title ? Color.EZNotesBlue : Color.clear)
     }
 }
 

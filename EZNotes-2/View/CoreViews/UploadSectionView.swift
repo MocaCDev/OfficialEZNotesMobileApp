@@ -66,8 +66,90 @@ struct UploadSection: View {
                 }
                 .padding([.bottom], 80)
             }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            
+            VStack {
+                HStack(spacing: 5) {
+                    Spacer()
+                    
+                    VStack {
+                        Button(action: { self.section = "home" }) {
+                            Image(systemName: "house")
+                                .resizable()
+                                .frame(width: 30, height: 25)
+                                .padding([.top], prop.size.height / 2.5 > 300 ? 20 : 5)
+                                .foregroundStyle(self.section != "home" ? Color.EZNotesBlue : Color.white)
+                        }
+                        .buttonStyle(.borderless)
+                        Text("Categories")
+                            .foregroundStyle(.white)
+                            .font(.system(size: 12))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding([.leading], 15)
+                    
+                    Spacer()
+                    //Spacer()
+                    
+                    VStack {
+                        Button(action: { self.section = "upload" }) {
+                            if self.section != "upload" {
+                                Image(systemName: "plus")
+                                    .resizable()
+                                    .frame(width: 25, height: 25)
+                                    .padding([.top], prop.size.height / 2.5 > 300 ? 20 : 5)
+                                    .foregroundStyle(Color.EZNotesBlue)
+                            } else {
+                                Image("History-Icon")
+                                    .resizable()
+                                    .frame(width: 30, height: 30)
+                                    .padding([.top], prop.size.height / 2.5 > 300 ? 15 : 5)
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                        
+                        Text(self.section != "upload" ? "Upload" : "History")
+                            .foregroundStyle(.white)
+                            .font(.system(size: 12))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    
+                    Spacer()
+                    //Spacer()
+                    
+                    VStack {
+                        Button(action: { self.section = "chat" }) {
+                            Image(systemName: "message")//self.section != "chat" ? "Chat" : "Chat-Active")
+                                .resizable()
+                                .frame(width: 25, height: 25)
+                                .padding([.top], prop.size.height / 2.5 > 300 ? 20 : 5)
+                                .foregroundStyle(self.section != "chat" ? Color.EZNotesBlue : Color.white)
+                        }
+                        .buttonStyle(.borderless)
+                        Text("Chat")
+                            .foregroundStyle(.white)
+                            .font(.system(size: 12))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding([.trailing], 20)
+                    
+                    Spacer()
+                }
+                .frame(
+                    maxWidth: .infinity,
+                    maxHeight: prop.size.height / 2.5 > 300 ? 40 : 45
+                )
+                .background(
+                    Rectangle()
+                        .fill(Color.EZNotesLightBlack.opacity(self.section == "upload" ? 0.85 : 1))
+                        .edgesIgnoringSafeArea(.bottom)
+                        .frame(maxWidth: .infinity, maxHeight: 40)
+                        .border(width: 0.2, edges: [.top], color: .white)
+                )
+            }
+            .frame(maxWidth: .infinity, maxHeight: 40)
+            .background(Color.EZNotesLightBlack.opacity(0.85))
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .background(
             FrameView(handler: model, image: model.frame, prop: prop)
                 //.frame(maxWidth: .infinity, maxHeight: .infinity)
