@@ -88,10 +88,11 @@ struct UploadImages {
     }
     
     func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
-        //let localServer1 = "http://192.168.1.114:8088"
-        let localServer2 = "http://192.168.0.8:8088"
+        //let localServer1 = "http://10.185.51.126:8088"
+        let localServer1 = "http://192.168.1.114:8088"
+        //let localServer1 = "http://192.168.0.8:8088"
         
-        let url = URL(string: "\(localServer2)/handle_uploads")
+        let url = URL(string: "\(localServer1)/handle_uploads")
         let boundary = "Boundary-\(NSUUID().uuidString)"
         var request = URLRequest(url: url!)
         
@@ -359,7 +360,7 @@ struct RequestAction<T> {
     func perform(action: String, completion: @escaping (RequestResponse) -> Void) {
         
         let scheme: String = "https"
-        let host: String = "www.eznotes.space"
+        let host: String = "http://127.0.0.1:8088"//"www.eznotes.space"
         
         var components = URLComponents()
         components.scheme = scheme
@@ -376,7 +377,7 @@ struct RequestAction<T> {
             default:break;
         }
         
-        guard let url = components.url else { return }
+        guard let url = components.url else { print("NO"); return }
         var request = URLRequest(url: url)
         
         if action == "get_supported_states" || action == "get_colleges_for_state" { request.httpMethod = "get" }
@@ -422,6 +423,7 @@ struct RequestAction<T> {
                 break;
             default: break;
         }
+        
         
         let _: Void = URLSession.shared.dataTask(with: request) { data, _, error in
             if let data = data {

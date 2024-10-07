@@ -192,21 +192,22 @@ struct CoreApp: View {
                             .system(size: 35, design: .monospaced)
                         )
                         .fontWeight(.bold)
-                        .foregroundStyle(Color.red)
+                        .foregroundStyle(Color.EZNotesRed)
+                        .multilineTextAlignment(.center)
                     
-                    Text(self.section == "upload_error" ? "This can be due to the server being down, the server having a fualty bug or a faulty Wi-Fi Connection." : "Try uploading images that do not contain any sort of confidential information")
+                    Text(self.section == "upload_error" ? "This can be due to the server being down, the server having a fualty bug or a faulty Wi-Fi connection." : "Try uploading images that do not contain any sort of confidential information")
                         .fontWeight(.bold)
                         .font(
                             .system(
-                                size: 20,
-                                design: .serif
+                                size: 18,
+                                design: .rounded
                             )
                         )
                         .multilineTextAlignment(.center)
                         .frame(
                             maxWidth: prop.isIpad
                             ? prop.size.width - 520
-                            : 320,
+                            : 380,
                             maxHeight: 110,
                             alignment: .top
                         )
@@ -214,19 +215,13 @@ struct CoreApp: View {
                     
                     Button(action: { self.section = "upload" }) {
                         Text("Okay")
-                            .foregroundStyle(Color.white)
+                            .foregroundStyle(Color.EZNotesBlack)
                             .font(.system(size: 25))
                             .frame(maxWidth: prop.size.width - 120, maxHeight: 25)
                             .padding(5)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(Color.EZNotesOrange)//(Color.EZNotesOrange)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(Color.clear)
-                            .stroke(Color.EZNotesOrange, lineWidth: 1)
-                            .shadow(color: Color.EZNotesBlack, radius: 12)
-                    )
+                    .tint(Color.white)//(Color.EZNotesOrange)
                     
                     if self.section == "upload_error" {
                         Button(action: { self.section = "report" }) {
@@ -237,19 +232,14 @@ struct CoreApp: View {
                                 .padding(5)
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(Color.EZNotesOrange)//(Color.EZNotesOrange)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(Color.clear)
-                                .stroke(Color.EZNotesOrange, lineWidth: 1)
-                                .shadow(color: Color.EZNotesBlack, radius: 12)
-                        )
+                        .tint(Color.EZNotesLightBlack)//(Color.EZNotesOrange)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
                     Image("Background8")
                         .blur(radius: 3.5)
+                        .overlay(Color.EZNotesBlack.opacity(0.4))
                 )
             }
             

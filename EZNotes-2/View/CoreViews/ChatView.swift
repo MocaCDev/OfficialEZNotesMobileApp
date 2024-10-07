@@ -22,6 +22,12 @@ struct ChatView: View {
                 
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
+            ButtomNavbar(
+                section: $section,
+                backgroundColor: Color.EZNotesLightBlack ,
+                prop: prop
+            )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.EZNotesBlack)

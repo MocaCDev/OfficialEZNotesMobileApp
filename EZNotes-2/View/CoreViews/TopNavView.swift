@@ -34,57 +34,63 @@ struct TopNavHome: View {
     
     var prop: Properties
     var backgroundColor: Color
-    @Binding public var show_categories_title: Bool
+    var categoriesAndSets: [String: Array<String>]
+    //@Binding public var show_categories_title: Bool
     
     var body: some View {
-        HStack {
-            VStack {
-                ProfileIconView(prop: prop)
-                    //.padding([.top], prop.size.height / 2.5 > 300 ? 20 : 5)
-            }
-            .frame(maxWidth: 50, alignment: .leading)
-            .padding([.top], 30)//.padding([.bottom], 10)
-            
-            Spacer()
-                
-            /* TODO: Change the below `Text` to a search bar (`TextField`) where user can search for specific categories.
-             * */
-            VStack {
-                Text("View Categories")
-                    .foregroundStyle(.white)
-                    .font(.system(size: 25, design: .serif))
-                    .fontWeight(.medium)
-                //.padding([.top], prop.size.height / 2.5 > 300 ? 40 : 5)
-                //.padding([.bottom], -5)
-            }
-            .frame(maxWidth: .infinity, alignment: .center)
-            .padding([.top], 30)//.padding([.bottom], 10)
-            
-            Spacer()
-            
-            VStack {
-                Button(action: { print("POPUP!") }) {
-                    Image("AI-Chat-Icon")
-                        .resizable()
-                        .frame(
-                            width: prop.size.height / 2.5 > 300 ? 45 : 40,
-                            height: prop.size.height / 2.5 > 300 ? 45 : 40
-                        )
-                        .padding([.trailing], 20)
-                        //.padding([.top], prop.size.height / 2.5 > 300 ? 45 : 15)
+        VStack {
+            HStack {
+                VStack {
+                    ProfileIconView(prop: prop)
+                        //.padding([.top], prop.size.height / 2.5 > 300 ? 20 : 5)
                 }
-                .buttonStyle(.borderless)
+                .frame(maxWidth: 50, alignment: .leading)
+                .padding([.top], 45)//.padding([.bottom], 10)
+                
+                Spacer()
+                
+                /* TODO: Change the below `Text` to a search bar (`TextField`) where user can search for specific categories.
+                 * */
+                VStack {
+                    Text("View Categories")
+                        .foregroundStyle(.primary)
+                        .font(.system(size: 22, design: .rounded))
+                        .fontWeight(.thin)
+                    
+                    Text("Total: \(self.categoriesAndSets.count)")
+                        .foregroundStyle(.white)
+                        .font(.system(size: 14, design: .rounded))
+                        .fontWeight(.thin)
+                    //.padding([.top], prop.size.height / 2.5 > 300 ? 40 : 5)
+                    //.padding([.bottom], -5)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding([.top], 45)
+                
+                Spacer()
+                
+                VStack {
+                    Button(action: { print("POPUP!") }) {
+                        Image("AI-Chat-Icon")
+                            .resizable()
+                            .frame(
+                                width: prop.size.height / 2.5 > 300 ? 45 : 40,
+                                height: prop.size.height / 2.5 > 300 ? 45 : 40
+                            )
+                            .padding([.trailing], 20)
+                            //.padding([.top], prop.size.height / 2.5 > 300 ? 45 : 15)
+                    }
+                    .buttonStyle(.borderless)
+                }
+                .frame(maxWidth: 50, alignment: .trailing)
+                .padding([.top], 45)
             }
-            .frame(maxWidth: 50, alignment: .trailing)
-            .padding([.top], 30)//.padding([.bottom], 10)
+            .frame(maxWidth: .infinity, maxHeight: 100, alignment: .top)
+            .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))//(.ultraThinMaterial, in: Color.EZNotesBlack)//.background(Color.clear.blur(radius: 4, opaque: true))
         }
-        .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 100 : 50, alignment: .top)
-        .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .edgesIgnoringSafeArea(.top)
-        //.topNavSettings(prop: prop, backgroundColor: .clear)
-        //.background(Color.clear.blur(radius: 10))
-        //.padding([.top], 5)
-        //.border(width: 1.5, edges: [.bottom], color: self.show_categories_title ? Color.EZNotesBlue : Color.clear)
+        .zIndex(1)
     }
 }
 

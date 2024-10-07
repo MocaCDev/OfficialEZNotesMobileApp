@@ -67,7 +67,7 @@ struct UploadSection: View {
                 .padding([.bottom], 80)
             }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             
-            VStack {
+            /*VStack {
                 HStack(spacing: 5) {
                     Spacer()
                     
@@ -147,7 +147,12 @@ struct UploadSection: View {
                 )
             }
             .frame(maxWidth: .infinity, maxHeight: 40)
-            .background(Color.EZNotesLightBlack.opacity(0.85))
+            .background(Color.EZNotesLightBlack.opacity(0.85))*/
+            ButtomNavbar(
+                section: $section,
+                backgroundColor: Color.EZNotesLightBlack.opacity(0.85),
+                prop: prop
+            )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .background(

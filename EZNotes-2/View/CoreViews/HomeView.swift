@@ -17,6 +17,11 @@ struct HomeView: View {
     
     var prop: Properties
     
+    let columns = [
+        GridItem(.flexible()),
+        GridItem(.flexible())
+    ]
+    
     private func checkIfOutOfFrame(innerGeometry: GeometryProxy, outerGeometry: GeometryProxy) {
         let textFrame = innerGeometry.frame(in: .global)
         let scrollViewFrame = outerGeometry.frame(in: .global)
@@ -32,74 +37,11 @@ struct HomeView: View {
     var body: some View {
         VStack {
             ZStack {
-                VStack {
-                    HStack {
-                        VStack {
-                            ProfileIconView(prop: prop)
-                                //.padding([.top], prop.size.height / 2.5 > 300 ? 20 : 5)
-                        }
-                        .frame(maxWidth: 50, alignment: .leading)
-                        .padding([.top], 45)//.padding([.bottom], 10)
-                        
-                        if self.show_categories_title {
-                            Spacer()
-                            
-                            VStack {
-                                Text("Categories")
-                                    .foregroundStyle(.white)
-                                    .font(.system(size: 35, design: .rounded))
-                                    .fontWeight(.medium)
-                                    //.padding([.top], prop.size.height / 2.5 > 300 ? 40 : 5)
-                                    //.padding([.bottom], -5)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding([.top], 45)//.padding([.bottom], 10)
-                        }
-                        
-                        Spacer()
-                        
-                        /* TODO: Change the below `Text` to a search bar (`TextField`) where user can search for specific categories.
-                         * */
-                        VStack {
-                            Text("View Categories")
-                                .foregroundStyle(.white)
-                                .font(.system(size: 22, design: .rounded))
-                                .fontWeight(.thin)
-                            
-                            Text("Total: \(self.categoriesAndSets.count)")
-                                .foregroundStyle(.white)
-                                .font(.system(size: 14, design: .rounded))
-                                .fontWeight(.thin)
-                            //.padding([.top], prop.size.height / 2.5 > 300 ? 40 : 5)
-                            //.padding([.bottom], -5)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding([.top], 45)
-                        
-                        Spacer()
-                        
-                        VStack {
-                            Button(action: { print("POPUP!") }) {
-                                Image("AI-Chat-Icon")
-                                    .resizable()
-                                    .frame(
-                                        width: prop.size.height / 2.5 > 300 ? 45 : 40,
-                                        height: prop.size.height / 2.5 > 300 ? 45 : 40
-                                    )
-                                    .padding([.trailing], 20)
-                                    //.padding([.top], prop.size.height / 2.5 > 300 ? 45 : 15)
-                            }
-                            .buttonStyle(.borderless)
-                        }
-                        .frame(maxWidth: 50, alignment: .trailing)
-                        .padding([.top], 45)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: 100, alignment: .top)
-                    .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))//(.ultraThinMaterial, in: Color.EZNotesBlack)//.background(Color.clear.blur(radius: 4, opaque: true))
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .edgesIgnoringSafeArea(.top)
-                .zIndex(1)//TopNavHome(prop: prop, backgroundColor: Color.EZNotesLightBlack, show_categories_title: $show_categories_title)
+                TopNavHome(
+                    prop: prop,
+                    backgroundColor: Color.EZNotesLightBlack,
+                    categoriesAndSets: categoriesAndSets
+                )
                 
                 if self.categoriesAndSets.count > 0 {
                     VStack {
@@ -122,12 +64,12 @@ struct HomeView: View {
                                  .padding([.bottom], 40)
                                  .opacity(self.show_categories_title ? 0 : 1)*/
                                 
-                                VStack {
+                                LazyVGrid(columns: columns, spacing: 15) {
                                     ForEach(Array(self.categoriesAndSets.keys), id: \.self) { key in
                                         ZStack {
                                             Image(uiImage: self.categoryImages[key]!)
                                                 .resizable()
-                                                .frame(width: prop.size.width - 20, height: 500)
+                                                .frame(width: 200, height: 200)
                                                 .scaledToFill()//.scaledToFit()
                                                 .clipShape(.rect(cornerRadius: 25))
                                                 .overlay(RoundedRectangle(cornerRadius: 25)
@@ -135,28 +77,88 @@ struct HomeView: View {
                                                 .shadow(color: .white, radius: 3.5)
                                             
                                             VStack {
-                                                Text(key)
-                                                    .foregroundStyle(.white)
-                                                    .font(.system(size: 24, design: .monospaced))
-                                                    .fontWeight(.heavy)
-                                                    .padding([.leading], 15)
-                                                    .multilineTextAlignment(.center)
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                                                    .padding([.top], 25)
+                                                VStack {
+                                                    Button(action: { print("Open Menu") }) {
+                                                        Image(systemName: "ellipsis")
+                                                            .resizable()
+                                                            .frame(maxWidth: 25, maxHeight: 5)
+                                                            .foregroundStyle(.white)
+                                                            .rotationEffect(.degrees(90))
+                                                    }
+                                                    .buttonStyle(.borderless)
+                                                    .tint(Color.clear)
+                                                }
+                                                .frame(maxWidth: .infinity, maxHeight: 40, alignment: .topLeading)
+                                                .padding([.top], 25)
+                                                .padding([.leading], 5)
+                                                
+                                                VStack {
+                                                    Text(key)
+                                                        .foregroundStyle(.white)
+                                                        .font(.system(size: 24, design: .rounded))
+                                                        //.minimumScaleFactor(0.4)
+                                                        .fontWeight(.bold)
+                                                    //.padding([.leading], 15)
+                                                        .multilineTextAlignment(.center)
+                                                        .frame(maxWidth: .infinity, maxHeight: 35, alignment: .center)
+                                                    //.padding([.top], 35)
+                                                    
+                                                    Text("Sets: \(self.categoriesAndSets[key]!.count)")
+                                                        .foregroundStyle(.white)
+                                                        .font(.system(size: 18, design: .rounded))
+                                                        //.minimumScaleFactor(0.01)
+                                                        .fontWeight(.medium)
+                                                        //.padding([.leading], 15)
+                                                        .multilineTextAlignment(.center)
+                                                        .frame(maxWidth: .infinity, maxHeight: 35)
+                                                    
+                                                    Text("Created 04/20/2024")
+                                                        .foregroundStyle(.white)
+                                                        .font(.system(size: 15, design: .rounded))
+                                                        .fontWeight(.light)
+                                                        //.padding([.leading], 15)
+                                                        .multilineTextAlignment(.center)
+                                                        .frame(maxWidth: .infinity, maxHeight: 35)
+                                                }
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                
+                                                VStack {
+                                                    HStack {
+                                                        Button(action: { print("Launch Category!") }) {
+                                                            Text("Launch")
+                                                                .foregroundStyle(.white)
+                                                                .font(.system(size: 18, design: .monospaced))
+                                                                .fontWeight(.bold)
+                                                                .frame(maxWidth: prop.size.width - 80)
+                                                                .padding([.top, .bottom], 5)
+                                                        }
+                                                        .buttonStyle(.borderedProminent)
+                                                        .tint(Color.gray.opacity(0.4))
+                                                        .overlay(
+                                                            RoundedRectangle(cornerRadius: 15)
+                                                                .stroke(.white, lineWidth: 3)
+                                                        )
+                                                    }
+                                                    .frame(maxWidth: 150, maxHeight: 20)
+                                                }
+                                                .frame(maxWidth: .infinity, maxHeight: 20, alignment: .bottom)
+                                                .background(Color.clear)
+                                                .padding([.bottom], 20)
                                             }
-                                            .frame(width: prop.size.width - 50, height: 450)//(maxWidth: prop.size.width - 50, maxHeight: 480)
+                                            .frame(width: 200, height: 200)//(width: prop.size.width - 20, height: prop.size.height - 170)//(maxWidth: prop.size.width - 50, maxHeight: 480)
                                             .background(
                                                 RoundedRectangle(cornerRadius: 25)
                                                     .fill(Color.EZNotesBlack.opacity(0.45))
                                             )
                                         }
-                                        .frame(width: prop.size.width - 50, height: 450)
+                                        .frame(width: 200, height: 200)//(width: prop.size.width - 20, height: prop.size.height - 170)
                                         //(maxWidth: prop.size.width - 50, maxHeight: 480)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .padding([.top], 90)
+                                .padding([.top], 65)
+                                .padding([.bottom], 10)
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
@@ -166,7 +168,7 @@ struct HomeView: View {
                 } else {
                     VStack {
                         Text("No Categories")
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.secondary)
                             .fontWeight(.bold)
                             .font(.system(size: 25, design: .rounded))
                     }
@@ -210,6 +212,17 @@ struct HomeView: View {
                  .edgesIgnoringSafeArea(.top)*/
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
+            Spacer()
+            
+            VStack {
+                ButtomNavbar(
+                    section: $section,
+                    backgroundColor: Color.EZNotesLightBlack,
+                    prop: prop
+                )
+            }
+            .frame(maxWidth: .infinity, maxHeight: 30, alignment: .bottom)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .background(
