@@ -247,6 +247,44 @@ struct UploadReview: View {
                                 .multiImageUpload() { resp in
                                     self.uploadState = "review"
                                     
+                                    /* MARK: Make sure none of the responses were bad*/
+                                    for r in resp {
+                                        if r.Bad != nil {
+                                            if r.Bad!.ErrorCode == 0x422 {
+                                                self.images_to_upload.images_to_upload.removeAll()
+                                                self.lastSection = self.section
+                                                self.section = "confidential_upload_error"
+                                                return
+                                            }
+                                            
+                                            self.lastSection = self.section
+                                            self.section = "upload_error"
+                                            return
+                                        }
+                                    }
+                                    
+                                    for d in resp[resp.count - 1].Good!.Data {
+                                        self.categories.append(d.category)
+                                        self.sets.append(d.set_name)
+                                        self.briefDescriptions.append(d.brief_description)
+                                        self.photos.append(d.image_name)
+                                        
+                                        if !self.categoryImages.keys.contains(d.category) {
+                                            self.categoryImages[d.category] = findImage(for: d.image_name)!
+                                        }
+                                        
+                                        /* Append the category/set_name to the `categoriesAndSets` variable
+                                         * so the `Home` view gets updated.
+                                         * */
+                                        if self.newCategoriesAndSets.keys.contains(d.category) {
+                                            if !self.newCategoriesAndSets[d.category]!.contains(d.set_name) {
+                                                self.newCategoriesAndSets[d.category]!.append(d.set_name)
+                                            }
+                                        } else {
+                                            self.newCategoriesAndSets[d.category] = [d.set_name]
+                                        }
+                                    }
+                                    
                                     /* TODO: Iterate through all of the responses and curate data accordingly */
                                     
                                     self.lastSection = self.section

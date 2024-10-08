@@ -89,8 +89,8 @@ struct UploadImages {
     
     func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
         //let localServer1 = "http://10.185.51.126:8088"
-        //let localServer1 = "http://192.168.1.114:8088"
-        let localServer1 = "http://192.168.0.8:8088"
+        let localServer1 = "http://192.168.1.114:8088"
+        //let localServer1 = "http://192.168.0.8:8088"
         
         let url = URL(string: "\(localServer1)/handle_uploads")
         let boundary = "Boundary-\(NSUUID().uuidString)"
@@ -157,7 +157,8 @@ struct UploadImages {
     }
     
     func multiImageUpload(completion: @escaping (Array<ImageUploadRequestResponse>) -> Void) {
-        let localServer1 = "http://192.168.0.8:8088"
+        //let localServer1 = "http://192.168.0.8:8088"
+        let localServer1 = "http://192.168.1.114:8088"
         
         let url = URL(string: "\(localServer1)/handle_uploads")
         let boundary = "Boundary-\(NSUUID().uuidString)"
@@ -182,9 +183,12 @@ struct UploadImages {
         
         var total = 0
         
-        /* TODO: This is bad design. Figure out a better system in which can enable us to figure out when all requests are done so we can dispatch back to the main program.
+        /* MARK: Estimate the amount of responses expected. Since there are more than 5 uploads, each request will consist of, max, 5 uploads. So, if there are 11 uploads there will be 3 responses. 2 requests carrying 5 uploads, the last one carrying only 1.
+         * MARK: We want to round up regardless the decimal value. If the value of `requestsBeingSent` is not a rounded decimal, that means that the last request won't carry the max of 5 images.
+         * MARK: Example: If there are 11 images uploaded, that will result in 3 requests. 2 with 5 uploads the last having 1 upload. This will prompt the server to send back 3 responses. 11 / 5 = 2.2, with `.rounded(.up)` this will result in 3.
          * */
-        var totalResponsesExpected = 0
+        let requestsBeingSent: Float = Float(imageUpload.count) / 5
+        let totalResponsesExpected = Int(requestsBeingSent.rounded(.up))
         var totalResponses = 0
         var uploads = imageUpload
         
@@ -194,7 +198,7 @@ struct UploadImages {
             if mediaImages.count > 0 { mediaImages.removeAll() }
             
             for photo in uploads {
-                if i >= 4 { totalResponsesExpected += 1; break }
+                if i >= 5 { /*totalResponsesExpected += 1;*/ break }
                 
                 mediaImages.append(Media(withImage: photo.first!.value, withName: photo.keys.first!, forKey: "file")!)
                 
@@ -228,9 +232,10 @@ struct UploadImages {
                             completion(ImageUploadRequestResponse(Good: response, Bad: nil))
                         }
                         return*/
-                        responses.append(ImageUploadRequestResponse(Good: response, Bad: nil))
+                        //responses.append(ImageUploadRequestResponse(Good: response, Bad: nil))
                         
                         if totalResponses == totalResponsesExpected {
+                            responses.append(ImageUploadRequestResponse(Good: response, Bad: nil))
                             DispatchQueue.main.async {
                                 completion(responses)
                             }
