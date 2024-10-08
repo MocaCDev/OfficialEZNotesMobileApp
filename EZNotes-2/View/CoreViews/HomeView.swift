@@ -66,92 +66,95 @@ struct HomeView: View {
                                 
                                 LazyVGrid(columns: columns, spacing: 15) {
                                     ForEach(Array(self.categoriesAndSets.keys), id: \.self) { key in
-                                        ZStack {
-                                            Image(uiImage: self.categoryImages[key]!)
-                                                .resizable()
-                                                .frame(width: 200, height: 200)
-                                                .scaledToFill()//.scaledToFit()
-                                                .clipShape(.rect(cornerRadius: 25))
-                                                .overlay(RoundedRectangle(cornerRadius: 25)
-                                                    .fill(Color.clear))
-                                                .shadow(color: .white, radius: 3.5)
-                                            
-                                            VStack {
-                                                VStack {
-                                                    Button(action: { print("Open Menu") }) {
-                                                        Image(systemName: "ellipsis")
-                                                            .resizable()
-                                                            .frame(maxWidth: 25, maxHeight: 5)
-                                                            .foregroundStyle(.white)
-                                                            .rotationEffect(.degrees(90))
-                                                    }
-                                                    .buttonStyle(.borderless)
-                                                    .tint(Color.clear)
-                                                }
-                                                .frame(maxWidth: .infinity, maxHeight: 40, alignment: .topLeading)
-                                                .padding([.top], 25)
-                                                .padding([.leading], 5)
+                                        Button(action: { print("Opening \(key)") }) {
+                                            ZStack {
+                                                Image(uiImage: self.categoryImages[key]!)
+                                                    .resizable()
+                                                    .frame(width: 200, height: 200)
+                                                    .scaledToFill()//.scaledToFit()
+                                                    .clipShape(.rect(cornerRadius: 25))
+                                                    .overlay(RoundedRectangle(cornerRadius: 25)
+                                                        .fill(Color.clear))
+                                                    .shadow(color: .white, radius: 3.5)
                                                 
                                                 VStack {
-                                                    Text(key)
-                                                        .foregroundStyle(.white)
-                                                        .font(.system(size: 24, design: .rounded))
-                                                        //.minimumScaleFactor(0.4)
-                                                        .fontWeight(.bold)
-                                                    //.padding([.leading], 15)
-                                                        .multilineTextAlignment(.center)
-                                                        .frame(maxWidth: .infinity, maxHeight: 35, alignment: .center)
-                                                    //.padding([.top], 35)
-                                                    
-                                                    Text("Sets: \(self.categoriesAndSets[key]!.count)")
-                                                        .foregroundStyle(.white)
-                                                        .font(.system(size: 18, design: .rounded))
-                                                        //.minimumScaleFactor(0.01)
-                                                        .fontWeight(.medium)
-                                                        //.padding([.leading], 15)
-                                                        .multilineTextAlignment(.center)
-                                                        .frame(maxWidth: .infinity, maxHeight: 35)
-                                                    
-                                                    Text("Created 04/20/2024")
-                                                        .foregroundStyle(.white)
-                                                        .font(.system(size: 15, design: .rounded))
-                                                        .fontWeight(.light)
-                                                        //.padding([.leading], 15)
-                                                        .multilineTextAlignment(.center)
-                                                        .frame(maxWidth: .infinity, maxHeight: 35)
-                                                }
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                                
-                                                VStack {
-                                                    HStack {
-                                                        Button(action: { print("Launch Category!") }) {
-                                                            Text("Launch")
+                                                    VStack {
+                                                        Button(action: { print("Open Menu") }) {
+                                                            Image(systemName: "ellipsis")
+                                                                .resizable()
+                                                                .frame(maxWidth: 25, maxHeight: 5)
                                                                 .foregroundStyle(.white)
-                                                                .font(.system(size: 18, design: .monospaced))
-                                                                .fontWeight(.bold)
-                                                                .frame(maxWidth: prop.size.width - 80)
-                                                                .padding([.top, .bottom], 5)
+                                                                .rotationEffect(.degrees(90))
                                                         }
-                                                        .buttonStyle(.borderedProminent)
-                                                        .tint(Color.gray.opacity(0.4))
-                                                        .overlay(
-                                                            RoundedRectangle(cornerRadius: 15)
-                                                                .stroke(.white, lineWidth: 3)
-                                                        )
+                                                        .buttonStyle(.borderless)
+                                                        .tint(Color.clear)
                                                     }
-                                                    .frame(maxWidth: 150, maxHeight: 20)
+                                                    .frame(maxWidth: .infinity, maxHeight: 40, alignment: .topLeading)
+                                                    .padding([.top], 25)
+                                                    .padding([.leading], 5)
+                                                    
+                                                    VStack {
+                                                        Text(key)
+                                                            .foregroundStyle(.white)
+                                                            .font(.system(size: 20, design: .rounded))
+                                                        //.minimumScaleFactor(0.4)
+                                                            .fontWeight(.bold)
+                                                        //.padding([.leading], 15)
+                                                            .multilineTextAlignment(.center)
+                                                            .frame(maxWidth: .infinity, maxHeight: 35, alignment: .center)
+                                                            .padding([.top], -15)
+                                                        
+                                                        Text("Sets: \(self.categoriesAndSets[key]!.count)")
+                                                            .foregroundStyle(.white)
+                                                            .font(.system(size: 16, design: .rounded))
+                                                        //.minimumScaleFactor(0.01)
+                                                            .fontWeight(.medium)
+                                                        //.padding([.leading], 15)
+                                                            .multilineTextAlignment(.center)
+                                                            .frame(maxWidth: .infinity, maxHeight: 35)
+                                                        
+                                                        Text("Created 04/20/2024")
+                                                            .foregroundStyle(.white)
+                                                            .font(.system(size: 13, design: .rounded))
+                                                            .fontWeight(.light)
+                                                        //.padding([.leading], 15)
+                                                            .multilineTextAlignment(.center)
+                                                            .frame(maxWidth: .infinity, maxHeight: 35)
+                                                    }
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                    
+                                                    /*VStack {
+                                                     HStack {
+                                                     Button(action: { print("Launch Category!") }) {
+                                                     Text("Launch")
+                                                     .foregroundStyle(.white)
+                                                     .font(.system(size: 18, design: .monospaced))
+                                                     .fontWeight(.bold)
+                                                     .frame(maxWidth: prop.size.width - 60)
+                                                     //.padding([.top, .bottom], 5)
+                                                     }
+                                                     .buttonStyle(.borderedProminent)
+                                                     .tint(Color.gray.opacity(0.4))
+                                                     .overlay(
+                                                     RoundedRectangle(cornerRadius: 15)
+                                                     .stroke(.white, lineWidth: 3)
+                                                     )
+                                                     }
+                                                     .frame(maxWidth: 150, maxHeight: 20)
+                                                     }
+                                                     .frame(maxWidth: .infinity, maxHeight: 20, alignment: .bottom)
+                                                     .background(Color.clear)
+                                                     .padding([.bottom], 20)*/
                                                 }
-                                                .frame(maxWidth: .infinity, maxHeight: 20, alignment: .bottom)
-                                                .background(Color.clear)
-                                                .padding([.bottom], 20)
+                                                .frame(width: 200, height: 200)//(width: prop.size.width - 20, height: prop.size.height - 170)//(maxWidth: prop.size.width - 50, maxHeight: 480)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 25)
+                                                        .fill(Color.EZNotesBlack.opacity(0.45))
+                                                )
                                             }
-                                            .frame(width: 200, height: 200)//(width: prop.size.width - 20, height: prop.size.height - 170)//(maxWidth: prop.size.width - 50, maxHeight: 480)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 25)
-                                                    .fill(Color.EZNotesBlack.opacity(0.45))
-                                            )
+                                            .frame(width: 200, height: 200)//(width: prop.size.width - 20, height: prop.size.height - 170)
                                         }
-                                        .frame(width: 200, height: 200)//(width: prop.size.width - 20, height: prop.size.height - 170)
+                                        .buttonStyle(.borderless)
                                         //(maxWidth: prop.size.width - 50, maxHeight: 480)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)

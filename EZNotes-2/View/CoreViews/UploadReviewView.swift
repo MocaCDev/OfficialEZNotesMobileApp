@@ -13,7 +13,7 @@ struct UploadReview: View {
     @Binding public var section: String
     @Binding public var lastSection: String
     
-    @Binding public var categoriesAndSets: [String: Array<String>]
+    @Binding public var newCategoriesAndSets: [String: Array<String>]
     @Binding public var categoryImages: [String: UIImage]
     @Binding public var categories: Array<String>
     @Binding public var sets: Array<String>
@@ -214,10 +214,12 @@ struct UploadReview: View {
                                         /* Append the category/set_name to the `categoriesAndSets` variable
                                          * so the `Home` view gets updated.
                                          * */
-                                        if self.categoriesAndSets.keys.contains(r.category) {
-                                            self.categoriesAndSets[r.category]!.append(r.set_name)
+                                        if self.newCategoriesAndSets.keys.contains(r.category) {
+                                            if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
+                                                self.newCategoriesAndSets[r.category]!.append(r.set_name)
+                                            }
                                         } else {
-                                            self.categoriesAndSets[r.category] = [r.set_name]
+                                            self.newCategoriesAndSets[r.category] = [r.set_name]
                                         }
                                     }
                                     

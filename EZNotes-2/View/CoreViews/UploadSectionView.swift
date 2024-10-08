@@ -54,9 +54,13 @@ struct UploadSection: View {
                                 .frame(maxWidth: 110, maxHeight: 65)
                                 .opacity(0.35)*/
                             
-                            Image("Camera-Icon")
+                            /*Image("Camera-Icon")
                                 .resizable()
-                                .frame(maxWidth: 135, maxHeight: 135)
+                                .frame(maxWidth: 135, maxHeight: 135)*/
+                            Image(systemName: "circle")
+                                .resizable()
+                                .frame(width: 50, height: 50)
+                                .tint(Color.EZNotesBlue)
                         }
                     }
                     
@@ -64,7 +68,7 @@ struct UploadSection: View {
                         .foregroundStyle(.white)
                         .padding([.bottom], prop.size.height / 2.5 > 300 ? -10 : -40)
                 }
-                .padding([.bottom], 80)
+                .padding([.bottom], 40)
             }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             
             /*VStack {

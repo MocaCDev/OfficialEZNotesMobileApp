@@ -24,10 +24,17 @@ struct FrameView: View {
                 .aspectRatio(contentMode: .fill)
         } else {
             VStack {
-                ProgressView()
-                    .tint(Color.EZNotesBlue)
-                    .frame(width: 25, height: 25)
-                    .controlSize(.large)
+                VStack {
+                    ProgressView()
+                        .tint(Color.EZNotesBlue)
+                        .frame(width: 25, height: 25)
+                        .controlSize(.large)
+                }
+                .frame(width: 100, height: 100, alignment: .center)
+                .background(
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.EZNotesBlack.opacity(0.75))
+                )
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.EZNotesLightBlack)

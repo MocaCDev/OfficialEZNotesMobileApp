@@ -71,6 +71,7 @@ struct CoreApp: View {
      * The `key` to `categoriesAndSets` will be the category name, and the value (`Array<String>`)
      * will be the array of sets pertaining to that category.
      * */
+    @State private var newCategoriesAndSets: [String: Array<String>] = [:]
     @State private var categoriesAndSets: [String: Array<String>] = [:]
     @State private var categoryImages: [String: UIImage] = [:] /* Key will be the category name, value will be the image data*/
     @State private var categories: Array<String> = []
@@ -121,7 +122,7 @@ struct CoreApp: View {
                     localUpload: $localUpload,
                     section: $section,
                     lastSection: $lastSection,
-                    categoriesAndSets: $categoriesAndSets,
+                    newCategoriesAndSets: $newCategoriesAndSets,
                     categoryImages: $categoryImages,
                     categories: $categories,
                     sets: $sets,
@@ -133,6 +134,8 @@ struct CoreApp: View {
                 ReviewNewCategories(
                     section: $section,
                     images_to_upload: images_to_upload,
+                    newCategoriesAndSets: $newCategoriesAndSets,
+                    categoriesAndSets: $categoriesAndSets,
                     categories: $categories,
                     sets: $sets,
                     briefDescriptions: $briefDescriptions,
