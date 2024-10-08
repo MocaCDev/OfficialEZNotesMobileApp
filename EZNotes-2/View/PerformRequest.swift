@@ -89,8 +89,8 @@ struct UploadImages {
     
     func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
         //let localServer1 = "http://10.185.51.126:8088"
-        let localServer1 = "http://192.168.1.114:8088"
-        //let localServer1 = "http://192.168.0.8:8088"
+        //let localServer1 = "http://192.168.1.114:8088"
+        let localServer1 = "http://192.168.0.8:8088"
         
         let url = URL(string: "\(localServer1)/handle_uploads")
         let boundary = "Boundary-\(NSUUID().uuidString)"
@@ -154,6 +154,120 @@ struct UploadImages {
                 }
             }
         }.resume()
+    }
+    
+    func multiImageUpload(completion: @escaping (Array<ImageUploadRequestResponse>) -> Void) {
+        let localServer1 = "http://192.168.0.8:8088"
+        
+        let url = URL(string: "\(localServer1)/handle_uploads")
+        let boundary = "Boundary-\(NSUUID().uuidString)"
+        
+        var request = URLRequest(url: url!)
+        request.httpMethod = "POST"
+
+        request.allHTTPHeaderFields = [
+                    "X-User-Agent": "ios",
+                    "Accept-Language": "en",
+                    "Accept": "application/json",
+                    "Content-Type": "multipart/form-data; boundary=\(boundary)",
+                ]
+        
+        var mediaImages: Array<Media> = []
+        
+        var i = 0
+        var responses: Array<ImageUploadRequestResponse> = []
+        
+        let session = URLSession.shared
+        session.configuration.timeoutIntervalForRequest = 400
+        
+        var total = 0
+        
+        /* TODO: This is bad design. Figure out a better system in which can enable us to figure out when all requests are done so we can dispatch back to the main program.
+         * */
+        var totalResponsesExpected = 0
+        var totalResponses = 0
+        var uploads = imageUpload
+        
+        while true {
+            if total >= imageUpload.count || uploads.count == 0 { break }
+            
+            if mediaImages.count > 0 { mediaImages.removeAll() }
+            
+            for photo in uploads {
+                if i >= 4 { totalResponsesExpected += 1; break }
+                
+                mediaImages.append(Media(withImage: photo.first!.value, withName: photo.keys.first!, forKey: "file")!)
+                
+                uploads.remove(at: 0)
+                
+                i += 1
+                total += 1
+                
+                /*for k in photo.keys {
+                    mediaImages.append(Media(withImage: photo[k]!, withName: k, forKey: "file")!)
+                }*/
+            }
+            
+            i = 0
+            
+            let dataBody = createDataBody(media: mediaImages, boundary: boundary)
+            request.httpBody = dataBody
+            
+            session.dataTask(with: request) { (data, response, error) in
+                totalResponses += 1
+                
+                if let data = data {
+                    /* Attempt to get a good response. */
+                    let response = try? JSONDecoder().decode(UploadImagesGoodResponse.self, from: data)
+                    
+                    /* Attempt to get a bad response*/
+                    let bresponse = try? JSONDecoder().decode(BadResponse.self, from: data)
+                    
+                    if let response = response {
+                        /*DispatchQueue.main.async {
+                            completion(ImageUploadRequestResponse(Good: response, Bad: nil))
+                        }
+                        return*/
+                        responses.append(ImageUploadRequestResponse(Good: response, Bad: nil))
+                        
+                        if totalResponses == totalResponsesExpected {
+                            DispatchQueue.main.async {
+                                completion(responses)
+                            }
+                        }
+                        return
+                    }
+                    
+                    if let bresponse = bresponse {
+                        responses.append(ImageUploadRequestResponse(Good: nil, Bad: bresponse))
+                        
+                        if totalResponses == totalResponsesExpected {
+                            DispatchQueue.main.async {
+                                completion(responses)
+                            }
+                        }
+                        return
+                    }
+                } else {
+                    responses.append(ImageUploadRequestResponse(
+                        Good: nil,
+                        Bad: BadResponse(
+                            Status: "404",
+                            ErrorCode: 0x1,
+                            Message: "(Internal) Request Failed"
+                        )
+                    ))
+                    
+                    if totalResponses == totalResponsesExpected {
+                        DispatchQueue.main.async {
+                            completion(responses)
+                        }
+                    }
+                    
+                    return
+                }
+            }.resume()
+        }
     }
 
     func createDataBody(media: [Media]?, boundary: String) -> Data {
@@ -360,7 +474,7 @@ struct RequestAction<T> {
     func perform(action: String, completion: @escaping (RequestResponse) -> Void) {
         
         let scheme: String = "https"
-        let host: String = "http://127.0.0.1:8088"//"www.eznotes.space"
+        let host: String = "www.eznotes.space"//"http://127.0.0.1:8088"//"www.eznotes.space"
         
         var components = URLComponents()
         components.scheme = scheme

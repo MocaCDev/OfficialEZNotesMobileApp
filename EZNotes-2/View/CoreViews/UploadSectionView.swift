@@ -59,12 +59,12 @@ struct UploadSection: View {
                                 .frame(maxWidth: 135, maxHeight: 135)*/
                             Image(systemName: "circle")
                                 .resizable()
-                                .frame(width: 50, height: 50)
+                                .frame(width: 100, height: 100)
                                 .tint(Color.EZNotesBlue)
                         }
                     }
                     
-                    Text(String(round(self.model.frameScale * 10.00) / 10.00) + "x")
+                    Text("\(String(round(self.model.frameScale * 10.00) / 10.00))x")
                         .foregroundStyle(.white)
                         .padding([.bottom], prop.size.height / 2.5 > 300 ? -10 : -40)
                 }

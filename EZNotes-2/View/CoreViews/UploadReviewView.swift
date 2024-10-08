@@ -47,60 +47,41 @@ struct UploadReview: View {
                     .background(Color.EZNotesBlack.opacity(0.7))
                 } else {
                     HStack(spacing: 0) {
-                        Button(action: {
-                            self.section = self.lastSection
-                            self.lastSection = self.section
-                        }) {
-                            HStack {
-                                Image("Back")
-                                    .resizable()
-                                    .frame(width: 20, height: 20)
-                                    .padding([.leading], 20)
-                                    .padding([.top], prop.size.height / 2.5 > 300 ? 20 : -5)
-                                
-                                /*Text("Back")
-                                 .foregroundStyle(Color.EZNotesBlue)
-                                 .font(.system(size: 20))
-                                 .padding([.top], 20)*/
+                        VStack {
+                            Button(action: {
+                                self.section = self.lastSection
+                                self.lastSection = self.section
+                            }) {
+                                HStack {
+                                    Image("Back")
+                                        .resizable()
+                                        .frame(width: 20, height: 20)
+                                        .padding([.leading], 20)
+                                        .padding([.top], prop.size.height / 2.5 > 300 ? 20 : -5)
+                                    
+                                    /*Text("Back")
+                                     .foregroundStyle(Color.EZNotesBlue)
+                                     .font(.system(size: 20))
+                                     .padding([.top], 20)*/
+                                }
                             }
                         }
-                        //.frame(maxWidth: 100, alignment: .leading)//.frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(maxWidth: 50, alignment: .leading)//.frame(maxWidth: .infinity, alignment: .leading)
                         
                         Spacer()
-                        Text("Review Uploads")
-                            .foregroundStyle(Color.EZNotesBlack)
-                            .font(.system(size: 30))
-                            .padding([.top], prop.size.height / 2.5 > 300 ? 10 : -10)
-                            .padding([.leading], -30)
+                        
+                        VStack {
+                            Text("Review Uploads")
+                                .foregroundStyle(Color.EZNotesBlack)
+                                .font(.system(size: 30))
+                                .padding([.top], prop.size.height / 2.5 > 300 ? 10 : -10)
+                                .padding([.leading], -30)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)
-                    
-                    
-                    Toggle("Save upload to device", isOn: $localUpload)
-                        .frame(maxWidth: prop.size.width - 150)
-                        .foregroundStyle(Color.EZNotesBlack)
-                        .toggleStyle(SwitchToggleStyle(tint: Color.EZNotesBlue))
-                    
-                    if self.localUpload == false {
-                        Text("All categories will be created and stored in the cloud.")
-                            .frame(maxWidth: prop.size.width - 100)
-                            .foregroundStyle(Color.EZNotesBlue)
-                            .font(.system(size: 14))
-                            .italic()
-                            .fontWeight(.bold)
-                            .padding([.top], -5)
-                            .multilineTextAlignment(.center)
-                    } else {
-                        Text("All categories will be created and stored on your device.")
-                            .frame(maxWidth: prop.size.width - 100)
-                            .foregroundStyle(Color.EZNotesBlue)
-                            .font(.system(size: 14))
-                            .italic()
-                            .fontWeight(.bold)
-                            .padding([.top], -5)
-                            .multilineTextAlignment(.center)
-                    }
                     
                     if self.images_to_upload.images_to_upload.count == 1 {
                         VStack {
@@ -134,7 +115,8 @@ struct UploadReview: View {
                             .padding([.top], 10)
                             .padding([.bottom], 30)
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .centerLastTextBaseline)
+                        .padding([.bottom], 25)
                     } else {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack {
@@ -173,60 +155,104 @@ struct UploadReview: View {
                                         }
                                         .padding([.trailing], 15)
                                         .padding([.leading], index == 0 ? 15 : 0)
+                                        //.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .centerFirstTextBaseline)
                                     }
                                 }
                             }
-                            .padding([.top], 30)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .centerFirstTextBaseline)
+                            .padding([.bottom], 25)
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        //.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .centerFirstTextBaseline)
                     }
+                    
+                    VStack {
+                        Toggle("Save upload to device", isOn: $localUpload)
+                            .frame(maxWidth: prop.size.width - 150)
+                            .foregroundStyle(Color.EZNotesBlack)
+                            .fontWeight(.bold)
+                            .font(.system(size: 18))
+                            .toggleStyle(SwitchToggleStyle(tint: Color.EZNotesBlue))
+                        
+                        if self.localUpload == false {
+                            Text("All categories will be created and stored in the cloud.")
+                                .frame(maxWidth: prop.size.width - 100)
+                                .foregroundStyle(Color.EZNotesLightBlack)
+                                .font(.system(size: 14))
+                                .italic()
+                                .fontWeight(.bold)
+                                .multilineTextAlignment(.center)
+                        } else {
+                            Text("All categories will be created and stored on your device.")
+                                .frame(maxWidth: prop.size.width - 100)
+                                .foregroundStyle(Color.EZNotesLightBlack)
+                                .font(.system(size: 14))
+                                .italic()
+                                .fontWeight(.bold)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding([.bottom], 15)
                     
                     Button(action: {
                         self.uploadState = "uploading" /* MARK: Show the loading screen. */
-                        UploadImages(imageUpload: self.images_to_upload.images_to_upload)
-                            .requestNativeImageUpload() { resp in
-                                if resp.Bad != nil {
-                                    if resp.Bad?.ErrorCode == 0x422 {
-                                        self.images_to_upload.images_to_upload.removeAll()
+                        if self.images_to_upload.images_to_upload.count < 10 {
+                            UploadImages(imageUpload: self.images_to_upload.images_to_upload)
+                                .requestNativeImageUpload() { resp in
+                                    if resp.Bad != nil {
+                                        print(resp.Bad!)
+                                        
+                                        if resp.Bad?.ErrorCode == 0x422 {
+                                            self.images_to_upload.images_to_upload.removeAll()
+                                            self.lastSection = self.section
+                                            self.section = "confidential_upload_error"
+                                            return
+                                        }
+                                        
                                         self.lastSection = self.section
-                                        self.section = "confidential_upload_error"
+                                        self.section = "upload_error"
                                         return
-                                    }
-                                    
-                                    self.lastSection = self.section
-                                    self.section = "upload_error"
-                                    return
-                                } else {
-                                    self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
-                                    //print(resp.Good!)//print("Category: \(resp.Good!.category)\nSet Name: \(resp.Good!.set_name)\nContent: \(resp.Good!.image_content)")
-                                    
-                                    for r in resp.Good!.Data {
-                                        self.categories.append(r.category)
-                                        self.sets.append(r.set_name)
-                                        self.briefDescriptions.append(r.brief_description)
-                                        self.photos.append(r.image_name)
+                                    } else {
+                                        self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
+                                        //print(resp.Good!)//print("Category: \(resp.Good!.category)\nSet Name: \(resp.Good!.set_name)\nContent: \(resp.Good!.image_content)")
                                         
-                                        if !self.categoryImages.keys.contains(r.category) {
-                                            self.categoryImages[r.category] = findImage(for: r.image_name)!
-                                        }
-                                        
-                                        /* Append the category/set_name to the `categoriesAndSets` variable
-                                         * so the `Home` view gets updated.
-                                         * */
-                                        if self.newCategoriesAndSets.keys.contains(r.category) {
-                                            if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
-                                                self.newCategoriesAndSets[r.category]!.append(r.set_name)
+                                        for r in resp.Good!.Data {
+                                            self.categories.append(r.category)
+                                            self.sets.append(r.set_name)
+                                            self.briefDescriptions.append(r.brief_description)
+                                            self.photos.append(r.image_name)
+                                            
+                                            if !self.categoryImages.keys.contains(r.category) {
+                                                self.categoryImages[r.category] = findImage(for: r.image_name)!
                                             }
-                                        } else {
-                                            self.newCategoriesAndSets[r.category] = [r.set_name]
+                                            
+                                            /* Append the category/set_name to the `categoriesAndSets` variable
+                                             * so the `Home` view gets updated.
+                                             * */
+                                            if self.newCategoriesAndSets.keys.contains(r.category) {
+                                                if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
+                                                    self.newCategoriesAndSets[r.category]!.append(r.set_name)
+                                                }
+                                            } else {
+                                                self.newCategoriesAndSets[r.category] = [r.set_name]
+                                            }
                                         }
+                                        
+                                        self.lastSection = self.section
+                                        self.section = "review_new_categories"
                                     }
+                                }
+                        } else {
+                            UploadImages(imageUpload: self.images_to_upload.images_to_upload)
+                                .multiImageUpload() { resp in
+                                    self.uploadState = "review"
+                                    
+                                    /* TODO: Iterate through all of the responses and curate data accordingly */
                                     
                                     self.lastSection = self.section
                                     self.section = "review_new_categories"
                                 }
-                            }
+                        }
                     }) {
                         Text("Upload")
                             .foregroundStyle(Color.white)

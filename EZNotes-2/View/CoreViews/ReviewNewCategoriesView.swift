@@ -116,7 +116,7 @@ struct ReviewNewCategories: View {
                                             .stroke(!self.indexOfCategoriesToRemove.contains(index) ? Color.red : Color.green, lineWidth: 1)
                                     )
                                     
-                                    if !self.indexOfCategoriesToRemove.contains(index) {
+                                    if !self.indexOfCategoriesToRemove.contains(index) && self.categoriesAndSets.keys.contains(self.categories[index]) {
                                         Button(action: {
                                             if !self.indexOfSetsToRemove.contains(index) {
                                                 self.indexOfSetsToRemove.append(index)
