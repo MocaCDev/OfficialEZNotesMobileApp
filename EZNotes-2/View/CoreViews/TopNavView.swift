@@ -65,7 +65,7 @@ struct TopNavHome: View {
                     //.padding([.bottom], -5)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
-                .padding([.top], 45)
+                .padding([.top], prop.size.height > 340 ? 50 : 45)
                 
                 Spacer()
                 
@@ -87,6 +87,72 @@ struct TopNavHome: View {
             }
             .frame(maxWidth: .infinity, maxHeight: 100, alignment: .top)
             .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))//(.ultraThinMaterial, in: Color.EZNotesBlack)//.background(Color.clear.blur(radius: 4, opaque: true))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .edgesIgnoringSafeArea(.top)
+        .zIndex(1)
+    }
+}
+
+struct TopNavCategoryView: View {
+    
+    var prop: Properties
+    var categoryName: String
+    var totalSets: Int
+    
+    @Binding public var launchCategory: Bool
+    
+    var body: some View {
+        VStack {
+            HStack {
+                VStack {
+                    Button(action: { self.launchCategory = false }) {
+                        Image(systemName: "arrow.left")
+                            .resizable()
+                            .frame(width: 20, height: 20)
+                            .tint(Color.EZNotesBlue)
+                    }
+                    .padding([.leading], 20)
+                }
+                .frame(maxWidth: 50, alignment: .leading)
+                .padding([.top], 45)
+                
+                Spacer()
+                
+                VStack {
+                    Text(categoryName)
+                        .foregroundStyle(.primary)
+                        .font(.system(size: 22, design: .rounded))
+                        .fontWeight(.thin)
+                    
+                    Text("Sets: \(self.totalSets)")
+                        .foregroundStyle(.white)
+                        .font(.system(size: 14, design: .rounded))
+                        .fontWeight(.thin)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding([.top], prop.size.height > 340 ? 50 : 45)
+                
+                Spacer()
+                
+                VStack {
+                    Button(action: { print("POPUP!") }) {
+                        Image("AI-Chat-Icon")
+                            .resizable()
+                            .frame(
+                                width: prop.size.height / 2.5 > 300 ? 45 : 40,
+                                height: prop.size.height / 2.5 > 300 ? 45 : 40
+                            )
+                            .padding([.trailing], 20)
+                            //.padding([.top], prop.size.height / 2.5 > 300 ? 45 : 15)
+                    }
+                    .buttonStyle(.borderless)
+                }
+                .frame(maxWidth: 50, alignment: .trailing)
+                .padding([.top], 45)
+            }
+            .frame(maxWidth: .infinity, maxHeight: 100, alignment: .top)
+            .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .edgesIgnoringSafeArea(.top)

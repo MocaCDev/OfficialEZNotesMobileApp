@@ -277,9 +277,9 @@ struct UploadReview: View {
                                          * so the `Home` view gets updated.
                                          * */
                                         if self.newCategoriesAndSets.keys.contains(d.category) {
-                                            if !self.newCategoriesAndSets[d.category]!.contains(d.set_name) {
-                                                self.newCategoriesAndSets[d.category]!.append(d.set_name)
-                                            }
+                                            /* TODO: Should there be a if statement here that makes sure there aren't more than one of the same set names in the array belonging to the category?
+                                             * */
+                                            self.newCategoriesAndSets[d.category]!.append(d.set_name)
                                         } else {
                                             self.newCategoriesAndSets[d.category] = [d.set_name]
                                         }

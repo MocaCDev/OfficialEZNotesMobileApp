@@ -6,6 +6,8 @@
 //  Created by Aidan White on 9/21/24.
 //
 import SwiftUI
+import Foundation
+import Network
 
 struct MyButtonStyle: ButtonStyle {
     func makeBody(configuration: Self.Configuration) -> some View

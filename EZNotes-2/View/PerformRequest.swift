@@ -89,8 +89,9 @@ struct UploadImages {
     
     func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
         //let localServer1 = "http://10.185.51.126:8088"
-        let localServer1 = "http://192.168.1.114:8088"
+        //let localServer1 = "http://192.168.1.114:8088"
         //let localServer1 = "http://192.168.0.8:8088"
+        let localServer1 = "https://www.eznotes.space"
         
         let url = URL(string: "\(localServer1)/handle_uploads")
         let boundary = "Boundary-\(NSUUID().uuidString)"
@@ -157,8 +158,8 @@ struct UploadImages {
     }
     
     func multiImageUpload(completion: @escaping (Array<ImageUploadRequestResponse>) -> Void) {
-        //let localServer1 = "http://192.168.0.8:8088"
-        let localServer1 = "http://192.168.1.114:8088"
+        let localServer1 = "https://www.eznotes.space"//"http://192.168.0.8:8088"
+        //let localServer1 = "http://192.168.1.114:8088"
         
         let url = URL(string: "\(localServer1)/handle_uploads")
         let boundary = "Boundary-\(NSUUID().uuidString)"
@@ -485,19 +486,22 @@ struct RequestAction<T> {
         components.scheme = scheme
         components.host = host
         
+        var request: URLRequest = URLRequest(url: URL(string: "n")!)
+        let server = "https://www.eznotes.space"//"http://192.168.0.8:8088"
+        
         switch(action)
         {
-            case "check_server_is_active": components.path = "/EZNotes_Software_Network_Test";break;
-            case "get_supported_states": components.path = "/get_supported_states";break;
-            case "get_colleges_for_state": components.path = "/get_colleges_for_state";break;
-            case "complete_login": components.path = "/cl";break;
-            case "complete_signup1": components.path = "/csu";break;
-            case "complete_signup2": components.path = "/csu2";break;
-            default:break;
+            case "check_server_is_active": request = URLRequest(url: URL(string: "\(server)/EZNotes_Software_Network_Test")!);break;
+            case "get_supported_states": request = URLRequest(url: URL(string: "\(server)/get_supported_states")!);break;
+            case "get_colleges_for_state": request = URLRequest(url: URL(string: "\(server)/get_colleges_for_state")!);break;
+            case "complete_login":  request = URLRequest(url: URL(string: "\(server)/mobile_cl")!);break;
+            case "complete_signup1": request = URLRequest(url: URL(string: "\(server)/csu")!);break;
+            case "complete_signup2": request = URLRequest(url: URL(string: "\(server)/csu2")!);break;
+            default: request = URLRequest(url: URL(string: "\(server)/\(action)")!);break;
         }
         
-        guard let url = components.url else { print("NO"); return }
-        var request = URLRequest(url: url)
+        //let url = URL(string: "http://192.168.0.8:8088")//guard let url = components.url else { print("NO"); return }
+        //var request = URLRequest(url: url!)
         
         if action == "get_supported_states" || action == "get_colleges_for_state" { request.httpMethod = "get" }
         else { request.httpMethod = "post" }
@@ -566,6 +570,7 @@ struct RequestAction<T> {
                     }
                     return
                 }
+                
             } else {
                 DispatchQueue.main.async {
                     completion(RequestResponse(

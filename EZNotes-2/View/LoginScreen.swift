@@ -102,20 +102,20 @@ struct LoginScreen: View, KeyboardReadable {
                 )
                 .opacity(prop.isIpad && UIDevice.current.orientation.isLandscape
                          ? passwordFieldInFocus
-                            ? 0
-                            : imageOpacity
+                            ? !loginError ? 0 : 1
+                            : !loginError ? imageOpacity : 1
                          : prop.size.width / 2.5 < 300
                             ? passwordFieldInFocus
-                                ? 0
-                                : imageOpacity
-                         : 1
+                                ? !loginError ? 0 : 1
+                                : !loginError ? imageOpacity : 1
+                            : 1
                 )
                 .fontWeight(.bold)
                 .padding([.top], prop.isIpad
                          ? -80
                          : prop.size.width / 2.5 > 300
-                            ? -170
-                            : -180
+                            ? !loginError ? -170 : -150
+                            : !loginError ? -180 : -160
                 )
                 .padding()
                 .font(
@@ -184,10 +184,9 @@ struct LoginScreen: View, KeyboardReadable {
                         text: $username,
                         onEditingChanged: set_image_opacity
                     )
-                    .onReceive(keyboardPublisher) { newIsKeyboardVisible in
-                        print("Is keyboard visible? ", newIsKeyboardVisible)
+                    /*.onReceive(keyboardPublisher) { newIsKeyboardVisible in
                         self.keyboardActivated = newIsKeyboardVisible
-                    }
+                    }*/
                     .autocapitalization(.none)
                     .disableAutocorrection(true)
                     .frame(
@@ -277,13 +276,24 @@ struct LoginScreen: View, KeyboardReadable {
                                     Password: password
                                 )
                             ).perform(action: "complete_login") { r in
+                                /* MARK: Temporary. Bug in server needs fixed. */
+                                /*if r.Good!.Status != "200" {
+                                    self.loginError = true
+                                    return
+                                }
+                                
+                                UserDefaults.standard.set(true, forKey: "logged_in")
+                                self.userHasSignedIn = true
+                                print("LOGGED IN!")
+                                return*/
+                                
                                 if r.Good == nil {
-                                    print(r.Bad!)
                                     self.loginError = true
                                     return
                                 } else {
                                     UserDefaults.standard.set(true, forKey: "logged_in")
                                     self.userHasSignedIn = true
+                                    print("LOGGED IN!")
                                     return
                                 }
                                 /*if r.Bad != nil

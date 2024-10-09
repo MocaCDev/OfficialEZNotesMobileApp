@@ -42,11 +42,11 @@ struct ContentView: View {
         //.publisher(for: UIDevice.orientationDidChangeNotification)
     
     var body: some View {
-        /*if !userHasSignedIn {
+        if !userHasSignedIn {
             StartupScreen(
                 userHasSignedIn: $userHasSignedIn
             )
-        } else {*/
+        } else {
             VStack {
                 ResponsiveView { prop in
                     CoreApp(model: model, prop: prop)
@@ -66,7 +66,7 @@ struct ContentView: View {
                     //}//UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
                 //}
             }
-        //}
+        }
     }
 }
 

@@ -13,6 +13,7 @@ struct ReviewNewCategories: View {
     
     @Binding var newCategoriesAndSets: [String: Array<String>]
     @Binding var categoriesAndSets: [String: Array<String>]
+    @Binding var categoryImages: [String: UIImage]
     @Binding var categories: Array<String>
     @Binding var sets: Array<String>
     @Binding var briefDescriptions: Array<String>
@@ -67,7 +68,7 @@ struct ReviewNewCategories: View {
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                                 
-                                if !self.indexOfSetsToRemove.contains(index) && !self.indexOfCategoriesToRemove.contains(index) {
+                                if !self.indexOfCategoriesToRemove.contains(index) {
                                     Text(self.sets[index])
                                         .foregroundStyle(.white)
                                         .font(.system(size: 20, design: .serif))
@@ -101,7 +102,7 @@ struct ReviewNewCategories: View {
                                             self.valueOfCategoriesToRemove = self.valueOfCategoriesToRemove.filter { $0 != self.categories[index] }
                                         }
                                     }) {
-                                        Text(!self.indexOfCategoriesToRemove.contains(index) ? "Delete Category" : "Undo Removal")
+                                        Text(!self.indexOfCategoriesToRemove.contains(index) ? "Delete" : "Undo Removal")
                                             .foregroundStyle(Color.white)
                                             .font(.system(size: 18))
                                             .fontWeight(.light)
@@ -150,7 +151,7 @@ struct ReviewNewCategories: View {
                                     }
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: 50, alignment: .leading)
-                                .padding([.top], 30)
+                                .padding([.top], 10)
                             }
                             .frame(maxWidth: prop.size.width - 50, maxHeight: 200)
                             .padding([.top], 15)
@@ -200,6 +201,10 @@ struct ReviewNewCategories: View {
                             }
                         }
                     }
+                    
+                    /* MARK: Save the categories to a JSON file. */
+                    writeCategoryData(categoryData: self.categoriesAndSets)
+                    writeCategoryImages(categoryImages: self.categoryImages)
                     
                     /* Remove all upload information. */
                     self.photos.removeAll()

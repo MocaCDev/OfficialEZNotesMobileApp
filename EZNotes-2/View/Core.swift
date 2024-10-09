@@ -72,8 +72,8 @@ struct CoreApp: View {
      * will be the array of sets pertaining to that category.
      * */
     @State private var newCategoriesAndSets: [String: Array<String>] = [:]
-    @State private var categoriesAndSets: [String: Array<String>] = [:]
-    @State private var categoryImages: [String: UIImage] = [:] /* Key will be the category name, value will be the image data*/
+    @State private var categoriesAndSets: [String: Array<String>] = getCategoryData()
+    @State private var categoryImages: [String: UIImage] = getCategoriesImageData() /* Key will be the category name, value will be the image data*/
     @State private var categories: Array<String> = []
     @State private var sets: Array<String> = []
     @State private var photos: Array<String> = []
@@ -136,6 +136,7 @@ struct CoreApp: View {
                     images_to_upload: images_to_upload,
                     newCategoriesAndSets: $newCategoriesAndSets,
                     categoriesAndSets: $categoriesAndSets,
+                    categoryImages: $categoryImages,
                     categories: $categories,
                     sets: $sets,
                     briefDescriptions: $briefDescriptions,
@@ -331,6 +332,10 @@ struct CoreApp: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear(perform: {
+                print(prop.size.height / 2.5)
+            }
+        )
         
         /*if self.section != "upload_review" && self.section != "review_new_categories" {
             VStack {
