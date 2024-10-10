@@ -17,27 +17,48 @@ struct FrameView: View {
             Image(image, scale: handler.frameScale, orientation: .up, label: label)
                 .interpolation(.high)
                 .resizable()
-                .scaledToFit()
+                .aspectRatio(contentMode: .fill)
+                //.scaledToFit()
                 //.frame(maxWidth: .infinity, maxHeight: .infinity)
-                .scaleEffect(handler.currentZoom + handler.frameScale)
+                /*.scaleEffect(self.handler.currentSession == .builtInTelephotoCamera
+                             ? (self.handler.currentZoom + self.handler.frameScale) - 2
+                             : self.handler.currentZoom + self.handler.frameScale
+                )*/
             //.frame(maxWidth: .infinity, maxHeight: .infinity)
                 .aspectRatio(contentMode: .fill)
         } else {
-            VStack {
+            if self.handler.permissionGranted {
                 VStack {
-                    ProgressView()
-                        .tint(Color.EZNotesBlue)
-                        .frame(width: 25, height: 25)
-                        .controlSize(.large)
+                    VStack {
+                        ProgressView()
+                            .tint(Color.EZNotesBlue)
+                            .frame(width: 25, height: 25)
+                            .controlSize(.large)
+                    }
+                    .frame(width: 100, height: 100, alignment: .center)
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.EZNotesBlack.opacity(0.75))
+                    )
                 }
-                .frame(width: 100, height: 100, alignment: .center)
-                .background(
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.EZNotesBlack.opacity(0.75))
-                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.EZNotesLightBlack)
+            } else { /* MARK: builtInTelephotoCamera */
+                VStack {
+                    VStack {
+                        Text("Camera Access Denied")
+                            .foregroundStyle(.white)
+                            .font(.system(size: 18, design: .rounded))
+                    }
+                    .frame(width: 200, height: 200)
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.EZNotesBlack.opacity(0.75))
+                    )
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.EZNotesLightBlack)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.EZNotesLightBlack)
         }
     }
 }

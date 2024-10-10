@@ -7,7 +7,7 @@
 import SwiftUI
 
 struct UploadReview: View {
-    @ObservedObject public var images_to_upload: ImagesUploads
+    @ObservedObject public var images_to_upload: ImagesUploads//@Binding public var images_to_upload: Array<[String: UIImage]>//@ObservedObject public var images_to_upload: ImagesUploads
     
     @Binding public var localUpload: Bool
     @Binding public var section: String
@@ -96,12 +96,10 @@ struct UploadReview: View {
                             
                             HStack {
                                 Button(action: {
-                                    self.images_to_upload.images_to_upload.removeAll()
+                                    self.section = self.lastSection
+                                    self.lastSection = ""
                                     
-                                    if self.images_to_upload.images_to_upload.count == 0 {
-                                        self.section = self.lastSection
-                                        self.lastSection = ""
-                                    }
+                                    self.images_to_upload.images_to_upload.remove(at: 0)
                                 }) {
                                     Image("Delete")
                                         .resizable()
@@ -321,7 +319,7 @@ struct UploadReview: View {
         /*} else {
             /* MARK: `self.uploadState`, in regards to this else statement, will presumably be "uploading". */
             VStack {
-                Text("Uploading \(self.images_to_upload.images_to_upload.count) images...")
+                Text("Uploading \(self.images_to_upload.count) images...")
                     .foregroundStyle(.white)
                     .font(.system(size: 25))
                 ProgressView()

@@ -164,7 +164,8 @@ struct TopNavUpload: View {
     
     @Binding public var section: String
     @Binding public var lastSection: String
-    @ObservedObject public var images_to_upload: ImagesUploads
+    
+    @Binding public var images_to_upload: Array<[String: UIImage]>
     
     var prop: Properties
     var backgroundColor: Color
@@ -206,7 +207,7 @@ struct TopNavUpload: View {
                     .padding([.trailing], 20)
                     .buttonStyle(.borderedProminent)
                     .tint(Color.EZNotesBlue)//.buttonStyle(MyButtonStyle())
-                    .opacity(!self.images_to_upload.images_to_upload.isEmpty ? 1 : 0)
+                    .opacity(!self.images_to_upload.isEmpty ? 1 : 0)
                     
                 }
                 .frame(width: 200, height: 40, alignment: .topTrailing)

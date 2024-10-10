@@ -8,7 +8,6 @@ import SwiftUI
 
 struct HomeView: View {
     @Binding public var section: String
-    @ObservedObject public var images_to_upload: ImagesUploads
     var categoriesAndSets: [String: Array<String>]
     var categoryImages: [String: UIImage]
     

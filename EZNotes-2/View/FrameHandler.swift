@@ -12,11 +12,14 @@ class FrameHandler: NSObject, ObservableObject {
     @Published var frame: CGImage?
     @Published var frameScale: Double = 1.01
     @Published var currentZoom: Double = 0.0
-    private var permissionGranted = true
-    private let captureSession = AVCaptureSession()
+    @Published var permissionGranted = true
+    @Published var currentSession: AVCaptureDevice.DeviceType = .builtInDualCamera
+    
+    public let captureSession = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "sessionQueue")
     private let context = CIContext()
-
+    private var videoDeviceInput: AVCaptureDeviceInput?
+    private var videoOutput: AVCaptureVideoDataOutput?
     
     override init() {
         super.init()
@@ -35,9 +38,9 @@ class FrameHandler: NSObject, ObservableObject {
             case .notDetermined: // The user has not yet been asked for camera access.
                 self.requestPermission()
                 
-        // Combine the two other cases into the default case
-        default:
-            self.permissionGranted = false
+            // Combine the two other cases into the default case
+            default:
+                self.permissionGranted = false
         }
     }
     
@@ -48,25 +51,57 @@ class FrameHandler: NSObject, ObservableObject {
         }
     }
     
-    func setupCaptureSession() {
-        let videoOutput = AVCaptureVideoDataOutput()
+    func setupCaptureSession() -> Void {
+        self.videoOutput = AVCaptureVideoDataOutput()
         
         guard permissionGranted else { return }
-        guard let videoDevice = AVCaptureDevice.default(.builtInDualCamera,for: .video, position: .back) else { return }
-        guard let videoDeviceInput = try? AVCaptureDeviceInput(device: videoDevice) else { return }
-        guard captureSession.canAddInput(videoDeviceInput) else { return }
+        guard let videoDevice = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) else { return }
         
-        captureSession.sessionPreset = .hd4K3840x2160//.sessionPreset = .photo
-        captureSession.addInput(videoDeviceInput)
+        guard let deviceInput = try? AVCaptureDeviceInput(device: videoDevice) else { return }
+        self.videoDeviceInput = deviceInput
         
-        videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "sampleBufferQueue"))
-        captureSession.addOutput(videoOutput)
+        guard captureSession.canAddInput(self.videoDeviceInput!) else { return }
+        
+        /* TODO: What preset is going to work best? We want the app to be as light-weight as possible (preferrably). */
+        captureSession.sessionPreset = .high//.hd4K3840x2160//.sessionPreset = .photo
+        
+        captureSession.addInput(self.videoDeviceInput!)
+        
+        do {
+            try self.videoDeviceInput?.device.lockForConfiguration()
+            self.videoDeviceInput?.device.videoZoomFactor = 123
+            self.videoDeviceInput?.device.unlockForConfiguration()
+        } catch let error {
+            print(error)
+            return
+        }
+        
+        self.videoOutput!.setSampleBufferDelegate(self, queue: DispatchQueue(label: "sampleBufferQueue"))
+        captureSession.addOutput(self.videoOutput!)
         
         /*let previewLayer = AVCaptureVideoPreviewLayer.layerWithSession(captureSession) as AVCaptureVideoPreviewLayer
         previewLayer.frame = view.bounds
         captureSession.layer.addSublayer(previewLayer)*/
         
-        videoOutput.connection(with: .video)?.videoRotationAngle = 90
+        self.videoOutput!.connection(with: .video)?.videoRotationAngle = 90
+    }
+    
+    /* MARK: `deviceType` - 0 for `.builtInDualCamera`, 1 for `.builtInTelephotoCamera`. */
+    func changeCaptureSession(deviceType: Int) -> Void {
+        var device: AVCaptureDevice.DeviceType = .builtInDualCamera
+        
+        if deviceType == 1 { device = .builtInTelephotoCamera }
+        
+        captureSession.removeInput(self.videoDeviceInput!)
+        
+        guard let videoDevice = AVCaptureDevice.default(device, for: .video, position: .back) else { return }
+        guard let deviceInput = try? AVCaptureDeviceInput(device: videoDevice) else { return }
+        self.videoDeviceInput = deviceInput
+        
+        self.videoOutput!.setSampleBufferDelegate(self, queue: DispatchQueue(label: "sampleBufferQueue"))
+        captureSession.addInput(self.videoDeviceInput!)
+        
+        self.videoOutput!.connection(with: .video)?.videoRotationAngle = 90
     }
 }
 

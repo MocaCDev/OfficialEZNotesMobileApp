@@ -10,7 +10,6 @@ struct ChatView: View {
     @State private var friendSearch: String = ""
     
     @Binding public var section: String
-    @ObservedObject public var images_to_upload: ImagesUploads
     
     var prop: Properties
     

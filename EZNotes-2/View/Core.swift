@@ -61,6 +61,8 @@ struct CoreApp: View {
     public var prop: Properties
     
     @StateObject var images_to_upload: ImagesUploads = ImagesUploads() //@State private var images_to_upload: Array<UIImage> = []
+    @StateObject var viewModel: CameraViewModel = CameraViewModel()
+    
     @State private var images: Array<UIImage> = []
     @State private var images_to_ignore: Array<Int> = []
     @State private var change = 0.0
@@ -110,7 +112,7 @@ struct CoreApp: View {
         VStack {
             if self.section == "upload" {
                 UploadSection(
-                    images_to_upload: images_to_upload,
+                    viewModel: viewModel,
                     model: model,
                     lastSection: $lastSection,
                     section: $section,
@@ -118,7 +120,7 @@ struct CoreApp: View {
                 )
             } else if self.section == "upload_review" {
                 UploadReview(
-                    images_to_upload: images_to_upload,
+                    images_to_upload: viewModel.cameraManager.images_to_upload,
                     localUpload: $localUpload,
                     section: $section,
                     lastSection: $lastSection,
@@ -133,7 +135,7 @@ struct CoreApp: View {
             } else if self.section == "review_new_categories" {
                 ReviewNewCategories(
                     section: $section,
-                    images_to_upload: images_to_upload,
+                    images_to_upload: $viewModel.cameraManager.images_to_upload.images_to_upload,
                     newCategoriesAndSets: $newCategoriesAndSets,
                     categoriesAndSets: $categoriesAndSets,
                     categoryImages: $categoryImages,
@@ -146,7 +148,6 @@ struct CoreApp: View {
             } else if self.section == "home" {
                 HomeView(
                     section: $section,
-                    images_to_upload: images_to_upload,
                     categoriesAndSets: categoriesAndSets,
                     categoryImages: categoryImages,
                     prop: prop
@@ -171,7 +172,6 @@ struct CoreApp: View {
             } else if self.section == "chat" {
                 ChatView(
                     section: $section,
-                    images_to_upload: images_to_upload,
                     prop: prop
                 )
                 /*ZStack {

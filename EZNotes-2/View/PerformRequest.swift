@@ -233,10 +233,10 @@ struct UploadImages {
                             completion(ImageUploadRequestResponse(Good: response, Bad: nil))
                         }
                         return*/
-                        //responses.append(ImageUploadRequestResponse(Good: response, Bad: nil))
+                        responses.append(ImageUploadRequestResponse(Good: response, Bad: nil))
                         
                         if totalResponses == totalResponsesExpected {
-                            responses.append(ImageUploadRequestResponse(Good: response, Bad: nil))
+                            //responses.append(ImageUploadRequestResponse(Good: response, Bad: nil))
                             DispatchQueue.main.async {
                                 completion(responses)
                             }

@@ -7,7 +7,14 @@
 import SwiftUI
 
 struct UploadSection: View {
-    @ObservedObject public var images_to_upload: ImagesUploads
+    @State private var isFocused = false
+    @State private var isScaled = false
+    @State private var focusLocation: CGPoint = .zero
+    @State private var currentZoomFactor: CGFloat = 1.0
+    
+    //@ObservedObject public var images_to_upload: ImagesUploads
+    @ObservedObject public var viewModel: CameraViewModel// = CameraViewModel()
+    
     @ObservedObject public var model: FrameHandler
     
     @Binding public var lastSection: String
@@ -20,7 +27,7 @@ struct UploadSection: View {
             TopNavUpload(
                 section: $section,
                 lastSection: $lastSection,
-                images_to_upload: images_to_upload,
+                images_to_upload: $viewModel.cameraManager.images_to_upload.images_to_upload,
                 prop: prop,
                 backgroundColor: Color.clear
             )
@@ -28,7 +35,7 @@ struct UploadSection: View {
             VStack {
                 VStack {
                     Button(action: {
-                        let width = self.model.frame!.width
+                        /*let width = self.model.frame!.width
                         let height = self.model.frame!.height
                         
                         // Calculate the cropped rectangle based on the zoom scale
@@ -42,11 +49,12 @@ struct UploadSection: View {
                         guard let croppedCGImage = self.model.frame!.cropping(to: cropRect) else {
                             self.section = "picture_error"
                             return
-                        }
+                        }*/
                         
-                        self.images_to_upload.images_to_upload.append(
-                            ["\(arc4random()).jpeg": UIImage(cgImage: croppedCGImage)]
-                        )
+                        viewModel.captureImage()
+                        /*self.images_to_upload.images_to_upload.append(
+                            ["\(arc4random()).jpeg": viewModel.capturedImage] //UIImage(cgImage: croppedCGImage)]
+                        )*/
                     }) {
                         ZStack {
                             /*RoundedRectangle(cornerRadius: 15)
@@ -160,23 +168,47 @@ struct UploadSection: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .background(
-            FrameView(handler: model, image: model.frame, prop: prop)
+            CameraPreview(session: viewModel.session) { tapPoint in
+                isFocused = true
+                focusLocation = tapPoint
+                viewModel.setFocus(point: tapPoint)
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea()
+            .gesture(MagnificationGesture()
+                .onChanged { value in
+                    self.currentZoomFactor += value - 1.0 // Calculate the zoom factor change
+                    self.currentZoomFactor = min(max(self.currentZoomFactor, 0.5), 20)
+                    self.viewModel.zoom(with: currentZoomFactor)
+                }
+            )
+            /*FrameView(handler: model, image: model.frame, prop: prop)
                 //.frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea()
                 .gesture(MagnifyGesture()
                     .onChanged { value in
-                        if !(self.model.frameScale + self.model.currentZoom <= 1) && !(self.model.frameScale + self.model.currentZoom >= 6)
+                        if !(self.model.frameScale + self.model.currentZoom <= 1) && !(self.model.frameScale + self.model.currentZoom >= 7)
                         {
+                            /*if self.model.frameScale + self.model.currentZoom >= 4.0 {
+                                self.model.changeCaptureSession(deviceType: 1)
+                            } else {
+                                /* MARK: Change the input device back to `.builtInDualCamera` if it is not already that. */
+                                if self.model.currentSession != .builtInDualCamera {
+                                    self.model.changeCaptureSession(deviceType: 0)
+                                }
+                            }*/
+                            
                             self.model.currentZoom = value.magnification - 1
                         }
                     }
                     .onEnded { value in
-                        if !(self.model.frameScale + self.model.currentZoom < 1) && !(self.model.frameScale + self.model.currentZoom > 6) {
+                        if !(self.model.frameScale + self.model.currentZoom < 1) && !(self.model.frameScale + self.model.currentZoom > 7) {
                             self.model.frameScale += self.model.currentZoom
                         } else {
                             if self.model.frameScale + self.model.currentZoom < 1
                             { self.model.frameScale = 1.01 }
-                            else { self.model.frameScale = 5.9 }
+                            else { self.model.frameScale = 6.9 }
                         }
                         self.model.currentZoom = 0
                     }
@@ -202,7 +234,11 @@ struct UploadSection: View {
                             return
                         }
                     })
-                )
+                )*/
         )
+        .onAppear {
+            viewModel.setupBindings()
+            viewModel.requestCameraPermission()
+        }
     }
 }

@@ -9,7 +9,7 @@ import SwiftUI
 struct ReviewNewCategories: View {
     
     @Binding public var section: String
-    @ObservedObject public var images_to_upload: ImagesUploads
+    @Binding public var images_to_upload: Array<[String: UIImage]>
     
     @Binding var newCategoriesAndSets: [String: Array<String>]
     @Binding var categoriesAndSets: [String: Array<String>]
@@ -27,7 +27,7 @@ struct ReviewNewCategories: View {
     var prop: Properties
     
     private func findImage(for key: String) -> UIImage? {
-        for dictionary in self.images_to_upload.images_to_upload {
+        for dictionary in self.images_to_upload {
             if let image = dictionary[key] {
                 return image
             }
@@ -211,7 +211,7 @@ struct ReviewNewCategories: View {
                     self.sets.removeAll()
                     self.categories.removeAll()
                     self.briefDescriptions.removeAll()
-                    self.images_to_upload.images_to_upload.removeAll()
+                    self.images_to_upload.removeAll()
                     
                     self.valueOfSetsToRemove.removeAll()
                     self.indexOfSetsToRemove.removeAll()
