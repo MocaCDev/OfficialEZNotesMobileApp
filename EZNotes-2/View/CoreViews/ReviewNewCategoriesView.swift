@@ -9,7 +9,7 @@ import SwiftUI
 struct ReviewNewCategories: View {
     
     @Binding public var section: String
-    @Binding public var images_to_upload: Array<[String: UIImage]>
+    @ObservedObject public var images_to_upload: ImagesUploads
     
     @Binding var newCategoriesAndSets: [String: Array<String>]
     @Binding var categoriesAndSets: [String: Array<String>]
@@ -27,7 +27,7 @@ struct ReviewNewCategories: View {
     var prop: Properties
     
     private func findImage(for key: String) -> UIImage? {
-        for dictionary in self.images_to_upload {
+        for dictionary in self.images_to_upload.images_to_upload {
             if let image = dictionary[key] {
                 return image
             }
@@ -49,8 +49,6 @@ struct ReviewNewCategories: View {
                                     .overlay(RoundedRectangle(cornerRadius: 10)
                                         .fill(Color.clear))
                             }
-                                //         /*.stroke(Color.EZNotesBlue, lineWidth: 1)*/)
-                                //.shadow(color: Color.white, radius: 6)
                             
                             VStack {
                                 if !self.indexOfCategoriesToRemove.contains(index) {
@@ -110,7 +108,7 @@ struct ReviewNewCategories: View {
                                             .padding(5)
                                     }
                                     .buttonStyle(.borderedProminent)
-                                    .tint(Color.clear)//(Color.EZNotesOrange)
+                                    .tint(Color.clear)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 15)
                                             .fill(Color.clear)
@@ -142,7 +140,7 @@ struct ReviewNewCategories: View {
                                                 .padding(5)
                                         }
                                         .buttonStyle(.borderedProminent)
-                                        .tint(Color.clear)//(Color.EZNotesOrange)
+                                        .tint(Color.clear)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 15)
                                                 .fill(Color.clear)
@@ -163,7 +161,7 @@ struct ReviewNewCategories: View {
                 .padding([.top], 30)
                 
                 Button(action: {
-                    print("Before: \(self.newCategoriesAndSets)")
+                    //print("Before: \(self.newCategoriesAndSets)")
                     
                     if self.indexOfCategoriesToRemove.count > 0 {
                         for (_, value) in self.valueOfCategoriesToRemove.enumerated() {
@@ -190,7 +188,7 @@ struct ReviewNewCategories: View {
                         }
                     }
                     
-                    print("After: \(self.newCategoriesAndSets)")
+                    //print("After: \(self.newCategoriesAndSets)")
                     
                     for (_, value) in self.newCategoriesAndSets.enumerated() {
                         for (_, value2) in value.value.enumerated() {
@@ -211,7 +209,7 @@ struct ReviewNewCategories: View {
                     self.sets.removeAll()
                     self.categories.removeAll()
                     self.briefDescriptions.removeAll()
-                    self.images_to_upload.removeAll()
+                    self.images_to_upload.images_to_upload.removeAll()
                     
                     self.valueOfSetsToRemove.removeAll()
                     self.indexOfSetsToRemove.removeAll()
@@ -229,7 +227,7 @@ struct ReviewNewCategories: View {
                         .padding(5)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(Color.EZNotesGreen)//(Color.EZNotesOrange)
+                .tint(Color.EZNotesGreen)
                 .overlay(
                     RoundedRectangle(cornerRadius: 15)
                         .fill(Color.clear)

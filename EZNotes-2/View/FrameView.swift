@@ -14,18 +14,10 @@ struct FrameView: View {
     
     var body: some View {
         if let image = image {
-            Image(image, scale: handler.frameScale, orientation: .up, label: label)
+            Image(image, scale: 1, orientation: .up, label: label)
                 .interpolation(.high)
                 .resizable()
-                .aspectRatio(contentMode: .fill)
-                //.scaledToFit()
-                //.frame(maxWidth: .infinity, maxHeight: .infinity)
-                /*.scaleEffect(self.handler.currentSession == .builtInTelephotoCamera
-                             ? (self.handler.currentZoom + self.handler.frameScale) - 2
-                             : self.handler.currentZoom + self.handler.frameScale
-                )*/
-            //.frame(maxWidth: .infinity, maxHeight: .infinity)
-                .aspectRatio(contentMode: .fill)
+                .aspectRatio(contentMode: .fill)//scaledToFit()
         } else {
             if self.handler.permissionGranted {
                 VStack {

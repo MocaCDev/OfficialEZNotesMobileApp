@@ -12,8 +12,7 @@ struct UploadSection: View {
     @State private var focusLocation: CGPoint = .zero
     @State private var currentZoomFactor: CGFloat = 1.0
     
-    //@ObservedObject public var images_to_upload: ImagesUploads
-    @ObservedObject public var viewModel: CameraViewModel// = CameraViewModel()
+    @ObservedObject public var images_to_upload: ImagesUploads
     
     @ObservedObject public var model: FrameHandler
     
@@ -27,7 +26,7 @@ struct UploadSection: View {
             TopNavUpload(
                 section: $section,
                 lastSection: $lastSection,
-                images_to_upload: $viewModel.cameraManager.images_to_upload.images_to_upload,
+                images_to_upload: images_to_upload,
                 prop: prop,
                 backgroundColor: Color.clear
             )
@@ -35,36 +34,11 @@ struct UploadSection: View {
             VStack {
                 VStack {
                     Button(action: {
-                        /*let width = self.model.frame!.width
-                        let height = self.model.frame!.height
-                        
-                        // Calculate the cropped rectangle based on the zoom scale
-                        let cropWidth = CGFloat(width) / self.model.frameScale
-                        let cropHeight = CGFloat(height) / self.model.frameScale
-                        let cropRect = CGRect(x: (CGFloat(width) - cropWidth) / 2,
-                                              y: (CGFloat(height) - cropHeight) / 2,
-                                              width: cropWidth,
-                                              height: cropHeight)
-                        
-                        guard let croppedCGImage = self.model.frame!.cropping(to: cropRect) else {
-                            self.section = "picture_error"
-                            return
-                        }*/
-                        
-                        viewModel.captureImage()
-                        /*self.images_to_upload.images_to_upload.append(
-                            ["\(arc4random()).jpeg": viewModel.capturedImage] //UIImage(cgImage: croppedCGImage)]
-                        )*/
+                        self.images_to_upload.images_to_upload.append(
+                            ["\(arc4random()).jpeg": UIImage(cgImage: self.model.frame!)]
+                        )
                     }) {
                         ZStack {
-                            /*RoundedRectangle(cornerRadius: 15)
-                                .fill(.white)
-                                .frame(maxWidth: 110, maxHeight: 65)
-                                .opacity(0.35)*/
-                            
-                            /*Image("Camera-Icon")
-                                .resizable()
-                                .frame(maxWidth: 135, maxHeight: 135)*/
                             Image(systemName: "circle")
                                 .resizable()
                                 .frame(width: 100, height: 100)
@@ -72,94 +46,13 @@ struct UploadSection: View {
                         }
                     }
                     
-                    Text("\(String(round(self.model.frameScale * 10.00) / 10.00))x")
+                    Text("\(String(round(self.currentZoomFactor * 10.00) / 10.00))x")
                         .foregroundStyle(.white)
                         .padding([.bottom], prop.size.height / 2.5 > 300 ? -10 : -40)
                 }
                 .padding([.bottom], 40)
             }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             
-            /*VStack {
-                HStack(spacing: 5) {
-                    Spacer()
-                    
-                    VStack {
-                        Button(action: { self.section = "home" }) {
-                            Image(systemName: "house")
-                                .resizable()
-                                .frame(width: 30, height: 25)
-                                .padding([.top], prop.size.height / 2.5 > 300 ? 20 : 5)
-                                .foregroundStyle(self.section != "home" ? Color.EZNotesBlue : Color.white)
-                        }
-                        .buttonStyle(.borderless)
-                        Text("Categories")
-                            .foregroundStyle(.white)
-                            .font(.system(size: 12))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding([.leading], 15)
-                    
-                    Spacer()
-                    //Spacer()
-                    
-                    VStack {
-                        Button(action: { self.section = "upload" }) {
-                            if self.section != "upload" {
-                                Image(systemName: "plus")
-                                    .resizable()
-                                    .frame(width: 25, height: 25)
-                                    .padding([.top], prop.size.height / 2.5 > 300 ? 20 : 5)
-                                    .foregroundStyle(Color.EZNotesBlue)
-                            } else {
-                                Image("History-Icon")
-                                    .resizable()
-                                    .frame(width: 30, height: 30)
-                                    .padding([.top], prop.size.height / 2.5 > 300 ? 15 : 5)
-                            }
-                        }
-                        .buttonStyle(.borderless)
-                        
-                        Text(self.section != "upload" ? "Upload" : "History")
-                            .foregroundStyle(.white)
-                            .font(.system(size: 12))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    
-                    Spacer()
-                    //Spacer()
-                    
-                    VStack {
-                        Button(action: { self.section = "chat" }) {
-                            Image(systemName: "message")//self.section != "chat" ? "Chat" : "Chat-Active")
-                                .resizable()
-                                .frame(width: 25, height: 25)
-                                .padding([.top], prop.size.height / 2.5 > 300 ? 20 : 5)
-                                .foregroundStyle(self.section != "chat" ? Color.EZNotesBlue : Color.white)
-                        }
-                        .buttonStyle(.borderless)
-                        Text("Chat")
-                            .foregroundStyle(.white)
-                            .font(.system(size: 12))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding([.trailing], 20)
-                    
-                    Spacer()
-                }
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: prop.size.height / 2.5 > 300 ? 40 : 45
-                )
-                .background(
-                    Rectangle()
-                        .fill(Color.EZNotesLightBlack.opacity(self.section == "upload" ? 0.85 : 1))
-                        .edgesIgnoringSafeArea(.bottom)
-                        .frame(maxWidth: .infinity, maxHeight: 40)
-                        .border(width: 0.2, edges: [.top], color: .white)
-                )
-            }
-            .frame(maxWidth: .infinity, maxHeight: 40)
-            .background(Color.EZNotesLightBlack.opacity(0.85))*/
             ButtomNavbar(
                 section: $section,
                 backgroundColor: Color.EZNotesLightBlack.opacity(0.85),
@@ -168,60 +61,15 @@ struct UploadSection: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .background(
-            CameraPreview(session: viewModel.session) { tapPoint in
-                isFocused = true
-                focusLocation = tapPoint
-                viewModel.setFocus(point: tapPoint)
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .ignoresSafeArea()
-            .gesture(MagnificationGesture()
-                .onChanged { value in
-                    self.currentZoomFactor += value - 1.0 // Calculate the zoom factor change
-                    self.currentZoomFactor = min(max(self.currentZoomFactor, 0.5), 20)
-                    self.viewModel.zoom(with: currentZoomFactor)
-                }
-            )
-            /*FrameView(handler: model, image: model.frame, prop: prop)
-                //.frame(maxWidth: .infinity, maxHeight: .infinity)
+            FrameView(handler: model, image: model.frame, prop: prop)
                 .ignoresSafeArea()
-                .gesture(MagnifyGesture()
+                .gesture(MagnificationGesture()
                     .onChanged { value in
-                        if !(self.model.frameScale + self.model.currentZoom <= 1) && !(self.model.frameScale + self.model.currentZoom >= 7)
-                        {
-                            /*if self.model.frameScale + self.model.currentZoom >= 4.0 {
-                                self.model.changeCaptureSession(deviceType: 1)
-                            } else {
-                                /* MARK: Change the input device back to `.builtInDualCamera` if it is not already that. */
-                                if self.model.currentSession != .builtInDualCamera {
-                                    self.model.changeCaptureSession(deviceType: 0)
-                                }
-                            }*/
-                            
-                            self.model.currentZoom = value.magnification - 1
-                        }
-                    }
-                    .onEnded { value in
-                        if !(self.model.frameScale + self.model.currentZoom < 1) && !(self.model.frameScale + self.model.currentZoom > 7) {
-                            self.model.frameScale += self.model.currentZoom
-                        } else {
-                            if self.model.frameScale + self.model.currentZoom < 1
-                            { self.model.frameScale = 1.01 }
-                            else { self.model.frameScale = 6.9 }
-                        }
-                        self.model.currentZoom = 0
+                        self.currentZoomFactor += value - 1.0 // Calculate the zoom factor change
+                        self.currentZoomFactor = min(max(self.currentZoomFactor, 0.5), 20)
+                        self.model.setScale(scale: currentZoomFactor)
                     }
                 )
-                .accessibilityZoomAction { action in
-                    if action.direction == .zoomIn {
-                        print(self.model.frameScale)
-                        self.model.frameScale += 1
-                    } else {
-                        print(self.model.frameScale)
-                        self.model.frameScale -= 1
-                    }
-                }
                 .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
                     .onEnded({ value in
                         if value.translation.width < 0 {
@@ -234,11 +82,7 @@ struct UploadSection: View {
                             return
                         }
                     })
-                )*/
+                )
         )
-        .onAppear {
-            viewModel.setupBindings()
-            viewModel.requestCameraPermission()
-        }
     }
 }

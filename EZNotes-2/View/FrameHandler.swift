@@ -10,10 +10,7 @@ import CoreImage
 
 class FrameHandler: NSObject, ObservableObject {
     @Published var frame: CGImage?
-    @Published var frameScale: Double = 1.01
-    @Published var currentZoom: Double = 0.0
     @Published var permissionGranted = true
-    @Published var currentSession: AVCaptureDevice.DeviceType = .builtInDualCamera
     
     public let captureSession = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "sessionQueue")
@@ -63,18 +60,9 @@ class FrameHandler: NSObject, ObservableObject {
         guard captureSession.canAddInput(self.videoDeviceInput!) else { return }
         
         /* TODO: What preset is going to work best? We want the app to be as light-weight as possible (preferrably). */
-        captureSession.sessionPreset = .high//.hd4K3840x2160//.sessionPreset = .photo
+        captureSession.sessionPreset = .inputPriority//.hd4K3840x2160//.sessionPreset = .photo
         
         captureSession.addInput(self.videoDeviceInput!)
-        
-        do {
-            try self.videoDeviceInput?.device.lockForConfiguration()
-            self.videoDeviceInput?.device.videoZoomFactor = 123
-            self.videoDeviceInput?.device.unlockForConfiguration()
-        } catch let error {
-            print(error)
-            return
-        }
         
         self.videoOutput!.setSampleBufferDelegate(self, queue: DispatchQueue(label: "sampleBufferQueue"))
         captureSession.addOutput(self.videoOutput!)
@@ -84,24 +72,26 @@ class FrameHandler: NSObject, ObservableObject {
         captureSession.layer.addSublayer(previewLayer)*/
         
         self.videoOutput!.connection(with: .video)?.videoRotationAngle = 90
+        
+        guard let device = self.videoDeviceInput?.device else { return }
+        do {
+            try device.lockForConfiguration()
+            device.videoZoomFactor = device.minAvailableVideoZoomFactor//max(device.minAvailableVideoZoomFactor, max(factor, device.minAvailableVideoZoomFactor))
+            device.unlockForConfiguration()
+        } catch {
+            print(error.localizedDescription)
+        }
     }
     
-    /* MARK: `deviceType` - 0 for `.builtInDualCamera`, 1 for `.builtInTelephotoCamera`. */
-    func changeCaptureSession(deviceType: Int) -> Void {
-        var device: AVCaptureDevice.DeviceType = .builtInDualCamera
-        
-        if deviceType == 1 { device = .builtInTelephotoCamera }
-        
-        captureSession.removeInput(self.videoDeviceInput!)
-        
-        guard let videoDevice = AVCaptureDevice.default(device, for: .video, position: .back) else { return }
-        guard let deviceInput = try? AVCaptureDeviceInput(device: videoDevice) else { return }
-        self.videoDeviceInput = deviceInput
-        
-        self.videoOutput!.setSampleBufferDelegate(self, queue: DispatchQueue(label: "sampleBufferQueue"))
-        captureSession.addInput(self.videoDeviceInput!)
-        
-        self.videoOutput!.connection(with: .video)?.videoRotationAngle = 90
+    func setScale(scale: CGFloat) -> Void {
+        guard let device = self.videoDeviceInput?.device else { return }
+        do {
+            try device.lockForConfiguration()
+            device.videoZoomFactor = max(device.minAvailableVideoZoomFactor, max(scale, device.minAvailableVideoZoomFactor))
+            device.unlockForConfiguration()
+        } catch {
+            print(error.localizedDescription)
+        }
     }
 }
 

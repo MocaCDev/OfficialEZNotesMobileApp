@@ -44,29 +44,23 @@ struct HomeView: View {
                     TopNavHome(
                         prop: prop,
                         backgroundColor: Color.EZNotesLightBlack,
-                        categoriesAndSets: categoriesAndSets
+                        categoriesAndSets: categoriesAndSets,
+                        changeNavbarColor: $show_categories_title
                     )
                     
                     if self.categoriesAndSets.count > 0 {
                         VStack {
                             GeometryReader { geometry in
                                 ScrollView(showsIndicators: false) {
-                                    /*VStack {
-                                     GeometryReader { innerGeometry in
-                                     Text("Categories:")
-                                     .foregroundStyle(.white)
-                                     .font(.system(size: 30, design: .monospaced))
-                                     .fontWeight(.bold)
-                                     .padding([.leading], 20)
-                                     .padding([.top], prop.size.height / 2.5 > 300 ? -5 : 0)
-                                     //.frame(maxWidth: .infinity, alignment: .leading)
-                                     .onChange(of: innerGeometry.frame(in: .global)) {
-                                     checkIfOutOfFrame(innerGeometry: innerGeometry, outerGeometry: geometry)
-                                     }
-                                     }
-                                     }
-                                     .padding([.bottom], 40)
-                                     .opacity(self.show_categories_title ? 0 : 1)*/
+                                    VStack {
+                                         GeometryReader { innerGeometry in
+                                             VStack {}
+                                                 .onChange(of: innerGeometry.frame(in: .global)) {
+                                                     checkIfOutOfFrame(innerGeometry: innerGeometry, outerGeometry: geometry)
+                                                 }
+                                         }
+                                    }
+                                    .background(Color.clear)
                                     
                                     LazyVGrid(columns: columns, spacing: 10) {
                                         ForEach(Array(self.categoriesAndSets.keys), id: \.self) { key in
