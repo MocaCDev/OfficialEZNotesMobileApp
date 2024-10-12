@@ -29,7 +29,21 @@ struct ChatView: View {
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.EZNotesBlack)
+        .background(
+            LinearGradient(
+                gradient: Gradient(
+                    colors: [
+                        Color.EZNotesBlack,
+                        Color.EZNotesBlack,
+                        Color.EZNotesBlack,
+                        Color.EZNotesLightBlack,
+                        //Color.EZNotesOrange,
+                        //Color.EZNotesOrange
+                    ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+            )
+        )
         .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
             .onEnded({ value in
                 if value.translation.width > 0 {

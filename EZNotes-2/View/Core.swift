@@ -73,8 +73,11 @@ struct CoreApp: View {
      * will be the array of sets pertaining to that category.
      * */
     @State private var newCategoriesAndSets: [String: Array<String>] = [:]
-    @State private var categoriesAndSets: [String: Array<String>] = getCategoryData()
-    @State private var categoryImages: [String: UIImage] = getCategoriesImageData() /* Key will be the category name, value will be the image data*/
+    
+    /* MARK: See `ContentView.swift` lines 41 & 42. */
+    @Binding public var categoriesAndSets: [String: Array<String>]
+    @Binding public var categoryImages: [String: UIImage]
+    
     @State private var categories: Array<String> = []
     @State private var sets: Array<String> = []
     @State private var photos: Array<String> = []
@@ -106,6 +109,8 @@ struct CoreApp: View {
     @State private var section: String = "upload"
     @State private var lastSection: String = "upload"
     
+    @State private var errorType: String = ""
+    
     var body: some View {
         VStack {
             if self.section == "upload" {
@@ -122,6 +127,7 @@ struct CoreApp: View {
                     localUpload: $localUpload,
                     section: $section,
                     lastSection: $lastSection,
+                    errorType: $errorType,
                     newCategoriesAndSets: $newCategoriesAndSets,
                     categoryImages: $categoryImages,
                     categories: $categories,
@@ -155,17 +161,29 @@ struct CoreApp: View {
                     section: $section,
                     prop: prop
                 )
-            } else if self.section == "upload_error" || self.section == "confidential_upload_error" {
+            } else if self.section == "upload_error" {
                 VStack {
-                    Text(self.section == "upload_error" ? "Internal Server Error" : "Confidential Upload Error")
+                    Text(self.errorType == "blank_image"
+                         ? "No Content Found"
+                         : self.errorType == "no_content"
+                            ? "Internal Server Error"
+                            : self.errorType == "confidential_upload"
+                                ? "Confidential Upload Error"
+                                : "Internal Server Error")
                         .font(
                             .system(size: 35, design: .monospaced)
                         )
                         .fontWeight(.bold)
-                        .foregroundStyle(Color.EZNotesRed)
+                        .foregroundStyle(self.errorType == "blank_image" ? Color.yellow : Color.EZNotesRed)
                         .multilineTextAlignment(.center)
                     
-                    Text(self.section == "upload_error" ? "This can be due to the server being down, the server having a fualty bug or a faulty Wi-Fi connection." : "Try uploading images that do not contain any sort of confidential information")
+                    Text(self.errorType == "blank_image"
+                         ? "This error is due to your uploads having no visible content in them"
+                         : self.errorType == "no_content"
+                            ? "There was an error obtaining content from your uploads. This can be due to the server being down, the server having a fualty bug or a faulty Wi-Fi connection."
+                            : self.errorType == "confidential_upload"
+                                ? "confidential_upload"
+                                : "There was an error obtaining content from your uploads. This can be due to the server being down, the server having a fualty bug or a faulty Wi-Fi connection.")//(self.section == "upload_error" ? "This can be due to the server being down, the server having a fualty bug or a faulty Wi-Fi connection." : "Try uploading images that do not contain any sort of confidential information")
                         .fontWeight(.bold)
                         .font(
                             .system(
@@ -214,10 +232,11 @@ struct CoreApp: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear(perform: {
+        .ignoresSafeArea(.keyboard)
+        /*.onAppear(perform: {
                 print(prop.size.height / 2.5)
             }
-        )
+        )*/
     }
 }
 

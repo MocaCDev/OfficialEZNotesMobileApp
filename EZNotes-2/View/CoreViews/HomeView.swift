@@ -18,6 +18,8 @@ struct HomeView: View {
     @State private var categoryLaunched: String = ""
     @State private var categoryBackground: UIImage = UIImage(systemName: "arrow.left")! /* TODO: Figure out how to initialize a UIImage variable. */
     
+    @State private var categorySearch: String = ""
+    
     var prop: Properties
     
     let columns = [
@@ -30,7 +32,7 @@ struct HomeView: View {
         let scrollViewFrame = outerGeometry.frame(in: .global)
         
         // Check if the text frame is out of the bounds of the ScrollView
-        if textFrame.maxY < scrollViewFrame.minY - 30 || textFrame.minY > scrollViewFrame.maxY {
+        if textFrame.maxY < scrollViewFrame.minY + 15 || textFrame.minY > scrollViewFrame.maxY {
             self.show_categories_title = true
         } else {
             self.show_categories_title = false
@@ -45,7 +47,8 @@ struct HomeView: View {
                         prop: prop,
                         backgroundColor: Color.EZNotesLightBlack,
                         categoriesAndSets: categoriesAndSets,
-                        changeNavbarColor: $show_categories_title
+                        changeNavbarColor: $show_categories_title,
+                        categorySearch: $categorySearch
                     )
                     
                     if self.categoriesAndSets.count > 0 {
@@ -54,118 +57,121 @@ struct HomeView: View {
                                 ScrollView(showsIndicators: false) {
                                     VStack {
                                          GeometryReader { innerGeometry in
-                                             VStack {}
-                                                 .onChange(of: innerGeometry.frame(in: .global)) {
-                                                     checkIfOutOfFrame(innerGeometry: innerGeometry, outerGeometry: geometry)
-                                                 }
+                                             HStack {
+                                                 Text("Categories(\(self.categoriesAndSets.count))")
+                                                     .foregroundStyle(.white)
+                                                     .font(.system(size: 30))
+                                                     .fontWeight(.semibold)
+                                                     .padding([.leading], 15)
+                                                     .onChange(of: innerGeometry.frame(in: .global)) {
+                                                         checkIfOutOfFrame(innerGeometry: innerGeometry, outerGeometry: geometry)
+                                                     }
+                                             }
                                          }
+                                         .frame(maxWidth: .infinity, maxHeight: 50)
                                     }
+                                    .frame(maxWidth: .infinity, maxHeight: 50)
+                                    .padding([.top], 25)
+                                    .padding([.bottom], 10)
                                     .background(Color.clear)
+                                    .opacity(self.show_categories_title ? 0 : 1)
                                     
-                                    LazyVGrid(columns: columns, spacing: 10) {
+                                    //LazyVGrid(columns: columns, spacing: 10) {
+                                    VStack {
                                         ForEach(Array(self.categoriesAndSets.keys), id: \.self) { key in
-                                            Button(action: {
-                                                self.launchCategory = true
-                                                self.categoryLaunched = key
-                                                self.categoryBackground = self.categoryImages[key]!
-                                            }) {
-                                                ZStack {
-                                                    Image(uiImage: self.categoryImages[key]!)
-                                                        .resizable()
-                                                        .frame(width: 200, height: 200)
-                                                        .scaledToFill()//.scaledToFit()
-                                                        .clipShape(.rect(cornerRadius: 25))
-                                                        .overlay(RoundedRectangle(cornerRadius: 25)
-                                                            .fill(Color.clear))
-                                                        .shadow(color: .white, radius: 3.5)
-                                                    
-                                                    VStack {
-                                                        /*VStack {
-                                                         Button(action: { print("Open Menu") }) {
-                                                         Image(systemName: "ellipsis")
-                                                         .resizable()
-                                                         .frame(maxWidth: 25, maxHeight: 5)
-                                                         .foregroundStyle(.white)
-                                                         .rotationEffect(.degrees(90))
-                                                         }
-                                                         .buttonStyle(.borderless)
-                                                         .tint(Color.clear)
-                                                         }
-                                                         .frame(maxWidth: .infinity, maxHeight: 40, alignment: .topLeading)
-                                                         .padding([.top], 25)
-                                                         .padding([.leading], 5)*/
+                                            HStack {
+                                                Button(action: {
+                                                    self.launchCategory = true
+                                                    self.categoryLaunched = key
+                                                    self.categoryBackground = self.categoryImages[key]!
+                                                }) {
+                                                    HStack {
+                                                        VStack {
+                                                            HStack {
+                                                                Image(uiImage: self.categoryImages[key]!)
+                                                                    .resizable()
+                                                                    .frame(width: 70, height: 100)
+                                                                    .scaledToFit()
+                                                                    .padding([.leading], 15)
+                                                                
+                                                                VStack {
+                                                                    Text(key)
+                                                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                                        .padding([.leading], 12)
+                                                                        .foregroundStyle(.white)
+                                                                        .font(.system(size: 20, design: .monospaced))
+                                                                        .fontWeight(.medium)
+                                                                        .multilineTextAlignment(.center)
+                                                                    
+                                                                    Text("Created 04/20/24")
+                                                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                                        .padding([.leading], 12)
+                                                                        .foregroundStyle(.white)
+                                                                        .font(.system(size: 13, design: .rounded))
+                                                                        .fontWeight(.thin)
+                                                                        .multilineTextAlignment(.center)
+                                                                }
+                                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                            }
+                                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                        }
+                                                        .frame(maxWidth: .infinity, maxHeight: 100, alignment: .leading)
+                                                        .padding([.top, .bottom], 10)
+                                                        
+                                                        Spacer()
                                                         
                                                         VStack {
-                                                            Text(key)
-                                                                .foregroundStyle(.white)
-                                                                .font(.system(size: 20, design: .rounded))
-                                                            //.minimumScaleFactor(0.4)
-                                                                .fontWeight(.bold)
-                                                            //.padding([.leading], 15)
-                                                                .multilineTextAlignment(.center)
-                                                                .frame(maxWidth: .infinity, maxHeight: 35, alignment: .center)
-                                                                .padding([.top], -15)
-                                                            
                                                             Text("Sets: \(self.categoriesAndSets[key]!.count)")
                                                                 .foregroundStyle(.white)
-                                                                .font(.system(size: 16, design: .rounded))
-                                                            //.minimumScaleFactor(0.01)
+                                                                .font(.system(size: 18, design: .rounded))
                                                                 .fontWeight(.medium)
-                                                            //.padding([.leading], 15)
                                                                 .multilineTextAlignment(.center)
-                                                                .frame(maxWidth: .infinity, maxHeight: 35)
-                                                            
-                                                            Text("Created 04/20/2024")
-                                                                .foregroundStyle(.white)
-                                                                .font(.system(size: 13, design: .rounded))
-                                                                .fontWeight(.light)
-                                                            //.padding([.leading], 15)
-                                                                .multilineTextAlignment(.center)
-                                                                .frame(maxWidth: .infinity, maxHeight: 35)
+                                                                .frame(maxWidth: .infinity, maxHeight: 20)
                                                         }
-                                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                        .frame(maxWidth: 80, alignment: .center)
                                                         
-                                                        /*VStack {
-                                                         HStack {
-                                                         Button(action: { print("Launch Category!") }) {
-                                                         Text("Launch")
-                                                         .foregroundStyle(.white)
-                                                         .font(.system(size: 18, design: .monospaced))
-                                                         .fontWeight(.bold)
-                                                         .frame(maxWidth: prop.size.width - 60)
-                                                         //.padding([.top, .bottom], 5)
-                                                         }
-                                                         .buttonStyle(.borderedProminent)
-                                                         .tint(Color.gray.opacity(0.4))
-                                                         .overlay(
-                                                         RoundedRectangle(cornerRadius: 15)
-                                                         .stroke(.white, lineWidth: 3)
-                                                         )
-                                                         }
-                                                         .frame(maxWidth: 150, maxHeight: 20)
-                                                         }
-                                                         .frame(maxWidth: .infinity, maxHeight: 20, alignment: .bottom)
-                                                         .background(Color.clear)
-                                                         .padding([.bottom], 20)*/
+                                                        //Spacer()
                                                     }
-                                                    .frame(width: 200, height: 200)//(width: prop.size.width - 20, height: prop.size.height - 170)//(maxWidth: prop.size.width - 50, maxHeight: 480)
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 25)
-                                                            .fill(Color.EZNotesBlack.opacity(0.45))
-                                                    )
+                                                    .frame(maxWidth: prop.size.width - 20, maxHeight: 110)
+                                                    .background(Color.clear)
                                                 }
-                                                .frame(width: 220, height: 200)//(width: prop.size.width - 20, height: prop.size.height - 170)
+                                                .buttonStyle(.borderless)
+                                                //.padding([.bottom], 5)
+                                                
+                                                VStack {
+                                                    Image(systemName: "pencil")
+                                                        .resizable()
+                                                        .frame(width: 18, height: 18)
+                                                        .foregroundStyle(Color.EZNotesBlue)
+                                                        .padding([.trailing], 10)
+                                                    
+                                                    Image(systemName: "ellipsis")
+                                                        .resizable()
+                                                        .frame(width: 20, height: 5)
+                                                        .foregroundStyle(Color.EZNotesBlue)
+                                                        .padding([.trailing, .top, .bottom], 10)
+                                                    
+                                                    Image(systemName: "trash")
+                                                        .resizable()
+                                                        .frame(width: 15, height: 15)
+                                                        .foregroundStyle(Color.EZNotesRed)
+                                                        .padding([.trailing], 10)
+                                                }
+                                                .frame(maxWidth: 80, maxHeight: 120, alignment: .trailing)
+                                                .padding([.trailing], 15)
                                             }
-                                            .buttonStyle(.borderless)
-                                            //(maxWidth: prop.size.width - 50, maxHeight: 480)
+                                            .frame(maxWidth: prop.size.width - 20, maxHeight: 110)
+                                            .background(Rectangle().fill(Color.EZNotesBlack).shadow(color: .black, radius: 8))
+                                            .padding([.bottom], 5)
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .padding([.top], 65)
+                                    .padding([.top], 35)
                                     .padding([.bottom], 10)
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .padding([.top], 20)
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
@@ -231,9 +237,21 @@ struct HomeView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .background(
-                Image("Background12")
+                /*Image("Background12")
                     .overlay(Color.EZNotesBlack.opacity(0.4))
-                    .blur(radius: 6.5)
+                    .blur(radius: 6.5)*/
+                //Color.EZNotesBlack
+                LinearGradient(
+                    gradient: Gradient(
+                        colors: [
+                            Color.EZNotesBlack,
+                            Color.EZNotesBlack,
+                            Color.EZNotesBlack,
+                            Color.EZNotesLightBlack
+                        ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
             )
             .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
                 .onEnded({ value in

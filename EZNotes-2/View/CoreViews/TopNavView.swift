@@ -37,6 +37,10 @@ struct TopNavHome: View {
     var categoriesAndSets: [String: Array<String>]
     
     @Binding public var changeNavbarColor: Bool
+    @Binding public var categorySearch: String
+    
+    @State private var showSearchBar: Bool = false
+    @FocusState private var categorySearchFocus: Bool
     
     var body: some View {
         VStack {
@@ -45,51 +49,139 @@ struct TopNavHome: View {
                     ProfileIconView(prop: prop)
                 }
                 .frame(maxWidth: 50, alignment: .leading)
-                .padding([.top], 45)
+                .padding([.top], 50)
                 
                 Spacer()
                 
                 /* TODO: Change the below `Text` to a search bar (`TextField`) where user can search for specific categories.
                  * */
-                VStack {
-                    Text("View Categories")
-                        .foregroundStyle(.primary)
-                        .font(.system(size: 18, design: .rounded))
-                        .fontWeight(.thin)
-                    
-                    Text("Total: \(self.categoriesAndSets.count)")
-                        .foregroundStyle(.white)
-                        .font(.system(size: 14, design: .rounded))
-                        .fontWeight(.thin)
+                if self.changeNavbarColor {
+                    VStack {
+                        if !self.showSearchBar {
+                            Text("View Categories")
+                                .foregroundStyle(.primary)
+                                .font(.system(size: 18, design: .rounded))
+                                .fontWeight(.semibold)
+                            
+                            Text("Total: \(self.categoriesAndSets.count)")
+                                .foregroundStyle(.white)
+                                .font(.system(size: 14, design: .rounded))
+                                .fontWeight(.thin)
+                        } else {
+                            TextField(
+                                "Search Categories...",
+                                text: $categorySearch,
+                                onEditingChanged: { isEditing in
+                                    if !isEditing {
+                                        self.showSearchBar = false
+                                        self.categorySearchFocus = false
+                                        return
+                                    }
+                                }
+                            )
+                            .frame(
+                                maxWidth: prop.isIpad
+                                    ? UIDevice.current.orientation.isLandscape
+                                        ? prop.size.width - 800
+                                        : prop.size.width - 450
+                                    : 200,
+                                maxHeight: prop.size.height / 2.5 > 300 ? 30 : 20
+                            )
+                            .padding([.leading], 15)
+                            .padding(5)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.gray)
+                                    .opacity(0.6)
+                            )
+                            .foregroundStyle(Color.EZNotesBlue)
+                            .cornerRadius(15)
+                            .tint(Color.EZNotesBlue)
+                            .font(.system(size: 18))
+                            .fontWeight(.medium)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .focused($categorySearchFocus)
+                            .onAppear { self.categorySearchFocus = true }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding([.top], prop.size.height > 340 ? 55 : 50)
+                } else {
+                    VStack {
+                        TextField(
+                            "Search Categories...",
+                            text: $categorySearch
+                        )
+                        .frame(
+                            maxWidth: prop.isIpad
+                                ? UIDevice.current.orientation.isLandscape
+                                    ? prop.size.width - 800
+                                    : prop.size.width - 450
+                                : 200,
+                            maxHeight: prop.size.height / 2.5 > 300 ? 30 : 20
+                        )
+                        .padding([.leading], 15)
+                        .padding(5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(Color.gray)
+                                .opacity(0.6)
+                        )
+                        .foregroundStyle(Color.EZNotesBlue)
+                        .cornerRadius(15)
+                        .tint(Color.EZNotesBlue)
+                        .font(.system(size: 18))
+                        .fontWeight(.medium)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                        .focused($categorySearchFocus)
+                        .onTapGesture {
+                            categorySearchFocus = true
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: 25, alignment: .center)
+                    .padding([.top], 60)//prop.size.height > 340 ? 55 : 50)
                 }
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding([.top], prop.size.height > 340 ? 55 : 50)
                 
                 Spacer()
                 
                 VStack {
-                    Button(action: { print("POPUP!") }) {
-                        Image("AI-Chat-Icon")
-                            .resizable()
-                            .frame(
-                                width: prop.size.height / 2.5 > 300 ? 45 : 40,
-                                height: prop.size.height / 2.5 > 300 ? 45 : 40
-                            )
-                            .padding([.trailing], 20)
+                    HStack {
+                        if self.changeNavbarColor && !self.showSearchBar {
+                            Button(action: { self.showSearchBar = true }) {
+                                Image(systemName: "magnifyingglass")
+                                    .resizable()
+                                    .frame(width: 25, height: 25)
+                                    .tint(Color.EZNotesOrange)
+                            }
+                            .buttonStyle(.borderless)
+                            .padding([.top], 5)
+                        }
+                        Button(action: { print("POPUP!") }) {
+                            Image("AI-Chat-Icon")
+                                .resizable()
+                                .frame(
+                                    width: prop.size.height / 2.5 > 300 ? 45 : 40,
+                                    height: prop.size.height / 2.5 > 300 ? 45 : 40
+                                )
+                                .padding([.trailing], 20)
+                        }
+                        .buttonStyle(.borderless)
                     }
-                    .buttonStyle(.borderless)
                 }
                 .frame(maxWidth: 50, alignment: .trailing)
-                .padding([.top], 45)
+                .padding([.top], 50)
             }
             .frame(maxWidth: .infinity, maxHeight: 100, alignment: .top)
             .background(!self.changeNavbarColor
-                ? AnyView(Color.clear)
+                        ? AnyView(Color.EZNotesBlack)
                 : AnyView(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .edgesIgnoringSafeArea(.top)
+        .ignoresSafeArea(.keyboard)
         .zIndex(1)
     }
 }

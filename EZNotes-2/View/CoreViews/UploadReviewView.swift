@@ -12,6 +12,7 @@ struct UploadReview: View {
     @Binding public var localUpload: Bool
     @Binding public var section: String
     @Binding public var lastSection: String
+    @Binding public var errorType: String
     
     @Binding public var newCategoriesAndSets: [String: Array<String>]
     @Binding public var categoryImages: [String: UIImage]
@@ -188,21 +189,27 @@ struct UploadReview: View {
                 
                 Button(action: {
                     self.uploadState = "uploading" /* MARK: Show the loading screen. */
+                    
+                    var errors: Int = 0
+                    
                     if self.images_to_upload.images_to_upload.count < 10 {
                         UploadImages(imageUpload: self.images_to_upload.images_to_upload)
                             .requestNativeImageUpload() { resp in
                                 if resp.Bad != nil {
                                     print(resp.Bad!)
                                     
-                                    if resp.Bad?.ErrorCode == 0x422 {
+                                    /* MARK: If `errors` accumulates to the # of values in the array `images_to_upload`, that means none of the images uploaded had anything valuable in them. Prompt an error.
+                                     * */
+                                    if errors == self.images_to_upload.images_to_upload.count - 1 {
                                         self.images_to_upload.images_to_upload.removeAll()
+                                        
                                         self.lastSection = self.section
-                                        self.section = "confidential_upload_error"
-                                        return
+                                        self.section = "upload_error"
+                                        self.errorType = resp.Bad!.Message
                                     }
                                     
-                                    self.lastSection = self.section
-                                    self.section = "upload_error"
+                                    errors += 1
+                                    
                                     return
                                 } else {
                                     self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
@@ -231,10 +238,140 @@ struct UploadReview: View {
                                     
                                     self.lastSection = self.section
                                     self.section = "review_new_categories"
+                                    return
                                 }
                             }
                     } else {
-                        UploadImages(imageUpload: self.images_to_upload.images_to_upload)
+                        var uploads: Array<[String: UIImage]> = []
+                        let requestsBeingSent: Float = Float(self.images_to_upload.images_to_upload.count) / 5
+                        let totalResponsesExpected = Int(requestsBeingSent.rounded(.up))
+                        var totalResponses = 0
+                        var i: Int = 0
+                        var errors: Int = 0
+                        
+                        for (index, value) in self.images_to_upload.images_to_upload.enumerated() {
+                            uploads.append(value)
+                            i += 1
+                            
+                            if i == 5  || index == self.images_to_upload.images_to_upload.count - 1 {
+                                UploadImages(imageUpload: uploads)
+                                    .requestNativeImageUpload() { resp in
+                                        if resp.Bad != nil || (resp.Bad == nil && resp.Good!.Status != "200") {
+                                            print(resp.Bad!)
+                                            
+                                            if errors == self.images_to_upload.images_to_upload.count - 1 {
+                                                self.images_to_upload.images_to_upload.removeAll()
+                                                
+                                                self.lastSection = self.section
+                                                self.section = "upload_error"
+                                                self.errorType = resp.Bad!.Message
+                                            }
+                                            
+                                            errors += 1
+                                            
+                                            return
+                                        } else {
+                                            totalResponses += 1
+                                            print(totalResponses, totalResponsesExpected)
+                                            //self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
+                                            
+                                            for r in resp.Good!.Data {
+                                                self.categories.append(r.category)
+                                                self.sets.append(r.set_name)
+                                                self.briefDescriptions.append(r.brief_description)
+                                                self.photos.append(r.image_name)
+                                                
+                                                if !self.categoryImages.keys.contains(r.category) {
+                                                    self.categoryImages[r.category] = findImage(for: r.image_name)!
+                                                }
+                                                
+                                                /* Append the category/set_name to the `categoriesAndSets` variable
+                                                 * so the `Home` view gets updated.
+                                                 * */
+                                                if self.newCategoriesAndSets.keys.contains(r.category) {
+                                                    if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
+                                                        self.newCategoriesAndSets[r.category]!.append(r.set_name)
+                                                    }
+                                                } else {
+                                                    self.newCategoriesAndSets[r.category] = [r.set_name]
+                                                }
+                                            }
+                                            
+                                            if totalResponses == totalResponsesExpected {
+                                                self.uploadState = "review"
+                                                self.lastSection = self.section
+                                                self.section = "review_new_categories"
+                                            }
+                                        }
+                                    }
+                                
+                                i = 0
+                                uploads.removeAll()
+                            }
+                            /*if i >= 5 || index == self.images_to_upload.images_to_upload.count - 1 {
+                                print("OKAY")
+                                
+                                UploadImages(imageUpload: uploads)
+                                    .requestNativeImageUpload() { resp in
+                                        if resp.Bad != nil {
+                                            print(resp.Bad!)
+                                            
+                                            if resp.Bad?.ErrorCode == 0x422 {
+                                                self.images_to_upload.images_to_upload.removeAll()
+                                                self.lastSection = self.section
+                                                self.section = "confidential_upload_error"
+                                                return
+                                            }
+                                            
+                                            self.lastSection = self.section
+                                            self.section = "upload_error"
+                                            return
+                                        } else {
+                                            totalResponses += 1
+                                            print(totalResponses, totalResponsesExpected)
+                                            //self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
+                                            
+                                            if totalResponses == totalResponsesExpected {
+                                                for r in resp.Good!.Data {
+                                                    self.categories.append(r.category)
+                                                    self.sets.append(r.set_name)
+                                                    self.briefDescriptions.append(r.brief_description)
+                                                    self.photos.append(r.image_name)
+                                                    
+                                                    if !self.categoryImages.keys.contains(r.category) {
+                                                        self.categoryImages[r.category] = findImage(for: r.image_name)!
+                                                    }
+                                                    
+                                                    /* Append the category/set_name to the `categoriesAndSets` variable
+                                                     * so the `Home` view gets updated.
+                                                     * */
+                                                    if self.newCategoriesAndSets.keys.contains(r.category) {
+                                                        if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
+                                                            self.newCategoriesAndSets[r.category]!.append(r.set_name)
+                                                        }
+                                                    } else {
+                                                        self.newCategoriesAndSets[r.category] = [r.set_name]
+                                                    }
+                                                }
+                                                
+                                                if totalResponses == totalResponsesExpected {
+                                                    self.uploadState = "review"
+                                                    self.lastSection = self.section
+                                                    self.section = "review_new_categories"
+                                                }
+                                            }
+                                        }
+                                    }
+                                
+                                uploads.removeAll()
+                                i = 0
+                            }
+                            
+                            uploads.append(value)
+                            i += 1*/
+                        }
+                        
+                        /*UploadImages(imageUpload: self.images_to_upload.images_to_upload)
                             .multiImageUpload() { resp in
                                 self.uploadState = "review"
                                 
@@ -253,6 +390,12 @@ struct UploadReview: View {
                                         return
                                     }
                                 }
+                                
+                                for (index, _) in resp.enumerated() {
+                                    print(resp[index].Good!.Data.count)
+                                }
+                                
+                                print(resp[resp.count - 1].Good!.Data.count)
                                 
                                 for d in resp[resp.count - 1].Good!.Data {
                                     self.categories.append(d.category)
@@ -280,7 +423,7 @@ struct UploadReview: View {
                                 
                                 self.lastSection = self.section
                                 self.section = "review_new_categories"
-                            }
+                            }*/
                     }
                 }) {
                     Text("Upload")
@@ -306,7 +449,9 @@ struct UploadReview: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             Image("Background8")
-                .blur(radius: 3.5)
+                .overlay(
+                    Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark)
+                )//.blur(radius: 3.5)
         )
     }
 }

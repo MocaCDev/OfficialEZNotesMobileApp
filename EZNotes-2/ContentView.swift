@@ -38,6 +38,9 @@ struct ContentView: View {
     @State public var userHasSignedIn: Bool = UserDefaults.standard.bool(forKey: "logged_in")
     @StateObject private var model: FrameHandler = FrameHandler()
     
+    @State private var categoriesAndSets: [String: Array<String>] = getCategoryData() /* MARK: Key will be the category name, value will be the set names */
+    @State private var categoryImages: [String: UIImage] = getCategoriesImageData() /* MARK: Key will be the category name, value will be the categories image (first uploaded image for category). */
+    
     //private let rotationChangePublisher = NotificationCenter.default
         //.publisher(for: UIDevice.orientationDidChangeNotification)
     
@@ -49,7 +52,12 @@ struct ContentView: View {
         } else {
             VStack {
                 ResponsiveView { prop in
-                    CoreApp(model: model, prop: prop)
+                    CoreApp(
+                        model: model,
+                        prop: prop,
+                        categoriesAndSets: $categoriesAndSets,
+                        categoryImages: $categoryImages
+                    )
                 }
                 /* TODO: Add "Core.swift". */
                 //ResponsiveView { prop in

@@ -89,9 +89,9 @@ struct UploadImages {
     
     func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
         //let localServer1 = "http://10.185.51.126:8088"
-        //let localServer1 = "http://192.168.1.114:8088"
+        let localServer1 = "http://192.168.1.114:8088"
         //let localServer1 = "http://192.168.0.8:8088"
-        let localServer1 = "https://www.eznotes.space"
+        //let localServer1 = "https://www.eznotes.space"
         
         let url = URL(string: "\(localServer1)/handle_uploads")
         let boundary = "Boundary-\(NSUUID().uuidString)"
@@ -158,14 +158,16 @@ struct UploadImages {
     }
     
     func multiImageUpload(completion: @escaping (Array<ImageUploadRequestResponse>) -> Void) {
-        let localServer1 = "https://www.eznotes.space"//"http://192.168.0.8:8088"
-        //let localServer1 = "http://192.168.1.114:8088"
+        //let localServer1 = "https://www.eznotes.space"//"http://192.168.0.8:8088"
+        let localServer1 = "http://192.168.1.114:8088"
         
         let url = URL(string: "\(localServer1)/handle_uploads")
         let boundary = "Boundary-\(NSUUID().uuidString)"
         
         var request = URLRequest(url: url!)
         request.httpMethod = "POST"
+        
+        var requests: Array<URLRequest> = []
 
         request.allHTTPHeaderFields = [
                     "X-User-Agent": "ios",
@@ -180,7 +182,7 @@ struct UploadImages {
         var responses: Array<ImageUploadRequestResponse> = []
         
         let session = URLSession.shared
-        session.configuration.timeoutIntervalForRequest = 400
+        session.configuration.timeoutIntervalForRequest = 500
         
         var total = 0
         
@@ -218,7 +220,67 @@ struct UploadImages {
             let dataBody = createDataBody(media: mediaImages, boundary: boundary)
             request.httpBody = dataBody
             
-            session.dataTask(with: request) { (data, response, error) in
+            requests.append(request)
+            
+            /*session.dataTask(with: request) { (data, response, error) in
+                totalResponses += 1
+                
+                if let data = data {
+                    /* Attempt to get a good response. */
+                    let response = try? JSONDecoder().decode(UploadImagesGoodResponse.self, from: data)
+                    
+                    /* Attempt to get a bad response*/
+                    let bresponse = try? JSONDecoder().decode(BadResponse.self, from: data)
+                    
+                    if let response = response {
+                        /*DispatchQueue.main.async {
+                            completion(ImageUploadRequestResponse(Good: response, Bad: nil))
+                        }
+                        return*/
+                        responses.append(ImageUploadRequestResponse(Good: response, Bad: nil))
+                        
+                        if totalResponses == totalResponsesExpected {
+                            //responses.append(ImageUploadRequestResponse(Good: response, Bad: nil))
+                            DispatchQueue.main.async {
+                                completion(responses)
+                            }
+                        }
+                        return
+                    }
+                    
+                    if let bresponse = bresponse {
+                        responses.append(ImageUploadRequestResponse(Good: nil, Bad: bresponse))
+                        
+                        if totalResponses == totalResponsesExpected {
+                            DispatchQueue.main.async {
+                                completion(responses)
+                            }
+                        }
+                        return
+                    }
+                } else {
+                    responses.append(ImageUploadRequestResponse(
+                        Good: nil,
+                        Bad: BadResponse(
+                            Status: "404",
+                            ErrorCode: 0x1,
+                            Message: "(Internal) Request Failed"
+                        )
+                    ))
+                    
+                    if totalResponses == totalResponsesExpected {
+                        DispatchQueue.main.async {
+                            completion(responses)
+                        }
+                    }
+                    
+                    return
+                }
+            }.resume()*/
+        }
+        
+        for req in requests {
+            session.dataTask(with: req) { (data, response, error) in
                 totalResponses += 1
                 
                 if let data = data {
@@ -487,7 +549,7 @@ struct RequestAction<T> {
         components.host = host
         
         var request: URLRequest = URLRequest(url: URL(string: "n")!)
-        let server = "https://www.eznotes.space"//"http://192.168.0.8:8088"
+        let server = "http://192.168.1.114:8088"
         
         switch(action)
         {

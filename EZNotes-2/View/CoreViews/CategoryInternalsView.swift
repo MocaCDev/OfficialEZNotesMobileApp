@@ -30,8 +30,9 @@ struct CategoryInternalsView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             Image(uiImage: categoryBackground)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
+                //.resizable()
+                //.frame(maxWidth: .infinity, maxHeight: .infinity)
+                //.scaledToFill()//.aspectRatio(contentMode: .fill)
                 //.overlay(Color.EZNotesBlack.opacity(0.4))
                 .blur(radius: 2.5)
         )

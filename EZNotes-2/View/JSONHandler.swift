@@ -16,7 +16,7 @@ public func writeCategoryData(categoryData: [String: Array<String>]) -> Void {
             .encode(categoryData)
             .write(to: fileURL)
         
-        print("Finished writing \(categoryData) to \(fileURL)")
+        //print("Finished writing \(categoryData) to \(fileURL)")
     } catch let error {
         print(error)
     }
@@ -31,14 +31,14 @@ public func writeCategoryImages(categoryImages: [String: UIImage]) -> Void {
         var imageData: [String: Data] = [:]
         
         for (_, value) in categoryImages.enumerated() {
-            imageData[value.key] = value.value.jpegData(compressionQuality: 0.1)
+            imageData[value.key] = value.value.jpegData(compressionQuality: 0.9)
         }
         
         try JSONEncoder()
             .encode(imageData)
             .write(to: fileURL)
         
-        print("Finished Writing \(imageData) to \(fileURL)")
+        //print("Finished Writing \(imageData) to \(fileURL)")
     } catch let error {
         print(error)
     }

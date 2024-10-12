@@ -46,7 +46,7 @@ struct ReviewNewCategories: View {
                                     .resizable()
                                     .frame(width: prop.size.width - 50, height: 600)
                                     .clipShape(.rect(cornerRadius: 10))
-                                    .overlay(RoundedRectangle(cornerRadius: 10)
+                                    .overlay(RoundedRectangle(cornerRadius: 15)
                                         .fill(Color.clear))
                             }
                             

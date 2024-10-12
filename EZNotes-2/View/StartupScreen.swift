@@ -81,15 +81,21 @@ extension Color {
     )
     
     static var EZNotesBlack: Color = Color(
-        red: 18/255,
+        red: 24/255,
+        green: 24/255,
+        blue: 24/255
+        /*red: 18/255,
         green: 18/255,
-        blue: 18/255
+        blue: 18/255*/
     )
     
     static var EZNotesLightBlack: Color = Color (
-        red: 40/255,
+        red: 80/255,
+        green: 80/255,
+        blue: 80/255
+        /*red: 40/255,
         green: 40/255,
-        blue: 40/255
+        blue: 40/255*/
     )
     
     static var EZNotesGreen: Color = Color (

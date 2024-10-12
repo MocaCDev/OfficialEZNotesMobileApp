@@ -84,10 +84,10 @@ struct ButtomNavbar: View {
         }
         .frame(maxWidth: .infinity, maxHeight: 40)
         .background(Rectangle()
-            .fill(backgroundColor)
+            .fill(self.section == "upload" ? backgroundColor : .clear)
             .edgesIgnoringSafeArea(.bottom)
             .frame(maxWidth: .infinity, maxHeight: 40)
-            .border(width: 0.2, edges: [.top], color: .white))
+            .border(width: 0.2, edges: [.top], color: self.section == "home" || self.section == "chat" ? .clear : .white))
     }
 }
 
