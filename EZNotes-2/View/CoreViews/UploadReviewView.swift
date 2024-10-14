@@ -450,7 +450,7 @@ struct UploadReview: View {
         .background(
             Image("Background8")
                 .overlay(
-                    Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark)
+                    Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .light)
                 )//.blur(radius: 3.5)
         )
     }

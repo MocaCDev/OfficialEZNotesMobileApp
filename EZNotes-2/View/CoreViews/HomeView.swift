@@ -6,6 +6,22 @@
 //
 import SwiftUI
 
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
+        return Path(path.cgPath)
+    }
+}
+
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
+    }
+}
+
 struct HomeView: View {
     @Binding public var section: String
     var categoriesAndSets: [String: Array<String>]
@@ -90,21 +106,37 @@ struct HomeView: View {
                                                             HStack {
                                                                 Image(uiImage: self.categoryImages[key]!)
                                                                     .resizable()
-                                                                    .frame(width: 70, height: 100)
+                                                                    .frame(width: 150, height: 190)
+                                                                    .cornerRadius(15, corners: [.topLeft, .bottomLeft, .topRight, .bottomRight])
+                                                                    //.cornerRadius(10, corners: [.topRight, .bottomRight])
                                                                     .scaledToFit()
-                                                                    .padding([.leading], 15)
+                                                                    /*.mask(LinearGradient(gradient: Gradient(stops: [
+                                                                                .init(color: .black, location: 0),
+                                                                                .init(color: .clear, location: 1),
+                                                                                .init(color: .black, location: 1),
+                                                                                .init(color: .clear, location: 1)
+                                                                            ]), startPoint: .leading, endPoint: .trailing))*/
+                                                                    //.padding([.leading], 5)
                                                                 
                                                                 VStack {
                                                                     Text(key)
-                                                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .center)
                                                                         .padding([.leading], 12)
                                                                         .foregroundStyle(.white)
                                                                         .font(.system(size: 20, design: .monospaced))
                                                                         .fontWeight(.medium)
                                                                         .multilineTextAlignment(.center)
                                                                     
+                                                                    Text("Sets: \(self.categoriesAndSets[key]!.count)")
+                                                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .center)
+                                                                        .padding([.leading], 12)
+                                                                        .foregroundStyle(.white)
+                                                                        .font(.system(size: 18, design: .rounded))
+                                                                        .fontWeight(.medium)
+                                                                        .multilineTextAlignment(.center)
+                                                                    
                                                                     Text("Created 04/20/24")
-                                                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .center)
                                                                         .padding([.leading], 12)
                                                                         .foregroundStyle(.white)
                                                                         .font(.system(size: 13, design: .rounded))
@@ -115,12 +147,12 @@ struct HomeView: View {
                                                             }
                                                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                                                         }
-                                                        .frame(maxWidth: .infinity, maxHeight: 100, alignment: .leading)
+                                                        .frame(maxWidth: .infinity, maxHeight: 190, alignment: .leading)
                                                         .padding([.top, .bottom], 10)
                                                         
-                                                        Spacer()
+                                                        //Spacer()
                                                         
-                                                        VStack {
+                                                        /*VStack {
                                                             Text("Sets: \(self.categoriesAndSets[key]!.count)")
                                                                 .foregroundStyle(.white)
                                                                 .font(.system(size: 18, design: .rounded))
@@ -128,17 +160,16 @@ struct HomeView: View {
                                                                 .multilineTextAlignment(.center)
                                                                 .frame(maxWidth: .infinity, maxHeight: 20)
                                                         }
-                                                        .frame(maxWidth: 80, alignment: .center)
+                                                        .frame(maxWidth: 85, alignment: .center)*/
                                                         
                                                         //Spacer()
                                                     }
-                                                    .frame(maxWidth: prop.size.width - 20, maxHeight: 110)
-                                                    .background(Color.clear)
+                                                    .frame(maxWidth: prop.size.width - 20, maxHeight: 190)
                                                 }
                                                 .buttonStyle(.borderless)
                                                 //.padding([.bottom], 5)
                                                 
-                                                VStack {
+                                                /*VStack {
                                                     Image(systemName: "pencil")
                                                         .resizable()
                                                         .frame(width: 18, height: 18)
@@ -157,11 +188,11 @@ struct HomeView: View {
                                                         .foregroundStyle(Color.EZNotesRed)
                                                         .padding([.trailing], 10)
                                                 }
-                                                .frame(maxWidth: 80, maxHeight: 120, alignment: .trailing)
-                                                .padding([.trailing], 15)
+                                                .frame(maxWidth: 55, maxHeight: 130, alignment: .trailing)
+                                                .padding([.trailing], 15)*/
                                             }
-                                            .frame(maxWidth: prop.size.width - 20, maxHeight: 110)
-                                            .background(Rectangle().fill(Color.EZNotesBlack).shadow(color: .black, radius: 8))
+                                            .frame(maxWidth: prop.size.width - 20, maxHeight: 190)
+                                            .background(RoundedRectangle(cornerRadius: 15).fill(Color.EZNotesBlack.opacity(0.35)).shadow(color: Color.EZNotesBlack, radius: 4))
                                             .padding([.bottom], 5)
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -244,10 +275,14 @@ struct HomeView: View {
                 LinearGradient(
                     gradient: Gradient(
                         colors: [
-                            Color.EZNotesBlack,
-                            Color.EZNotesBlack,
-                            Color.EZNotesBlack,
+                            .black,
+                            .black,
+                            .black,
                             Color.EZNotesLightBlack
+                            /*Color.EZNotesBlack,
+                            Color.EZNotesBlack,
+                            Color.EZNotesBlack,
+                            Color.EZNotesLightBlack*/
                         ]),
                     startPoint: .top,
                     endPoint: .bottom

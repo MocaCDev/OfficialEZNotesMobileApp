@@ -90,9 +90,9 @@ extension Color {
     )
     
     static var EZNotesLightBlack: Color = Color (
-        red: 80/255,
-        green: 80/255,
-        blue: 80/255
+        red: 50/255,
+        green: 50/255,
+        blue: 50/255
         /*red: 40/255,
         green: 40/255,
         blue: 40/255*/

@@ -33,10 +33,10 @@ struct ChatView: View {
             LinearGradient(
                 gradient: Gradient(
                     colors: [
-                        Color.EZNotesBlack,
-                        Color.EZNotesBlack,
-                        Color.EZNotesBlack,
-                        Color.EZNotesLightBlack,
+                        .black,//Color.EZNotesBlack,
+                        .black,//Color.EZNotesBlack,
+                        .black,//Color.EZNotesBlack,
+                        Color.EZNotesLightBlack//Color.EZNotesLightBlack
                         //Color.EZNotesOrange,
                         //Color.EZNotesOrange
                     ]),
