@@ -448,10 +448,10 @@ struct UploadReview: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            Image("Background8")
+            /*Image("Background8")
                 .overlay(
                     Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .light)
-                )//.blur(radius: 3.5)
+            )*///.blur(radius: 3.5)
         )
     }
 }

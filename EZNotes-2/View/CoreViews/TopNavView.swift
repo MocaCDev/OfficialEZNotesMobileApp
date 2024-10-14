@@ -38,9 +38,12 @@ struct TopNavHome: View {
     
     @Binding public var changeNavbarColor: Bool
     @Binding public var categorySearch: String
+    @Binding public var searchDone: Bool
     
     @State private var showSearchBar: Bool = false
     @FocusState private var categorySearchFocus: Bool
+    
+    @Binding public var lookedUpCategoriesAndSets: [String: Array<String>]
     
     var body: some View {
         VStack {
@@ -121,23 +124,52 @@ struct TopNavHome: View {
                                 : 200,
                             maxHeight: prop.size.height / 2.5 > 300 ? 30 : 20
                         )
-                        .padding([.leading], 15)
-                        .padding(5)
-                        .background(
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(Color.gray)
-                                .opacity(0.6)
+                        .padding(7)
+                        .padding(.horizontal, 25)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(7.5)
+                        .padding(.horizontal, 10)
+                        .overlay(
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.gray)
+                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                                    .padding(.leading, 15)
+
+                                if self.categorySearchFocus {
+                                    Button(action: {
+                                        self.categorySearch = ""
+                                        self.lookedUpCategoriesAndSets.removeAll()
+                                        self.searchDone = false
+                                    }) {
+                                        Image(systemName: "multiply.circle.fill")
+                                            .foregroundColor(.gray)
+                                            .padding(.trailing, 15)
+                                    }
+                                }
+                            }
                         )
-                        .foregroundStyle(Color.EZNotesBlue)
-                        .cornerRadius(15)
-                        .tint(Color.EZNotesBlue)
-                        .font(.system(size: 18))
-                        .fontWeight(.medium)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
+                        .onSubmit {
+                            if !(self.categorySearch == "") {
+                                for (_, value) in self.categoriesAndSets.keys.enumerated() {
+                                    if value.lowercased() == self.categorySearch.lowercased() || value.lowercased().contains(self.categorySearch.lowercased()) {
+                                        self.lookedUpCategoriesAndSets[value] = self.categoriesAndSets[value]
+                                        
+                                        print(self.lookedUpCategoriesAndSets)
+                                    }
+                                }
+                                
+                                self.searchDone = true
+                            } else {
+                                self.lookedUpCategoriesAndSets.removeAll()
+                                self.searchDone = false
+                            }
+                            
+                            self.categorySearchFocus = false
+                        }
                         .focused($categorySearchFocus)
                         .onTapGesture {
-                            categorySearchFocus = true
+                            self.categorySearchFocus = true
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: 25, alignment: .center)
@@ -175,7 +207,7 @@ struct TopNavHome: View {
             }
             .frame(maxWidth: .infinity, maxHeight: 100, alignment: .top)
             .background(!self.changeNavbarColor
-                        ? AnyView(Color.EZNotesBlack)
+                        ? AnyView(Color.black)
                 : AnyView(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
             )
         }
