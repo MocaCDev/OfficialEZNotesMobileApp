@@ -5,6 +5,7 @@
 //  Created by Aidan White on 10/2/24.
 //
 import SwiftUI
+import PhotosUI
 
 struct RoundedCorner: Shape {
     var radius: CGFloat = .infinity
@@ -27,6 +28,10 @@ struct HomeView: View {
     var categoriesAndSets: [String: Array<String>]
     var categoryImages: [String: UIImage]
     var categoryCreationDates: [String: Date]
+    
+    /* MARK: For changing background image of category. */
+    @State private var photoPicker: PhotosPickerItem?
+    @State private var selectedImage: Image?
     
     @State private var home_section: String = "main"
     @State private var show_categories_title: Bool = false
@@ -126,7 +131,9 @@ struct HomeView: View {
                                                                     /* MARK: When the image is clicked, the app will open the photo gallery for the user to select a new photo for the category.
                                                                      * MARK: By default, the categories background image is the first image uploaded in which curated a set of notes within the category.
                                                                      * */
-                                                                    Button(action: { print("Open Photo Gallery") }) {
+                                                                    Button(action: {
+                                                                        
+                                                                    }) {
                                                                         Image(uiImage: self.categoryImages[key]!)
                                                                             .resizable()
                                                                             .frame(width: 150, height: 190)
