@@ -11,13 +11,14 @@ struct ReviewNewCategories: View {
     @Binding public var section: String
     @ObservedObject public var images_to_upload: ImagesUploads
     
-    @Binding var newCategoriesAndSets: [String: Array<String>]
-    @Binding var categoriesAndSets: [String: Array<String>]
-    @Binding var categoryImages: [String: UIImage]
-    @Binding var categories: Array<String>
-    @Binding var sets: Array<String>
-    @Binding var briefDescriptions: Array<String>
-    @Binding var photos: Array<String>
+    @Binding public var newCategoriesAndSets: [String: Array<String>]
+    @Binding public var categoriesAndSets: [String: Array<String>]
+    @Binding public var categoryCreationDates: [String: Date]
+    @Binding public var categoryImages: [String: UIImage]
+    @Binding public var categories: Array<String>
+    @Binding public var sets: Array<String>
+    @Binding public var briefDescriptions: Array<String>
+    @Binding public var photos: Array<String>
     
     @State public var indexOfSetsToRemove: Array<Int> = []
     @State public var indexOfCategoriesToRemove: Array<Int> = []
@@ -195,14 +196,18 @@ struct ReviewNewCategories: View {
                             if self.categoriesAndSets.keys.contains(value.key) {
                                 self.categoriesAndSets[value.key]!.append(value2)
                             } else {
+                                self.categoryCreationDates[value.key] = Date.now
                                 self.categoriesAndSets[value.key] = [value2]
                             }
                         }
                     }
                     
+                    print(self.categoryCreationDates)
+                    
                     /* MARK: Save the categories to a JSON file. */
                     writeCategoryData(categoryData: self.categoriesAndSets)
                     writeCategoryImages(categoryImages: self.categoryImages)
+                    writeCategoryCreationDates(categoryCreationDates: categoryCreationDates)
                     
                     /* Remove all upload information. */
                     self.photos.removeAll()

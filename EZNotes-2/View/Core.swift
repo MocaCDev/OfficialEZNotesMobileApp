@@ -76,6 +76,7 @@ struct CoreApp: View {
     
     /* MARK: See `ContentView.swift` lines 41 & 42. */
     @Binding public var categoriesAndSets: [String: Array<String>]
+    @Binding public var categoryCreationDates: [String: Date]
     @Binding public var categoryImages: [String: UIImage]
     
     @State private var categories: Array<String> = []
@@ -142,6 +143,7 @@ struct CoreApp: View {
                     images_to_upload: images_to_upload,
                     newCategoriesAndSets: $newCategoriesAndSets,
                     categoriesAndSets: $categoriesAndSets,
+                    categoryCreationDates: $categoryCreationDates,
                     categoryImages: $categoryImages,
                     categories: $categories,
                     sets: $sets,
@@ -154,6 +156,7 @@ struct CoreApp: View {
                     section: $section,
                     categoriesAndSets: categoriesAndSets,
                     categoryImages: categoryImages,
+                    categoryCreationDates: categoryCreationDates,
                     prop: prop
                 )
             } else if self.section == "chat" {

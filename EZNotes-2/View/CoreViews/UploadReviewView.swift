@@ -67,7 +67,7 @@ struct UploadReview: View {
                     
                     VStack {
                         Text("Review Uploads")
-                            .foregroundStyle(Color.EZNotesBlack)
+                            .foregroundStyle(.white)
                             .font(.system(size: 30))
                             .padding([.top], prop.size.height / 2.5 > 300 ? 10 : -10)
                             .padding([.leading], -30)
@@ -88,7 +88,7 @@ struct UploadReview: View {
                                 RoundedRectangle(cornerRadius: 10)
                                     .fill(Color.clear)
                             )
-                            .shadow(color: Color.EZNotesBlack, radius: 6)
+                            .shadow(color: Color.EZNotesLightBlack, radius: 3.5)
                         
                         HStack {
                             Button(action: {
@@ -97,9 +97,10 @@ struct UploadReview: View {
                                 
                                 self.images_to_upload.images_to_upload.remove(at: 0)
                             }) {
-                                Image("Delete")
+                                Image(systemName: "trash")
                                     .resizable()
                                     .frame(width: 20, height: 20)
+                                    .foregroundStyle(.red)
                                 
                                 Text("Delete")
                                     .foregroundStyle(.red)
@@ -125,7 +126,7 @@ struct UploadReview: View {
                                                 RoundedRectangle(cornerRadius: 10)
                                                     .fill(Color.clear)
                                             )
-                                            .shadow(color: Color.EZNotesBlack, radius: 6)
+                                            .shadow(color: Color.white, radius: 3.5)
                                         
                                         HStack {
                                             Button(action: {
@@ -136,9 +137,10 @@ struct UploadReview: View {
                                                     self.lastSection = ""
                                                 }
                                             }) {
-                                                Image("Delete")
+                                                Image(systemName: "trash")
                                                     .resizable()
                                                     .frame(width: 20, height: 20)
+                                                    .foregroundStyle(.red)
                                                 
                                                 Text("Delete")
                                                     .foregroundStyle(.red)
@@ -161,7 +163,7 @@ struct UploadReview: View {
                 VStack {
                     Toggle("Save upload to device", isOn: $localUpload)
                         .frame(maxWidth: prop.size.width - 150)
-                        .foregroundStyle(Color.EZNotesBlack)
+                        .foregroundStyle(.white)
                         .fontWeight(.bold)
                         .font(.system(size: 18))
                         .toggleStyle(SwitchToggleStyle(tint: Color.EZNotesBlue))
@@ -228,9 +230,9 @@ struct UploadReview: View {
                                          * so the `Home` view gets updated.
                                          * */
                                         if self.newCategoriesAndSets.keys.contains(r.category) {
-                                            if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
+                                            //if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
                                                 self.newCategoriesAndSets[r.category]!.append(r.set_name)
-                                            }
+                                            //}
                                         } else {
                                             self.newCategoriesAndSets[r.category] = [r.set_name]
                                         }
@@ -448,6 +450,21 @@ struct UploadReview: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
+            LinearGradient(
+                gradient: Gradient(
+                    colors: [
+                        .black,
+                        .black,
+                        .black,
+                        Color.EZNotesLightBlack
+                        /*Color.EZNotesBlack,
+                        Color.EZNotesBlack,
+                        Color.EZNotesBlack,
+                        Color.EZNotesLightBlack*/
+                    ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
             /*Image("Background8")
                 .overlay(
                     Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .light)

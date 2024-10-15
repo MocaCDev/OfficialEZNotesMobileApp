@@ -111,69 +111,71 @@ struct TopNavHome: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding([.top], prop.size.height > 340 ? 55 : 50)
                 } else {
-                    VStack {
-                        TextField(
-                            "Search Categories...",
-                            text: $categorySearch
-                        )
-                        .frame(
-                            maxWidth: prop.isIpad
+                    if self.categoriesAndSets.count > 0 {
+                        VStack {
+                            TextField(
+                                "Search Categories...",
+                                text: $categorySearch
+                            )
+                            .frame(
+                                maxWidth: prop.isIpad
                                 ? UIDevice.current.orientation.isLandscape
-                                    ? prop.size.width - 800
-                                    : prop.size.width - 450
+                                ? prop.size.width - 800
+                                : prop.size.width - 450
                                 : 200,
-                            maxHeight: prop.size.height / 2.5 > 300 ? 30 : 20
-                        )
-                        .padding(7)
-                        .padding(.horizontal, 25)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(7.5)
-                        .padding(.horizontal, 10)
-                        .overlay(
-                            HStack {
-                                Image(systemName: "magnifyingglass")
-                                    .foregroundColor(.gray)
-                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                                    .padding(.leading, 15)
-
-                                if self.categorySearchFocus {
-                                    Button(action: {
-                                        self.categorySearch = ""
-                                        self.lookedUpCategoriesAndSets.removeAll()
-                                        self.searchDone = false
-                                    }) {
-                                        Image(systemName: "multiply.circle.fill")
-                                            .foregroundColor(.gray)
-                                            .padding(.trailing, 15)
+                                maxHeight: prop.size.height / 2.5 > 300 ? 30 : 20
+                            )
+                            .padding(7)
+                            .padding(.horizontal, 25)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(7.5)
+                            .padding(.horizontal, 10)
+                            .overlay(
+                                HStack {
+                                    Image(systemName: "magnifyingglass")
+                                        .foregroundColor(.gray)
+                                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                                        .padding(.leading, 15)
+                                    
+                                    if self.categorySearchFocus {
+                                        Button(action: {
+                                            self.categorySearch = ""
+                                            self.lookedUpCategoriesAndSets.removeAll()
+                                            self.searchDone = false
+                                        }) {
+                                            Image(systemName: "multiply.circle.fill")
+                                                .foregroundColor(.gray)
+                                                .padding(.trailing, 15)
+                                        }
                                     }
                                 }
-                            }
-                        )
-                        .onSubmit {
-                            if !(self.categorySearch == "") {
-                                for (_, value) in self.categoriesAndSets.keys.enumerated() {
-                                    if value.lowercased() == self.categorySearch.lowercased() || value.lowercased().contains(self.categorySearch.lowercased()) {
-                                        self.lookedUpCategoriesAndSets[value] = self.categoriesAndSets[value]
-                                        
-                                        print(self.lookedUpCategoriesAndSets)
+                            )
+                            .onSubmit {
+                                if !(self.categorySearch == "") {
+                                    for (_, value) in self.categoriesAndSets.keys.enumerated() {
+                                        if value.lowercased() == self.categorySearch.lowercased() || value.lowercased().contains(self.categorySearch.lowercased()) {
+                                            self.lookedUpCategoriesAndSets[value] = self.categoriesAndSets[value]
+                                            
+                                            print(self.lookedUpCategoriesAndSets)
+                                        }
                                     }
+                                    
+                                    self.searchDone = true
+                                } else {
+                                    self.lookedUpCategoriesAndSets.removeAll()
+                                    self.searchDone = false
                                 }
                                 
-                                self.searchDone = true
-                            } else {
-                                self.lookedUpCategoriesAndSets.removeAll()
-                                self.searchDone = false
+                                self.categorySearchFocus = false
                             }
-                            
-                            self.categorySearchFocus = false
+                            .focused($categorySearchFocus)
+                            .onTapGesture {
+                                self.categorySearchFocus = true
+                            }
                         }
-                        .focused($categorySearchFocus)
-                        .onTapGesture {
-                            self.categorySearchFocus = true
-                        }
+                        .frame(maxWidth: .infinity, maxHeight: 25, alignment: .center)
+                        .padding([.top], 60)//prop.size.height > 340 ? 55 : 50)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: 25, alignment: .center)
-                    .padding([.top], 60)//prop.size.height > 340 ? 55 : 50)
                 }
                 
                 Spacer()
