@@ -155,7 +155,7 @@ struct CoreApp: View {
                 HomeView(
                     section: $section,
                     categoriesAndSets: categoriesAndSets,
-                    categoryImages: categoryImages,
+                    categoryImages: $categoryImages,
                     categoryCreationDates: categoryCreationDates,
                     prop: prop
                 )

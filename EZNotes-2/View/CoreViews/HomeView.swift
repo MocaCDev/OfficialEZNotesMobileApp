@@ -26,12 +26,15 @@ extension View {
 struct HomeView: View {
     @Binding public var section: String
     var categoriesAndSets: [String: Array<String>]
-    var categoryImages: [String: UIImage]
+    @Binding public var categoryImages: [String: UIImage]
     var categoryCreationDates: [String: Date]
     
     /* MARK: For changing background image of category. */
     @State private var photoPicker: PhotosPickerItem?
     @State private var selectedImage: Image?
+    @State private var editCategoryDetails: Bool = false
+    @State private var categoryBeingEdited: String = ""
+    @State private var categoryBeingEditedImage: UIImage = UIImage(systemName: "plus")!
     
     @State private var home_section: String = "main"
     @State private var show_categories_title: Bool = false
@@ -131,16 +134,12 @@ struct HomeView: View {
                                                                     /* MARK: When the image is clicked, the app will open the photo gallery for the user to select a new photo for the category.
                                                                      * MARK: By default, the categories background image is the first image uploaded in which curated a set of notes within the category.
                                                                      * */
-                                                                    Button(action: {
-                                                                        
-                                                                    }) {
-                                                                        Image(uiImage: self.categoryImages[key]!)
-                                                                            .resizable()
-                                                                            .frame(width: 150, height: 190)
-                                                                            .cornerRadius(15, corners: [.topLeft, .bottomLeft, .topRight, .bottomRight])
-                                                                            .scaledToFit()
-                                                                    }
-                                                                    .zIndex(1)
+                                                                    Image(uiImage: self.categoryImages[key]!)
+                                                                        .resizable()
+                                                                        .frame(width: 150, height: 190)
+                                                                        .cornerRadius(15, corners: [.topLeft, .bottomLeft, .topRight, .bottomRight])
+                                                                        .scaledToFit()
+                                                                        .zIndex(1)
                                                                     
                                                                     VStack {
                                                                         VStack {
@@ -168,7 +167,11 @@ struct HomeView: View {
                                                                         .padding([.leading], -20)
                                                                         
                                                                         HStack {
-                                                                            Button(action: { print("Edit") }) {
+                                                                            Button(action: {
+                                                                                self.categoryBeingEdited = key
+                                                                                self.categoryBeingEditedImage = self.categoryImages[key]!
+                                                                                self.editCategoryDetails = true
+                                                                            }) {
                                                                                 Image(systemName: "pencil")
                                                                                     .resizable()
                                                                                     .frame(width: 14.5, height: 14.5)
@@ -243,7 +246,7 @@ struct HomeView: View {
                                                 .background(RoundedRectangle(cornerRadius: 15).fill(Color.EZNotesBlack.opacity(0.65 )).shadow(color: Color.EZNotesBlack, radius: 4))
                                                 .padding([.bottom], 5)
                                             }
-                                                          .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         .padding([.top], 35)
@@ -255,6 +258,41 @@ struct HomeView: View {
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .popover(isPresented: $editCategoryDetails) {
+                                VStack {
+                                    VStack {
+                                        VStack {
+                                            Text(self.categoryBeingEdited)
+                                                .frame(maxWidth: .infinity, maxHeight: 100, alignment: .center)
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: 500, design: .rounded))
+                                                .minimumScaleFactor(0.01)
+                                                .lineLimit(1)
+                                                .fontWeight(.heavy)
+                                                .multilineTextAlignment(.center)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 415, alignment: .center)
+                                        .background(
+                                            Image(uiImage: self.categoryBeingEditedImage)
+                                                .resizable()
+                                                .frame(width: nil, height: 415)
+                                                .scaledToFit()
+                                                .cornerRadius(15, corners: [.topLeft, .topRight])
+                                                .overlay(
+                                                    Color.EZNotesLightBlack.opacity(0.65)
+                                                )
+                                        )
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 400, alignment: .top)
+                                    
+                                    VStack {
+                                        
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .background(.black)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }
                         }
                     } else {
                         VStack {
