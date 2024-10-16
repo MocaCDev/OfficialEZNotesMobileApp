@@ -281,10 +281,71 @@ struct HomeView: View {
                                                 //.lineLimit(1)
                                                 .fontWeight(.bold)
                                                 .multilineTextAlignment(.center)
+                                            
+                                            HStack {
+                                                //VStack {
+                                                    Button(action: {
+                                                        self.editSection = "edit"
+                                                    }) {
+                                                        Text("Edit")
+                                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                                            .padding(5)
+                                                            .foregroundStyle(self.editSection != "edit" ? Color.EZNotesOrange : Color.EZNotesBlack)
+                                                            .font(.system(size: 15))
+                                                            .fontWeight(.bold)
+                                                    }
+                                                    .padding([.leading], 25)
+                                                    .buttonStyle(.borderedProminent)
+                                                    .cornerRadius(15)
+                                                    .tint(self.editSection == "edit"
+                                                          ? Color.white.opacity(0.35)
+                                                          : Color.EZNotesBlack.opacity(0.75)
+                                                    )
+                                                    .animation(.easeIn(duration: 0.5), value: self.editSection == "edit")
+                                                    .animation(.easeOut(duration: 0.5), value: self.editSection != "edit")
+                                                /*}
+                                                .frame(maxWidth: 125, maxHeight: 30, alignment: .leading)
+                                                .cornerRadius(15)
+                                                .background(self.editSection == "edit"
+                                                    ? Color.white.opacity(0.55)
+                                                    : Color.EZNotesBlack.opacity(0.75)
+                                                )*/
+                                                
+                                                //VStack {
+                                                    Button(action: {
+                                                        self.editSection = "preview"
+                                                    }) {
+                                                        Text("Preview")
+                                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                                            .padding(5)
+                                                            .foregroundStyle(self.editSection != "preview" ? Color.EZNotesOrange : Color.EZNotesBlack)
+                                                            .font(.system(size: 15))
+                                                            .fontWeight(.bold)
+                                                    }
+                                                    .padding([.leading, .trailing], 15)
+                                                    .buttonStyle(.borderedProminent)
+                                                    .cornerRadius(15)
+                                                    .tint(self.editSection == "preview"
+                                                          ? Color.white.opacity(0.55)
+                                                          : Color.EZNotesBlack.opacity(0.75)
+                                                    )
+                                                    .animation(.easeIn(duration: 0.5), value: self.editSection == "preview")
+                                                    .animation(.easeOut(duration: 0.5), value: self.editSection != "preview")
+                                                    //.buttonStyle(.borderless)
+                                                /*}
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                                                .background(self.editSection == "preview"
+                                                    ? Color.white.opacity(0.55)
+                                                    : Color.EZNotesBlack.opacity(0.75)
+                                                )*/
+                                            }
+                                            .frame(maxWidth: 300, maxHeight: 40, alignment: .top)
+                                            //.cornerRadius(15)
+                                            .padding([.top], 25)
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: 265)
-                                        .background(
-                                            Image("Category-Edit-Background")//uiImage: self.categoryBeingEditedImage)
+                                        /*.background(
+                                            /*Image("Category-Edit-Background")//uiImage: self.categoryBeingEditedImage)
                                                 .resizable()
                                                 .frame(width: nil, height: 265)
                                                 .scaledToFit()
@@ -298,115 +359,93 @@ struct HomeView: View {
                                                             .init(color: .clear, location: 1),
                                                             .init(color: .black, location: 1),
                                                             .init(color: .clear, location: 1)
-                                                        ]), startPoint: .top, endPoint: .bottom))
-                                        )
+                                                        ]), startPoint: .top, endPoint: .bottom))*/
+                                            .black
+                                        )*/
                                     }
-                                    .frame(maxWidth: .infinity, maxHeight: 250, alignment: .top)
+                                    .frame(maxWidth: .infinity, maxHeight: 265)
+                                    .background(.black)
                                     
                                     VStack {
-                                        HStack {
-                                            VStack {
-                                                Button(action: {
-                                                    self.editSection = "edit"
-                                                }) {
-                                                    Text("Edit")
-                                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                                        .padding(5)
-                                                        .foregroundStyle(self.editSection != "edit" ? Color.EZNotesOrange : Color.EZNotesBlack)
-                                                        .font(.system(size: 15))
-                                                        .fontWeight(.bold)
-                                                }
-                                                .animation(.easeIn(duration: 0.5), value: self.editSection == "edit")
-                                                .animation(.easeOut(duration: 0.5), value: self.editSection != "edit")
-                                                .buttonStyle(.borderless)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                            .background(self.editSection == "edit"
-                                                ? Color.white.opacity(0.55)
-                                                : Color.clear
-                                            )
-                                            
-                                            VStack {
-                                                Button(action: {
-                                                    self.editSection = "preview"
-                                                }) {
-                                                    Text("Preview")
-                                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                                        .padding(5)
-                                                        .foregroundStyle(self.editSection != "preview" ? Color.EZNotesOrange : Color.EZNotesBlack)
-                                                        .font(.system(size: 15))
-                                                        .fontWeight(.bold)
-                                                }
-                                                .animation(.easeIn(duration: 0.5), value: self.editSection == "preview")
-                                                .animation(.easeOut(duration: 0.5), value: self.editSection != "preview")
-                                                .buttonStyle(.borderless)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                                            .background(self.editSection == "preview"
-                                                ? Color.white.opacity(0.55)
-                                                : Color.clear
-                                            )
-                                        }
-                                        .frame(maxWidth: 200, maxHeight: 30, alignment: .top)
-                                        .background(Color.EZNotesLightBlack.background(.ultraThickMaterial).environment(\.colorScheme, .dark))
-                                        .cornerRadius(15)
-                                        .padding([.top], 25)
+                                        /* MARK: "Padding". */
+                                        VStack { }.frame(maxWidth: .infinity, maxHeight: 25)
                                         
                                         if self.editSection == "edit" {
                                             VStack {
                                                 HStack {
-                                                    Text("Category Title: ")
-                                                        .frame(maxWidth: .infinity, maxHeight: 24, alignment: .leading)
-                                                        .padding([.leading], 15)
-                                                        .foregroundStyle(.white)
-                                                        .font(.system(size: 20, design: .monospaced))
-                                                        .fontWeight(.semibold)
+                                                    VStack {
+                                                        Text("Category Title: ")
+                                                            .frame(maxWidth: .infinity, maxHeight: 24, alignment: .leading)
+                                                            .padding([.leading], 15)
+                                                            .foregroundStyle(.white)
+                                                            .font(.system(size: 20, design: .rounded))
+                                                            .fontWeight(.semibold)
+                                                        
+                                                        TextField("New Title...", text: $newCategoryName)
+                                                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                            .padding(7)
+                                                            .padding(.horizontal, 15)
+                                                            .background(Color(.systemGray6))
+                                                            .cornerRadius(7.5)
+                                                            .padding(.horizontal, 5)
+                                                    }
                                                     
                                                     Spacer()
-                                                    
-                                                    TextField("New Title...", text: $newCategoryName)
-                                                        .frame(maxWidth: .infinity, maxHeight: 20)
-                                                        .padding(7)
-                                                        .padding(.horizontal, 25)
-                                                        .background(Color(.systemGray6))
-                                                        .cornerRadius(7.5)
-                                                        .padding(.horizontal, 10)
                                                 }
-                                                .frame(maxWidth: prop.size.width - 100, maxHeight: 50)
+                                                .frame(maxWidth: prop.size.width - 120, maxHeight: 80)
                                                 .padding([.top], 40)
                                                 .cornerRadius(10)
                                                 
                                                 Divider()
-                                                    .frame(width: prop.size.width - 140)
+                                                    .frame(width: prop.size.width - 120)
                                                 
                                                 Spacer()
                                                 
                                                 Button(action: { print("Finished Editing!") }) {
                                                     Text("Save Changes")
-                                                        .frame(width: prop.size.width - 50, height: 40)
+                                                        .frame(width: prop.size.width - 80, height: 40)
                                                         .padding(5)
                                                         .foregroundStyle(.white)
                                                         .font(.system(size: 22))
                                                         .fontWeight(.medium)
                                                 }
                                                 .buttonStyle(.borderedProminent)
-                                                .tint(.black.opacity(0.50))
+                                                .tint(Color.EZNotesBlack.opacity(0.75))
+                                                .padding([.bottom], 35)
                                             }
-                                            .frame(maxWidth: prop.size.width - 50, maxHeight: .infinity)
+                                            .frame(maxWidth: prop.size.width, maxHeight: .infinity)
                                             .cornerRadius(15)
                                             .background(
                                                 RoundedRectangle(cornerRadius: 15)
-                                                    .fill(.clear)
-                                                    .stroke(LinearGradient(
+                                                    .fill(
+                                                        /*LinearGradient(
+                                                            gradient: Gradient(
+                                                                colors: [
+                                                                    Color.EZNotesLightBlack,
+                                                                    .black.opacity(0.50)
+                                                                ]),
+                                                            startPoint: .top,
+                                                            endPoint: .bottom
+                                                        )*/
+                                                        .black
+                                                    )
+                                                    .shadow(color: .white, radius: 2.5)
+                                                //(.clear)
+                                                    //.shadow(color: .white, radius: 2.5)
+                                                    /*.stroke(LinearGradient(
                                                         gradient: Gradient(
                                                             colors: [
                                                                 Color.EZNotesLightBlack,
-                                                                .black
+                                                                .black.opacity(0.50)
                                                             ]),
                                                         startPoint: .top,
                                                         endPoint: .bottom
-                                                    ), lineWidth: 1)
-                                            ) //(.black.opacity(0.50))
+                                                    ), lineWidth: 1)*/
+                                                /*Image("Category-Edit-Background")//uiImage: self.categoryBeingEditedImage)
+                                                    .resizable()
+                                                    .blur(radius: 2.5)
+                                                    .cornerRadius(15)*/
+                                            ).edgesIgnoringSafeArea(.bottom) //(.black.opacity(0.50))
                                         } else {
                                             VStack {
                                                 Text("Previewing...")
@@ -416,19 +455,21 @@ struct HomeView: View {
                                     }
                                     .animation(.default, value: self.editSection == "edit" || self.editSection == "preview")
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .background(
-                                        LinearGradient(
-                                            gradient: Gradient(
-                                                colors: [
-                                                    .black,
-                                                    Color.EZNotesLightBlack
-                                                ]),
-                                            startPoint: .top,
-                                            endPoint: .bottom
-                                        )
-                                    )
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .background(
+                                    /*LinearGradient(
+                                        gradient: Gradient(
+                                            colors: [
+                                                .black,
+                                                .black,
+                                                Color.EZNotesLightBlack
+                                            ]),
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )*/
+                                    .black
+                                )
                             }
                         }
                     } else {

@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "Category-Edit-Bg.svg",
+      "filename" : "Edit-Category-Bg2.svg",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Category-Edit-Bg 1.svg",
+      "filename" : "Edit-Category-Bg2 1.svg",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Category-Edit-Bg 2.svg",
+      "filename" : "Edit-Category-Bg2 2.svg",
       "idiom" : "universal",
       "scale" : "3x"
     }
