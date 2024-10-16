@@ -28,6 +28,9 @@ struct HomeView: View {
     var categoriesAndSets: [String: Array<String>]
     @Binding public var categoryImages: [String: UIImage]
     var categoryCreationDates: [String: Date]
+    @Binding public var categoryDescriptions: [String: String]
+    @Binding public var categoryCustomColors: [String: Color]
+    @Binding public var categoryCustomTextColors: [String: Color]
     
     /* MARK: For editing category details */
     @State private var photoPicker: PhotosPickerItem?
@@ -38,9 +41,20 @@ struct HomeView: View {
     @State private var editSection: String = "edit" /* MARK: Can be "edit" or "preview". */
     @State private var editSectionYPos: CGFloat = 0
     @State private var newCategoryName: String = ""
+    @State private var newCategoryDescription: String = ""
+    @FocusState private var newCategoryDescriptionFocus: Bool
+    @State private var toggleCategoryBackgroundColorPicker: Bool = false
+    @State private var toggleCategoryTextColorPicker: Bool = false
+    @State private var newCategoryDisplayColor: Color = Color.EZNotesOrange
+    @State private var newCategoryTextColor: Color = Color.white
     
     @State private var home_section: String = "main"
     @State private var show_categories_title: Bool = false
+    @State private var topNavOpacity: Double = 0.0
+    
+    @State private var scrollOffset: CGFloat = 0 // Store the scroll offset
+    //@State private var currentBackgroundOpacity: Double = 1.0 // Background opacity
+    //@State private var currentNavOpacity: Double = 1.0
     
     @State private var launchCategory: Bool = false
     @State private var categoryLaunched: String = ""
@@ -52,10 +66,76 @@ struct HomeView: View {
     
     var prop: Properties
     
+    /* TODO: Eventually the app will enable users to set the outline of there categories as they please. Get this implemented. */
     let columns = [
         GridItem(.flexible()),
         GridItem(.flexible())
     ]
+    
+    /*private func opacityForBackground(scrollOffset: CGFloat) -> Double {
+        /*let navigationBarHeight: CGFloat = 100 // Height of the navigation bar
+         let maxOffset: CGFloat = -navigationBarHeight // Max offset (when content hits the navbar)
+         let minOffset: CGFloat = 0 // Min offset (when content is at the top of the screen)
+         
+         // Calculate opacity based on scroll offset
+         //let normalizedOffset = min(max(scrollOffset, minOffset), maxOffset)
+         //return Double((maxOffset - normalizedOffset) / (maxOffset - minOffset))
+         let normalizedOffset = min(max(scrollOffset, minOffset), maxOffset)
+         
+         return Double((maxOffset - normalizedOffset) / (maxOffset - minOffset))*/
+        let navigationBarHeight: CGFloat = 0 // Height of the navigation bar
+        let maxOffset: CGFloat = -navigationBarHeight // Max offset (when content hits the navbar)
+        let minOffset: CGFloat = -300 // Extended range for more gradual change
+        
+        print("SO: \(scrollOffset)\nMIN_OFFSET: \(minOffset)\nMAX_OFFSET: \(maxOffset)")
+        
+        // Calculate opacity based on scroll offset
+        let normalizedOffset = min(max(scrollOffset, minOffset), maxOffset)
+        let opacity = (maxOffset - normalizedOffset) / (maxOffset - minOffset)
+        
+        // Clamp opacity to 0.0 - 1.0 range
+        return max(0.0, min(Double(opacity), 1.0))
+    }*/
+    
+    /* MARK: WIP (Work In Progress). Animations will get added overtime, they are a bit confusing in swift. */
+    private func updateScrollOffset(innerGeometry: GeometryProxy) {
+        let newOffset = innerGeometry.frame(in: .global).minY
+        //let newBackgroundOpacity = calculateBackgroundOpacity(scrollOffset: newOffset)
+        let newNavOpacity = calculateNavOpacity(scrollOffset: newOffset)
+        
+        if newOffset < scrollOffset {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                self.topNavOpacity = newNavOpacity
+            }
+        }
+        
+        scrollOffset = newOffset
+    }
+
+        // Calculate opacity for the background based on scroll offset
+    private func calculateBackgroundOpacity(scrollOffset: CGFloat) -> Double {
+        let navigationBarHeight: CGFloat = 50
+        let maxOffset: CGFloat = -navigationBarHeight
+        let minOffset: CGFloat = -300
+        
+        let normalizedOffset = min(max(scrollOffset, minOffset), maxOffset)
+        let opacity = (maxOffset - normalizedOffset) / (maxOffset - minOffset)
+        return max(0.0, min(Double(opacity), 1.0))
+    }
+    
+    private func calculateNavOpacity(scrollOffset: CGFloat) -> Double {
+        let navigationBarHeight: CGFloat = 200
+        let maxOffset: CGFloat = -navigationBarHeight
+        let minOffset: CGFloat = 0 // When content is at the top
+        
+        guard scrollOffset < maxOffset else {
+            return self.topNavOpacity
+        }
+        
+        let normalizedOffset = min(max(scrollOffset, minOffset), maxOffset)
+        let opacity = (maxOffset - normalizedOffset) / (maxOffset - minOffset)
+        return max(0.0, min(Double(opacity), 1.0))
+    }
     
     private func checkIfOutOfFrame(innerGeometry: GeometryProxy, outerGeometry: GeometryProxy) {
         let textFrame = innerGeometry.frame(in: .global)
@@ -64,8 +144,10 @@ struct HomeView: View {
         // Check if the text frame is out of the bounds of the ScrollView
         if textFrame.maxY < scrollViewFrame.minY + 15 || textFrame.minY > scrollViewFrame.maxY {
             self.show_categories_title = true
+            self.topNavOpacity += 0.2
         } else {
             self.show_categories_title = false
+            self.topNavOpacity = 0
         }
     }
     
@@ -78,6 +160,7 @@ struct HomeView: View {
                         backgroundColor: Color.EZNotesLightBlack,
                         categoriesAndSets: categoriesAndSets,
                         changeNavbarColor: $show_categories_title,
+                        navbarOpacity: $topNavOpacity,
                         categorySearch: $categorySearch,
                         searchDone: $searchDone,
                         lookedUpCategoriesAndSets: $lookedUpCategoriesAndSets
@@ -117,7 +200,18 @@ struct HomeView: View {
                                         .frame(maxWidth: .infinity, maxHeight: 50)
                                         .padding([.top], 25)
                                         .padding([.bottom], 10)
-                                        .background(Color.clear)
+                                        .background(
+                                            GeometryReader { innerGeometry in
+                                                Color.clear
+                                                    .onAppear {
+                                                        updateScrollOffset(innerGeometry: innerGeometry)
+                                                    }
+                                                    .onChange(of: innerGeometry.frame(in: .global).minY) {
+                                                        updateScrollOffset(innerGeometry: innerGeometry)
+                                                    }
+                                            }
+                                            .frame(height: 0)
+                                        )//(Color.clear)
                                         //.opacity(self.show_categories_title ? 0 : 1)
                                         
                                         //LazyVGrid(columns: columns, spacing: 10) {
@@ -148,7 +242,11 @@ struct HomeView: View {
                                                                         VStack {
                                                                             HStack {
                                                                                 Text(key)
-                                                                                    .foregroundStyle(.white)
+                                                                                    .foregroundStyle(
+                                                                                        self.categoryCustomTextColors.keys.contains(key)
+                                                                                            ? self.categoryCustomTextColors[key]!
+                                                                                            : .white
+                                                                                    )
                                                                                     .font(.system(size: 18.5, design: .rounded))
                                                                                     .fontWeight(.semibold)
                                                                                     .multilineTextAlignment(.center)
@@ -157,7 +255,11 @@ struct HomeView: View {
                                                                                     .frame(height: 35)
                                                                                 
                                                                                 Text("Sets: \(self.categoriesAndSets[key]!.count)")
-                                                                                    .foregroundStyle(.white)
+                                                                                    .foregroundStyle(
+                                                                                        self.categoryCustomTextColors.keys.contains(key)
+                                                                                            ? self.categoryCustomTextColors[key]!
+                                                                                            : .white
+                                                                                    )
                                                                                     .font(.system(size: 18.5, design: .rounded))
                                                                                     .fontWeight(.medium)
                                                                                     .multilineTextAlignment(.center)
@@ -165,7 +267,11 @@ struct HomeView: View {
                                                                             .frame(maxWidth: (prop.size.width - 20) - 180, maxHeight: .infinity, alignment: .center)
                                                                         }
                                                                         .frame(maxWidth: .infinity, maxHeight: 90, alignment: .top)
-                                                                        .background(Color.EZNotesOrange.background(.ultraThinMaterial).environment(\.colorScheme, .light))
+                                                                        .background(
+                                                                            self.categoryCustomColors.keys.contains(key)
+                                                                                ? AnyView(self.categoryCustomColors[key].background(.ultraThinMaterial).environment(\.colorScheme, .light))
+                                                                            : AnyView(Color.EZNotesOrange.background(.ultraThinMaterial).environment(\.colorScheme, .light))
+                                                                        )
                                                                         .cornerRadius(15, corners: [.topRight])
                                                                         .padding([.leading], -20)
                                                                         
@@ -276,132 +382,253 @@ struct HomeView: View {
                                             Text(self.categoryBeingEdited)
                                                 .frame(maxWidth: .infinity, maxHeight: 100, alignment: .center)
                                                 .foregroundStyle(.white)
-                                                .shadow(color: .white, radius: 3.5)
+                                                .shadow(color: .white, radius: 2)
                                                 .font(.system(size: 50, design: .rounded))
                                                 //.lineLimit(1)
                                                 .fontWeight(.bold)
                                                 .multilineTextAlignment(.center)
                                             
                                             HStack {
-                                                //VStack {
+                                                VStack {
                                                     Button(action: {
                                                         self.editSection = "edit"
                                                     }) {
                                                         Text("Edit")
                                                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                                                             .padding(5)
-                                                            .foregroundStyle(self.editSection != "edit" ? Color.EZNotesOrange : Color.EZNotesBlack)
-                                                            .font(.system(size: 15))
-                                                            .fontWeight(.bold)
+                                                            .foregroundStyle(self.editSection != "edit" ? Color.EZNotesBlack : Color.EZNotesOrange)
+                                                            .font(.system(size: 18))
+                                                            .fontWeight(.medium)
                                                     }
-                                                    .padding([.leading], 25)
-                                                    .buttonStyle(.borderedProminent)
-                                                    .cornerRadius(15)
-                                                    .tint(self.editSection == "edit"
-                                                          ? Color.white.opacity(0.35)
-                                                          : Color.EZNotesBlack.opacity(0.75)
-                                                    )
+                                                    .buttonStyle(.borderless)
                                                     .animation(.easeIn(duration: 0.5), value: self.editSection == "edit")
                                                     .animation(.easeOut(duration: 0.5), value: self.editSection != "edit")
-                                                /*}
-                                                .frame(maxWidth: 125, maxHeight: 30, alignment: .leading)
+                                                }
+                                                .frame(maxWidth: 150, maxHeight: .infinity)
+                                                .background(
+                                                    self.editSection == "edit"
+                                                            ? AnyView(RoundedRectangle(cornerRadius: 15)
+                                                                .fill(.gray.opacity(0.70))
+                                                                .stroke(.white, lineWidth: 4))
+                                                            : AnyView(RoundedRectangle(cornerRadius: 15)
+                                                                .fill(.white.opacity(0.75)))
+                                                )
                                                 .cornerRadius(15)
-                                                .background(self.editSection == "edit"
-                                                    ? Color.white.opacity(0.55)
-                                                    : Color.EZNotesBlack.opacity(0.75)
-                                                )*/
                                                 
-                                                //VStack {
+                                                VStack {
                                                     Button(action: {
                                                         self.editSection = "preview"
                                                     }) {
                                                         Text("Preview")
                                                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                                                             .padding(5)
-                                                            .foregroundStyle(self.editSection != "preview" ? Color.EZNotesOrange : Color.EZNotesBlack)
-                                                            .font(.system(size: 15))
-                                                            .fontWeight(.bold)
+                                                            .foregroundStyle(self.editSection != "preview" ? Color.EZNotesBlack : Color.EZNotesOrange)
+                                                            .font(.system(size: 18))
+                                                            .fontWeight(.medium)
                                                     }
-                                                    .padding([.leading, .trailing], 15)
-                                                    .buttonStyle(.borderedProminent)
-                                                    .cornerRadius(15)
-                                                    .tint(self.editSection == "preview"
-                                                          ? Color.white.opacity(0.55)
-                                                          : Color.EZNotesBlack.opacity(0.75)
-                                                    )
+                                                    .padding([.leading, .trailing], 30)
+                                                    .buttonStyle(.borderless)
                                                     .animation(.easeIn(duration: 0.5), value: self.editSection == "preview")
                                                     .animation(.easeOut(duration: 0.5), value: self.editSection != "preview")
-                                                    //.buttonStyle(.borderless)
-                                                /*}
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                                                }
+                                                .frame(maxWidth: 150, maxHeight: .infinity)
                                                 .background(self.editSection == "preview"
-                                                    ? Color.white.opacity(0.55)
-                                                    : Color.EZNotesBlack.opacity(0.75)
-                                                )*/
+                                                            ? AnyView(RoundedRectangle(cornerRadius: 15)
+                                                                .fill(.gray.opacity(0.70))
+                                                                .stroke(.white, lineWidth: 4))
+                                                            : AnyView(RoundedRectangle(cornerRadius: 15)
+                                                                .fill(.white.opacity(0.75)))
+                                                )
+                                                .cornerRadius(15)
                                             }
-                                            .frame(maxWidth: 300, maxHeight: 40, alignment: .top)
-                                            //.cornerRadius(15)
-                                            .padding([.top], 25)
+                                            .frame(maxWidth: prop.size.width - 50, maxHeight: 40, alignment: .top)
+                                            .cornerRadius(15)
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: 265)
-                                        /*.background(
-                                            /*Image("Category-Edit-Background")//uiImage: self.categoryBeingEditedImage)
-                                                .resizable()
-                                                .frame(width: nil, height: 265)
-                                                .scaledToFit()
-                                                .cornerRadius(15, corners: [.topLeft, .topRight])
-                                                .overlay(
-                                                    Color.EZNotesLightBlack.opacity(0.45)
-                                                )
-                                                .blur(radius: 2.5)
-                                                .mask(LinearGradient(gradient: Gradient(stops: [
-                                                            .init(color: .black, location: 0),
-                                                            .init(color: .clear, location: 1),
-                                                            .init(color: .black, location: 1),
-                                                            .init(color: .clear, location: 1)
-                                                        ]), startPoint: .top, endPoint: .bottom))*/
-                                            .black
-                                        )*/
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 265)
-                                    .background(.black)
+                                    .background(
+                                        Image(uiImage: self.categoryBeingEditedImage)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .overlay(
+                                                Color.EZNotesLightBlack.opacity(0.45)
+                                            )
+                                            .blur(radius: 2.5)
+                                    )
                                     
                                     VStack {
                                         /* MARK: "Padding". */
-                                        VStack { }.frame(maxWidth: .infinity, maxHeight: 25)
+                                        VStack {
+                                            
+                                        }.frame(maxWidth: .infinity, maxHeight: 15)
                                         
                                         if self.editSection == "edit" {
                                             VStack {
-                                                HStack {
-                                                    VStack {
+                                                Text("Edit Details")
+                                                    .frame(maxWidth: .infinity, maxHeight: 25)
+                                                    .padding([.top], 15)
+                                                    .font(.system(size: 20))
+                                                    .fontWeight(.semibold)
+                                                
+                                                Divider()
+                                                    .frame(width: prop.size.width - 50)
+                                                
+                                                VStack {
+                                                    //VStack {
                                                         Text("Category Title: ")
                                                             .frame(maxWidth: .infinity, maxHeight: 24, alignment: .leading)
-                                                            .padding([.leading], 15)
+                                                            //.padding([.leading], 15)
                                                             .foregroundStyle(.white)
                                                             .font(.system(size: 20, design: .rounded))
-                                                            .fontWeight(.semibold)
+                                                            .fontWeight(.light)
                                                         
                                                         TextField("New Title...", text: $newCategoryName)
                                                             .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                            .padding([.leading], 15)
                                                             .padding(7)
-                                                            .padding(.horizontal, 15)
+                                                            //.padding(.horizontal, 15)
                                                             .background(Color(.systemGray6))
                                                             .cornerRadius(7.5)
-                                                            .padding(.horizontal, 5)
-                                                    }
+                                                            //.padding(.horizontal, 5)
+                                                    //}
                                                     
-                                                    Spacer()
                                                 }
-                                                .frame(maxWidth: prop.size.width - 120, maxHeight: 80)
-                                                .padding([.top], 40)
-                                                .cornerRadius(10)
+                                                .frame(maxWidth: prop.size.width - 80, maxHeight: 80)
+                                                .padding([.top], 25)
                                                 
-                                                Divider()
-                                                    .frame(width: prop.size.width - 120)
+                                                VStack {
+                                                    HStack {
+                                                        Text("Category Description")
+                                                            .frame(maxWidth: .infinity, maxHeight: 24, alignment: .leading)
+                                                        //.padding([.leading], 15)
+                                                            .foregroundStyle(.white)
+                                                            .font(.system(size: 20, design: .rounded))
+                                                            .fontWeight(.light)
+                                                        
+                                                        Button(action: {
+                                                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                                                            self.newCategoryDescriptionFocus = false
+                                                            
+                                                            self.categoryDescriptions[self.categoryBeingEdited] = self.newCategoryDescription
+                                                        }) {
+                                                            Text("Save")
+                                                                .foregroundStyle(Color.EZNotesBlue)
+                                                                .font(.system(size: 16))
+                                                                .fontWeight(.semibold)
+                                                        }
+                                                    }
+                                                    .frame(maxWidth: .infinity, maxHeight: 25)
+                                                    
+                                                    TextField("Description...", text: $newCategoryDescription, axis: .vertical)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .padding([.leading], 15)
+                                                        .padding(7)
+                                                        //.padding(.horizontal, 15)
+                                                        .background(Color(.systemGray6))
+                                                        .cornerRadius(7.5)
+                                                        .lineLimit(3...5)
+                                                        .onChange(of: self.newCategoryDescription) {
+                                                            if self.newCategoryDescription.count > 80 {
+                                                                self.newCategoryDescription = String(self.newCategoryDescription.prefix(80))
+                                                            }
+                                                        }
+                                                    
+                                                    Text("\(self.newCategoryDescription.count) out of 80 characters")
+                                                        .frame(maxWidth: .infinity, maxHeight: 15, alignment: .leading)
+                                                        .padding([.leading], 5)
+                                                        .foregroundStyle(self.newCategoryDescription.count < 80
+                                                                ? self.newCategoryDescription.count > 70 && self.newCategoryDescription.count < 80
+                                                                    ? .yellow
+                                                                    : Color.secondary
+                                                                : .red
+                                                        )
+                                                        .font(.system(size: 10, design: .rounded))
+                                                        .fontWeight(.medium)
+                                                }
+                                                .frame(maxWidth: prop.size.width - 80, maxHeight: 140)
+                                                .padding([.top], 5)
+                                                
+                                                VStack {
+                                                    //VStack {
+                                                    HStack {
+                                                        Text("Category Color")
+                                                            .frame(maxWidth: .infinity, maxHeight: 24, alignment: .leading)
+                                                        //.padding([.leading], 15)
+                                                            .foregroundStyle(.white)
+                                                            .font(.system(size: 20, design: .rounded))
+                                                            .fontWeight(.light)
+                                                        
+                                                        if self.toggleCategoryBackgroundColorPicker {
+                                                            ColorPicker("Select Color", selection: $newCategoryDisplayColor)
+                                                                .padding(5.5)
+                                                                .background(Color.EZNotesLightBlack)
+                                                                .cornerRadius(15)
+                                                                .onChange(of: self.newCategoryDisplayColor) {
+                                                                    self.categoryCustomColors[self.categoryBeingEdited] = self.newCategoryDisplayColor
+                                                                }
+                                                        }
+                                                    }
+                                                    .frame(maxWidth: .infinity, maxHeight: 40)
+                                                    
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(
+                                                            self.categoryCustomColors.keys.contains(self.categoryBeingEdited)
+                                                            ? self.categoryCustomColors[self.categoryBeingEdited]!
+                                                            : self.newCategoryDisplayColor
+                                                        )
+                                                        .frame(maxWidth: prop.size.width - 80, maxHeight: 120)
+                                                        .onTapGesture { self.toggleCategoryBackgroundColorPicker = true }
+                                                }
+                                                .frame(maxWidth: prop.size.width - 80, maxHeight: 80)
+                                                .padding([.top], 5)
+                                                
+                                                VStack {
+                                                    HStack {
+                                                        Text("Text Color")
+                                                            .frame(maxWidth: .infinity, maxHeight: 24, alignment: .leading)
+                                                        //.padding([.leading], 15)
+                                                            .foregroundStyle(.white)
+                                                            .font(.system(size: 20, design: .rounded))
+                                                            .fontWeight(.light)
+                                                        
+                                                        if self.toggleCategoryTextColorPicker {
+                                                            ColorPicker("Select Color", selection: $newCategoryTextColor)
+                                                                .padding(5.5)
+                                                                .background(Color.EZNotesLightBlack)
+                                                                .cornerRadius(15)
+                                                                .onChange(of: self.newCategoryTextColor) {
+                                                                    self.categoryCustomTextColors[self.categoryBeingEdited] = self.newCategoryTextColor
+                                                                }
+                                                        }
+                                                    }
+                                                    .frame(maxWidth: .infinity, maxHeight: 40)
+                                                    
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(
+                                                            self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
+                                                                ? self.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                : self.newCategoryTextColor
+                                                        )
+                                                        .frame(maxWidth: prop.size.width - 80, maxHeight: 120)
+                                                        .onTapGesture { self.toggleCategoryTextColorPicker = true }
+                                                }
+                                                .frame(maxWidth: prop.size.width - 80, maxHeight: 80)
+                                                .padding([.top], 5)
                                                 
                                                 Spacer()
                                                 
-                                                Button(action: { print("Finished Editing!") }) {
+                                                Button(action: {
+                                                    if self.newCategoryDisplayColor != Color.EZNotesOrange {
+                                                        writeCategoryCustomColors(categoryCustomColors: self.categoryCustomColors)
+                                                        self.newCategoryDisplayColor = Color.EZNotesOrange
+                                                    }
+                                                    
+                                                    if self.newCategoryTextColor != Color.white {
+                                                        writeCategoryTextColors(categoryTextColors: self.categoryCustomTextColors)
+                                                        self.newCategoryTextColor = Color.white
+                                                    }
+                                                }) {
                                                     Text("Save Changes")
                                                         .frame(width: prop.size.width - 80, height: 40)
                                                         .padding(5)
@@ -410,7 +637,7 @@ struct HomeView: View {
                                                         .fontWeight(.medium)
                                                 }
                                                 .buttonStyle(.borderedProminent)
-                                                .tint(Color.EZNotesBlack.opacity(0.75))
+                                                .tint(Color.EZNotesBlack.opacity(0.85))
                                                 .padding([.bottom], 35)
                                             }
                                             .frame(maxWidth: prop.size.width, maxHeight: .infinity)
@@ -429,7 +656,7 @@ struct HomeView: View {
                                                         )*/
                                                         .black
                                                     )
-                                                    .shadow(color: .white, radius: 2.5)
+                                                    .shadow(color: .black, radius: 6.5)
                                                 //(.clear)
                                                     //.shadow(color: .white, radius: 2.5)
                                                     /*.stroke(LinearGradient(
@@ -445,7 +672,9 @@ struct HomeView: View {
                                                     .resizable()
                                                     .blur(radius: 2.5)
                                                     .cornerRadius(15)*/
-                                            ).edgesIgnoringSafeArea(.bottom) //(.black.opacity(0.50))
+                                            )
+                                            .edgesIgnoringSafeArea(.bottom)
+                                            //(.black.opacity(0.50))
                                         } else {
                                             VStack {
                                                 Text("Previewing...")
@@ -455,6 +684,15 @@ struct HomeView: View {
                                     }
                                     .animation(.default, value: self.editSection == "edit" || self.editSection == "preview")
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .onTapGesture {
+                                        self.toggleCategoryTextColorPicker = false
+                                        self.toggleCategoryBackgroundColorPicker = false
+                                        
+                                        if self.newCategoryDescriptionFocus {
+                                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                                            self.newCategoryDescriptionFocus = false
+                                        }
+                                    }
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .background(
@@ -468,7 +706,7 @@ struct HomeView: View {
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )*/
-                                    .black
+                                    .white
                                 )
                             }
                         }

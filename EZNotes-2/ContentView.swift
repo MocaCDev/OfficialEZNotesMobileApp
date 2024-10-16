@@ -41,6 +41,11 @@ struct ContentView: View {
     @State private var categoriesAndSets: [String: Array<String>] = getCategoryData() /* MARK: Key will be the category name, value will be the set names */
     @State private var categoryCreationDates: [String: Date] = getCategoryCreationDates()
     @State private var categoryImages: [String: UIImage] = getCategoriesImageData() /* MARK: Key will be the category name, value will be the categories image (first uploaded image for category). */
+    @State private var categoryDescriptions: [String: String] = getCategoryDescriptions()
+    @State private var categoryCustomColors: [String: Color] = getCategoryCustomColors()
+    
+    /* MARK: The below colors will apply only to text that is on the top of the right-side of the category details. */
+    @State private var categoryCustomTextColors: [String: Color] = getCategoryCustomTextColors()
     
     //private let rotationChangePublisher = NotificationCenter.default
         //.publisher(for: UIDevice.orientationDidChangeNotification)
@@ -58,7 +63,10 @@ struct ContentView: View {
                         prop: prop,
                         categoriesAndSets: $categoriesAndSets,
                         categoryCreationDates: $categoryCreationDates,
-                        categoryImages: $categoryImages
+                        categoryImages: $categoryImages,
+                        categoryDescriptions: $categoryDescriptions,
+                        categoryCustomColors: $categoryCustomColors,
+                        categoryCustomTextColors: $categoryCustomTextColors
                     )
                 }
                 /* TODO: Add "Core.swift". */

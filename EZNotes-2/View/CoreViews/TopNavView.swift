@@ -37,6 +37,7 @@ struct TopNavHome: View {
     var categoriesAndSets: [String: Array<String>]
     
     @Binding public var changeNavbarColor: Bool
+    @Binding public var navbarOpacity: Double
     @Binding public var categorySearch: String
     @Binding public var searchDone: Bool
     
@@ -212,7 +213,7 @@ struct TopNavHome: View {
             .frame(maxWidth: .infinity, maxHeight: 100, alignment: .top)
             .background(!self.changeNavbarColor
                         ? AnyView(Color.black)
-                : AnyView(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+                        : AnyView(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark).opacity(navbarOpacity))
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

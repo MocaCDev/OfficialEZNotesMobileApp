@@ -74,6 +74,76 @@ public func writeCategoryImages(categoryImages: [String: UIImage]) -> Void {
     }
 }
 
+public func writeCategoryDescriptions(categoryDescriptions: [String: String]) -> Void {
+    guard let _ = try? writeJSON(data: categoryDescriptions, filename: "category_descriptions.json") else {
+        print("[writeCategoryDescriptions] -> Failed to write \(categoryDescriptions) to cache")
+        return
+    }
+}
+
+struct ColorData: Codable {
+    var red: Double
+    var green: Double
+    var blue: Double
+}
+
+extension Color {
+    func components() -> (red: Double, green: Double, blue: Double) {
+        let color = UIColor(self) // Convert SwiftUI Color to UIColor
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        color.getRed(&red, green: &green, blue: &blue, alpha: nil)
+
+        return (Double(red), Double(green), Double(blue))
+    }
+}
+
+
+public func writeCategoryCustomColors(categoryCustomColors: [String: Color]) -> Void {
+    var data: [String: [String: Double]] = [:]
+    
+    let colorDataArray = categoryCustomColors.map { (name, color) -> ColorData in
+        let components = color.components()
+        return ColorData(red: components.red, green: components.green, blue: components.blue)
+    }
+    
+    for (index, value) in categoryCustomColors.enumerated() {
+        data[value.key] = [
+            "Red": colorDataArray[index].red,
+            "Green": colorDataArray[index].green,
+            "Blue": colorDataArray[index].blue
+        ]
+    }
+    
+    guard let _ = try? writeJSON(data: data, filename: "category_custom_colors.json") else {
+        print("[writeCategoryCustomColors] -> Failed to write \(data) to cache")
+        return
+    }
+}
+
+public func writeCategoryTextColors(categoryTextColors: [String: Color]) -> Void {
+    var data: [String: [String: Double]] = [:]
+    
+    let colorDataArray = categoryTextColors.map { (name, color) -> ColorData in
+        let components = color.components()
+        return ColorData(red: components.red, green: components.green, blue: components.blue)
+    }
+    
+    for (index, value) in categoryTextColors.enumerated() {
+        data[value.key] = [
+            "Red": colorDataArray[index].red,
+            "Green": colorDataArray[index].green,
+            "Blue": colorDataArray[index].blue
+        ]
+    }
+    
+    guard let _ = try? writeJSON(data: data, filename: "category_custom_text_colors.json") else {
+        print("[writeCategoryTextColors] -> Failed to write \(data) to cache")
+        return
+    }
+}
+
 public func getCategoryData() -> [String: Array<String>] {
     if let result = try? obtainJSON(type: [String: Array<String>].self, filename: "categories_data.json") { return result }
     else {
@@ -105,4 +175,43 @@ public func getCategoriesImageData() -> [String: UIImage] {
     }
     
     return imagesData
+}
+
+public func getCategoryDescriptions() -> [String: String] {
+    guard let result = try? obtainJSON(type: [String: String].self, filename: "category_descriptions.json") else {
+        print("[getCategoryDescriptions] -> Failed to get category descriptions from cache")
+        return [:]
+    }
+    
+    return result
+}
+
+public func getCategoryCustomColors() -> [String: Color] {
+    guard let result = try? obtainJSON(type: [String: [String: Double]].self, filename: "category_custom_colors.json") else {
+        print("[getCategoryDescriptions] -> Failed to get custon category display colors from cache")
+        return [:]
+    }
+    
+    var retData: [String: Color] = [:]
+    
+    for (_, value) in result.enumerated() {
+        retData[value.key] = Color(red: value.value["Red"]!, green: value.value["Green"]!, blue: value.value["Blue"]!)
+    }
+    
+    return retData
+}
+
+public func getCategoryCustomTextColors() -> [String: Color] {
+    guard let result = try? obtainJSON(type: [String: [String: Double]].self, filename: "category_custom_text_colors.json") else {
+        print("[getCategoryCustomTextColors] -> Failed to get custom category text colors from cache")
+        return [:]
+    }
+    
+    var retData: [String: Color] = [:]
+    
+    for (_, value) in result.enumerated() {
+        retData[value.key] = Color(red: value.value["Red"]!, green: value.value["Green"]!, blue: value.value["Blue"]!)
+    }
+    
+    return retData
 }

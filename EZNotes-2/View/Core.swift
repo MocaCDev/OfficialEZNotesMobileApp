@@ -78,6 +78,9 @@ struct CoreApp: View {
     @Binding public var categoriesAndSets: [String: Array<String>]
     @Binding public var categoryCreationDates: [String: Date]
     @Binding public var categoryImages: [String: UIImage]
+    @Binding public var categoryDescriptions: [String: String]
+    @Binding public var categoryCustomColors: [String: Color]
+    @Binding public var categoryCustomTextColors: [String: Color]
     
     @State private var categories: Array<String> = []
     @State private var sets: Array<String> = []
@@ -157,6 +160,9 @@ struct CoreApp: View {
                     categoriesAndSets: categoriesAndSets,
                     categoryImages: $categoryImages,
                     categoryCreationDates: categoryCreationDates,
+                    categoryDescriptions: $categoryDescriptions,
+                    categoryCustomColors: $categoryCustomColors,
+                    categoryCustomTextColors: $categoryCustomTextColors,
                     prop: prop
                 )
             } else if self.section == "chat" {
