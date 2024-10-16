@@ -152,6 +152,8 @@ struct TopNavHome: View {
                             )
                             .onSubmit {
                                 if !(self.categorySearch == "") {
+                                    self.lookedUpCategoriesAndSets.removeAll()
+                                    
                                     for (_, value) in self.categoriesAndSets.keys.enumerated() {
                                         if value.lowercased() == self.categorySearch.lowercased() || value.lowercased().contains(self.categorySearch.lowercased()) {
                                             self.lookedUpCategoriesAndSets[value] = self.categoriesAndSets[value]

@@ -29,12 +29,15 @@ struct HomeView: View {
     @Binding public var categoryImages: [String: UIImage]
     var categoryCreationDates: [String: Date]
     
-    /* MARK: For changing background image of category. */
+    /* MARK: For editing category details */
     @State private var photoPicker: PhotosPickerItem?
-    @State private var selectedImage: Image?
     @State private var editCategoryDetails: Bool = false
     @State private var categoryBeingEdited: String = ""
-    @State private var categoryBeingEditedImage: UIImage = UIImage(systemName: "plus")!
+    @State private var categoryBeingEditedImage: UIImage! = UIImage(systemName: "plus")!
+    @State private var categoryCreationDate: Date! = Date.now
+    @State private var editSection: String = "edit" /* MARK: Can be "edit" or "preview". */
+    @State private var editSectionYPos: CGFloat = 0
+    @State private var newCategoryName: String = ""
     
     @State private var home_section: String = "main"
     @State private var show_categories_title: Bool = false
@@ -262,34 +265,168 @@ struct HomeView: View {
                                 VStack {
                                     VStack {
                                         VStack {
+                                            Text("Editing Category")
+                                                .frame(maxWidth: .infinity, maxHeight: 25, alignment: .center)
+                                                .padding([.bottom], -15)
+                                                .foregroundStyle(Color.secondary)
+                                                .font(.system(size: 25, design: .rounded))
+                                                .fontWeight(.semibold)
+                                                .multilineTextAlignment(.center)
+                                            
                                             Text(self.categoryBeingEdited)
                                                 .frame(maxWidth: .infinity, maxHeight: 100, alignment: .center)
                                                 .foregroundStyle(.white)
-                                                .font(.system(size: 500, design: .rounded))
-                                                .minimumScaleFactor(0.01)
-                                                .lineLimit(1)
-                                                .fontWeight(.heavy)
+                                                .shadow(color: .white, radius: 3.5)
+                                                .font(.system(size: 50, design: .rounded))
+                                                //.lineLimit(1)
+                                                .fontWeight(.bold)
                                                 .multilineTextAlignment(.center)
                                         }
-                                        .frame(maxWidth: .infinity, maxHeight: 415, alignment: .center)
+                                        .frame(maxWidth: .infinity, maxHeight: 265)
                                         .background(
-                                            Image(uiImage: self.categoryBeingEditedImage)
+                                            Image("Category-Edit-Background")//uiImage: self.categoryBeingEditedImage)
                                                 .resizable()
-                                                .frame(width: nil, height: 415)
+                                                .frame(width: nil, height: 265)
                                                 .scaledToFit()
                                                 .cornerRadius(15, corners: [.topLeft, .topRight])
                                                 .overlay(
-                                                    Color.EZNotesLightBlack.opacity(0.65)
+                                                    Color.EZNotesLightBlack.opacity(0.45)
                                                 )
+                                                .blur(radius: 2.5)
+                                                .mask(LinearGradient(gradient: Gradient(stops: [
+                                                            .init(color: .black, location: 0),
+                                                            .init(color: .clear, location: 1),
+                                                            .init(color: .black, location: 1),
+                                                            .init(color: .clear, location: 1)
+                                                        ]), startPoint: .top, endPoint: .bottom))
                                         )
                                     }
-                                    .frame(maxWidth: .infinity, maxHeight: 400, alignment: .top)
+                                    .frame(maxWidth: .infinity, maxHeight: 250, alignment: .top)
                                     
                                     VStack {
+                                        HStack {
+                                            VStack {
+                                                Button(action: {
+                                                    self.editSection = "edit"
+                                                }) {
+                                                    Text("Edit")
+                                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                                        .padding(5)
+                                                        .foregroundStyle(self.editSection != "edit" ? Color.EZNotesOrange : Color.EZNotesBlack)
+                                                        .font(.system(size: 15))
+                                                        .fontWeight(.bold)
+                                                }
+                                                .animation(.easeIn(duration: 0.5), value: self.editSection == "edit")
+                                                .animation(.easeOut(duration: 0.5), value: self.editSection != "edit")
+                                                .buttonStyle(.borderless)
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                            .background(self.editSection == "edit"
+                                                ? Color.white.opacity(0.55)
+                                                : Color.clear
+                                            )
+                                            
+                                            VStack {
+                                                Button(action: {
+                                                    self.editSection = "preview"
+                                                }) {
+                                                    Text("Preview")
+                                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                                        .padding(5)
+                                                        .foregroundStyle(self.editSection != "preview" ? Color.EZNotesOrange : Color.EZNotesBlack)
+                                                        .font(.system(size: 15))
+                                                        .fontWeight(.bold)
+                                                }
+                                                .animation(.easeIn(duration: 0.5), value: self.editSection == "preview")
+                                                .animation(.easeOut(duration: 0.5), value: self.editSection != "preview")
+                                                .buttonStyle(.borderless)
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                                            .background(self.editSection == "preview"
+                                                ? Color.white.opacity(0.55)
+                                                : Color.clear
+                                            )
+                                        }
+                                        .frame(maxWidth: 200, maxHeight: 30, alignment: .top)
+                                        .background(Color.EZNotesLightBlack.background(.ultraThickMaterial).environment(\.colorScheme, .dark))
+                                        .cornerRadius(15)
+                                        .padding([.top], 25)
                                         
+                                        if self.editSection == "edit" {
+                                            VStack {
+                                                HStack {
+                                                    Text("Category Title: ")
+                                                        .frame(maxWidth: .infinity, maxHeight: 24, alignment: .leading)
+                                                        .padding([.leading], 15)
+                                                        .foregroundStyle(.white)
+                                                        .font(.system(size: 20, design: .monospaced))
+                                                        .fontWeight(.semibold)
+                                                    
+                                                    Spacer()
+                                                    
+                                                    TextField("New Title...", text: $newCategoryName)
+                                                        .frame(maxWidth: .infinity, maxHeight: 20)
+                                                        .padding(7)
+                                                        .padding(.horizontal, 25)
+                                                        .background(Color(.systemGray6))
+                                                        .cornerRadius(7.5)
+                                                        .padding(.horizontal, 10)
+                                                }
+                                                .frame(maxWidth: prop.size.width - 100, maxHeight: 50)
+                                                .padding([.top], 40)
+                                                .cornerRadius(10)
+                                                
+                                                Divider()
+                                                    .frame(width: prop.size.width - 140)
+                                                
+                                                Spacer()
+                                                
+                                                Button(action: { print("Finished Editing!") }) {
+                                                    Text("Save Changes")
+                                                        .frame(width: prop.size.width - 50, height: 40)
+                                                        .padding(5)
+                                                        .foregroundStyle(.white)
+                                                        .font(.system(size: 22))
+                                                        .fontWeight(.medium)
+                                                }
+                                                .buttonStyle(.borderedProminent)
+                                                .tint(.black.opacity(0.50))
+                                            }
+                                            .frame(maxWidth: prop.size.width - 50, maxHeight: .infinity)
+                                            .cornerRadius(15)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.clear)
+                                                    .stroke(LinearGradient(
+                                                        gradient: Gradient(
+                                                            colors: [
+                                                                Color.EZNotesLightBlack,
+                                                                .black
+                                                            ]),
+                                                        startPoint: .top,
+                                                        endPoint: .bottom
+                                                    ), lineWidth: 1)
+                                            ) //(.black.opacity(0.50))
+                                        } else {
+                                            VStack {
+                                                Text("Previewing...")
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        }
                                     }
+                                    .animation(.default, value: self.editSection == "edit" || self.editSection == "preview")
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .background(.black)
+                                    .background(
+                                        LinearGradient(
+                                            gradient: Gradient(
+                                                colors: [
+                                                    .black,
+                                                    Color.EZNotesLightBlack
+                                                ]),
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
