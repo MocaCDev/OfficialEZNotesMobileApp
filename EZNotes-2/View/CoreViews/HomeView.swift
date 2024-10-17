@@ -28,21 +28,29 @@ struct HomeView: View {
     var categoriesAndSets: [String: Array<String>]
     @Binding public var categoryImages: [String: UIImage]
     var categoryCreationDates: [String: Date]
+    
+    /* MARK: The below bindings are all custom to the category cards. The values below will be set via the edit popup. */
     @Binding public var categoryDescriptions: [String: String]
     @Binding public var categoryCustomColors: [String: Color]
     @Binding public var categoryCustomTextColors: [String: Color]
     
-    /* MARK: For editing category details */
+    /* MARK: (Edit popup) changing category background image */
     @State private var photoPicker: PhotosPickerItem?
+    @State private var categoryBeingEditedImage: UIImage! = UIImage(systemName: "plus")!
+    
+    /* MARK: (Edit popup) variables for triggering edit popup and storing the name of the category being edited. */
     @State private var editCategoryDetails: Bool = false
     @State private var categoryBeingEdited: String = ""
-    @State private var categoryBeingEditedImage: UIImage! = UIImage(systemName: "plus")!
-    @State private var categoryCreationDate: Date! = Date.now
-    @State private var editSection: String = "edit" /* MARK: Can be "edit" or "preview". */
-    @State private var editSectionYPos: CGFloat = 0
+    
+    /* MARK: (Edit popup) what section of the edit popup are we in? Can be "edit" or "preview". */
+    @State private var editSection: String = "edit"
+    
+    /* MARK: (Edit popup) variables for updating categories name and/or adding a description. */
     @State private var newCategoryName: String = ""
     @State private var newCategoryDescription: String = ""
     @FocusState private var newCategoryDescriptionFocus: Bool
+    
+    /* MARK: (Edit Popup) changing category "cards" text/display colors. */
     @State private var toggleCategoryBackgroundColorPicker: Bool = false
     @State private var toggleCategoryTextColorPicker: Bool = false
     @State private var newCategoryDisplayColor: Color = Color.EZNotesOrange
@@ -275,6 +283,32 @@ struct HomeView: View {
                                                                         .cornerRadius(15, corners: [.topRight])
                                                                         .padding([.leading], -20)
                                                                         
+                                                                        if self.categoryDescriptions.count > 0 && self.categoryDescriptions.keys.contains(key) {
+                                                                            Text(self.categoryDescriptions[key]!)
+                                                                                .foregroundStyle(.white)
+                                                                                .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
+                                                                                //.font(.system(size: 12))
+                                                                                .font(.system(size: 300))  // 1
+                                                                                .minimumScaleFactor(0.01)
+                                                                                .fontWeight(.medium)
+                                                                        } else {
+                                                                            Text("No Description")
+                                                                                .foregroundStyle(.secondary)
+                                                                                .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
+                                                                                //.font(.system(size: 12))
+                                                                                .font(.system(size: 300))  // 1
+                                                                                .minimumScaleFactor(0.01)
+                                                                                .fontWeight(.medium)
+                                                                        }
+                                                                        
+                                                                        Text("Created \(self.categoryCreationDates[key]!.formatted(date: .numeric, time: .omitted))")
+                                                                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .center)
+                                                                            .foregroundStyle(.white)
+                                                                            .fontWeight(.light)
+                                                                            .font(.system(size: 15))
+                                                                        
+                                                                        Spacer()
+                                                                        
                                                                         HStack {
                                                                             Button(action: {
                                                                                 self.categoryBeingEdited = key
@@ -327,16 +361,10 @@ struct HomeView: View {
                                                                             }
                                                                             .padding([.trailing], 5)
                                                                         }
-                                                                        .frame(maxWidth: .infinity, maxHeight: 30)
+                                                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                                                                         .padding([.top], 5)
-                                                                        
-                                                                        Spacer()
-                                                                        
-                                                                        Text("Created \(self.categoryCreationDates[key]!.formatted(date: .numeric, time: .omitted))")
-                                                                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .center)
-                                                                            .foregroundStyle(.white)
-                                                                            .fontWeight(.light)
-                                                                            .font(.system(size: 15))
+                                                                        .padding([.leading], -20)
+                                                                        .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
                                                                         
                                                                         Spacer()
                                                                     }
@@ -520,19 +548,25 @@ struct HomeView: View {
                                                     }
                                                     .frame(maxWidth: .infinity, maxHeight: 25)
                                                     
-                                                    TextField("Description...", text: $newCategoryDescription, axis: .vertical)
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .padding([.leading], 15)
-                                                        .padding(7)
-                                                        //.padding(.horizontal, 15)
-                                                        .background(Color(.systemGray6))
-                                                        .cornerRadius(7.5)
-                                                        .lineLimit(3...5)
-                                                        .onChange(of: self.newCategoryDescription) {
-                                                            if self.newCategoryDescription.count > 80 {
-                                                                self.newCategoryDescription = String(self.newCategoryDescription.prefix(80))
-                                                            }
+                                                    TextField(
+                                                        self.categoryDescriptions.keys.contains(self.categoryBeingEdited)
+                                                            ? self.categoryDescriptions[self.categoryBeingEdited]!
+                                                            : "Description...",
+                                                        text: $newCategoryDescription,
+                                                        axis: .vertical
+                                                    )
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding([.leading], 15)
+                                                    .padding(7)
+                                                    //.padding(.horizontal, 15)
+                                                    .background(Color(.systemGray6))
+                                                    .cornerRadius(7.5)
+                                                    .lineLimit(3...5)
+                                                    .onChange(of: self.newCategoryDescription) {
+                                                        if self.newCategoryDescription.count > 80 {
+                                                            self.newCategoryDescription = String(self.newCategoryDescription.prefix(80))
                                                         }
+                                                    }
                                                     
                                                     Text("\(self.newCategoryDescription.count) out of 80 characters")
                                                         .frame(maxWidth: .infinity, maxHeight: 15, alignment: .leading)
@@ -561,12 +595,16 @@ struct HomeView: View {
                                                         
                                                         if self.toggleCategoryBackgroundColorPicker {
                                                             ColorPicker("Select Color", selection: $newCategoryDisplayColor)
-                                                                .padding(5.5)
+                                                                .padding(3.5)
                                                                 .background(Color.EZNotesLightBlack)
                                                                 .cornerRadius(15)
-                                                                .onChange(of: self.newCategoryDisplayColor) {
-                                                                    self.categoryCustomColors[self.categoryBeingEdited] = self.newCategoryDisplayColor
-                                                                }
+                                                                /*.onChange(of: self.newCategoryDisplayColor) {
+                                                                    if self.newCategoryDisplayColor == Color.EZNotesOrange {
+                                                                        self.newCategoryCustomColors.removeValue(forKey: self.categoryBeingEdited)
+                                                                    } else {
+                                                                        self.newCategoryCustomColors[self.categoryBeingEdited] = self.newCategoryDisplayColor
+                                                                    }
+                                                                }*/
                                                         }
                                                     }
                                                     .frame(maxWidth: .infinity, maxHeight: 40)
@@ -594,12 +632,12 @@ struct HomeView: View {
                                                         
                                                         if self.toggleCategoryTextColorPicker {
                                                             ColorPicker("Select Color", selection: $newCategoryTextColor)
-                                                                .padding(5.5)
+                                                                .padding(3.5)
                                                                 .background(Color.EZNotesLightBlack)
                                                                 .cornerRadius(15)
-                                                                .onChange(of: self.newCategoryTextColor) {
-                                                                    self.categoryCustomTextColors[self.categoryBeingEdited] = self.newCategoryTextColor
-                                                                }
+                                                                /*.onChange(of: self.newCategoryTextColor) {
+                                                                    self.newCategoryCustomTextColors[self.categoryBeingEdited] = self.newCategoryTextColor
+                                                                }*/
                                                         }
                                                     }
                                                     .frame(maxWidth: .infinity, maxHeight: 40)
@@ -619,14 +657,29 @@ struct HomeView: View {
                                                 Spacer()
                                                 
                                                 Button(action: {
+                                                    self.toggleCategoryTextColorPicker = false
+                                                    self.toggleCategoryBackgroundColorPicker = false
+                                                    
                                                     if self.newCategoryDisplayColor != Color.EZNotesOrange {
+                                                        self.categoryCustomColors[self.categoryBeingEdited] = self.newCategoryDisplayColor
                                                         writeCategoryCustomColors(categoryCustomColors: self.categoryCustomColors)
                                                         self.newCategoryDisplayColor = Color.EZNotesOrange
                                                     }
                                                     
                                                     if self.newCategoryTextColor != Color.white {
+                                                        self.categoryCustomTextColors[self.categoryBeingEdited] = self.newCategoryTextColor
                                                         writeCategoryTextColors(categoryTextColors: self.categoryCustomTextColors)
                                                         self.newCategoryTextColor = Color.white
+                                                    }
+                                                    
+                                                    if self.newCategoryDescription.count > 0 {
+                                                        let str = self.newCategoryDescription.filter{!$0.isWhitespace || !$0.isNewline}
+                                                        
+                                                        if str == "" { return }
+                                                        
+                                                        self.categoryDescriptions[self.categoryBeingEdited] = self.newCategoryDescription
+                                                        writeCategoryDescriptions(categoryDescriptions: self.categoryDescriptions)
+                                                        self.newCategoryDescription.removeAll()
                                                     }
                                                 }) {
                                                     Text("Save Changes")
