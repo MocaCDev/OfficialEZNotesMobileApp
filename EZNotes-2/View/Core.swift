@@ -157,9 +157,9 @@ struct CoreApp: View {
             } else if self.section == "home" {
                 HomeView(
                     section: $section,
-                    categoriesAndSets: categoriesAndSets,
+                    categoriesAndSets: $categoriesAndSets,
                     categoryImages: $categoryImages,
-                    categoryCreationDates: categoryCreationDates,
+                    categoryCreationDates: $categoryCreationDates,
                     categoryDescriptions: $categoryDescriptions,
                     categoryCustomColors: $categoryCustomColors,
                     categoryCustomTextColors: $categoryCustomTextColors,
