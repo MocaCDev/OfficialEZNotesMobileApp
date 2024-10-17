@@ -241,7 +241,7 @@ struct HomeView: View {
                                                                      * */
                                                                     Image(uiImage: self.categoryImages[key]!)
                                                                         .resizable()
-                                                                        .frame(width: 150, height: 190)
+                                                                        .frame(width: 150.5, height: 190.5)
                                                                         .cornerRadius(15, corners: [.topLeft, .bottomLeft, .topRight, .bottomRight])
                                                                         .scaledToFit()
                                                                         .zIndex(1)
@@ -273,106 +273,183 @@ struct HomeView: View {
                                                                                     .multilineTextAlignment(.center)
                                                                             }
                                                                             .frame(maxWidth: (prop.size.width - 20) - 180, maxHeight: .infinity, alignment: .center)
+                                                                            .border(width: 0.5, edges: [.bottom], color: .white)
                                                                         }
-                                                                        .frame(maxWidth: .infinity, maxHeight: 90, alignment: .top)
-                                                                        .background(
+                                                                        .frame(maxWidth: .infinity, maxHeight: 40, alignment: .top)
+                                                                        /*.background(
                                                                             self.categoryCustomColors.keys.contains(key)
                                                                                 ? AnyView(self.categoryCustomColors[key].background(.ultraThinMaterial).environment(\.colorScheme, .light))
                                                                             : AnyView(Color.EZNotesOrange.background(.ultraThinMaterial).environment(\.colorScheme, .light))
-                                                                        )
+                                                                        )*/
                                                                         .cornerRadius(15, corners: [.topRight])
                                                                         .padding([.leading], -20)
                                                                         
-                                                                        if self.categoryDescriptions.count > 0 && self.categoryDescriptions.keys.contains(key) {
-                                                                            Text(self.categoryDescriptions[key]!)
-                                                                                .foregroundStyle(.white)
-                                                                                .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
-                                                                                //.font(.system(size: 12))
-                                                                                .font(.system(size: 300))  // 1
-                                                                                .minimumScaleFactor(0.01)
-                                                                                .fontWeight(.medium)
-                                                                        } else {
-                                                                            Text("No Description")
-                                                                                .foregroundStyle(.secondary)
-                                                                                .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
-                                                                                //.font(.system(size: 12))
-                                                                                .font(.system(size: 300))  // 1
-                                                                                .minimumScaleFactor(0.01)
-                                                                                .fontWeight(.medium)
-                                                                        }
-                                                                        
-                                                                        Text("Created \(self.categoryCreationDates[key]!.formatted(date: .numeric, time: .omitted))")
-                                                                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .center)
-                                                                            .foregroundStyle(.white)
-                                                                            .fontWeight(.light)
-                                                                            .font(.system(size: 15))
-                                                                        
-                                                                        Spacer()
-                                                                        
-                                                                        HStack {
-                                                                            Button(action: {
-                                                                                self.categoryBeingEdited = key
-                                                                                self.categoryBeingEditedImage = self.categoryImages[key]!
-                                                                                self.editCategoryDetails = true
-                                                                            }) {
-                                                                                Image(systemName: "pencil")
-                                                                                    .resizable()
-                                                                                    .frame(width: 14.5, height: 14.5)
-                                                                                    .foregroundStyle(Color.EZNotesBlue)
-                                                                                    .padding([.trailing], 10)
+                                                                        VStack {
+                                                                            VStack {
+                                                                                VStack {
+                                                                                    if self.categoryDescriptions.count > 0 && self.categoryDescriptions.keys.contains(key) {
+                                                                                        //ZStack {
+                                                                                        Text(self.categoryDescriptions[key]!)
+                                                                                            .foregroundStyle(
+                                                                                                self.categoryCustomTextColors.keys.contains(key)
+                                                                                                    ? self.categoryCustomTextColors[key]!
+                                                                                                    : .white
+                                                                                            )
+                                                                                            .frame(maxWidth: (prop.size.width - 20) - 200, maxHeight: 40, alignment: .leading)
+                                                                                            .padding([.leading], 20)
+                                                                                        //.font(.system(size: 12))
+                                                                                        //.font(.system(size: 300))  // 1
+                                                                                            .minimumScaleFactor(0.5)
+                                                                                            .fontWeight(.thin)
+                                                                                            .multilineTextAlignment(.leading)
+                                                                                        //}
+                                                                                        //.frame(maxWidth: .infinity, maxHeight: 40, alignment: .leading)
+                                                                                    } else {
+                                                                                        Text("No Description")
+                                                                                            .foregroundStyle(
+                                                                                                self.categoryCustomTextColors.keys.contains(key)
+                                                                                                    ? self.categoryCustomTextColors[key]!
+                                                                                                    : .white
+                                                                                            )
+                                                                                            .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
+                                                                                            .padding([.leading], 20)
+                                                                                        //.font(.system(size: 12))
+                                                                                            .font(.system(size: 300))  // 1
+                                                                                            .minimumScaleFactor(0.01)
+                                                                                            .fontWeight(.medium)
+                                                                                            .padding()
+                                                                                    }
+                                                                                    
+                                                                                    Text("Created \(self.categoryCreationDates[key]!.formatted(date: .numeric, time: .omitted))")
+                                                                                        .frame(maxWidth: (prop.size.width - 20) - 200, maxHeight: 20, alignment: .leading)
+                                                                                        .padding([.bottom], 5)
+                                                                                        .padding([.leading], 20)
+                                                                                        .foregroundStyle(
+                                                                                            self.categoryCustomTextColors.keys.contains(key)
+                                                                                                ? self.categoryCustomTextColors[key]!
+                                                                                                : .white
+                                                                                        )
+                                                                                        .fontWeight(.medium)
+                                                                                        .font(.system(size: 10))
+                                                                                        .multilineTextAlignment(.leading)
+                                                                                }
+                                                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                                                                .padding([.leading], 30)
                                                                                 
-                                                                                Text("Edit")
-                                                                                    .foregroundStyle(.white)
-                                                                                    .font(.system(size: 14))
-                                                                                    .fontWeight(.medium)
-                                                                                    .padding([.leading], -10)
+                                                                                HStack {
+                                                                                    Button(action: {
+                                                                                        self.categoryBeingEdited = key
+                                                                                        self.categoryBeingEditedImage = self.categoryImages[key]!
+                                                                                        self.editCategoryDetails = true
+                                                                                    }) {
+                                                                                        Image(systemName: "pencil")
+                                                                                            .resizable()
+                                                                                            .frame(width: 14.5, height: 14.5)
+                                                                                            .foregroundStyle(Color.EZNotesBlue)
+                                                                                            .padding([.trailing], 10)
+                                                                                        
+                                                                                        Text("Edit")
+                                                                                            .foregroundStyle(.white)
+                                                                                            .font(.system(size: 14))
+                                                                                            .fontWeight(.medium)
+                                                                                            .padding([.leading], -10)
+                                                                                    }
+                                                                                    .padding([.leading], 10)
+                                                                                    .padding([.trailing], 5)
+                                                                                    
+                                                                                    Button(action: { print("Delete Category") }) {
+                                                                                        Image(systemName: "trash")
+                                                                                            .resizable()
+                                                                                            .frame(width: 14.5, height: 14.5)
+                                                                                            .foregroundStyle(.red)
+                                                                                            .padding([.trailing, .top, .bottom], 10)
+                                                                                        
+                                                                                        Text("Delete")
+                                                                                            .foregroundStyle(.white)
+                                                                                            .font(.system(size: 13))
+                                                                                            .fontWeight(.medium)
+                                                                                            .padding([.leading], -10)
+                                                                                    }
+                                                                                    .padding([.trailing], 5)
+                                                                                    
+                                                                                    Button(action: { print("Share") }) {
+                                                                                        Image(systemName: "square.and.arrow.up")
+                                                                                            .resizable()
+                                                                                            .frame(width: 14.5, height: 19.5)
+                                                                                            .foregroundStyle(Color.EZNotesBlue)
+                                                                                            .padding([.trailing, .bottom], 10)
+                                                                                            .padding([.top], 5)
+                                                                                        
+                                                                                        Text("Share")
+                                                                                            .foregroundStyle(.white)
+                                                                                            .font(.system(size: 13))
+                                                                                            .fontWeight(.medium)
+                                                                                            .padding([.leading], -10)
+                                                                                    }
+                                                                                    .padding([.trailing], 5)
+                                                                                }
+                                                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                                                .background(Color.EZNotesBlack.opacity(0.50).background(.ultraThinMaterial).environment(\.colorScheme, .dark))
                                                                             }
-                                                                            .padding([.leading], 10)
-                                                                            .padding([.trailing], 5)
-                                                                            
-                                                                            Button(action: { print("Delete Category") }) {
-                                                                                Image(systemName: "trash")
-                                                                                    .resizable()
-                                                                                    .frame(width: 14.5, height: 14.5)
-                                                                                    .foregroundStyle(.red)
-                                                                                    .padding([.trailing, .top, .bottom], 10)
-                                                                                
-                                                                                Text("Delete")
-                                                                                    .foregroundStyle(.white)
-                                                                                    .font(.system(size: 13))
-                                                                                    .fontWeight(.medium)
-                                                                                    .padding([.leading], -10)
-                                                                            }
-                                                                            .padding([.trailing], 5)
-                                                                            
-                                                                            Button(action: { print("Share") }) {
-                                                                                Image(systemName: "square.and.arrow.up")
-                                                                                    .resizable()
-                                                                                    .frame(width: 14.5, height: 19.5)
-                                                                                    .foregroundStyle(Color.EZNotesBlue)
-                                                                                    .padding([.trailing, .bottom], 10)
-                                                                                    .padding([.top], 5)
-                                                                                
-                                                                                Text("Share")
-                                                                                    .foregroundStyle(.white)
-                                                                                    .font(.system(size: 13))
-                                                                                    .fontWeight(.medium)
-                                                                                    .padding([.leading], -10)
-                                                                            }
-                                                                            .padding([.trailing], 5)
+                                                                            /*.background(
+                                                                                LinearGradient(
+                                                                                    gradient: Gradient(
+                                                                                        colors: [
+                                                                                            self.categoryCustomColors.keys.contains(key)
+                                                                                                ? self.categoryCustomColors[key]!.opacity(0.8)
+                                                                                                : Color.EZNotesOrange,
+                                                                                            Color.EZNotesLightBlack.opacity(0.80)
+                                                                                        ]
+                                                                                    ),
+                                                                                    startPoint: .top,
+                                                                                    endPoint: .bottom
+                                                                                )
+                                                                            )*//*(Color.EZNotesBlack.opacity(0.50).background(.ultraThinMaterial).environment(\.colorScheme, .dark))*/
+                                                                            .padding([.leading], -20)
                                                                         }
                                                                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                                                        .padding([.top], 5)
+                                                                        /*.background(
+                                                                            self.categoryCustomColors.keys.contains(key)
+                                                                                ? AnyView(self.categoryCustomColors[key])
+                                                                                : AnyView(Color.EZNotesOrange)
+                                                                        )*/
                                                                         .padding([.leading], -20)
-                                                                        .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
-                                                                        
-                                                                        Spacer()
                                                                     }
                                                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                                    /*.background(
+                                                                        self.categoryCustomColors.keys.contains(key)
+                                                                            ? AnyView(self.categoryCustomColors[key])
+                                                                            : AnyView(Color.EZNotesOrange)
+                                                                    )*/
                                                                 }
                                                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                                .cornerRadius(15)
                                                             }
                                                             .frame(maxWidth: .infinity, maxHeight: 190)
+                                                            .background(
+                                                                RoundedRectangle(cornerRadius: 15)
+                                                                    .fill (
+                                                                        MeshGradient(width: 3, height: 3, points: [
+                                                                            .init(0, 0), .init(0.5, 0), .init(1, 0),
+                                                                            .init(0, 0.5), .init(0.5, 0.5), .init(1, 0.5),
+                                                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                                        ], colors: [
+                                                                            self.categoryCustomColors.keys.contains(key)
+                                                                                ? self.categoryCustomColors[key]!
+                                                                                : Color.EZNotesOrange, self.categoryCustomColors.keys.contains(key)
+                                                                                ? Color.EZNotesOrange
+                                                                                : .mint, Color.EZNotesBlue,/*.red, .purple, .indigo,*/
+                                                                            Color.EZNotesBlack, self.categoryCustomColors.keys.contains(key)
+                                                                                                    ? self.categoryCustomColors[key]!
+                                                                                                    : Color.EZNotesOrange, Color.EZNotesGreen,
+                                                                            .yellow, self.categoryCustomColors.keys.contains(key)
+                                                                                        ? self.categoryCustomColors[key]!
+                                                                                        : Color.EZNotesBlue, self.categoryCustomColors.keys.contains(key)
+                                                                                                ? Color.EZNotesOrange
+                                                                                                : .mint
+                                                                        ])
+                                                                    )
+                                                            )
                                                             .padding([.top, .bottom], 10)
                                                         }
                                                         .frame(maxWidth: prop.size.width - 20, maxHeight: 190)
@@ -380,7 +457,7 @@ struct HomeView: View {
                                                     .buttonStyle(.borderless)
                                                 }
                                                 .frame(maxWidth: prop.size.width - 20, maxHeight: 190)
-                                                .background(RoundedRectangle(cornerRadius: 15).fill(Color.EZNotesBlack.opacity(0.65 )).shadow(color: Color.EZNotesBlack, radius: 4))
+                                                .background(RoundedRectangle(cornerRadius: 15).fill(Color.EZNotesBlack.opacity(0.65)).shadow(color: Color.EZNotesBlack, radius: 4))
                                                 .padding([.bottom], 5)
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: .infinity)
