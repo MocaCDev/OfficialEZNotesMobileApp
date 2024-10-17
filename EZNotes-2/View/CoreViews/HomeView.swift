@@ -301,26 +301,26 @@ struct HomeView: View {
                                                                                     if self.categoryDescriptions.count > 0 && self.categoryDescriptions.keys.contains(key) {
                                                                                         //ZStack {
                                                                                         Text(self.categoryDescriptions[key]!)
+                                                                                            .frame(maxWidth: (prop.size.width - 20) - 200, maxHeight: 100, alignment: .leading)
                                                                                             .foregroundStyle(
                                                                                                 self.categoryCustomTextColors.keys.contains(key)
                                                                                                 ? self.categoryCustomTextColors[key]!
                                                                                                 : .white
                                                                                             )
-                                                                                            .frame(maxWidth: (prop.size.width - 20) - 200, maxHeight: 40, alignment: .leading)
                                                                                             .padding([.leading], 20)
-                                                                                            .minimumScaleFactor(0.5)
+                                                                                            .minimumScaleFactor(0.2)
                                                                                             .fontWeight(.light)
                                                                                             .multilineTextAlignment(.leading)
                                                                                     } else {
                                                                                         Text("No Description")
+                                                                                            .frame(maxWidth: .infinity, maxHeight: 40, alignment: .leading)
                                                                                             .foregroundStyle(
                                                                                                 self.categoryCustomTextColors.keys.contains(key)
                                                                                                     ? self.categoryCustomTextColors[key]!
                                                                                                     : .white
                                                                                             )
-                                                                                            .frame(maxWidth: .infinity, maxHeight: 40, alignment: .leading)
                                                                                             .padding([.leading], 20)
-                                                                                            .minimumScaleFactor(0.6)
+                                                                                            .font(.system(size: 16))
                                                                                             .fontWeight(.medium)
                                                                                             .padding()
                                                                                             .multilineTextAlignment(.leading)
