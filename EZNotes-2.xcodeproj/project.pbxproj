@@ -29,9 +29,22 @@
 		E3AA612E2C9F500400C4C0AA /* EZNotes-2UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "EZNotes-2UITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E38DD4862CC1E21200788AD9 /* Exceptions for "EZNotes-2" folder in "EZNotes-2" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E3AA61132C9F500300C4C0AA /* EZNotes-2 */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E3AA61162C9F500300C4C0AA /* EZNotes-2 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E38DD4862CC1E21200788AD9 /* Exceptions for "EZNotes-2" folder in "EZNotes-2" target */,
+			);
 			path = "EZNotes-2";
 			sourceTree = "<group>";
 		};
@@ -399,9 +412,11 @@
 				DEVELOPMENT_TEAM = 2A9LMA2ACD;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "EZNotes-2/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "To take pictures of notes";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "FaceID is needed to allow you to access the app";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Save photos to device";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -432,9 +447,11 @@
 				DEVELOPMENT_TEAM = 2A9LMA2ACD;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "EZNotes-2/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSCameraUsageDescription = "To take pictures of notes";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "FaceID is needed to allow you to access the app";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Save photos to device";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
