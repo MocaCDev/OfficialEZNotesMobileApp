@@ -113,18 +113,18 @@ struct HomeScreen: View {
                     )
                     
                     Text("**To your New & Completely Automated Note Taking App**")
-                        .opacity(0.9)
                         .padding([.top], prop.size.height / 2.5 > 300 ? -20 : -70)
                         .font(
                             .system(
-                                size: prop.size.height / 2.5 > 300 ? 25 : 22
+                                size: prop.size.height / 2.5 > 300 ? 20 : 17,
+                                design: .monospaced
                             )
                         )
                         .multilineTextAlignment(.center)
                         .frame(
                             maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width  - 100 : prop.size.width - 60,
                             maxHeight: prop.size.height / 2, alignment: .top)
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Spacer()
@@ -133,8 +133,8 @@ struct HomeScreen: View {
                 [.top],
                 prop.size.height / 2.5 > 300
                     ? prop.isIpad
-                            ? 60
-                            : 0
+                        ? 60
+                        : 0
                     : -50
             )
             .frame(
@@ -144,11 +144,10 @@ struct HomeScreen: View {
                 height: prop.isIpad
                         ? 850
                         : prop.size.height / 2.5 > 300
-                            ? 550
+                            ? 450
                             : (prop.size.height / 2.5) + 300
             )
             
-            //Spacer()
             Spacer()
             
             /* Buttons at bottom of screen. */

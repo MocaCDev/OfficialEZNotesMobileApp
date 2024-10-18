@@ -9,6 +9,8 @@ import SwiftUI
 struct LoginScreen: View, KeyboardReadable {
     public var prop: Properties
     
+    @State private var showPopup: Bool = false
+    
     public var startupScreen: StartupScreen
     @Binding public var screen: String
     @Binding public var userHasSignedIn: Bool
@@ -24,6 +26,14 @@ struct LoginScreen: View, KeyboardReadable {
     func set_image_opacity(focused: Bool)
     {
         imageOpacity = focused ? 0.0 : 1.0;
+    }
+    
+    private func setLoginStatus() -> Void {
+        UserDefaults.standard.set(
+            true,
+            forKey: "logged_in"
+        )
+        self.userHasSignedIn = true
     }
 
     var body: some View {
@@ -291,9 +301,17 @@ struct LoginScreen: View, KeyboardReadable {
                                     self.loginError = true
                                     return
                                 } else {
-                                    UserDefaults.standard.set(true, forKey: "logged_in")
-                                    self.userHasSignedIn = true
-                                    print("LOGGED IN!")
+                                    UserDefaults.standard.set(username, forKey: "username")
+                                    
+                                    if UserDefaults.standard.string(forKey: "faceID_enabled") == "not_enabled" {
+                                        self.showPopup = true
+                                    } else {
+                                        UserDefaults.standard.set(true, forKey: "logged_in")
+                                        self.userHasSignedIn = true
+                                        self.startupScreen.goBackToLogin = false
+                                        self.startupScreen.faceIDAuthenticated = true
+                                    }
+                                    
                                     return
                                 }
                                 /*if r.Bad != nil
@@ -340,6 +358,18 @@ struct LoginScreen: View, KeyboardReadable {
             }
             
             //Spacer()
+        }
+        .alert("Enable FaceID?", isPresented: $showPopup) {
+            Button("Enable") {
+                UserDefaults.standard.set("enabled", forKey: "faceID_enabled")
+                setLoginStatus()
+            } //action: { self.allowFaceID = true }) { }
+            Button("Disable", role: .cancel) {
+                UserDefaults.standard.set("disabled", forKey: "faceID_enabled")
+                setLoginStatus()
+            }
+        } message: {
+            Text("Enabling FaceID will further secure your data")
         }
     }
 }

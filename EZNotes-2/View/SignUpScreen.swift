@@ -9,7 +9,10 @@ import SwiftUI
 struct SignUpScreen : View, KeyboardReadable {
     public var prop: Properties
     
+    @State private var showPopup: Bool = false
+    
     public var startupScreen: StartupScreen
+    
     @Binding public var screen: String
     @Binding public var userHasSignedIn: Bool
     @Binding public var serverError: Bool
@@ -35,6 +38,18 @@ struct SignUpScreen : View, KeyboardReadable {
     func set_image_opacity(focused: Bool)
     {
         imageOpacity = focused ? 0.0 : 1.0;
+    }
+    
+    private func setLoginStatus() -> Void {
+        UserDefaults.standard.set(
+            true,
+            forKey: "logged_in"
+        )
+        UserDefaults.standard.set(
+            self.accountID,
+            forKey: "account_id"
+        )
+        self.userHasSignedIn = true
     }
     
     var body: some View {
@@ -201,12 +216,6 @@ struct SignUpScreen : View, KeyboardReadable {
                             text: $username,
                             onEditingChanged: set_image_opacity
                         )
-                        .onReceive(keyboardPublisher) { newIsKeyboardVisible in
-                            print("Is keyboard visible? ", newIsKeyboardVisible)
-                            self.keyboardActivated = newIsKeyboardVisible
-                        }
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
                         .frame(
                             width: prop.isIpad
                             ? UIDevice.current.orientation.isLandscape
@@ -226,6 +235,12 @@ struct SignUpScreen : View, KeyboardReadable {
                         .tint(Color.EZNotesBlue)
                         .font(.system(size: 18))
                         .foregroundStyle(Color.EZNotesBlue)
+                        /*.onReceive(keyboardPublisher) { newIsKeyboardVisible in
+                            self.keyboardActivated = newIsKeyboardVisible
+                        }*/
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                        .keyboardType(.alphabet)
                         
                         Text("Email")
                             .frame(
@@ -250,12 +265,6 @@ struct SignUpScreen : View, KeyboardReadable {
                             text: $email,
                             onEditingChanged: set_image_opacity
                         )
-                        .onReceive(keyboardPublisher) { newIsKeyboardVisible in
-                            print("Is keyboard visible? ", newIsKeyboardVisible)
-                            self.keyboardActivated = newIsKeyboardVisible
-                        }
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
                         .frame(
                             width: prop.isIpad
                                 ? UIDevice.current.orientation.isLandscape
@@ -276,6 +285,13 @@ struct SignUpScreen : View, KeyboardReadable {
                         .font(.system(size: 18))
                         .fontWeight(.medium)
                         .foregroundStyle(Color.EZNotesBlue)
+                        /*.onReceive(keyboardPublisher) { newIsKeyboardVisible in
+                            print("Is keyboard visible? ", newIsKeyboardVisible)
+                            self.keyboardActivated = newIsKeyboardVisible
+                        }*/
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                        .keyboardType(.emailAddress)
                         
                         Text("Password")
                             .frame(
@@ -442,8 +458,6 @@ struct SignUpScreen : View, KeyboardReadable {
                             text: $userInputedCode,
                             onEditingChanged: set_image_opacity
                         )
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
                         .frame(
                             width: prop.isIpad
                             ? prop.size.width - 450
@@ -461,6 +475,9 @@ struct SignUpScreen : View, KeyboardReadable {
                         .tint(Color.EZNotesBlue)
                         .font(.system(size: 18))
                         .foregroundStyle(Color.EZNotesBlue)
+                        .keyboardType(.numberPad)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
                     }
                     
                     startupScreen.createButton(
@@ -493,7 +510,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             self.section = "code_input"
                                         }
                                     }
-                                } else {
+                                } else if self.section == "code_input" {
                                     RequestAction<SignUp2RequestData>(
                                         parameters: SignUp2RequestData(
                                             AccountID: accountID,
@@ -505,15 +522,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                             return
                                         }
                                         else {
-                                            UserDefaults.standard.set(
-                                                true,
-                                                forKey: "logged_in"
-                                            )
-                                            UserDefaults.standard.set(
-                                                self.accountID,
-                                                forKey: "account_id"
-                                            )
-                                            self.userHasSignedIn = true
+                                            UserDefaults.standard.set(username, forKey: "username")
+                                            self.showPopup = true
                                         }
                                     }
                                     /* TODO: Add screen for the code to be put in.
@@ -561,6 +571,18 @@ struct SignUpScreen : View, KeyboardReadable {
                 
                 //Spacer()
             }
+        }
+        .alert("Enable FaceID?", isPresented: $showPopup) {
+            Button("Enable") {
+                UserDefaults.standard.set("enabled", forKey: "faceID_enabled")
+                setLoginStatus()
+            } //action: { self.allowFaceID = true }) { }
+            Button("Disable", role: .cancel) {
+                UserDefaults.standard.set("disabled", forKey: "faceID_enabled")
+                setLoginStatus()
+            }
+        } message: {
+            Text("Enabling FaceID will further secure your data")
         }
         //.frame(maxWidth: .infinity, maxHeight: .infinity)
     }

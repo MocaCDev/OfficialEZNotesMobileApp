@@ -82,6 +82,8 @@ struct CoreApp: View {
     @Binding public var categoryCustomColors: [String: Color]
     @Binding public var categoryCustomTextColors: [String: Color]
     
+    @ObservedObject public var accountInfo: AccountDetails
+    
     @State private var categories: Array<String> = []
     @State private var sets: Array<String> = []
     @State private var photos: Array<String> = []
@@ -123,7 +125,8 @@ struct CoreApp: View {
                     model: model,
                     lastSection: $lastSection,
                     section: $section,
-                    prop: prop
+                    prop: prop,
+                    accountInfo: accountInfo
                 )
             } else if self.section == "upload_review" {
                 UploadReview(
@@ -163,12 +166,14 @@ struct CoreApp: View {
                     categoryDescriptions: $categoryDescriptions,
                     categoryCustomColors: $categoryCustomColors,
                     categoryCustomTextColors: $categoryCustomTextColors,
-                    prop: prop
+                    prop: prop,
+                    accountInfo: accountInfo
                 )
             } else if self.section == "chat" {
                 ChatView(
                     section: $section,
-                    prop: prop
+                    prop: prop,
+                    accountInfo: accountInfo
                 )
             } else if self.section == "upload_error" {
                 VStack {

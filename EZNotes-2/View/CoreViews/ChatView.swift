@@ -13,9 +13,16 @@ struct ChatView: View {
     
     var prop: Properties
     
+    @ObservedObject public var accountInfo: AccountDetails
+    
     var body: some View {
         VStack {
-            TopNavChat(friendSearch: $friendSearch, prop: prop, backgroundColor: Color.EZNotesLightBlack)
+            TopNavChat(
+                accountInfo: accountInfo,
+                friendSearch: $friendSearch,
+                prop: prop,
+                backgroundColor: Color.EZNotesLightBlack
+            )
             
             VStack {
                 

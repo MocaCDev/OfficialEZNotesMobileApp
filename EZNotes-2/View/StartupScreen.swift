@@ -113,7 +113,10 @@ extension Color {
 
 struct StartupScreen: View {
     @State public var screen: String = "home"
+    
     @Binding public var userHasSignedIn: Bool
+    @Binding public var goBackToLogin: Bool
+    @Binding public var faceIDAuthenticated: Bool
     
     @State public var serverError: Bool = false
     @State public var supportedStates: Array<String> = []
@@ -244,13 +247,17 @@ struct StartupScreen: View {
                                 prop: prop,
                                 screen: $screen,
                                 startupScreen: StartupScreen(
-                                    userHasSignedIn: $userHasSignedIn
+                                    userHasSignedIn: $userHasSignedIn,
+                                    goBackToLogin: $goBackToLogin,
+                                    faceIDAuthenticated: $faceIDAuthenticated
                                 )
                             );
                             case "login": LoginScreen(
                                 prop: prop,
                                 startupScreen: StartupScreen(
-                                    userHasSignedIn: $userHasSignedIn
+                                    userHasSignedIn: $userHasSignedIn,
+                                    goBackToLogin: $goBackToLogin,
+                                    faceIDAuthenticated: $faceIDAuthenticated
                                 ),
                                 screen: $screen,
                                 userHasSignedIn: $userHasSignedIn
@@ -258,7 +265,9 @@ struct StartupScreen: View {
                             case "signup": SignUpScreen(
                                 prop: prop,
                                 startupScreen: StartupScreen(
-                                    userHasSignedIn: $userHasSignedIn
+                                    userHasSignedIn: $userHasSignedIn,
+                                    goBackToLogin: $goBackToLogin,
+                                    faceIDAuthenticated: $faceIDAuthenticated
                                 ),
                                 screen: $screen,
                                 userHasSignedIn: $userHasSignedIn,
@@ -269,7 +278,9 @@ struct StartupScreen: View {
                                 prop: prop,
                                 screen: $screen,
                                 startupScreen: StartupScreen(
-                                    userHasSignedIn: $userHasSignedIn
+                                    userHasSignedIn: $userHasSignedIn,
+                                    goBackToLogin: $goBackToLogin,
+                                    faceIDAuthenticated: $faceIDAuthenticated
                                 )
                             )
                             }

@@ -84,6 +84,8 @@ struct HomeView: View {
     
     var prop: Properties
     
+    @ObservedObject public var accountInfo: AccountDetails
+    
     /* TODO: Eventually the app will enable users to set the outline of there categories as they please. Get this implemented. */
     let columns = [
         GridItem(.flexible()),
@@ -174,6 +176,7 @@ struct HomeView: View {
             VStack {
                 ZStack {
                     TopNavHome(
+                        accountInfo: accountInfo,
                         prop: prop,
                         backgroundColor: Color.EZNotesLightBlack,
                         categoriesAndSets: categoriesAndSets,
@@ -346,15 +349,15 @@ struct HomeView: View {
                                                                                     Button(action: {
                                                                                         if self.categoryDescriptions.keys.contains(key) {
                                                                                             self.newCategoryDescription = self.categoryDescriptions[key]!
-                                                                                        }
+                                                                                        } else { self.newCategoryDescription = "" }
                                                                                         
                                                                                         if self.categoryCustomColors.keys.contains(key) {
                                                                                             self.newCategoryDisplayColor = self.categoryCustomColors[key]!
-                                                                                        }
+                                                                                        } else { self.newCategoryDisplayColor = Color.EZNotesOrange }
                                                                                         
                                                                                         if self.categoryCustomTextColors.keys.contains(key) {
                                                                                             self.newCategoryTextColor = self.categoryCustomTextColors[key]!
-                                                                                        }
+                                                                                        } else { self.newCategoryTextColor = .white }
                                                                                         
                                                                                         self.categoryBeingEditedImage = self.categoryImages[key]!
                                                                                         self.categoryBeingEdited = key
@@ -640,62 +643,65 @@ struct HomeView: View {
                                                 .frame(maxWidth: prop.size.width - 80, maxHeight: 140)
                                                 .padding([.top], 5)
                                                 
-                                                VStack {
-                                                    HStack {
-                                                        Text("Category Color")
-                                                            .frame(maxWidth: .infinity, maxHeight: 24, alignment: .leading)
-                                                            .foregroundStyle(.white)
-                                                            .font(.system(size: 20, design: .rounded))
-                                                            .fontWeight(.light)
-                                                        
-                                                        if self.toggleCategoryBackgroundColorPicker {
-                                                            ColorPicker("Select Color", selection: $newCategoryDisplayColor)
-                                                                .padding(3.5)
-                                                                .background(Color.EZNotesLightBlack)
-                                                                .cornerRadius(15)
+                                                HStack {
+                                                    VStack {
+                                                        HStack {
+                                                            Text("Category Color")
+                                                                .frame(maxWidth: .infinity, maxHeight: 24, alignment: .leading)
+                                                                .foregroundStyle(.white)
+                                                                .font(.system(size: 18, design: .rounded))
+                                                                .fontWeight(.light)
+                                                            
+                                                            //if self.toggleCategoryBackgroundColorPicker {
+                                                                ColorPicker("", selection: $newCategoryDisplayColor)
+                                                                    .frame(width: 38, height: 40)
+                                                                    .padding(3.5)
+                                                            //}
                                                         }
-                                                    }
-                                                    .frame(maxWidth: .infinity, maxHeight: 40)
-                                                    
-                                                    RoundedRectangle(cornerRadius: 15)
-                                                        .fill(
-                                                            self.categoryCustomColors.keys.contains(self.categoryBeingEdited)
-                                                            ? self.categoryCustomColors[self.categoryBeingEdited]!
-                                                            : self.newCategoryDisplayColor
-                                                        )
-                                                        .frame(maxWidth: prop.size.width - 80, maxHeight: 120)
-                                                        .onTapGesture { self.toggleCategoryBackgroundColorPicker = true }
-                                                }
-                                                .frame(maxWidth: prop.size.width - 80, maxHeight: 80)
-                                                .padding([.top], 5)
-                                                
-                                                VStack {
-                                                    HStack {
-                                                        Text("Text Color")
-                                                            .frame(maxWidth: .infinity, maxHeight: 24, alignment: .leading)
-                                                            .foregroundStyle(.white)
-                                                            .font(.system(size: 20, design: .rounded))
-                                                            .fontWeight(.light)
+                                                        .frame(maxWidth: .infinity, maxHeight: 40)
                                                         
-                                                        if self.toggleCategoryTextColorPicker {
-                                                            ColorPicker("Select Color", selection: $newCategoryTextColor)
-                                                                .padding(3.5)
-                                                                .background(Color.EZNotesLightBlack)
-                                                                .cornerRadius(15)
-                                                        }
+                                                        RoundedRectangle(cornerRadius: 15)
+                                                            .fill(
+                                                                self.categoryCustomColors.keys.contains(self.categoryBeingEdited)
+                                                                ? self.newCategoryDisplayColor == self.categoryCustomColors[self.categoryBeingEdited]!
+                                                                    ? self.categoryCustomColors[self.categoryBeingEdited]!
+                                                                    : self.newCategoryDisplayColor
+                                                                : self.newCategoryDisplayColor
+                                                            )
+                                                            .frame(maxWidth: prop.size.width - 80, maxHeight: 120)
+                                                            .onTapGesture { self.toggleCategoryBackgroundColorPicker = true }
                                                     }
-                                                    .frame(maxWidth: .infinity, maxHeight: 40)
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                                                     
-                                                    RoundedRectangle(cornerRadius: 15)
-                                                        .fill(
-                                                            self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
-                                                                ? self.categoryCustomTextColors[self.categoryBeingEdited]!
-                                                                : self.newCategoryTextColor
-                                                        )
-                                                        .frame(maxWidth: prop.size.width - 80, maxHeight: 120)
-                                                        .onTapGesture { self.toggleCategoryTextColorPicker = true }
+                                                    VStack {
+                                                        HStack {
+                                                            Text("Text Color")
+                                                                .frame(maxWidth: .infinity, maxHeight: 24, alignment: .leading)
+                                                                .foregroundStyle(.white)
+                                                                .font(.system(size: 18, design: .rounded))
+                                                                .fontWeight(.light)
+                                                            
+                                                            //if self.toggleCategoryTextColorPicker {
+                                                                ColorPicker("", selection: $newCategoryTextColor)
+                                                                    .frame(width: 30, height: 40)
+                                                            //}
+                                                        }
+                                                        .frame(maxWidth: .infinity, maxHeight: 40)
+                                                        
+                                                        RoundedRectangle(cornerRadius: 15)
+                                                            .fill(
+                                                                self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
+                                                                    ? self.newCategoryTextColor == self.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                        ? self.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                        : self.newCategoryTextColor
+                                                                    : self.newCategoryTextColor
+                                                            )
+                                                            .frame(maxWidth: prop.size.width - 80, maxHeight: 120)
+                                                            .onTapGesture { self.toggleCategoryTextColorPicker = true }
+                                                    }
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                                                 }
-                                                .frame(maxWidth: prop.size.width - 80, maxHeight: 80)
+                                                .frame(maxWidth: prop.size.width - 80, maxHeight: 120)
                                                 .padding([.top], 5)
                                                 .padding([.bottom], 15)
                                                 
@@ -728,8 +734,13 @@ struct HomeView: View {
                                                             self.categoryCreationDates.removeValue(forKey: self.categoryBeingEdited)
                                                             
                                                             self.categoriesAndSets[self.newCategoryName] = categoryData
+                                                            writeCategoryData(categoryData: self.categoriesAndSets)
+                                                            
                                                             self.categoryImages[self.newCategoryName] = categoryImageData
+                                                            writeCategoryImages(categoryImages: self.categoryImages)
+                                                            
                                                             self.categoryCreationDates[self.newCategoryName] = categoryCreationDate
+                                                            writeCategoryCreationDates(categoryCreationDates: self.categoryCreationDates)
                                                             
                                                             if self.categoryCustomColors.keys.contains(self.categoryBeingEdited) {
                                                                 self.categoryCustomColors.removeValue(forKey: self.categoryBeingEdited)
@@ -795,6 +806,10 @@ struct HomeView: View {
                                                     .shadow(color: .black, radius: 6.5)
                                             )
                                             .edgesIgnoringSafeArea(.bottom)
+                                            .onTapGesture {
+                                                self.toggleCategoryTextColorPicker = false
+                                                self.toggleCategoryBackgroundColorPicker = false
+                                            }
                                         } else {
                                             VStack {
                                                 Text("Preview Details")

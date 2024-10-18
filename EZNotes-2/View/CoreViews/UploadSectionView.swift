@@ -21,9 +21,12 @@ struct UploadSection: View {
     
     var prop: Properties
     
+    @ObservedObject public var accountInfo: AccountDetails
+    
     var body: some View {
         VStack {
             TopNavUpload(
+                accountInfo: accountInfo,
                 section: $section,
                 lastSection: $lastSection,
                 images_to_upload: images_to_upload,

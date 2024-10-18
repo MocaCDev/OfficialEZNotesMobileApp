@@ -40,25 +40,34 @@ struct ContentView: View {
     @State private var faceIDAuthenticated: Bool = false
     @Environment(\.scenePhase) private var scenePhase
     
-    private func authenticate() {
+    @State public var reAuthReqFromLogin: Bool = false
+    @StateObject public var accountInfo: AccountDetails = AccountDetails()
+    
+    public func authenticate(initializing: Bool) {
         let context = LAContext()
         var error: NSError?
 
         // check whether biometric authentication is possible
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
             // it's possible, so go ahead and use it
-            let reason = "FaceID is needed to allow access to the app."
+            let reason = "FaceID is recommended to secure you data"
 
             context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
                 // authentication has now completed
                 if success {
                     self.faceIDAuthenticated = true
-                } else {
-                    self.goBackToLogin = true
-                    self.userHasSignedIn = false
                     
-                    UserDefaults.standard.removeObject(forKey: "logged_in")
-                    UserDefaults.standard.removeObject(forKey: "requires_faceID")
+                    if initializing { UserDefaults.standard.set(true, forKey: "faceID_initialized") }
+                } else {
+                    if initializing {
+                        UserDefaults.standard.set("disabled", forKey: "faceID_enabled")
+                    } else {
+                        self.goBackToLogin = true
+                        //self.userHasSignedIn = false
+                        UserDefaults.standard.set(false, forKey: "logged_in")
+                        //UserDefaults.standard.removeObject(forKey: "logged_in")
+                        UserDefaults.standard.removeObject(forKey: "requires_faceID")
+                    }
                 }
             }
         } else {
@@ -85,8 +94,16 @@ struct ContentView: View {
     var body: some View {
         if !userHasSignedIn {
             StartupScreen(
-                userHasSignedIn: $userHasSignedIn
+                userHasSignedIn: $userHasSignedIn,
+                goBackToLogin: $goBackToLogin,
+                faceIDAuthenticated: $faceIDAuthenticated
             )
+            .onAppear(perform: {
+                if UserDefaults.standard.object(forKey: "faceID_enabled") == nil {
+                    UserDefaults.standard.set("not_enabled", forKey: "faceID_enabled")
+                    UserDefaults.standard.set(false, forKey: "faceID_initialized")
+                }
+            })
         } else {
             VStack {
                 if self.faceIDAuthenticated {
@@ -99,16 +116,29 @@ struct ContentView: View {
                             categoryImages: $categoryImages,
                             categoryDescriptions: $categoryDescriptions,
                             categoryCustomColors: $categoryCustomColors,
-                            categoryCustomTextColors: $categoryCustomTextColors
+                            categoryCustomTextColors: $categoryCustomTextColors,
+                            accountInfo: accountInfo
                         )
                     }
                 } else {
                     if self.goBackToLogin {
                         StartupScreen(
-                            userHasSignedIn: $userHasSignedIn
+                            userHasSignedIn: $userHasSignedIn,
+                            goBackToLogin: $goBackToLogin,
+                            faceIDAuthenticated: $faceIDAuthenticated
                         )
                     } else {
-                        VStack {
+                        ZStack {
+                            if self.faceIDAuthenticated {
+                                VStack {
+                                    ProgressView()
+                                        .tint(Color.EZNotesBlue)
+                                        .frame(width: 25, height: 25)
+                                        .controlSize(.large)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .background(.black.opacity(0.5))
+                            }
                             Text("Unlock With FaceID")
                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                                 .foregroundStyle(.white)
@@ -142,9 +172,19 @@ struct ContentView: View {
                 }
             }
             .onAppear(perform: {
-                if UserDefaults.standard.bool(forKey: "requires_faceID") {
-                    self.faceIDAuthenticated = false
-                    authenticate()
+                /* MARK: If this `.onAppear` runs, there should be a key `username` in `UserDefaults.standard`. If there isn't, then there is a problem.
+                 * */
+                if UserDefaults.standard.object(forKey: "username") != nil {
+                    accountInfo.setUsername(username: UserDefaults.standard.string(forKey: "username")!)
+                }
+                
+                if UserDefaults.standard.string(forKey: "faceID_enabled") == "enabled" {
+                    if !(UserDefaults.standard.bool(forKey: "faceID_initialized")) {
+                        authenticate(initializing: true)
+                    } else {
+                        self.faceIDAuthenticated = false
+                        authenticate(initializing: false)
+                    }
                 } else {
                     self.faceIDAuthenticated = true
                 }
