@@ -47,45 +47,26 @@ struct AccountPopup: View {
     @State private var photoGalleryLaunchedFor: String = "pfp" /* MARK: Value can be `pfp` or `pfp_bg`. */
     
     var body: some View {
-        if self.launchPhotoGallery {
-            PhotosPicker(
-                "Select PFP",
-                selection: self.photoGalleryLaunchedFor == "pfp"
-                    ? $pfpPhotoPicked
-                    : $pfpBackgroundPhotoPicked,
-                matching: .images
-            )
-            .onChange(of: self.photoGalleryLaunchedFor == "pfp"
-                      ? self.pfpPhotoPicked
-                      : self.pfpBackgroundPhotoPicked) {
-                Task {
-                    let selectedItem = self.photoGalleryLaunchedFor == "pfp"
-                        ? self.pfpPhotoPicked
-                        : self.pfpBackgroundPhotoPicked
-                    
-                    if let image = try? await selectedItem?.loadTransferable(type: Image.self) {
-                        if self.photoGalleryLaunchedFor == "pfp" { accountInfo.setProfilePicture(pfp: image); return }
-                        if self.photoGalleryLaunchedFor == "pfp_bg" { accountInfo.setProfilePictureBackground(bg: image); return }
-                    }
-                    print("Failed to load the image")
-                }
-            }
-        }
-        
         VStack {
             VStack {
                 Spacer()
                 
                 VStack {
-                    Button(action: {
-                        self.launchPhotoGallery = true
-                    }) {
+                    PhotosPicker(selection: $pfpPhotoPicked, matching: .images) {
                         accountInfo.profilePicture
                             .resizable()
-                            .frame(width: 80, height: 80)
-                            .clipShape(Circle())
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 90, height: 90, alignment: .center)
+                            .clipShape(.circle)
                             .overlay(Circle().stroke(Color.white, lineWidth: 2))
                             .shadow(color: .white, radius: 5)
+                    }
+                    .onChange(of: self.pfpPhotoPicked) {
+                        Task {
+                            if let image = try? await pfpPhotoPicked!.loadTransferable(type: Image.self) {
+                                self.accountInfo.profilePicture = image
+                            }
+                        }
                     }
                     .buttonStyle(NoLongPressButtonStyle())
                 }
