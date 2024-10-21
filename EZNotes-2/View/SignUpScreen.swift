@@ -371,9 +371,7 @@ struct SignUpScreen : View, KeyboardReadable {
                             RequestAction<GetCollegesRequest>(parameters: GetCollegesRequest(
                                     State: state
                             ))
-                            .perform(
-                                action: "get_colleges_for_state"
-                            ) { r in
+                            .perform(action: get_colleges_for_state_req) { r in
                                 if r.Bad != nil {
                                     self.serverError = true
                                 } else {
@@ -503,7 +501,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             College: college,
                                             State: state
                                         )
-                                    ).perform(action: "complete_signup1") { r in
+                                    ).perform(action: complete_signup1_req) { r in
                                         if r.Bad != nil { self.serverError = true }
                                         else {
                                             self.accountID = r.Good!.Message
@@ -516,7 +514,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             AccountID: accountID,
                                             UserInputtedCode: userInputedCode
                                         )
-                                    ).perform(action: "complete_signup2") {r in
+                                    ).perform(action: complete_signup2_req) {r in
                                         if r.Bad != nil {
                                             self.wrongCode = true
                                             return

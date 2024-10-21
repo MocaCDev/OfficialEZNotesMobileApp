@@ -7,6 +7,12 @@
 import Foundation
 import SwiftUI
 
+/* MARK: URLs used for requests. */
+//let server = "https://www.eznotes.space"
+//let server = "http://192.168.1.114:8088"
+let server = "http://192.168.0.8:8088"//"http://192.168.1.114:8088"
+
+/* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
  * to be sent to the endpoint.
  * */
@@ -75,3 +81,52 @@ struct ImageUploadRequestResponse: Decodable {
     let Good: UploadImagesGoodResponse?
     let Bad: BadResponse?
 }
+
+/* MARK: All request actions. */
+struct CSIARequest<T> {
+    let url: String
+    let method: String
+    let reqData: T.Type
+}
+
+let check_server_active_req: CSIARequest = CSIARequest(
+    url: "\(server)/EZNotes_Software_Network_Test",
+    method: "get",
+    reqData: ReqPlaceholder.self
+)
+
+let get_supported_states_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_supported_states",
+    method: "get",
+    reqData: ReqPlaceholder.self
+)
+
+let get_colleges_for_state_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_colleges_for_state",
+    method: "get",
+    reqData: GetCollegesRequest.self
+)
+
+let complete_login_req: CSIARequest = CSIARequest(
+    url: "\(server)/mobile_cl",
+    method: "post",
+    reqData: LoginRequestData.self
+)
+
+let complete_signup1_req: CSIARequest = CSIARequest(
+    url: "\(server)/csu",
+    method: "post",
+    reqData: SignUpRequestData.self
+)
+
+let complete_signup2_req: CSIARequest = CSIARequest(
+    url: "\(server)/csu2",
+    method: "post",
+    reqData: SignUp2RequestData.self
+)
+
+let get_user_email_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_user_email",
+    method: "get",
+    reqData: GetEmailData.self
+)

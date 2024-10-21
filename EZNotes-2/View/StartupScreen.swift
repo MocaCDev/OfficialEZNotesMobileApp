@@ -356,10 +356,20 @@ struct StartupScreen: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            Image(screen == "home" ? "Background2" : "Background5")
+            /*Image(screen == "home" ? "Background2" : "Background5")
                 .opacity(0.9)
-                .blur(radius: 3.5)
+                .blur(radius: 3.5)*/
+            MeshGradient(width: 3, height: 3, points: [
+                .init(0, 0.5), .init(0.5, 0), .init(1, 0),
+                .init(0, 0.5), .init(0.5, 0.5), .init(1, 0.5),
+                .init(0, 1), .init(0.5, 1), .init(1, 1)
+            ], colors: [
+                .red, .purple, .indigo,
+                .orange, .white, .blue,
+                .yellow, .green, .mint
+            ])
         )
+        .edgesIgnoringSafeArea([.top, .bottom])
         .onReceive(rotationChangePublisher) { _ in
             // This is called when there is a orientation change
             // You can set back the orientation to the one you like even
@@ -377,7 +387,7 @@ struct StartupScreen: View {
                 RequestAction<ReqPlaceholder>(
                     parameters: ReqPlaceholder()
                 )
-                .perform(action: "check_server_is_active")
+                .perform(action: check_server_active_req)
                 { r in
                     if r.Bad != nil {
                         self.serverError = true
@@ -385,7 +395,7 @@ struct StartupScreen: View {
                         RequestAction<ReqPlaceholder>(
                             parameters: ReqPlaceholder()
                         )
-                        .perform(action: "get_supported_states")
+                        .perform(action: get_supported_states_req)
                         { r in
                             if r.Good != nil {
                                 let message = r.Good?.Message.components(separatedBy: "\n");

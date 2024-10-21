@@ -135,7 +135,7 @@ struct RequestAction<T> {
     
     var parameters: T
     
-    func perform(action: String, completion: @escaping (RequestResponse) -> Void) {
+    func perform(action: CSIARequest<T>, completion: @escaping (RequestResponse) -> Void) {
         
         let scheme: String = "https"
         let host: String = "www.eznotes.space"//"http://127.0.0.1:8088"//"www.eznotes.space"
@@ -144,49 +144,22 @@ struct RequestAction<T> {
         components.scheme = scheme
         components.host = host
         
-        var request: URLRequest = URLRequest(url: URL(string: "n")!)
-        let server = "http://192.168.1.114:8088"
-        //let server = "http://192.168.0.12:8088"//"http://192.168.1.114:8088"
+        var request: URLRequest = URLRequest(url: URL(string: action.url)!)//URLRequest(url: URL(string: "n")!)
         
-        switch(action)
-        {
-            case "check_server_is_active": request = URLRequest(url: URL(string: "\(server)/EZNotes_Software_Network_Test")!);break;
-            case "get_supported_states": request = URLRequest(url: URL(string: "\(server)/get_supported_states")!);break;
-            case "get_colleges_for_state": request = URLRequest(url: URL(string: "\(server)/get_colleges_for_state")!);break;
-            case "complete_login":  request = URLRequest(url: URL(string: "\(server)/mobile_cl")!);break;
-            case "complete_signup1": request = URLRequest(url: URL(string: "\(server)/csu")!);break;
-            case "complete_signup2": request = URLRequest(url: URL(string: "\(server)/csu2")!);break;
-            case "get_user_email": request = URLRequest(url: URL(string: "\(server)/get_user_email")!);break;
-            default: request = URLRequest(url: URL(string: "\(server)/\(action)")!);break;
-        }
-        
-        if action == "get_supported_states" || action == "get_colleges_for_state" { request.httpMethod = "get" }
-        else { request.httpMethod = "get" }
+        request.httpMethod = action.method
+        request.addValue("yes", forHTTPHeaderField: "Fm") /* `Fm` - From Mobile. */
         
         request.addValue("text/html; charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.addValue("text/html; charset=utf-8", forHTTPHeaderField: "Accept")
         
-        /* `Fm` - From Mobile. */
-        /* TODO: Update this. The endpoint `/get_supported_states` needs to become adherent to requests coming from
-         * TODO: the mobile app.
-         * */
-        if action == "get_supported_states" { request.addValue("yes", forHTTPHeaderField: "Fm") }
-        else if action == "get_colleges_for_state" {
-            request.addValue("yes", forHTTPHeaderField: "Fm")
-            
-            guard let params: GetCollegesRequest = (parameters as? GetCollegesRequest) else { return }
-            request.addValue(params.State, forHTTPHeaderField: "State")
-        }
-        else { request.addValue("yes", forHTTPHeaderField: "Fm") }
-        
-        switch(action)
+        switch(action.reqData.self)
         {
-            case "complete_login":
+            case is LoginRequestData.Type://"complete_login":
                 guard let params: LoginRequestData = (parameters as? LoginRequestData) else { return }
                 request.addValue(params.Username, forHTTPHeaderField: "Un");
                 request.addValue(params.Password, forHTTPHeaderField: "Pw");
                 break
-            case "complete_signup1":
+            case is SignUpRequestData.Type:
                 guard let params: SignUpRequestData = (parameters as? SignUpRequestData) else { return }
                 request.addValue(params.Username, forHTTPHeaderField: "N-Un")
                 request.addValue(params.Password, forHTTPHeaderField: "N-Pw")
@@ -196,12 +169,12 @@ struct RequestAction<T> {
                 request.addValue("", forHTTPHeaderField: "N-Bgimg")
                 request.addValue("", forHTTPHeaderField: "N-Cip")
                 break
-            case "complete_signup2":
+            case is SignUp2RequestData.Type:
                 guard let params: SignUp2RequestData = (parameters as? SignUp2RequestData) else { return }
                 request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
                 request.addValue(params.UserInputtedCode, forHTTPHeaderField: "Uic")
                 break
-            case "get_user_email":
+            case is GetEmailData.Type:
                 guard let params: GetEmailData = (parameters as? GetEmailData) else { return }
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
                 break

@@ -285,7 +285,7 @@ struct LoginScreen: View, KeyboardReadable {
                                     Username: username,
                                     Password: password
                                 )
-                            ).perform(action: "complete_login") { r in
+                            ).perform(action: complete_login_req) { r in
                                 /* MARK: Temporary. Bug in server needs fixed. */
                                 /*if r.Good!.Status != "200" {
                                     self.loginError = true
@@ -308,7 +308,7 @@ struct LoginScreen: View, KeyboardReadable {
                                             parameters: GetEmailData(
                                                 AccountId: r.Good!.Message
                                             )
-                                        ).perform(action: "get_user_email") { resp in
+                                        ).perform(action: get_user_email_req) { resp in
                                             print(resp)
                                             if resp.Good == nil {
                                                 self.loginError = true
