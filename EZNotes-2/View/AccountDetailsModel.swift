@@ -8,6 +8,7 @@ import SwiftUI
 
 class AccountDetails: ObservableObject {
     @Published var username: String
+    @Published var email: String
     
     /* MARK: PFP - will be on top of `profileBackgroundImage`. */
     @Published var profilePicture: Image
@@ -18,10 +19,12 @@ class AccountDetails: ObservableObject {
     init() {
         username = ""
         profilePicture = Image(systemName: "person.crop.circle.fill")
-        profileBackgroundPicture = Image("Background12")
+        profileBackgroundPicture = Image("Pfp-Default-Bg")
+        email = ""
     }
     
     final public func setUsername(username: String) { self.username = username }
+    final public func setEmail(email: String) { self.email = email }
     
     final public func setProfilePicture(pfp: UIImage) { self.profilePicture = Image(uiImage: pfp) }
     final public func setProfilePicture(pfp: Image) { self.profilePicture = pfp }

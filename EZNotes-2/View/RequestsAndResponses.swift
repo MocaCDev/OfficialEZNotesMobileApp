@@ -17,6 +17,10 @@ struct LoginRequestData {
     let Password: String
 }
 
+struct GetEmailData {
+    let AccountId: String
+}
+
 struct SignUpRequestData {
     let Username: String
     let Email: String

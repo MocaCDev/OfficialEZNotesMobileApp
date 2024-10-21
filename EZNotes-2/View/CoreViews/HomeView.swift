@@ -162,7 +162,7 @@ struct HomeView: View {
         let scrollViewFrame = outerGeometry.frame(in: .global)
         
         // Check if the text frame is out of the bounds of the ScrollView
-        if textFrame.maxY < scrollViewFrame.minY + 15 || textFrame.minY > scrollViewFrame.maxY {
+        if textFrame.maxY < scrollViewFrame.minY + 130 || textFrame.minY > scrollViewFrame.maxY {
             self.show_categories_title = true
             self.topNavOpacity += 0.2
         } else {
@@ -174,19 +174,19 @@ struct HomeView: View {
     var body: some View {
         if !self.launchCategory {
             VStack {
+                TopNavHome(
+                    accountInfo: accountInfo,
+                    prop: prop,
+                    backgroundColor: Color.EZNotesLightBlack,
+                    categoriesAndSets: categoriesAndSets,
+                    changeNavbarColor: $show_categories_title,
+                    navbarOpacity: $topNavOpacity,
+                    categorySearch: $categorySearch,
+                    searchDone: $searchDone,
+                    lookedUpCategoriesAndSets: $lookedUpCategoriesAndSets
+                )
+                
                 ZStack {
-                    TopNavHome(
-                        accountInfo: accountInfo,
-                        prop: prop,
-                        backgroundColor: Color.EZNotesLightBlack,
-                        categoriesAndSets: categoriesAndSets,
-                        changeNavbarColor: $show_categories_title,
-                        navbarOpacity: $topNavOpacity,
-                        categorySearch: $categorySearch,
-                        searchDone: $searchDone,
-                        lookedUpCategoriesAndSets: $lookedUpCategoriesAndSets
-                    )
-                    
                     if self.categoriesAndSets.count > 0 {
                         if self.searchDone && self.lookedUpCategoriesAndSets.count == 0 {
                             VStack {
@@ -219,7 +219,7 @@ struct HomeView: View {
                                             .frame(maxWidth: .infinity, maxHeight: 50)
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: 50)
-                                        .padding([.top], 25)
+                                        .padding([.top], 130)
                                         .padding([.bottom], 10)
                                         .background(
                                             GeometryReader { innerGeometry in
@@ -459,11 +459,12 @@ struct HomeView: View {
                                         .padding([.bottom], 10)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .padding([.top], 20)
+                                    //.padding([.top], 20)
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(.top, -130)
                             .popover(isPresented: $editCategoryDetails) {
                                 VStack {
                                     VStack {
@@ -1111,6 +1112,7 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity, maxHeight: 30, alignment: .bottom)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .edgesIgnoringSafeArea(.top)
             .background(
                 LinearGradient(
                     gradient: Gradient(

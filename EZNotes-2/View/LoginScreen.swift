@@ -303,6 +303,22 @@ struct LoginScreen: View, KeyboardReadable {
                                 } else {
                                     UserDefaults.standard.set(username, forKey: "username")
                                     
+                                    if UserDefaults.standard.object(forKey: "email") == nil || UserDefaults.standard.string(forKey: "email") == "" {
+                                        RequestAction<GetEmailData>(
+                                            parameters: GetEmailData(
+                                                AccountId: r.Good!.Message
+                                            )
+                                        ).perform(action: "get_user_email") { resp in
+                                            print(resp)
+                                            if resp.Good == nil {
+                                                self.loginError = true
+                                                return
+                                            } else {
+                                                UserDefaults.standard.set(resp.Good!.Message, forKey: "email")
+                                            }
+                                        }
+                                    }
+                                    
                                     if UserDefaults.standard.string(forKey: "faceID_enabled") == "not_enabled" {
                                         self.showPopup = true
                                     } else {

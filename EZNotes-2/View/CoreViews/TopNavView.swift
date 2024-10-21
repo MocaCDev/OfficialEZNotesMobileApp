@@ -69,17 +69,44 @@ struct AccountPopup: View {
                         }
                     }
                     .buttonStyle(NoLongPressButtonStyle())
+                    
+                    Text(self.accountInfo.username)
+                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .center)
+                        .foregroundStyle(.white)
+                        .font(.system(size: 24, design: .rounded))
+                        .fontWeight(.semibold)
+                    
+                    if self.accountInfo.email != "" {
+                        Text(self.accountInfo.email)
+                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .center)
+                            .foregroundStyle(.white)
+                            .font(.system(size: 14, design: .rounded))
+                            .fontWeight(.light)
+                    } else {
+                        Text("No Email")
+                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .center)
+                            .foregroundStyle(.white)
+                            .font(.system(size: 14, design: .monospaced))
+                            .fontWeight(.light)
+                    }
                 }
-                .frame(maxWidth: prop.size.width - 150, maxHeight: 250, alignment: .center)
+                .frame(maxWidth: prop.size.width - 150, maxHeight: .infinity, alignment: .center)
                 
                 Spacer()
                 
                 HStack {
                     ZStack {
-                        Button(action: { print("Add Custom PFP Background!") }) {
+                        PhotosPicker(selection: $pfpBackgroundPhotoPicked, matching: .images) {
                             Image(systemName: "pencil")
                                 .resizable()
-                                .frame(width: 20, height: 20)
+                                .frame(width: 15, height: 15)
+                        }
+                        .onChange(of: self.pfpBackgroundPhotoPicked) {
+                            Task {
+                                if let image = try? await pfpBackgroundPhotoPicked!.loadTransferable(type: Image.self) {
+                                    self.accountInfo.profileBackgroundPicture = image
+                                }
+                            }
                         }
                         .buttonStyle(NoLongPressButtonStyle())
                     }
@@ -90,13 +117,12 @@ struct AccountPopup: View {
             }
             .frame(maxWidth: .infinity, maxHeight: 265)
             .background(
-                Image("Pfp-Default-Bg")
+                accountInfo.profileBackgroundPicture
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .overlay(
-                        Color.EZNotesLightBlack.opacity(0.45)
-                    )
-                    .blur(radius: 2.5)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .overlay(Color.EZNotesBlack.opacity(0.35))
+                    .blur(radius: 2)
             )
             
             VStack {
@@ -115,7 +141,6 @@ struct AccountPopup: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.white)
     }
 }
 
@@ -140,7 +165,160 @@ struct TopNavHome: View {
     @Binding public var lookedUpCategoriesAndSets: [String: Array<String>]
     
     var body: some View {
-        VStack {
+        HStack {
+            VStack {
+                ProfileIconView(prop: prop, showAccountPopup: $showAccountPopup)
+            }
+            .frame(maxWidth: 90, maxHeight: .infinity,  alignment: .leading)
+            .padding(.top, 55)
+            .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo) }
+            
+            Spacer()
+            
+            if self.showSearchBar {
+                VStack {
+                    TextField(
+                        "Search Categories...",
+                        text: $categorySearch
+                    )
+                    .onAppear(perform: { print(prop.size.height / 2.5) })
+                    .frame(
+                        maxWidth: prop.isIpad
+                        ? UIDevice.current.orientation.isLandscape
+                        ? prop.size.width - 800
+                        : prop.size.width - 450
+                        : 150,
+                        maxHeight: prop.size.height / 2.5 > 300 ? 25 : 20
+                    )
+                    .padding(7)
+                    .padding(.horizontal, 25)
+                    .background(Color(.systemGray6))
+                    .cornerRadius(7.5)
+                    .padding(.horizontal, 10)
+                    .overlay(
+                        HStack {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(.gray)
+                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 15)
+                            
+                            if self.categorySearchFocus || self.categorySearch != "" {
+                                Button(action: {
+                                    self.categorySearch = ""
+                                    self.lookedUpCategoriesAndSets.removeAll()
+                                    self.searchDone = false
+                                    self.showSearchBar = false
+                                }) {
+                                    Image(systemName: "multiply.circle.fill")
+                                        .foregroundColor(.gray)
+                                        .padding(.trailing, 15)
+                                }
+                            }
+                        }
+                    )
+                    .onSubmit {
+                        if !(self.categorySearch == "") {
+                            self.lookedUpCategoriesAndSets.removeAll()
+                            
+                            for (_, value) in self.categoriesAndSets.keys.enumerated() {
+                                if value.lowercased() == self.categorySearch.lowercased() || value.lowercased().contains(self.categorySearch.lowercased()) {
+                                    self.lookedUpCategoriesAndSets[value] = self.categoriesAndSets[value]
+                                    
+                                    print(self.lookedUpCategoriesAndSets)
+                                }
+                            }
+                            
+                            self.searchDone = true
+                        } else {
+                            self.lookedUpCategoriesAndSets.removeAll()
+                            self.searchDone = false
+                        }
+                        
+                        self.categorySearchFocus = false
+                    }
+                    .focused($categorySearchFocus)
+                    .onChange(of: categorySearchFocus) {
+                        if !self.categorySearchFocus && self.categorySearch == "" { self.showSearchBar = false }
+                    }
+                    .onTapGesture {
+                        self.categorySearchFocus = true
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding([.top], prop.size.height > 340 ? 55 : 45)
+            } else {
+                if self.changeNavbarColor {
+                    VStack {
+                        Text("View Categories")
+                            .foregroundStyle(.primary)
+                            .font(.system(size: 18, design: .rounded))
+                            .fontWeight(.semibold)
+                        
+                        Text("Total: \(self.categoriesAndSets.count)")
+                            .foregroundStyle(.white)
+                            .font(.system(size: 14, design: .rounded))
+                            .fontWeight(.thin)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .padding(.top, prop.size.height > 340 ? 55 : 50)
+                }
+            }
+            
+            Spacer()
+            
+            HStack {
+                Button(action: { self.showSearchBar.toggle() }) {
+                    Image(systemName: "magnifyingglass")
+                        .resizable()
+                        .frame(width: 25, height: 25)
+                        .foregroundStyle(Color.EZNotesOrange)
+                }
+                .buttonStyle(NoLongPressButtonStyle())
+                .padding([.top], 5)
+                
+                Button(action: { self.aiChatPopover = true }) {
+                    Image("AI-Chat-Icon")
+                        .resizable()
+                        .frame(
+                            width: prop.size.height / 2.5 > 300 ? 45 : 40,
+                            height: prop.size.height / 2.5 > 300 ? 45 : 40
+                        )
+                        .padding([.trailing], 20)
+                }
+                .buttonStyle(NoLongPressButtonStyle())
+            }
+            .frame(maxWidth: 90, maxHeight: .infinity, alignment: .trailing)
+            .padding(.top, 55)
+        }
+        .frame(maxWidth: .infinity, maxHeight: 115, alignment: .top)
+        .background(
+            !self.changeNavbarColor
+                ? AnyView(Color.clear)
+                : AnyView(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark).opacity(navbarOpacity))
+        )
+        .ignoresSafeArea(.keyboard)
+        .zIndex(1)
+        .onTapGesture {
+            if self.showSearchBar { self.showSearchBar = false }
+        }
+        .popover(isPresented: $aiChatPopover) {
+            VStack {
+                VStack {
+                    Text("EZNotes AI Chat")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        .foregroundStyle(.white)
+                        .font(.system(size: 30, design: .rounded))
+                        .shadow(color: .white, radius: 2)
+                }
+                .frame(maxWidth: prop.size.width - 40, maxHeight: 90, alignment: .top)
+                .border(width: 0.5, edges: [.bottom], color: .gray)
+                
+                Spacer()
+                
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        /*VStack {
             HStack {
                 VStack {
                     ProfileIconView(prop: prop, showAccountPopup: $showAccountPopup)
@@ -153,88 +331,93 @@ struct TopNavHome: View {
                 
                 /* TODO: Change the below `Text` to a search bar (`TextField`) where user can search for specific categories.
                  * */
-                if self.changeNavbarColor {
-                    Text("View Categories")
-                        .foregroundStyle(.primary)
-                        .font(.system(size: 18, design: .rounded))
-                        .fontWeight(.semibold)
-                    
-                    Text("Total: \(self.categoriesAndSets.count)")
-                        .foregroundStyle(.white)
-                        .font(.system(size: 14, design: .rounded))
-                        .fontWeight(.thin)
-                }
+                if self.showSearchBar {
                     VStack {
-                        if self.showSearchBar {
-                            TextField(
-                                "Search Categories...",
-                                text: $categorySearch
-                            )
-                            .frame(
-                                maxWidth: prop.isIpad
-                                    ? UIDevice.current.orientation.isLandscape
-                                        ? prop.size.width - 800
-                                        : prop.size.width - 450
-                                    : 150,
-                                maxHeight: prop.size.height / 2.5 > 300 ? 25 : 20
-                            )
-                            .padding(7)
-                            .padding(.horizontal, 25)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(7.5)
-                            .padding(.horizontal, 10)
-                            .overlay(
-                                HStack {
-                                    Image(systemName: "magnifyingglass")
-                                        .foregroundColor(.gray)
-                                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                                        .padding(.leading, 15)
-                                    
-                                    if self.categorySearchFocus || self.categorySearch != "" {
-                                        Button(action: {
-                                            self.categorySearch = ""
-                                            self.lookedUpCategoriesAndSets.removeAll()
-                                            self.searchDone = false
-                                            self.showSearchBar = false
-                                        }) {
-                                            Image(systemName: "multiply.circle.fill")
-                                                .foregroundColor(.gray)
-                                                .padding(.trailing, 15)
-                                        }
+                        TextField(
+                            "Search Categories...",
+                            text: $categorySearch
+                        )
+                        .frame(
+                            maxWidth: prop.isIpad
+                            ? UIDevice.current.orientation.isLandscape
+                            ? prop.size.width - 800
+                            : prop.size.width - 450
+                            : 150,
+                            maxHeight: prop.size.height / 2.5 > 300 ? 20 : 20
+                        )
+                        .padding(7)
+                        .padding(.horizontal, 25)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(7.5)
+                        .padding(.horizontal, 10)
+                        .overlay(
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.gray)
+                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                                    .padding(.leading, 15)
+                                
+                                if self.categorySearchFocus || self.categorySearch != "" {
+                                    Button(action: {
+                                        self.categorySearch = ""
+                                        self.lookedUpCategoriesAndSets.removeAll()
+                                        self.searchDone = false
+                                        self.showSearchBar = false
+                                    }) {
+                                        Image(systemName: "multiply.circle.fill")
+                                            .foregroundColor(.gray)
+                                            .padding(.trailing, 15)
                                     }
                                 }
-                            )
-                            .onSubmit {
-                                if !(self.categorySearch == "") {
-                                    self.lookedUpCategoriesAndSets.removeAll()
-                                    
-                                    for (_, value) in self.categoriesAndSets.keys.enumerated() {
-                                        if value.lowercased() == self.categorySearch.lowercased() || value.lowercased().contains(self.categorySearch.lowercased()) {
-                                            self.lookedUpCategoriesAndSets[value] = self.categoriesAndSets[value]
-                                            
-                                            print(self.lookedUpCategoriesAndSets)
-                                        }
+                            }
+                        )
+                        .onSubmit {
+                            if !(self.categorySearch == "") {
+                                self.lookedUpCategoriesAndSets.removeAll()
+                                
+                                for (_, value) in self.categoriesAndSets.keys.enumerated() {
+                                    if value.lowercased() == self.categorySearch.lowercased() || value.lowercased().contains(self.categorySearch.lowercased()) {
+                                        self.lookedUpCategoriesAndSets[value] = self.categoriesAndSets[value]
+                                        
+                                        print(self.lookedUpCategoriesAndSets)
                                     }
-                                    
-                                    self.searchDone = true
-                                } else {
-                                    self.lookedUpCategoriesAndSets.removeAll()
-                                    self.searchDone = false
                                 }
                                 
-                                self.categorySearchFocus = false
+                                self.searchDone = true
+                            } else {
+                                self.lookedUpCategoriesAndSets.removeAll()
+                                self.searchDone = false
                             }
-                            .focused($categorySearchFocus)
-                            .onChange(of: categorySearchFocus) {
-                                if !self.categorySearchFocus && self.categorySearch == "" { self.showSearchBar = false }
-                            }
-                            .onTapGesture {
-                                self.categorySearchFocus = true
-                            }
+                            
+                            self.categorySearchFocus = false
+                        }
+                        .focused($categorySearchFocus)
+                        .onChange(of: categorySearchFocus) {
+                            if !self.categorySearchFocus && self.categorySearch == "" { self.showSearchBar = false }
+                        }
+                        .onTapGesture {
+                            self.categorySearchFocus = true
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding([.top], prop.size.height > 340 ? 55 : 50)
+                    .padding([.top], prop.size.height > 340 ? 55 : 45)
+                } else {
+                    if self.changeNavbarColor {
+                        VStack {
+                            Text("View Categories")
+                                .foregroundStyle(.primary)
+                                .font(.system(size: 18, design: .rounded))
+                                .fontWeight(.semibold)
+                            
+                            Text("Total: \(self.categoriesAndSets.count)")
+                                .foregroundStyle(.white)
+                                .font(.system(size: 14, design: .rounded))
+                                .fontWeight(.thin)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        .padding(.top, prop.size.height > 340 ? 55 : 50)
+                    }
+                }
                 /*} else {
                     if self.categoriesAndSets.count > 0 {
                         VStack {
@@ -360,7 +543,7 @@ struct TopNavHome: View {
                 
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
+        }*/
     }
 }
 

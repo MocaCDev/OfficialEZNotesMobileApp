@@ -147,7 +147,7 @@ struct ContentView: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(
-                            Image("Background")
+                            Image(!self.faceIDAuthenticated ? "Background" : "Background2")
                         )
                     }
                 }
@@ -176,6 +176,10 @@ struct ContentView: View {
                  * */
                 if UserDefaults.standard.object(forKey: "username") != nil {
                     accountInfo.setUsername(username: UserDefaults.standard.string(forKey: "username")!)
+                }
+                
+                if UserDefaults.standard.object(forKey: "email") != nil {
+                    accountInfo.setEmail(email: UserDefaults.standard.string(forKey: "email")!)
                 }
                 
                 if UserDefaults.standard.string(forKey: "faceID_enabled") == "enabled" {

@@ -42,8 +42,8 @@ struct UploadImages {
     
     func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
         //let localServer1 = "http://10.185.51.126:8088"
-        //let localServer1 = "http://192.168.1.114:8088"
-        let localServer1 = "http://192.168.0.12:8088"
+        let localServer1 = "http://192.168.1.114:8088"
+        //let localServer1 = "http://192.168.0.12:8088"
         //let localServer1 = "https://www.eznotes.space"
         
         let url = URL(string: "\(localServer1)/handle_uploads")
@@ -145,8 +145,8 @@ struct RequestAction<T> {
         components.host = host
         
         var request: URLRequest = URLRequest(url: URL(string: "n")!)
-        //let server = "http://192.168.1.114:8088"
-        let server = "http://192.168.0.12:8088"//"http://192.168.1.114:8088"
+        let server = "http://192.168.1.114:8088"
+        //let server = "http://192.168.0.12:8088"//"http://192.168.1.114:8088"
         
         switch(action)
         {
@@ -156,11 +156,12 @@ struct RequestAction<T> {
             case "complete_login":  request = URLRequest(url: URL(string: "\(server)/mobile_cl")!);break;
             case "complete_signup1": request = URLRequest(url: URL(string: "\(server)/csu")!);break;
             case "complete_signup2": request = URLRequest(url: URL(string: "\(server)/csu2")!);break;
+            case "get_user_email": request = URLRequest(url: URL(string: "\(server)/get_user_email")!);break;
             default: request = URLRequest(url: URL(string: "\(server)/\(action)")!);break;
         }
         
         if action == "get_supported_states" || action == "get_colleges_for_state" { request.httpMethod = "get" }
-        else { request.httpMethod = "post" }
+        else { request.httpMethod = "get" }
         
         request.addValue("text/html; charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.addValue("text/html; charset=utf-8", forHTTPHeaderField: "Accept")
@@ -184,7 +185,7 @@ struct RequestAction<T> {
                 guard let params: LoginRequestData = (parameters as? LoginRequestData) else { return }
                 request.addValue(params.Username, forHTTPHeaderField: "Un");
                 request.addValue(params.Password, forHTTPHeaderField: "Pw");
-                break;
+                break
             case "complete_signup1":
                 guard let params: SignUpRequestData = (parameters as? SignUpRequestData) else { return }
                 request.addValue(params.Username, forHTTPHeaderField: "N-Un")
@@ -194,13 +195,17 @@ struct RequestAction<T> {
                 request.addValue(params.College, forHTTPHeaderField: "N-Cl")
                 request.addValue("", forHTTPHeaderField: "N-Bgimg")
                 request.addValue("", forHTTPHeaderField: "N-Cip")
-                break;
+                break
             case "complete_signup2":
                 guard let params: SignUp2RequestData = (parameters as? SignUp2RequestData) else { return }
                 request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
                 request.addValue(params.UserInputtedCode, forHTTPHeaderField: "Uic")
-                break;
-            default: break;
+                break
+            case "get_user_email":
+                guard let params: GetEmailData = (parameters as? GetEmailData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                break
+            default: break
         }
         
         
