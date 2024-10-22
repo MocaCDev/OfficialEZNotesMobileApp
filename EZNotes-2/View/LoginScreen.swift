@@ -39,16 +39,6 @@ struct LoginScreen: View, KeyboardReadable {
     var body: some View {
         VStack {
             VStack {
-                Image("Logo")
-                    .logoImageModifier(prop: prop)
-                    .opacity(!prop.isIpad
-                            ? passwordFieldInFocus
-                                ? 0
-                                : imageOpacity
-                            : 1
-                    )
-                    .padding([.top], -20)
-                
                 LinearGradient(
                     gradient: Gradient(
                         colors: [
@@ -72,18 +62,7 @@ struct LoginScreen: View, KeyboardReadable {
                 )
                 .mask(
                     Text("Login")
-                        .contrast(0)
-                        .shadow(color: .white, radius: 2.5)
-                        .opacity(prop.isIpad && UIDevice.current.orientation.isLandscape
-                                 ? passwordFieldInFocus
-                                    ? 0
-                                    : imageOpacity
-                                 : 1/*prop.size.width / 2.5 < 300
-                                 ? passwordFieldInFocus
-                                    ? 0
-                                    : imageOpacity
-                                 : 1*/
-                        )
+                        .frame(alignment: .top)
                         .padding(
                             [.top],
                             prop.isIpad
@@ -92,7 +71,7 @@ struct LoginScreen: View, KeyboardReadable {
                                     ? -125
                                     : imageOpacity == 0 || passwordFieldInFocus ? -100 : -120)
                         .padding([.bottom], -80)
-                        .frame(alignment: .top)
+                        .shadow(color: .white, radius: 2.5)
                         .font(
                             .system(
                                 size: prop.isIpad
@@ -105,22 +84,22 @@ struct LoginScreen: View, KeyboardReadable {
                         .multilineTextAlignment(.center)
                         //.opacity(opacity2)
                 )
+                
                 Text(
                     !loginError
                         ? "Use your Email or Username to login to your account"
                         : "Email, Username or Password is incorrect"
                 )
-                .opacity(prop.isIpad && UIDevice.current.orientation.isLandscape
-                         ? passwordFieldInFocus
-                            ? !loginError ? 0 : 1
-                            : !loginError ? imageOpacity : 1
-                         : prop.size.width / 2.5 < 300
-                            ? passwordFieldInFocus
-                                ? !loginError ? 0 : 1
-                                : !loginError ? imageOpacity : 1
-                            : 1
+                .frame(
+                    maxWidth: prop.isIpad
+                        ? prop.size.width - 520
+                        : 320,
+                    maxHeight: 50,
+                    alignment: .top
                 )
-                .fontWeight(.bold)
+                .foregroundStyle(!loginError
+                    ? Color.white
+                    : Color.red)
                 .padding([.top], prop.isIpad
                          ? -80
                          : prop.size.width / 2.5 > 300
@@ -135,17 +114,8 @@ struct LoginScreen: View, KeyboardReadable {
                             : 18
                     )
                 )
+                .fontWeight(.bold)
                 .multilineTextAlignment(.center)
-                .frame(
-                    maxWidth: prop.isIpad
-                        ? prop.size.width - 520
-                        : 320,
-                    maxHeight: 50,
-                    alignment: .top
-                )
-                .foregroundStyle(!loginError
-                    ? Color.white
-                    : Color.red)
                 
                 //Spacer()
             }
@@ -154,7 +124,7 @@ struct LoginScreen: View, KeyboardReadable {
                 prop.size.height / 2.5 > 300
                     ? prop.isIpad
                             ? -330
-                            : -280
+                            : -180
                     : -120)
             .frame(
                 width: prop.isIpad
@@ -169,8 +139,10 @@ struct LoginScreen: View, KeyboardReadable {
             
             //Spacer()
             
-            VStack {
+            //VStack {
                 VStack {
+                    VStack { }.frame(maxWidth: .infinity, maxHeight: 25)
+                    
                     Text("Username")
                         .frame(
                             width: prop.isIpad
@@ -189,6 +161,7 @@ struct LoginScreen: View, KeyboardReadable {
                         )
                         .foregroundStyle(.white)
                         .fontWeight(.medium)
+                    
                     TextField(
                         "Username",
                         text: $username,
@@ -354,8 +327,8 @@ struct LoginScreen: View, KeyboardReadable {
                     
                     Spacer()
                 }
-                .frame(maxWidth: .infinity)
-                .cornerRadius(20)
+                .frame(maxWidth: prop.size.width - 30, maxHeight: (prop.size.height / 2) - 100)
+                .cornerRadius(15)
                 .padding(
                     [.top],
                         prop.isIpad
@@ -371,9 +344,10 @@ struct LoginScreen: View, KeyboardReadable {
                  .padding([.top], -150)*/
                 
                 //Spacer()
-            }
+            //}
+            //.frame(maxWidth: prop.size.width - 100, maxHeight: 50)
             
-            //Spacer()
+            Spacer()
         }
         .alert("Enable FaceID?", isPresented: $showPopup) {
             Button("Enable") {

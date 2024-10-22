@@ -578,12 +578,15 @@ struct HomeView: View {
                                                         .font(.system(size: 20, design: .rounded))
                                                         .fontWeight(.light)
                                                     
-                                                    TextField("New Title...", text: $newCategoryName)
-                                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                                        .padding([.leading], 15)
-                                                        .padding(7)
-                                                        .background(Color(.systemGray6))
-                                                        .cornerRadius(7.5)
+                                                    ZStack {
+                                                        TextField("New Title...", text: $newCategoryName)
+                                                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                            .padding([.leading], 15)
+                                                            .padding(7)
+                                                            .background(Color(.systemGray6))
+                                                            .cornerRadius(7.5)
+                                                    }
+                                                    .frame(maxWidth: .infinity, maxHeight: 30)
                                                     
                                                 }
                                                 .frame(maxWidth: prop.size.width - 80, maxHeight: 80)

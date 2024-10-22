@@ -89,15 +89,15 @@ struct HomeScreen: View {
                         Text("Hello, and Welcome")
                             .contrast(10)
                             .shadow(color: .white, radius: 8)
+                            .frame(alignment: .center)
                             .padding(
                                 [.top],
                                 prop.isIpad
                                     ? 30
                                     : prop.size.height / 2.5 > 300
-                                        ? 75
+                                        ? 0
                                         : 20)
                             .padding([.bottom], -80)
-                            .frame(alignment: .centerLastTextBaseline)
                             .fontWeight(.medium)
                             .font(
                                 .system(
@@ -113,7 +113,10 @@ struct HomeScreen: View {
                     )
                     
                     Text("**To your New & Completely Automated Note Taking App**")
-                        .padding([.top], prop.size.height / 2.5 > 300 ? -20 : -70)
+                        .frame(
+                            maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width  - 100 : prop.size.width - 60,
+                            maxHeight: prop.size.height / 2, alignment: .top)
+                        .padding([.top], prop.size.height / 2.5 > 300 ? 0 : -70)
                         .font(
                             .system(
                                 size: prop.size.height / 2.5 > 300 ? 20 : 17,
@@ -121,20 +124,17 @@ struct HomeScreen: View {
                             )
                         )
                         .multilineTextAlignment(.center)
-                        .frame(
-                            maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width  - 100 : prop.size.width - 60,
-                            maxHeight: prop.size.height / 2, alignment: .top)
                         .foregroundStyle(.secondary)
                 }
                 
-                Spacer()
+                //Spacer()
             }
             .padding(
                 [.top],
                 prop.size.height / 2.5 > 300
                     ? prop.isIpad
                         ? 60
-                        : 0
+                        : 110
                     : -50
             )
             .frame(
@@ -144,35 +144,43 @@ struct HomeScreen: View {
                 height: prop.isIpad
                         ? 850
                         : prop.size.height / 2.5 > 300
-                            ? 450
+                            ? 550
                             : (prop.size.height / 2.5) + 300
             )
             
             Spacer()
             
             /* Buttons at bottom of screen. */
-            VStack {
-                startupScreen.createButton(
-                    prop: prop,
-                    text: "Log In",
-                    action: { self.screen = "login" }
-                )
-                
-                startupScreen.createButton(
-                    prop: prop,
-                    text: "Sign Up",
-                    action: { self.screen = "signup" }
-                )
+            ZStack {
+                VStack {
+                    startupScreen.createButton(
+                        prop: prop,
+                        text: "Log In",
+                        action: { self.screen = "login" }
+                    )
+                    
+                    startupScreen.createButton(
+                        prop: prop,
+                        text: "Sign Up",
+                        action: { self.screen = "signup" }
+                    )
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
-            .frame(maxWidth: .infinity, alignment: .bottom)
-            .padding(
+            .frame(maxWidth: .infinity, maxHeight: 200, alignment: .bottom)
+            /*.background(.blue.opacity(0.2))//Color.EZNotesLightBlack.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+            .cornerRadius(15, corners: [.topLeft, .topRight])
+            .shadow(color: .black, radius: 2.5, x: 0, y: -2)*/
+            .edgesIgnoringSafeArea(.bottom)
+            /*.padding(
                 [.bottom],
                 prop.isIpad
                     ? prop.isLandscape ? 140 : 60
                     : prop.size.height / 2.5 > 300
-                        ? 0
-                        : 30)
+                        ? 40
+                        : 30)*/
         }
+        .background(.blue.opacity(0.2))
     }
 }
 

@@ -55,16 +55,6 @@ struct SignUpScreen : View, KeyboardReadable {
     var body: some View {
         VStack {
             VStack {
-                Image("Logo")
-                    .logoImageModifier(prop: prop)
-                    .opacity(!prop.isIpad
-                            ? passwordFieldInFocus
-                                ? 0
-                                : imageOpacity
-                            : 1
-                    )
-                    .padding([.top], 10)
-                
                 LinearGradient(
                     gradient: Gradient(
                         colors: [
@@ -93,27 +83,16 @@ struct SignUpScreen : View, KeyboardReadable {
                 )
                 .mask(
                     Text("Sign Up")
-                        .contrast(0)
-                        .shadow(color: .white, radius: 2.5)
-                        .opacity(prop.isIpad && UIDevice.current.orientation.isLandscape
-                                 ? passwordFieldInFocus
-                                    ? 0
-                                    : imageOpacity
-                                 : 1/*prop.size.width / 2.5 < 300
-                                 ? passwordFieldInFocus
-                                    ? 0
-                                    : imageOpacity
-                                 : 1*/
-                        )
+                        .frame(alignment: .top)
                         .padding(
                             [.top],
                             prop.isIpad
                                 ? -90
                                 : prop.size.height / 2.5 > 300
-                                    ? -125
+                                    ? -115
                                     : imageOpacity == 0 || passwordFieldInFocus ? -100 : -120)
                         .padding([.bottom], -80)
-                        .frame(alignment: .top)
+                        .shadow(color: .white, radius: 2.5)
                         .font(
                             .system(
                                 size: prop.isIpad
@@ -135,16 +114,6 @@ struct SignUpScreen : View, KeyboardReadable {
                             : section == "select_state_and_college"
                                 ? "Select your State and College"
                                 : "A code has been sent to your email. Input the code below"
-                )
-                .opacity(prop.isIpad && UIDevice.current.orientation.isLandscape
-                         ? passwordFieldInFocus
-                            ? 0
-                            : imageOpacity
-                         : prop.size.width / 2.5 < 300
-                            ? passwordFieldInFocus
-                                ? 0
-                                : imageOpacity
-                            : 1
                 )
                 .fontWeight(.bold)
                 .padding([.top], prop.isIpad
@@ -177,7 +146,7 @@ struct SignUpScreen : View, KeyboardReadable {
                 prop.size.height / 2.5 > 300
                     ? prop.isIpad
                             ? -330
-                            : -310
+                            : -180
                     : -120)
             .frame(
                 width: prop.isIpad
@@ -211,6 +180,7 @@ struct SignUpScreen : View, KeyboardReadable {
                             )
                             .foregroundStyle(.white)
                             .fontWeight(.medium)
+                        
                         TextField(
                             "Username",
                             text: $username,
@@ -218,7 +188,7 @@ struct SignUpScreen : View, KeyboardReadable {
                         )
                         .frame(
                             width: prop.isIpad
-                            ? UIDevice.current.orientation.isLandscape
+                                ? UIDevice.current.orientation.isLandscape
                                     ? prop.size.width - 800
                                     : prop.size.width - 450
                                 : prop.size.width - 100,
@@ -230,16 +200,20 @@ struct SignUpScreen : View, KeyboardReadable {
                                 .fill(Color.gray)
                                 .opacity(0.6)
                         )
-                        .cornerRadius(15)
-                        .padding(prop.size.width / 2.5 > 300 ? 10 : 5)
+                        .padding(.top)
+                        .padding(.bottom, 5)
                         .tint(Color.EZNotesBlue)
-                        .font(.system(size: 18))
-                        .foregroundStyle(Color.EZNotesBlue)
-                        /*.onReceive(keyboardPublisher) { newIsKeyboardVisible in
-                            self.keyboardActivated = newIsKeyboardVisible
-                        }*/
+                        .cornerRadius(15)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
+                        /*.overlay(
+                         RoundedRectangle(cornerRadius: 15)
+                         .stroke(Color.EZNotesBlue, lineWidth: 2)
+                         )*/
+                        .tint(Color.EZNotesBlue)
+                        .font(.system(size: 18))
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color.EZNotesBlue)
                         .keyboardType(.alphabet)
                         
                         Text("Email")
@@ -279,18 +253,20 @@ struct SignUpScreen : View, KeyboardReadable {
                                 .fill(Color.gray)
                                 .opacity(0.6)
                         )
+                        .padding(.top)
+                        .padding(.bottom, 5)
+                        .tint(Color.EZNotesBlue)
                         .cornerRadius(15)
-                        .padding(prop.size.width / 2.5 > 300 ? 10 : 5)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                        /*.overlay(
+                         RoundedRectangle(cornerRadius: 15)
+                         .stroke(Color.EZNotesBlue, lineWidth: 2)
+                         )*/
                         .tint(Color.EZNotesBlue)
                         .font(.system(size: 18))
                         .fontWeight(.medium)
                         .foregroundStyle(Color.EZNotesBlue)
-                        /*.onReceive(keyboardPublisher) { newIsKeyboardVisible in
-                            print("Is keyboard visible? ", newIsKeyboardVisible)
-                            self.keyboardActivated = newIsKeyboardVisible
-                        }*/
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
                         .keyboardType(.emailAddress)
                         
                         Text("Password")
@@ -336,8 +312,17 @@ struct SignUpScreen : View, KeyboardReadable {
                                 .fill(Color.gray)
                                 .opacity(0.6)
                         )
+                        .padding(.top)
+                        .padding(.bottom, 5)
+                        .tint(Color.EZNotesBlue)
                         .cornerRadius(15)
-                        .padding(prop.size.width / 2.5 > 300 ? 10 : 5)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                        .keyboardType(.alphabet)
+                        /*.overlay(
+                         RoundedRectangle(cornerRadius: 15)
+                         .stroke(Color.EZNotesBlue, lineWidth: 2)
+                         )*/
                         .tint(Color.EZNotesBlue)
                         .font(.system(size: 18))
                         .fontWeight(.medium)

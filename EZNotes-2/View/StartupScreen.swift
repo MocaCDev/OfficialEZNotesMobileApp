@@ -295,39 +295,35 @@ struct StartupScreen: View {
                 } else {
                     VStack {
                         Spacer()
+                        
                         Image("Logo")
                             .logoImageModifier(prop: prop)
-                        Text("SERVER ERROR")
+                        
+                        Text("Oh No!")
                             .font(
-                                .system(size: 35)
+                                .system(size: 30, design: .rounded)
                             )
-                            .fontWeight(.bold)
+                            .fontWeight(.semibold)
                             .foregroundStyle(Color.red)
                         
-                        Text("There was an internal server error.")
-                            .fontWeight(.bold)
-                            .font(
-                                .system(
-                                    size: 25
-                                )
-                            )
-                            .multilineTextAlignment(.center)
+                        Text("Something went wrong!")
                             .frame(
                                 maxWidth: prop.isIpad
                                     ? prop.size.width - 520
                                     : 320,
-                                maxHeight: 80,
+                                maxHeight: 45,
                                 alignment: .top
                             )
                             .foregroundStyle(Color.white)
-                        Text("This can be due to the server being down or a faulty Wi-Fi Connection.")
+                            .multilineTextAlignment(.center)
                             .fontWeight(.bold)
                             .font(
                                 .system(
-                                    size: 20
+                                    size: 25, design: .rounded
                                 )
                             )
-                            .multilineTextAlignment(.center)
+                        
+                        Text("This can be due to the server being down or a faulty Wi-Fi Connection.")
                             .frame(
                                 maxWidth: prop.isIpad
                                     ? prop.size.width - 520
@@ -335,16 +331,35 @@ struct StartupScreen: View {
                                 maxHeight: 110,
                                 alignment: .top
                             )
+                            .fontWeight(.medium)
                             .foregroundStyle(Color.white)
+                            .font(
+                                .system(
+                                    size: 20
+                                )
+                            )
+                            .multilineTextAlignment(.center)
                         
-                        createButton(
+                        /*createButton(
                             prop: prop,
-                            text: "Exit",
-                            backgroundColor: Color.yellow,
-                            textColor: Color.EZNotesBlack,
+                            text: "Report",
                             primaryGlow: false,
                             isError: true,
                             action: { exit(0) }
+                        )*/
+                        Button(action: { exit(0) }) {
+                            Text("Report")
+                                .frame(maxWidth: prop.size.width - 200, maxHeight: 10)
+                                .padding()
+                                .foregroundStyle(.white)
+                                .font(.system(size: 16))
+                                .fontWeight(.semibold)
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .background(
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(.gray.opacity(0.6))
+                                .stroke(.yellow, lineWidth: 2.5)
                         )
                         
                         Spacer()
@@ -359,15 +374,28 @@ struct StartupScreen: View {
             /*Image(screen == "home" ? "Background2" : "Background5")
                 .opacity(0.9)
                 .blur(radius: 3.5)*/
-            MeshGradient(width: 3, height: 3, points: [
+            /*MeshGradient(width: 3, height: 3, points: [
                 .init(0, 0.5), .init(0.5, 0), .init(1, 0),
                 .init(0, 0.5), .init(0.5, 0.5), .init(1, 0.5),
                 .init(0, 1), .init(0.5, 1), .init(1, 1)
             ], colors: [
-                .red, .purple, .indigo,
+                Color.EZNotesBlack, .purple, .indigo,
                 .orange, .white, .blue,
                 .yellow, .green, .mint
+            ])*/
+            MeshGradient(width: 3, height: 3, points: [
+                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                .init(0, 1), .init(0.5, 1), .init(1, 1)
+            ], colors: [
+                Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesOrange,
+                Color.EZNotesOrange, Color.EZNotesLightBlack, Color.EZNotesBlue
+                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
             ])
+            .opacity(0.5)
         )
         .edgesIgnoringSafeArea([.top, .bottom])
         .onReceive(rotationChangePublisher) { _ in
