@@ -42,8 +42,8 @@ struct UploadImages {
     
     func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
         //let localServer1 = "http://10.185.51.126:8088"
-        let localServer1 = "http://192.168.1.114:8088"
-        //let localServer1 = "http://192.168.0.12:8088"
+        //let localServer1 = "http://192.168.1.114:8088"
+        let localServer1 = "http://192.168.0.12:8088"
         //let localServer1 = "https://www.eznotes.space"
         
         let url = URL(string: "\(localServer1)/handle_uploads")

@@ -68,7 +68,6 @@ struct AccountPopup: View {
                                         //.overlay(Rectangle().stroke(Color.white, lineWidth: 2))
                                             .shadow(color: .black, radius: 2.5)
                                     }
-                                    .padding([.leading], 10)
                                     .onChange(of: self.pfpPhotoPicked) {
                                         Task {
                                             if let image = try? await pfpPhotoPicked!.loadTransferable(type: Image.self) {
@@ -85,7 +84,7 @@ struct AccountPopup: View {
                                         Text("\(self.accountInfo.username)")
                                             //.frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
                                             .foregroundStyle(.white)
-                                            .font(.system(size: 24, design: .rounded))
+                                            .font(.system(size: 20, design: .rounded))
                                             .fontWeight(.semibold)
                                         
                                         Divider()
@@ -94,7 +93,7 @@ struct AccountPopup: View {
                                         Text("0 Friends")
                                             .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
                                             .foregroundStyle(.white)
-                                            .font(.system(size: 24, design: .rounded))
+                                            .font(.system(size: 18, design: .rounded))
                                             .fontWeight(.semibold)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
@@ -118,27 +117,46 @@ struct AccountPopup: View {
                             
                             HStack {
                                 ZStack {
-                                    Text("Change PFP")
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                        .padding()
-                                        .foregroundStyle(.white)
-                                        .font(.system(size: 14))
-                                        .fontWeight(.medium)
+                                    PhotosPicker(selection: $pfpPhotoPicked, matching: .images) {
+                                        Text("Change PFP")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                            .padding()
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: 14))
+                                            .fontWeight(.medium)
+                                    }
+                                    .onChange(of: self.pfpPhotoPicked) {
+                                        Task {
+                                            if let image = try? await pfpPhotoPicked!.loadTransferable(type: Image.self) {
+                                                self.accountInfo.profilePicture = image
+                                            }
+                                        }
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: 30, alignment: .leading)
                                 .background(
                                     RoundedRectangle(cornerRadius: 15)
                                         .fill(.gray.opacity(0.6))
-                                        .stroke(.white, lineWidth: 2.5)
                                 )
                                 
                                 ZStack {
-                                    Text("Change Display")
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                        .padding()
-                                        .foregroundStyle(.white)
-                                        .font(.system(size: 14))
-                                        .fontWeight(.medium)
+                                    PhotosPicker(selection: $pfpBackgroundPhotoPicked) {
+                                        Text("Change Display")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                            .padding()
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: 14))
+                                            .fontWeight(.medium)
+                                    }
+                                    .onChange(of: self.pfpBackgroundPhotoPicked) {
+                                        Task {
+                                            if let image = try? await pfpBackgroundPhotoPicked!.loadTransferable(type: Image.self) {
+                                                self.accountInfo.profileBackgroundPicture = image
+                                            }
+                                        }
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: 30, alignment: .trailing)
                                 .background(
@@ -156,74 +174,6 @@ struct AccountPopup: View {
                     .padding(.bottom, 15)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                
-                /*VStack {
-                    PhotosPicker(selection: $pfpPhotoPicked, matching: .images) {
-                        accountInfo.profilePicture
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 90, height: 90, alignment: .bottomLeading)
-                            .clipShape(.circle)
-                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                            .shadow(color: .white, radius: 5)
-                    }
-                    .onChange(of: self.pfpPhotoPicked) {
-                        Task {
-                            if let image = try? await pfpPhotoPicked!.loadTransferable(type: Image.self) {
-                                self.accountInfo.profilePicture = image
-                            }
-                        }
-                    }
-                    .buttonStyle(NoLongPressButtonStyle())
-                    
-                    VStack {
-                        Text(self.accountInfo.username)
-                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .center)
-                            .foregroundStyle(.white)
-                            .font(.system(size: 24, design: .rounded))
-                            .fontWeight(.semibold)
-                        
-                        if self.accountInfo.email != "" {
-                            Text(self.accountInfo.email)
-                                .frame(maxWidth: .infinity, maxHeight: 20, alignment: .center)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 14, design: .rounded))
-                                .fontWeight(.light)
-                        } else {
-                            Text("No Email")
-                                .frame(maxWidth: .infinity, maxHeight: 20, alignment: .center)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 14, design: .monospaced))
-                                .fontWeight(.light)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 10)
-                }
-                .frame(maxWidth: prop.size.width - 150, maxHeight: .infinity, alignment: .leading)*/
-                
-                //Spacer()
-                
-                /*HStack {
-                    ZStack {
-                        PhotosPicker(selection: $pfpBackgroundPhotoPicked, matching: .images) {
-                            Image(systemName: "pencil")
-                                .resizable()
-                                .frame(width: 15, height: 15)
-                        }
-                        .onChange(of: self.pfpBackgroundPhotoPicked) {
-                            Task {
-                                if let image = try? await pfpBackgroundPhotoPicked!.loadTransferable(type: Image.self) {
-                                    self.accountInfo.profileBackgroundPicture = image
-                                }
-                            }
-                        }
-                        .buttonStyle(NoLongPressButtonStyle())
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                    .padding([.trailing, .bottom], 15)
-                }
-                .frame(maxWidth: .infinity, maxHeight: 20, alignment: .trailing)*/
             }
             .frame(maxWidth: .infinity, maxHeight: 235)
             .background(
@@ -237,24 +187,12 @@ struct AccountPopup: View {
             .padding([.bottom], -10)
             
             VStack {
-                /*VStack {
-                    
-                }.frame(maxWidth: .infinity, maxHeight: 15)*/
-                
                 VStack {
-                    if !self.updateUsername {
-                        Text("Account Details")
-                            .frame(maxWidth: .infinity, maxHeight: 25)
-                            .padding([.top], 15)
-                            .font(.system(size: 20))
-                            .fontWeight(.semibold)
-                    } else {
-                        Text("Update Username")
-                            .frame(maxWidth: .infinity, maxHeight: 25)
-                            .padding([.top], 15)
-                            .font(.system(size: 20))
-                            .fontWeight(.semibold)
-                    }
+                    Text("Account Details")
+                        .frame(maxWidth: .infinity, maxHeight: 25)
+                        .padding([.top], 15)
+                        .font(.system(size: 20))
+                        .fontWeight(.semibold)
                     
                     Divider()
                         .frame(width: prop.size.width - 50)
@@ -262,218 +200,253 @@ struct AccountPopup: View {
                     VStack {
                         VStack { }.frame(maxWidth: .infinity, maxHeight: 5)
                         
-                        if !self.updateUsername {
+                        ScrollView(.vertical, showsIndicators: false) {
                             VStack {
-                                ZStack {
-                                    Text("Username & Password")
-                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                        .foregroundStyle(.white)
-                                        .font(.system(size: 20))
-                                        .fontWeight(.medium)
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: 30, alignment: .leading)
-                                .border(width: 0.5, edges: [.bottom], color: .gray)
-                                .padding(.bottom, 5)
-                                
                                 HStack {
-                                    /*Text(self.accountInfo.username)
-                                     .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                     .foregroundStyle(.white)
-                                     .font(.system(size: 20))
-                                     .fontWeight(.light)*/
+                                    Text("Plan Details")
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                        .padding(.leading, 15)
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 18, design: .rounded))
                                     
                                     ZStack {
-                                        Button(action: { self.updateUsername = true }) {
-                                            Text("Change Username")
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                                .padding()
-                                                .foregroundStyle(.white)
-                                                .font(.system(size: 18, design: .rounded))
-                                                .fontWeight(.medium)
+                                        Button(action: { print("Show Plan Detail") }) {
+                                            Image(systemName: "arrow.forward")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                     }
-                                    .frame(maxWidth: .infinity, maxHeight: 30)
-                                    .background(
-                                        AnyView(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(.clear)
-                                                .stroke(.white, lineWidth: 2)
-                                        )
-                                    )
-                                    .padding(.top, 5)
+                                    .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                    .padding(.trailing, 25)
                                 }
-                                .frame(maxWidth: .infinity, maxHeight: 45, alignment: .top)
+                                .frame(maxWidth: .infinity, maxHeight: 40)
                                 
-                                ZStack {
-                                    Button(action: { print("Update Password") }) {
-                                        Text("Update Password")
-                                            .frame(maxWidth: .infinity, maxHeight: 30)
-                                            .padding()
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 18, design: .rounded))
-                                            .fontWeight(.medium)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: 30)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(.clear)
-                                        .stroke(.white, lineWidth: 2)
-                                )
-                                .padding(.top, -10)
+                                Divider()
+                                    .frame(width: prop.size.width - 80)
                                 
-                                ZStack {
-                                    Text("Other")
-                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                        .foregroundStyle(.white)
-                                        .font(.system(size: 20))
-                                        .fontWeight(.medium)
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: 30, alignment: .leading)
-                                .border(width: 0.5, edges: [.bottom], color: .gray)
-                                .padding(.top, 20)
-                                
-                                VStack {
-                                    HStack {
-                                        VStack {
-                                            ZStack {
-                                                Image(systemName: "gearshape.fill")
-                                                    .resizable()
-                                                    .frame(width: 55, height: 55)
-                                                    .foregroundStyle(.gray)
-                                                
-                                                Text("Settings")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                                    .foregroundStyle(.black)
-                                                    .font(.system(size: 20, design: .rounded))
-                                                    .fontWeight(.heavy)
-                                            }
-                                        }
+                                HStack {
+                                    Text("Change Username")
                                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                        .background(Color.EZNotesOrange)
-                                        .cornerRadius(15)
-                                        
-                                        VStack {
-                                            ZStack {
-                                                Image(systemName: "newspaper.fill")
-                                                    .resizable()
-                                                    .frame(width: 55, height: 55)
-                                                    .foregroundStyle(.gray)
-                                                
-                                                Text("Plan Details")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                                    .foregroundStyle(.black)
-                                                    .foregroundStyle(.black)
-                                                    .font(.system(size: 20, design: .rounded))
-                                                    .fontWeight(.heavy)
-                                            }
-                                        }
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                                        .background(Color.EZNotesGreen)
-                                        .cornerRadius(15)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 140)
+                                        .padding(.leading, 15)
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 18, design: .rounded))
                                     
+                                    ZStack {
+                                        Button(action: { print("Show Plan Detail") }) {
+                                            Image(systemName: "arrow.forward")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
+                                    .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                    .padding(.trailing, 25)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: 40)
+                                
+                                Divider()
+                                    .frame(width: prop.size.width - 80)
+                                
+                                HStack {
+                                    Text("Update Password")
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                        .padding(.leading, 15)
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 18, design: .rounded))
+                                    
+                                    ZStack {
+                                        Button(action: { print("Show Plan Detail") }) {
+                                            Image(systemName: "arrow.forward")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
+                                    .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                    .padding(.trailing, 25)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: 40)
+                                
+                                Divider()
+                                    .frame(width: prop.size.width - 80)
+                                
+                                HStack {
+                                    Text("Change Schools")
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                        .padding(.leading, 15)
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 18, design: .rounded))
+                                    
+                                    ZStack {
+                                        Button(action: { print("Show Plan Detail") }) {
+                                            Image(systemName: "arrow.forward")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
+                                    .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                    .padding(.trailing, 25)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: 40)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding([.top, .bottom], 18)
+                            .padding([.leading, .trailing], 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.EZNotesLightBlack)
+                                    .stroke(LinearGradient(gradient: Gradient(
+                                        colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
+                                    ), startPoint: .leading, endPoint: .trailing), lineWidth: 1)
+                            )
+                            .cornerRadius(15)
+                            
+                            /* MARK: Custom `spacer`. Scrollview makes all the views within it kind of funky. */
+                            VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
+                            
+                            VStack {
+                                HStack {
                                     VStack {
                                         ZStack {
-                                            Image(systemName: "macwindow.on.rectangle")
+                                            Image(systemName: "gearshape.fill")
                                                 .resizable()
                                                 .frame(width: 35, height: 35, alignment: .topTrailing)
-                                                .padding([.trailing, .top], 10)
                                                 .foregroundStyle(.gray)
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
                                         
-                                        Text("Themes")
+                                        Text("Settings")
                                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                                            .padding([.leading, .bottom], 10)
                                             .foregroundStyle(.black)
+                                            .font(.system(size: 20, design: .rounded))
+                                            .fontWeight(.heavy)
                                     }
-                                    .frame(maxWidth: .infinity, maxHeight: 140)
-                                    .background(
-                                        Color.EZNotesBlue
-                                    )
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                    .padding()
+                                    .background(Color.EZNotesOrange.gradient)
+                                    .cornerRadius(15)
+                                    
+                                    VStack {
+                                        ZStack {
+                                            Image(systemName: "dollarsign.bank.building")
+                                                .resizable()
+                                                .frame(width: 35, height: 35, alignment: .topTrailing)
+                                                .foregroundStyle(.gray)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
+                                        
+                                        Text("Billing")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                                            .foregroundStyle(.black)
+                                            .font(.system(size: 20, design: .rounded))
+                                            .fontWeight(.heavy)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                                    .padding()
+                                    .background(Color.EZNotesGreen.gradient)
                                     .cornerRadius(15)
                                 }
-                                .frame(maxWidth: .infinity)
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                        } else {
-                            VStack {
+                                .frame(maxWidth: .infinity, maxHeight: 140)
+                                
                                 VStack {
                                     ZStack {
-                                        Text("New Username")
-                                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 20))
-                                            .fontWeight(.medium)
+                                        Image(systemName: "macwindow.on.rectangle")
+                                            .resizable()
+                                            .frame(width: 35, height: 35, alignment: .topTrailing)
+                                            .foregroundStyle(.gray)
                                     }
-                                    .frame(maxWidth: .infinity, maxHeight: 30, alignment: .leading)
-                                    .border(width: 0.5, edges: [.bottom], color: .gray)
-                                    .padding(.bottom, 5)
+                                    .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
                                     
-                                    ZStack {
-                                        TextField(self.accountInfo.username, text: $newUsername)
-                                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                            .padding([.leading], 15)
-                                            .padding(7)
-                                            .background(Color(.systemGray6))
-                                            .cornerRadius(7.5)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 35)
+                                    Text("Themes")
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                                        .foregroundStyle(.black)
+                                        .font(.system(size: 20, design: .rounded))
+                                        .fontWeight(.heavy)
                                 }
-                                .frame(maxWidth: .infinity, maxHeight: 90)
-                                
-                                ZStack {
-                                    Button(action: { print("Update Password") }) {
-                                        Text("Save Username")
-                                            .frame(maxWidth: .infinity, maxHeight: 30)
-                                            .padding()
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 18, design: .rounded))
-                                            .fontWeight(.medium)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: 30)
+                                .frame(maxWidth: .infinity, maxHeight: 140)
+                                .padding()
                                 .background(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(.clear)
-                                        .stroke(.white, lineWidth: 2)
+                                    Color.EZNotesBlue.gradient
                                 )
-                                
-                                ZStack {
-                                    Button(action: { print("Update Password") }) {
-                                        Text("Undo Changes")
-                                            .frame(maxWidth: .infinity, maxHeight: 30)
-                                            .padding()
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 18, design: .rounded))
-                                            .fontWeight(.medium)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: 30)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(.clear)
-                                        .stroke(.red, lineWidth: 2)
-                                )
+                                .cornerRadius(15)
                             }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                             
-                            VStack { }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                            Divider()
+                                .padding([.top, .bottom], 10)
+                            
+                            /* MARK: More details will show the user their account ID, session ID etc. */
+                            HStack {
+                                Text("More Details")
+                                    .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                    .padding(.leading, 15)
+                                    .padding([.top, .bottom])
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.semibold)
+                                
+                                ZStack {
+                                    Button(action: { print("View More Account Details") }) {
+                                        Image(systemName: "arrow.forward")
+                                            .resizable()
+                                            .frame(width: 15, height: 15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                }
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .padding(.trailing, 15)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: 55)
+                            .background(Color.EZNotesLightBlack)
+                            .cornerRadius(15)
+                            .onTapGesture {
+                                print("Show more account details")
+                            }
+                            
+                            HStack {
+                                Text("Report An Issue")
+                                    .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                    .padding(.leading, 15)
+                                    .padding([.top, .bottom])
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.semibold)
+                                
+                                ZStack {
+                                    Button(action: { print("Report An Issue") }) {
+                                        Image(systemName: "arrow.forward")
+                                            .resizable()
+                                            .frame(width: 15, height: 15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                }
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .padding(.trailing, 15)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: 55)
+                            .background(Color.EZNotesLightBlack)
+                            .cornerRadius(15)
+                            .onTapGesture {
+                                print("Report An Issue")
+                            }
+                            
+                            Text("Joined 10/10/2024")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding([.top, .bottom], 40)
+                                .foregroundStyle(.white)
+                                .font(.system(size: 12))
+                                .fontWeight(.medium)
                         }
                     }
-                    .frame(maxWidth: prop.size.width - 120, maxHeight: .infinity)
+                    .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .cornerRadius(15)
                 .background(
                     RoundedRectangle(cornerRadius: 15)
-                        .fill(.black)
+                        .fill(Color.EZNotesBlack)
                         .shadow(color: .black, radius: 6.5)
                 )
                 .edgesIgnoringSafeArea(.bottom)
@@ -1025,23 +998,22 @@ struct TopNavChat: View {
             
             Spacer()
             
-            VStack {
+            HStack {
+                Text("Add Friend")
+                    .foregroundStyle(.white)
+                    .font(.system(size: 12.5, design: .rounded))
+                    .fontWeight(.bold)
+                
                 Button(action: { print("Adding Friend!") }) {
-                    Image("Add-Friend-Icon")
+                    Image(systemName: "person.badge.plus")//Image("Add-Friend-Icon")
                         .resizable()
-                        .frame(maxWidth: 25, maxHeight: 25)
-                        .foregroundStyle(.white)
-                    
-                    Text("Add Friend")
-                        .padding([.trailing], 20)
-                        .foregroundStyle(.white)
-                        .font(.system(size: 12, design: .rounded))
-                        .fontWeight(.bold)
+                        .frame(maxWidth: 30, maxHeight: 30)
+                        .foregroundStyle(Color.EZNotesBlue)
                 }
                 .buttonStyle(NoLongPressButtonStyle())
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
-            .padding([.bottom], 10)
+            .padding([.bottom, .trailing], 10)
         }
         .topNavSettings(prop: prop, backgroundColor: .clear)
         .padding([.top], 5)
