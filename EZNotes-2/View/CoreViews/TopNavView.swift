@@ -77,6 +77,7 @@ struct AccountPopup: View {
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                 }
+                                .padding(.leading, 15)
                                 .padding([.top, .bottom])
                                 
                                 VStack {
@@ -137,7 +138,8 @@ struct AccountPopup: View {
                                 .frame(maxWidth: .infinity, maxHeight: 30, alignment: .leading)
                                 .background(
                                     RoundedRectangle(cornerRadius: 15)
-                                        .fill(.gray.opacity(0.6))
+                                        .fill(.gray.opacity(0.65))
+                                        .stroke(.white, lineWidth: 1)
                                 )
                                 
                                 ZStack {
@@ -161,11 +163,11 @@ struct AccountPopup: View {
                                 .frame(maxWidth: .infinity, maxHeight: 30, alignment: .trailing)
                                 .background(
                                     RoundedRectangle(cornerRadius: 15)
-                                        .fill(.gray.opacity(0.6))
-                                        //.stroke(.white, lineWidth: 2.5)
+                                        .fill(.gray.opacity(0.65))
+                                        .stroke(.white, lineWidth: 1)
                                 )
                             }
-                            .frame(maxWidth: prop.size.width - 20, maxHeight: 30)
+                            .frame(maxWidth: prop.size.width - 40, maxHeight: 30)
                             .padding(.leading, -10)
                         }
                     }
@@ -313,7 +315,7 @@ struct AccountPopup: View {
                                             Image(systemName: "gearshape.fill")
                                                 .resizable()
                                                 .frame(width: 35, height: 35, alignment: .topTrailing)
-                                                .foregroundStyle(.gray)
+                                                .foregroundStyle(.black)
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
                                         
@@ -333,7 +335,7 @@ struct AccountPopup: View {
                                             Image(systemName: "dollarsign.bank.building")
                                                 .resizable()
                                                 .frame(width: 35, height: 35, alignment: .topTrailing)
-                                                .foregroundStyle(.gray)
+                                                .foregroundStyle(.black)
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
                                         
@@ -355,7 +357,7 @@ struct AccountPopup: View {
                                         Image(systemName: "macwindow.on.rectangle")
                                             .resizable()
                                             .frame(width: 35, height: 35, alignment: .topTrailing)
-                                            .foregroundStyle(.gray)
+                                            .foregroundStyle(.black)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
                                     
