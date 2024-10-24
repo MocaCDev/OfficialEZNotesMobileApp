@@ -194,8 +194,8 @@ struct HomeScreen: View {
                 .init(0, 1), .init(0.5, 1), .init(1, 1)
             ], colors: [
                 Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesOrange,
-                Color.EZNotesOrange, Color.EZNotesLightBlack, Color.EZNotesBlue
+                Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
                 /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/

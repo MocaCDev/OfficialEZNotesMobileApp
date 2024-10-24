@@ -11,6 +11,7 @@ class AccountDetails: ObservableObject {
     @Published var email: String
     @Published var college: String
     @Published var major: String
+    @Published var planID: String
     
     /* MARK: PFP - will be on top of `profileBackgroundImage`. */
     @Published var profilePicture: Image
@@ -20,11 +21,12 @@ class AccountDetails: ObservableObject {
     
     init() {
         username = ""
-        profilePicture = Image(systemName: "person.crop.circle.fill")
-        profileBackgroundPicture = Image("Pfp-Default-Bg")
         email = ""
         college = ""
         major = ""
+        planID = ""
+        profilePicture = Image(systemName: "person.crop.circle.fill")
+        profileBackgroundPicture = Image("Pfp-Default-Bg")
     }
     
     final public func setUsername(username: String) { self.username = username }

@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E32D66522CCB01BE00244E2E /* Stripe in Frameworks */ = {isa = PBXBuildFile; productRef = E32D66512CCB01BE00244E2E /* Stripe */; };
+		E32D66542CCB01BE00244E2E /* StripeApplePay in Frameworks */ = {isa = PBXBuildFile; productRef = E32D66532CCB01BE00244E2E /* StripeApplePay */; };
+		E32D66562CCB01BE00244E2E /* StripeFinancialConnections in Frameworks */ = {isa = PBXBuildFile; productRef = E32D66552CCB01BE00244E2E /* StripeFinancialConnections */; };
+		E32D66582CCB01BE00244E2E /* StripeIdentity in Frameworks */ = {isa = PBXBuildFile; productRef = E32D66572CCB01BE00244E2E /* StripeIdentity */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		E3AA61252C9F500400C4C0AA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +72,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E32D66522CCB01BE00244E2E /* Stripe in Frameworks */,
+				E32D66562CCB01BE00244E2E /* StripeFinancialConnections in Frameworks */,
+				E32D66542CCB01BE00244E2E /* StripeApplePay in Frameworks */,
+				E32D66582CCB01BE00244E2E /* StripeIdentity in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +136,10 @@
 			);
 			name = "EZNotes-2";
 			packageProductDependencies = (
+				E32D66512CCB01BE00244E2E /* Stripe */,
+				E32D66532CCB01BE00244E2E /* StripeApplePay */,
+				E32D66552CCB01BE00244E2E /* StripeFinancialConnections */,
+				E32D66572CCB01BE00244E2E /* StripeIdentity */,
 			);
 			productName = "EZNotes-2";
 			productReference = E3AA61142C9F500300C4C0AA /* EZNotes-2.app */;
@@ -208,6 +223,9 @@
 			);
 			mainGroup = E3AA610B2C9F500300C4C0AA;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E32D66502CCB01BE00244E2E /* XCRemoteSwiftPackageReference "stripe-ios-spm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E3AA61152C9F500300C4C0AA /* Products */;
 			projectDirPath = "";
@@ -579,6 +597,40 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E32D66502CCB01BE00244E2E /* XCRemoteSwiftPackageReference "stripe-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stripe/stripe-ios-spm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 23.32.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E32D66512CCB01BE00244E2E /* Stripe */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E32D66502CCB01BE00244E2E /* XCRemoteSwiftPackageReference "stripe-ios-spm" */;
+			productName = Stripe;
+		};
+		E32D66532CCB01BE00244E2E /* StripeApplePay */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E32D66502CCB01BE00244E2E /* XCRemoteSwiftPackageReference "stripe-ios-spm" */;
+			productName = StripeApplePay;
+		};
+		E32D66552CCB01BE00244E2E /* StripeFinancialConnections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E32D66502CCB01BE00244E2E /* XCRemoteSwiftPackageReference "stripe-ios-spm" */;
+			productName = StripeFinancialConnections;
+		};
+		E32D66572CCB01BE00244E2E /* StripeIdentity */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E32D66502CCB01BE00244E2E /* XCRemoteSwiftPackageReference "stripe-ios-spm" */;
+			productName = StripeIdentity;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E3AA610C2C9F500300C4C0AA /* Project object */;
 }

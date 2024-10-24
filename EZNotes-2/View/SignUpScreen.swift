@@ -91,17 +91,19 @@ struct SignUpScreen : View, KeyboardReadable {
     
     @State public var keyboardActivated: Bool = false
     
+    @State public var planID: String = ""
     @State public var collegesPickerOpacity: Double  = 0.0
     @State public var accountID: String = ""
     @State public var userInputedCode: String = ""
     @State public var wrongCode: Bool = false
+    @State public var userExists: Bool = false
     @State public var username: String = ""
     @State public var email: String = ""
     @State public var password: String = ""
     @State public var college: String = ""
     @State public var major: String = ""
     @State public var state: String = ""
-    @State public var section: String = "main"
+    @State public var section: String = "select_plan"
     @State public var makeContentRed: Bool = false
     
     @State public var imageOpacity: Double = 1
@@ -146,7 +148,7 @@ struct SignUpScreen : View, KeyboardReadable {
             VStack {
                 // VStack with TextFields
                 VStack {
-                    Text("Sign Up")
+                    Text(self.section != "select_plan" ? "Sign Up" : "Plans")
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.bottom, 5)
                         .foregroundStyle(.white)
@@ -164,14 +166,18 @@ struct SignUpScreen : View, KeyboardReadable {
                     Text(
                         self.wrongCode
                             ? "Wrong code. Try again"
-                            : self.section == "main"
-                                ? "Sign up with a unique username, your email and a unique password"
-                            : self.section == "select_state_and_college"
-                                    ? "Tell us about your college and your degree :)"
-                                    : "A code has been sent to your email. Input the code below"
+                            : self.userExists
+                                ? "A user with the email and/or username you provided already exists"
+                                : self.section == "main"
+                                    ? "Sign up with a unique username, your email and a unique password"
+                                    : self.section == "select_state_and_college"
+                                        ? "Tell us about your college and your degree :)"
+                                        : self.section == "code_input"
+                                            ? "A code has been sent to your email. Input the code below"
+                                            : "Select a plan that best suits you"
                     )
-                    .frame(maxWidth: .infinity, minHeight: 45, alignment: .center)
-                    .foregroundStyle(wrongCode ? Color.red : Color.white)
+                    .frame(maxWidth: prop.size.width - 30, minHeight: 45, alignment: .center)
+                    .foregroundStyle(self.wrongCode || self.userExists ? Color.red : Color.white)
                     .font(
                         .system(
                             size: prop.isIpad || self.isLargerScreen
@@ -219,8 +225,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                             width: 1,
                                             edges: [.bottom],
                                             lcolor: !self.makeContentRed
-                                            ? self.borderBottomColor
-                                            : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                ? self.userExists ? self.borderBottomColorError : self.borderBottomColor
+                                                : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
                                         )
                                 )
                                 .foregroundStyle(Color.EZNotesBlue)
@@ -268,8 +274,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                             width: 1,
                                             edges: [.bottom],
                                             lcolor: !self.makeContentRed
-                                            ? self.borderBottomColor
-                                            : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                ? self.userExists ? self.borderBottomColorError : self.borderBottomColor
+                                                : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
                                         )
                                 )
                                 .foregroundStyle(Color.EZNotesBlue)
@@ -365,8 +371,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                         width: 1,
                                         edges: [.bottom],
                                         lcolor: !self.makeContentRed
-                                        ? self.borderBottomColor
-                                        : self.password == "" ? self.borderBottomColorError : self.borderBottomColor
+                                            ? self.borderBottomColor
+                                            : self.state == "" ? self.borderBottomColorError : self.borderBottomColor
                                     )
                             )
                             .foregroundStyle(Color.EZNotesBlue)
@@ -411,8 +417,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                         width: 1,
                                         edges: [.bottom],
                                         lcolor: !self.makeContentRed
-                                        ? self.borderBottomColor
-                                        : self.password == "" ? self.borderBottomColorError : self.borderBottomColor
+                                            ? self.borderBottomColor
+                                            : self.college == "" ? self.borderBottomColorError : self.borderBottomColor
                                     )
                             )
                             .foregroundStyle(Color.EZNotesBlue)
@@ -457,6 +463,51 @@ struct SignUpScreen : View, KeyboardReadable {
                                         width: 1,
                                         edges: [.bottom],
                                         lcolor: !self.makeContentRed
+                                            ? self.borderBottomColor
+                                            : self.major == "" ? self.borderBottomColorError : self.borderBottomColor
+                                    )
+                            )
+                            .foregroundStyle(Color.EZNotesBlue)
+                            .padding()
+                            .tint(Color.EZNotesBlue)
+                            .font(.system(size: 18))
+                            .fontWeight(.medium)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                        } else if self.section == "code_input" {
+                            Text("Code")
+                                .frame(
+                                    width: prop.isIpad
+                                        ? prop.size.width - 450
+                                        : prop.size.width - 100,
+                                    height: 5,
+                                    alignment: .leading
+                                )
+                                .padding(.top, 15)
+                                .font(.system(size: 25))
+                                .foregroundStyle(.white)
+                            
+                            TextField(
+                                "Code...",
+                                text: $userInputedCode,
+                                onEditingChanged: set_image_opacity
+                            )
+                            .frame(
+                                width: prop.isIpad
+                                    ? UIDevice.current.orientation.isLandscape
+                                        ? prop.size.width - 800
+                                        : prop.size.width - 450
+                                    : prop.size.width - 100,
+                                height: self.isLargerScreen ? 40 : 30
+                            )
+                            .padding([.leading], 15)
+                            .background(
+                                Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                    .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
+                                    .border(
+                                        width: 1,
+                                        edges: [.bottom],
+                                        lcolor: !self.makeContentRed
                                         ? self.borderBottomColor
                                         : self.password == "" ? self.borderBottomColorError : self.borderBottomColor
                                     )
@@ -468,8 +519,304 @@ struct SignUpScreen : View, KeyboardReadable {
                             .fontWeight(.medium)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
+                            .keyboardType(.numberPad)
+                            .onChange(of: self.userInputedCode) {
+                                /* Codes are 6-digits. */
+                                if self.userInputedCode.count > 6 { self.userInputedCode = String(self.userInputedCode.prefix(6)) }
+                            }
                         } else {
-                            
+                            ScrollView(.vertical, showsIndicators: false) {
+                                VStack {
+                                    VStack {
+                                        VStack {
+                                            Text("Basic Plan")
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                .foregroundStyle(.black)
+                                                .padding([.top, .bottom])
+                                                .font(.system(size: 24))
+                                                .fontWeight(.bold)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .background(.white)
+                                        
+                                        VStack {
+                                            VStack {
+                                                Text("Description")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(.system(size: 18))
+                                                    .fontWeight(.semibold)
+                                                
+                                                /*Text("The Basic Plan includes all of the fundamental features that a user will need to automate the note taking process.")*/
+                                                Text("The Basic Plan equips you with all the fundamentals that the app comes with.\nIt enables you to uploads roughly 100 images of notes at once and backup roughly 450K notes. You also get access to EZNotes Chatbot which can be your personal tutor through your note taking and studying adventures.")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.top, 5)
+                                                    .padding([.bottom, .leading], 10)
+                                                    .font(.system(size: 14))
+                                                    .minimumScaleFactor(0.5)
+                                                    .fontWeight(.light)
+                                                    .multilineTextAlignment(.leading)
+                                            }
+                                            .padding(.leading)
+                                            
+                                            VStack {
+                                                Text("Uploads:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(.system(size: 18))
+                                                    .fontWeight(.semibold)
+                                                
+                                                Text("• 1gb Upload Limit\n\t◦ 100 Image Upload Limit\n• 5gb Backup Limit\n\t◦ Roughly 450K notes can be backed up")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.top, 5)
+                                                    .padding(.leading, 10)
+                                                    .font(.system(size: 15))
+                                                    .minimumScaleFactor(0.5)
+                                            }
+                                            .padding([.top, .leading])
+                                            
+                                            VStack {
+                                                Text("AI Access:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(.system(size: 18))
+                                                    .fontWeight(.semibold)
+                                                
+                                                Text("• EZNotes LLM\n\t◦ Powers the automated note-curation\n• EZNotes Chatbot\n\t◦ Your personal tutor")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.top, 5)
+                                                    .padding(.leading, 10)
+                                                    .font(.system(size: 15))
+                                                    .minimumScaleFactor(0.5)
+                                            }
+                                            .padding([.top, .leading])
+                                            
+                                            VStack {
+                                                Text("Built-in Features:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(.system(size: 18))
+                                                    .fontWeight(.semibold)
+                                                
+                                                Text("• Essay Helper\n• Note Curation")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.top, 5)
+                                                    .padding(.leading, 10)
+                                                    .font(.system(size: 15))
+                                                    .minimumScaleFactor(0.5)
+                                            }
+                                            .padding([.top, .leading, .bottom])
+                                        }
+                                        .padding()
+                                        
+                                        HStack {
+                                            VStack {
+                                                Button(action: { print("Select Pro Plan") }) {
+                                                    Text("Select Monthly")
+                                                        .frame(maxWidth: (prop.size.width - 40) - 40, alignment: .center)
+                                                        .padding([.top, .bottom], 8)
+                                                        .foregroundStyle(.white)
+                                                        .font(.system(size: 20, design: .rounded))
+                                                        .fontWeight(.semibold)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                                .background(
+                                                    Rectangle()
+                                                        .fill(Color.EZNotesBlue)
+                                                )
+                                                
+                                                Text("From $10.50/month")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(.system(size: 12))
+                                                    .minimumScaleFactor(0.5)
+                                                    .fontWeight(.thin)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            
+                                            VStack {
+                                                Button(action: { print("Select Pro Plan") }) {
+                                                    Text("Select Annually")
+                                                        .frame(maxWidth: (prop.size.width - 40) - 40, alignment: .center)
+                                                        .padding([.top, .bottom], 8)
+                                                        .foregroundStyle(.white)
+                                                        .font(.system(size: 20, design: .rounded))
+                                                        .fontWeight(.semibold)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                                .background(
+                                                    Rectangle()
+                                                        .fill(Color.EZNotesBlue)
+                                                )
+                                                
+                                                Text("From $120/year")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(.system(size: 12))
+                                                    .minimumScaleFactor(0.5)
+                                                    .fontWeight(.thin)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 80, alignment: .center)
+                                        .padding(.bottom)
+                                    }
+                                    .frame(maxWidth: prop.size.width - 40)
+                                    .cornerRadius(15)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(Color.EZNotesBlack)
+                                            .shadow(color: .black, radius: 2.5)
+                                    )
+                                    .padding(.bottom, 15)
+                                    
+                                    VStack {
+                                        VStack {
+                                            Text("Pro Plan")
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                .foregroundStyle(.black)
+                                                .padding([.top, .bottom])
+                                                .font(.system(size: 24))
+                                                .fontWeight(.bold)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .background(
+                                            MeshGradient(width: 3, height: 3, points: [
+                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                            ], colors: [
+                                                Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                                Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                                Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                            ])
+                                        )
+                                        
+                                        VStack {
+                                            VStack {
+                                                Text("Description")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(.system(size: 18))
+                                                    .fontWeight(.semibold)
+                                                
+                                                /*Text("The Pro Plan is **coming soon**. The plan builds on top of the Basic Plan giving 2x upload and backup limits; further, the Pro Plan gives users access to a multitude of helpful features that allows for a more feasible experience when studying/doing homework. See the features to the right.")*/
+                                                Text("The Pro Plan equips you with everything from the Basic Plan and more.\nWith the Pro Plan, you get 2x the limit on the uploads and backups enabling you to upload 200+ images of notes at once and enabling you to store roughly 1M curated sets of notes. Further, the Pro Plan equips you with a model of EZNotes AI that is capable of adapting to your handwriting and curating a essay in your handwriting.")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.top, 5)
+                                                    .padding([.bottom, .leading], 10)
+                                                    .font(.system(size: 14))
+                                                    .minimumScaleFactor(0.5)
+                                                    .fontWeight(.light)
+                                                    .multilineTextAlignment(.leading)
+                                            }
+                                            .padding(.leading)
+                                            
+                                            VStack {
+                                                Text("Uploads:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(.system(size: 18))
+                                                    .fontWeight(.semibold)
+                                                
+                                                Text("• 2gb Upload Limit\n\t◦ 200-250 Image Upload Limit\n• 10gb Backup Limit\n\t◦ Roughly 1M notes can be backed up")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.top, 5)
+                                                    .padding(.leading, 10)
+                                                    .font(.system(size: 15))
+                                                    .minimumScaleFactor(0.5)
+                                            }
+                                            .padding([.top, .leading])
+                                            
+                                            VStack {
+                                                Text("AI Access:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(.system(size: 18))
+                                                    .fontWeight(.semibold)
+                                                
+                                                Text("• EZNotes LLM\n\t◦ Powers the automated note-curation\n• EZNotes Chatbot\n\t◦ Your personal tutor")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.top, 5)
+                                                    .padding(.leading, 10)
+                                                    .font(.system(size: 15))
+                                                    .minimumScaleFactor(0.5)
+                                            }
+                                            .padding([.top, .leading])
+                                            
+                                            VStack {
+                                                Text("Built-in Features:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(.system(size: 18))
+                                                    .fontWeight(.semibold)
+                                                
+                                                Text("• Essay Helper\n• Handwritten Note Curation\n• Integrated Note-taking Styles\n• Note Curation")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.top, 5)
+                                                    .padding(.leading, 10)
+                                                    .font(.system(size: 15))
+                                                    .minimumScaleFactor(0.5)
+                                            }
+                                            .padding([.top, .leading, .bottom])
+                                        }
+                                        .padding()
+                                        
+                                        HStack {
+                                            VStack {
+                                                Button(action: { print("Select Pro Plan") }) {
+                                                    Text("Select Monthly")
+                                                        .frame(maxWidth: (prop.size.width - 40) - 40, alignment: .center)
+                                                        .padding([.top, .bottom], 8)
+                                                        .foregroundStyle(.white)
+                                                        .font(.system(size: 20, design: .rounded))
+                                                        .fontWeight(.semibold)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                                .background(
+                                                    Rectangle()
+                                                        .fill(Color.EZNotesBlue)
+                                                )
+                                                
+                                                Text("From $16/month")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(.system(size: 12))
+                                                    .minimumScaleFactor(0.5)
+                                                    .fontWeight(.thin)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            
+                                            VStack {
+                                                Button(action: { print("Select Pro Plan") }) {
+                                                    Text("Select Annually")
+                                                        .frame(maxWidth: (prop.size.width - 40) - 40, alignment: .center)
+                                                        .padding([.top, .bottom], 8)
+                                                        .foregroundStyle(.white)
+                                                        .font(.system(size: 20, design: .rounded))
+                                                        .fontWeight(.semibold)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                                .background(
+                                                    Rectangle()
+                                                        .fill(Color.EZNotesBlue)
+                                                )
+                                                
+                                                Text("From $160/year")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(.system(size: 12))
+                                                    .minimumScaleFactor(0.5)
+                                                    .fontWeight(.thin)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 80, alignment: .center)
+                                        .padding(.bottom)
+                                    }
+                                    .frame(maxWidth: prop.size.width - 40)
+                                    .cornerRadius(15)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(Color.EZNotesBlack)
+                                            .shadow(color: .black, radius: 2.5)
+                                    )
+                                    .padding(.bottom, 10)
+                                    
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }
                         }
                     }
                     .padding(.top, self.isLargerScreen ? 25 : 20)
@@ -483,78 +830,92 @@ struct SignUpScreen : View, KeyboardReadable {
                 
                 Spacer() // To push the TextFields to the top
                 
-                VStack {
-                    Button(action: {
-                        if section == "main" {
-                            if self.username == "" || self.email == "" || self.password == "" {
-                                self.makeContentRed = true
-                                return
-                            }
-                            
-                            if self.makeContentRed { self.makeContentRed = false }
-                            
-                            section = "select_state_and_college"
-                        } else {
-                            if self.section == "select_state_and_college" {
-                                if self.state == "" || self.college == "" || self.major == "" {
+                if self.section != "select_plan" {
+                    VStack {
+                        Button(action: {
+                            if section == "main" {
+                                if self.username == "" || self.email == "" || self.password == "" {
                                     self.makeContentRed = true
                                     return
                                 }
-                                RequestAction<SignUpRequestData>(
-                                    parameters: SignUpRequestData(
-                                        Username: username,
-                                        Email: email,
-                                        Password: password,
-                                        College: college,
-                                        State: state
-                                    )
-                                ).perform(action: complete_signup1_req) { r in
-                                    if r.Bad != nil {
-                                        print(r.Bad!)
+                                
+                                if self.userExists { self.userExists = false }
+                                if self.makeContentRed { self.makeContentRed = false }
+                                
+                                self.section = "select_state_and_college"
+                            } else {
+                                if self.section == "select_state_and_college" {
+                                    if self.state == "" || self.college == "" || self.major == "" {
+                                        self.makeContentRed = true
                                         return
                                     }
-                                    else {
-                                        self.accountID = r.Good!.Message
-                                        self.section = "code_input"
-                                    }
-                                }
-                            }
-                            else {
-                                if self.section == "code_input" {
-                                    RequestAction<SignUp2RequestData>(
-                                        parameters: SignUp2RequestData(
-                                            AccountID: accountID,
-                                            UserInputtedCode: userInputedCode
+                                    
+                                    RequestAction<SignUpRequestData>(
+                                        parameters: SignUpRequestData(
+                                            Username: username,
+                                            Email: email,
+                                            Password: password,
+                                            College: college,
+                                            State: state
                                         )
-                                    ).perform(action: complete_signup2_req) {r in
+                                    ).perform(action: complete_signup1_req) { r in
                                         if r.Bad != nil {
-                                            self.wrongCode = true
+                                            if r.Bad!.ErrorCode == 0x6970 {
+                                                self.section = "main"
+                                                self.userExists = true
+                                                return
+                                            }
+                                            
+                                            self.serverError = true
                                             return
                                         }
                                         else {
-                                            UserDefaults.standard.set(username, forKey: "username")
-                                            UserDefaults.standard.set(email, forKey: "email")
+                                            if self.userExists { self.userExists = false }
                                             
-                                            self.showPopup = true
+                                            self.accountID = r.Good!.Message
+                                            self.section = "code_input"
                                         }
                                     }
-                                    /* TODO: Add screen for the code to be put in.
-                                     * TODO: After the screen is implemented, this else statement will take the code and send it to the server.*/
+                                } else {
+                                    if self.section == "code_input" {
+                                        RequestAction<SignUp2RequestData>(
+                                            parameters: SignUp2RequestData(
+                                                AccountID: accountID,
+                                                UserInputtedCode: userInputedCode
+                                            )
+                                        ).perform(action: complete_signup2_req) {r in
+                                            if r.Bad != nil {
+                                                self.wrongCode = true
+                                                return
+                                            }
+                                            else {
+                                                UserDefaults.standard.set(self.username, forKey: "username")
+                                                UserDefaults.standard.set(self.email, forKey: "email")
+                                                self.section = "select_plan"
+                                            }
+                                        }
+                                        /* TODO: Add screen for the code to be put in.
+                                         * TODO: After the screen is implemented, this else statement will take the code and send it to the server.*/
+                                    } else {
+                                        UserDefaults.standard.set(self.planID, forKey: "plan_id")
+                                        
+                                        /* TODO: The code in `setLoginStatus` is not needed. */
+                                        setLoginStatus()
+                                    }
                                 }
                             }
-                        }
-                    }) {
-                        Text(section == "main"
-                             ? "Continue"
-                             : section == "select_state_and_college"
+                        }) {
+                            Text(section == "main"
+                                 ? "Continue"
+                                 : section == "select_state_and_college"
                                  ? "Submit"
                                  : "Complete")
                             .frame(
                                 width: prop.isIpad
-                                    ? UIDevice.current.orientation.isLandscape
-                                        ? prop.size.width - 800
-                                        : prop.size.width - 450
-                                    : prop.size.width - 90,
+                                ? UIDevice.current.orientation.isLandscape
+                                ? prop.size.width - 800
+                                : prop.size.width - 450
+                                : prop.size.width - 90,
                                 height: 10
                             )
                             .padding([.top, .bottom])
@@ -562,47 +923,47 @@ struct SignUpScreen : View, KeyboardReadable {
                             .fontWeight(.semibold)
                             .foregroundStyle(.black)
                             .contentShape(Rectangle())
-                    }
-                    .buttonStyle(NoLongPressButtonStyle())
-                    .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(.white)
-                    )
-                    
-                    Button(action: {
-                        if self.section == "main" { self.screen = "home" }
-                        else {
-                            switch(self.section) {
-                                case "select_state_and_college": self.section = "main";break
-                                case "code_input": self.section = "select_state_and_college";break
-                                default: self.screen = "home"
-                            }
                         }
-                    }) {
-                        Text("Go Back")
-                            .frame(
-                                width: prop.isIpad
-                                    ? UIDevice.current.orientation.isLandscape
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .padding(.leading, 5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(.white)
+                        )
+                        
+                        if !(self.section == "code_input") {
+                            Button(action: {
+                                if self.section == "main" { self.screen = "home" }
+                                else { self.section = "main" }
+                            }) {
+                                Text("Go Back")
+                                    .frame(
+                                        width: prop.isIpad
+                                        ? UIDevice.current.orientation.isLandscape
                                         ? prop.size.width - 800
                                         : prop.size.width - 450
-                                    : prop.size.width - 90,
-                                height: 10
+                                        : prop.size.width - 90,
+                                        height: 10
+                                    )
+                                    .padding([.top, .bottom])
+                                    .font(.system(size: 25, design: .rounded))
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.white)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.EZNotesLightBlack)
                             )
-                            .padding([.top, .bottom])
-                            .font(.system(size: 25, design: .rounded))
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.white)
-                            .contentShape(Rectangle())
+                        }
                     }
-                    .buttonStyle(NoLongPressButtonStyle())
-                    .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(Color.EZNotesLightBlack)
-                    )
+                    .padding(.bottom, 30)
                 }
-                .padding(.bottom, 30)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.EZNotesBlack)
         .onAppear {
             self.isLargerScreen = prop.size.height / 2.5 > 300
         }

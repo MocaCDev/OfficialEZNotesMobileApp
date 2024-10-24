@@ -9,6 +9,7 @@ import SwiftUI
 import Combine
 import UIKit
 import LocalAuthentication
+import Stripe
 
 //import PhotosUI
 //import UIKit
@@ -42,6 +43,10 @@ struct ContentView: View {
     
     @State public var reAuthReqFromLogin: Bool = false
     @StateObject public var accountInfo: AccountDetails = AccountDetails()
+    
+    init() {
+        StripeAPI.defaultPublishableKey = "pk_test_51OdoXSDNLx34I7Pu22ELrZac5NUd5lrs8EXqK96SFOUJM6wZqOe8HQxyH0f3CR8emsCAVwQiqStwTWyGhCj1wRtM00T1fR9V2D"
+    }
     
     public func authenticate(initializing: Bool) {
         let context = LAContext()
