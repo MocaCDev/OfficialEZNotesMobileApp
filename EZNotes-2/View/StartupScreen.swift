@@ -229,9 +229,142 @@ struct StartupScreen: View {
         )
     }
     
+    @State private var testing: String = ""
+    
     var body: some View {
+        /*switch(self.screen) {
+        case "home":
+            ResponsiveView { prop in
+                HomeScreen(
+                    prop: prop,
+                    screen: $screen,
+                    startupScreen: StartupScreen(
+                        userHasSignedIn: $userHasSignedIn,
+                        goBackToLogin: $goBackToLogin,
+                        faceIDAuthenticated: $faceIDAuthenticated
+                    )
+                )
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .edgesIgnoringSafeArea([.top, .bottom])
+            .onReceive(rotationChangePublisher) { _ in
+                // This is called when there is a orientation change
+                // You can set back the orientation to the one you like even
+                // if the user has turned around their phone to use another
+                // orientation.
+                requestOrientations(.portrait)
+            }
+            .onAppear(
+                perform: {
+                    /*if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+                        scene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
+                            // Handle denial of request.
+                        }
+                    }*/
+                    RequestAction<ReqPlaceholder>(
+                        parameters: ReqPlaceholder()
+                    )
+                    .perform(action: check_server_active_req)
+                    { r in
+                        if r.Bad != nil {
+                            self.serverError = true
+                        } else {
+                            RequestAction<ReqPlaceholder>(
+                                parameters: ReqPlaceholder()
+                            )
+                            .perform(action: get_supported_states_req)
+                            { r in
+                                if r.Good != nil {
+                                    let message = r.Good?.Message.components(separatedBy: "\n");
+                                    
+                                    message!.forEach { m in
+                                        self.supportedStates.append(m)
+                                    }
+                                } else { self.serverError = true }
+                            }
+                        }
+                    }
+                }
+            )
+        case "signup":
+            ResponsiveView { prop in
+                SignUpScreen(
+                    prop: prop,
+                    startupScreen: StartupScreen(
+                        userHasSignedIn: $userHasSignedIn,
+                        goBackToLogin: $goBackToLogin,
+                        faceIDAuthenticated: $faceIDAuthenticated
+                    ),
+                    screen: $screen,
+                    userHasSignedIn: $userHasSignedIn,
+                    serverError: $serverError,
+                    supportedStates: $supportedStates
+                )
+            }
+            .onReceive(rotationChangePublisher) { _ in
+                // This is called when there is a orientation change
+                // You can set back the orientation to the one you like even
+                // if the user has turned around their phone to use another
+                // orientation.
+                requestOrientations(.portrait)
+            }
+        default:
+            ResponsiveView { prop in
+                HomeScreen(
+                    prop: prop,
+                    screen: $screen,
+                    startupScreen: StartupScreen(
+                        userHasSignedIn: $userHasSignedIn,
+                        goBackToLogin: $goBackToLogin,
+                        faceIDAuthenticated: $faceIDAuthenticated
+                    )
+                )
+            }
+        }*/
+        //.frame(maxWidth: .infinity, maxHeight: .infinity)
+        //.edgesIgnoringSafeArea([.top])
+        
         ResponsiveView { prop in
-            HStack(spacing: 0) {
+            VStack {
+                switch(self.screen) {
+                case "home":
+                    HomeScreen(
+                        prop: prop,
+                        screen: $screen,
+                        startupScreen: StartupScreen(
+                            userHasSignedIn: $userHasSignedIn,
+                            goBackToLogin: $goBackToLogin,
+                            faceIDAuthenticated: $faceIDAuthenticated
+                        )
+                    )
+                case "signup":
+                    SignUpScreen(
+                        prop: prop,
+                        startupScreen: StartupScreen(
+                            userHasSignedIn: $userHasSignedIn,
+                            goBackToLogin: $goBackToLogin,
+                            faceIDAuthenticated: $faceIDAuthenticated
+                        ),
+                        screen: $screen,
+                        userHasSignedIn: $userHasSignedIn,
+                        serverError: $serverError,
+                        supportedStates: $supportedStates
+                    )
+                default:
+                    HomeScreen(
+                        prop: prop,
+                        screen: $screen,
+                        startupScreen: StartupScreen(
+                            userHasSignedIn: $userHasSignedIn,
+                            goBackToLogin: $goBackToLogin,
+                            faceIDAuthenticated: $faceIDAuthenticated
+                        )
+                    )
+                }
+            }
+        }
+        /*ResponsiveView { prop in
+            VStack(spacing: 0) {
                 if !serverError {
                     if !prop.isLandscape || prop.isIpad {
                         /*if prop.isIpad && prop.size.width > prop.size.height {
@@ -242,7 +375,7 @@ struct StartupScreen: View {
                                 .foregroundStyle(Color.white)
                         } else {*/
                             switch(screen)
-                            {
+                        {
                             case "home": HomeScreen(
                                 prop: prop,
                                 screen: $screen,
@@ -273,7 +406,7 @@ struct StartupScreen: View {
                                 userHasSignedIn: $userHasSignedIn,
                                 serverError: $serverError,
                                 supportedStates: $supportedStates
-                            );
+                            )
                             default: HomeScreen(
                                 prop: prop,
                                 screen: $screen,
@@ -383,21 +516,8 @@ struct StartupScreen: View {
                 .orange, .white, .blue,
                 .yellow, .green, .mint
             ])*/
-            MeshGradient(width: 3, height: 3, points: [
-                .init(0, 0), .init(0.3, 0), .init(1, 0),
-                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                .init(0, 1), .init(0.5, 1), .init(1, 1)
-            ], colors: [
-                Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesOrange,
-                Color.EZNotesOrange, Color.EZNotesLightBlack, Color.EZNotesBlue
-                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-            ])
-            .opacity(0.5)
+            
         )
-        .edgesIgnoringSafeArea([.top, .bottom])
         .onReceive(rotationChangePublisher) { _ in
             // This is called when there is a orientation change
             // You can set back the orientation to the one you like even
@@ -436,7 +556,7 @@ struct StartupScreen: View {
                     }
                 }
             }
-        )
+        )*/
     }
     
     private func requestOrientations(_ orientations: UIInterfaceOrientationMask) {

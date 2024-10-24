@@ -70,9 +70,16 @@ struct HomeScreen: View {
             VStack {
                 Image("Logo")
                     .logoImageModifier(prop: prop)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .padding(.top, 50)
+            
+            /*VStack {
+                Image("Logo")
+                    .logoImageModifier(prop: prop)
                 
                 VStack {
-                    LinearGradient(
+                    /*LinearGradient(
                         gradient: Gradient(
                             colors: [
                                 /*Color.EZNotesBlue,
@@ -85,11 +92,11 @@ struct HomeScreen: View {
                             endPoint: .trailing
                     )
                     .frame(width: prop.isIpad ? 550 : 350, height: prop.isIpad ? 300 : 250)
-                    .mask(
+                    .mask(*/
                         Text("Hello, and Welcome")
                             .contrast(10)
                             .shadow(color: .white, radius: 8)
-                            .frame(alignment: .center)
+                            //.frame(width: prop.isIpad ? 550 : 350, height: prop.isIpad ? 300 : 250)
                             .padding(
                                 [.top],
                                 prop.isIpad
@@ -110,9 +117,9 @@ struct HomeScreen: View {
                                 )
                             )
                             .multilineTextAlignment(.center)
-                    )
+                    //)
                     
-                    Text("**To your New & Completely Automated Note Taking App**")
+                    /*Text("**To your New & Completely Automated Note Taking App**")
                         .frame(
                             maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width  - 100 : prop.size.width - 60,
                             maxHeight: prop.size.height / 2, alignment: .top)
@@ -124,7 +131,7 @@ struct HomeScreen: View {
                             )
                         )
                         .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.secondary)*/
                 }
                 
                 //Spacer()
@@ -146,7 +153,7 @@ struct HomeScreen: View {
                         : prop.size.height / 2.5 > 300
                             ? 550
                             : (prop.size.height / 2.5) + 300
-            )
+            )*/
             
             Spacer()
             
@@ -171,7 +178,7 @@ struct HomeScreen: View {
             /*.background(.blue.opacity(0.2))//Color.EZNotesLightBlack.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
             .cornerRadius(15, corners: [.topLeft, .topRight])
             .shadow(color: .black, radius: 2.5, x: 0, y: -2)*/
-            .edgesIgnoringSafeArea(.bottom)
+            //.edgesIgnoringSafeArea(.bottom)
             /*.padding(
                 [.bottom],
                 prop.isIpad
@@ -180,7 +187,22 @@ struct HomeScreen: View {
                         ? 40
                         : 30)*/
         }
-        .background(.blue.opacity(0.2))
+        .background(
+            MeshGradient(width: 3, height: 3, points: [
+                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                .init(0, 1), .init(0.5, 1), .init(1, 1)
+            ], colors: [
+                Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesOrange,
+                Color.EZNotesOrange, Color.EZNotesLightBlack, Color.EZNotesBlue
+                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+            ])
+            .opacity(0.5)
+        )
+        .edgesIgnoringSafeArea([.top, .bottom])
     }
 }
 

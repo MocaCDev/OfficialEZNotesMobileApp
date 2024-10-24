@@ -17,6 +17,22 @@ struct LoginScreen: View, KeyboardReadable {
     
     @State public var keyboardActivated: Bool = false
     
+    @State public var makeContentRed: Bool = false
+    var borderBottomColor: LinearGradient = LinearGradient(
+        gradient: Gradient(
+            colors: [Color.EZNotesBlue, Color.EZNotesOrange]
+        ),
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+    var borderBottomColorError: LinearGradient = LinearGradient(
+        gradient: Gradient(
+            colors: [Color.EZNotesRed, Color.EZNotesRed]
+        ),
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+    
     @State public var username: String = ""
     @State public var password: String = ""
     @State public var imageOpacity: Double = 1
@@ -119,23 +135,27 @@ struct LoginScreen: View, KeyboardReadable {
                 
                 //Spacer()
             }
-            .padding(
+            /*.padding(
                 [.top],
                 prop.size.height / 2.5 > 300
                     ? prop.isIpad
                             ? -330
                             : -180
-                    : -120)
+                    : -120)*/
             .frame(
-                width: prop.isIpad
+                maxWidth: .infinity,
+                maxHeight: .infinity,
+                alignment: .top
+                /*width: prop.isIpad
                         ? 400
                         : nil,
                 height: prop.isIpad
                         ? 850
                         : prop.size.height / 2.5 > 300
                             ? 750
-                            : (prop.size.height / 2.5) + 200
+                            : (prop.size.height / 2.5) + 200*/
             )
+            .ignoresSafeArea(.keyboard)
             
             //Spacer()
             
@@ -143,7 +163,7 @@ struct LoginScreen: View, KeyboardReadable {
                 VStack {
                     VStack { }.frame(maxWidth: .infinity, maxHeight: 25)
                     
-                    Text("Username")
+                    Text("Username/Email")
                         .frame(
                             width: prop.isIpad
                             ? UIDevice.current.orientation.isLandscape
@@ -163,39 +183,37 @@ struct LoginScreen: View, KeyboardReadable {
                         .fontWeight(.medium)
                     
                     TextField(
-                        "Username",
+                        "Username or Email...",
                         text: $username,
                         onEditingChanged: set_image_opacity
                     )
-                    /*.onReceive(keyboardPublisher) { newIsKeyboardVisible in
-                        self.keyboardActivated = newIsKeyboardVisible
-                    }*/
-                    .autocapitalization(.none)
-                    .disableAutocorrection(true)
                     .frame(
                         width: prop.isIpad
                             ? UIDevice.current.orientation.isLandscape
                                 ? prop.size.width - 800
                                 : prop.size.width - 450
                             : prop.size.width - 100,
-                        height: prop.size.height / 2.5 > 300 ? 45 : 35
+                        height: prop.size.height / 2.5 > 300 ? 40 : 30
                     )
                     .padding([.leading], 15)
                     .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(Color.gray)
-                            .opacity(0.6)
+                        Rectangle()//RoundedRectangle(cornerRadius: 15)
+                            .fill(.gray.opacity(0.2))
+                            .border(
+                                width: 1,
+                                edges: [.bottom],
+                                lcolor: !self.makeContentRed
+                                    ? self.borderBottomColor
+                                    : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
+                            )
                     )
-                    .cornerRadius(15)
-                    /*.overlay(
-                     RoundedRectangle(cornerRadius: 15)
-                     .stroke(Color.EZNotesBlue, lineWidth: 2)
-                     )*/
+                    .foregroundStyle(Color.EZNotesBlue)
                     .padding()
                     .tint(Color.EZNotesBlue)
                     .font(.system(size: 18))
                     .fontWeight(.medium)
-                    .foregroundStyle(Color.EZNotesBlue)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
                     
                     Text("Password")
                         .frame(
@@ -214,39 +232,171 @@ struct LoginScreen: View, KeyboardReadable {
                         )
                         .foregroundStyle(.white)
                         .fontWeight(.medium)
+                    
                     SecureField(
                         "Password",
                         text: $password
                     )
-                    .focused($passwordFieldInFocus)
-                    .autocapitalization(.none)
-                    .disableAutocorrection(true)
                     .frame(
                         width: prop.isIpad
                             ? UIDevice.current.orientation.isLandscape
                                 ? prop.size.width - 800
                                 : prop.size.width - 450
                             : prop.size.width - 100,
-                        height: prop.size.height / 2.5 > 300 ? 45 : 35
+                        height: prop.size.height / 2.5 > 300 ? 40 : 30
                     )
                     .padding([.leading], 15)
                     .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(Color.gray)
-                            .opacity(0.6)
+                        Rectangle()//RoundedRectangle(cornerRadius: 15)
+                            .fill(.gray.opacity(0.2))
+                            .border(
+                                width: 1,
+                                edges: [.bottom],
+                                lcolor: !self.makeContentRed
+                                    ? self.borderBottomColor
+                                    : self.password == "" ? self.borderBottomColorError : self.borderBottomColor
+                            )
                     )
-                    .cornerRadius(15)
-                    /*.overlay(
-                     RoundedRectangle(cornerRadius: 15)
-                     .stroke(Color.EZNotesBlue, lineWidth: 2)
-                     )*/
+                    .foregroundStyle(Color.EZNotesBlue)
                     .padding()
                     .tint(Color.EZNotesBlue)
                     .font(.system(size: 18))
                     .fontWeight(.medium)
-                    .foregroundStyle(Color.EZNotesBlue)
+                    .focused($passwordFieldInFocus)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
                     
-                    startupScreen.createButton(
+                    Button(action: {
+                        if username == "" || password == "" { self.makeContentRed = true; return }
+                        
+                        if self.makeContentRed { self.makeContentRed = false }
+                        
+                        RequestAction<LoginRequestData>(
+                            parameters: LoginRequestData(
+                                Username: username,
+                                Password: password
+                            )
+                        ).perform(action: complete_login_req) { r in
+                            if r.Good == nil {
+                                self.loginError = true
+                                return
+                            } else {
+                                UserDefaults.standard.set(username, forKey: "username")
+                                
+                                if UserDefaults.standard.object(forKey: "email") == nil || UserDefaults.standard.string(forKey: "email") == "" {
+                                    RequestAction<GetEmailData>(
+                                        parameters: GetEmailData(
+                                            AccountId: r.Good!.Message
+                                        )
+                                    ).perform(action: get_user_email_req) { resp in
+                                        print(resp)
+                                        if resp.Good == nil {
+                                            self.loginError = true
+                                            return
+                                        } else {
+                                            UserDefaults.standard.set(resp.Good!.Message, forKey: "email")
+                                        }
+                                    }
+                                }
+                                
+                                if UserDefaults.standard.string(forKey: "faceID_enabled") == "not_enabled" {
+                                    self.showPopup = true
+                                } else {
+                                    UserDefaults.standard.set(true, forKey: "logged_in")
+                                    self.userHasSignedIn = true
+                                    self.startupScreen.goBackToLogin = false
+                                    self.startupScreen.faceIDAuthenticated = true
+                                }
+                                
+                                return
+                            }
+                        }
+                    }) {
+                        Text("Login")
+                            .frame(
+                                width: prop.isIpad
+                                    ? UIDevice.current.orientation.isLandscape
+                                        ? prop.size.width - 800
+                                        : prop.size.width - 450
+                                    : prop.size.width - 90,
+                                height: 10
+                            )
+                            .padding([.top, .bottom])
+                            .font(.system(size: 25, design: .rounded))
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.black)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(.white)
+                    )
+                    
+                    Button(action: { self.screen = "home" }) {
+                        Text("Go Back")
+                            .frame(
+                                width: prop.isIpad
+                                    ? UIDevice.current.orientation.isLandscape
+                                        ? prop.size.width - 800
+                                        : prop.size.width - 450
+                                    : prop.size.width - 90,
+                                height: 10
+                            )
+                            .padding([.top, .bottom])
+                            .font(.system(size: 25, design: .rounded))
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.EZNotesLightBlack)
+                    )
+                    /*.background(.gray.opacity(0.6))
+                    .overlay(
+                        Capsule()
+                          .glow(
+                            fill: .angularGradient(
+                              stops: [
+                                .init(
+                                    color: Color.EZNotesBlue,
+                                    location: 0.0
+                                ),
+                                .init(
+                                    color: Color.EZNotesBlue,
+                                    location: 0.2),
+                                .init(
+                                    color: Color.EZNotesBlue,
+                                    location: 0.4
+                                ),
+                                .init(
+                                    color: Color.EZNotesBlue,
+                                    location: 0.5
+                                ),
+                                .init(
+                                    color: Color.EZNotesBlue,
+                                    location: 0.7
+                                ),
+                                .init(
+                                    color: Color.EZNotesBlue,
+                                    location: 0.9
+                                ),
+                                .init(
+                                    color: Color.EZNotesBlue,
+                                    location: 1.0
+                                ),
+                              ],
+                              center: .center,
+                              startAngle: Angle(radians: .zero),
+                              endAngle: Angle(radians: .pi * 2)
+                            ),
+                            lineWidth: 2.5
+                          )
+                    )*/
+                    
+                    /*startupScreen.createButton(
                         prop: prop,
                         text: "Login",
                         primaryGlow: false,
@@ -323,7 +473,7 @@ struct LoginScreen: View, KeyboardReadable {
                         primaryGlow: false,
                         action: { self.screen = "home" }
                     )
-                    .padding([.top], 5)
+                    .padding([.top], 5)*/
                     
                     Spacer()
                 }
@@ -349,6 +499,7 @@ struct LoginScreen: View, KeyboardReadable {
             
             Spacer()
         }
+        .ignoresSafeArea(.keyboard)
         .alert("Enable FaceID?", isPresented: $showPopup) {
             Button("Enable") {
                 UserDefaults.standard.set("enabled", forKey: "faceID_enabled")
