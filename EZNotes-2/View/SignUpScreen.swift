@@ -570,12 +570,14 @@ struct SignUpScreen : View, KeyboardReadable {
                                             VStack {
                                                 Text("Description")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .font(.system(size: 18))
                                                     .fontWeight(.semibold)
                                                 
                                                 /*Text("The Basic Plan includes all of the fundamental features that a user will need to automate the note taking process.")*/
                                                 Text("The Basic Plan equips you with all the fundamentals that the app comes with.\nIt enables you to uploads roughly 100 images of notes at once and backup roughly 450K notes. You also get access to EZNotes Chatbot which can be your personal tutor through your note taking and studying adventures.")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .padding(.top, 5)
                                                     .padding([.bottom, .leading], 10)
                                                     .font(.system(size: 14))
@@ -588,11 +590,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                             VStack {
                                                 Text("Uploads:")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .font(.system(size: 18))
                                                     .fontWeight(.semibold)
                                                 
                                                 Text("• 1gb Upload Limit\n\t◦ 100 Image Upload Limit\n• 5gb Backup Limit\n\t◦ Roughly 450K notes can be backed up")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .padding(.top, 5)
                                                     .padding(.leading, 10)
                                                     .font(.system(size: 15))
@@ -603,11 +607,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                             VStack {
                                                 Text("AI Access:")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .font(.system(size: 18))
                                                     .fontWeight(.semibold)
                                                 
                                                 Text("• EZNotes LLM\n\t◦ Powers the automated note-curation\n• EZNotes Chatbot\n\t◦ Your personal tutor")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .padding(.top, 5)
                                                     .padding(.leading, 10)
                                                     .font(.system(size: 15))
@@ -618,11 +624,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                             VStack {
                                                 Text("Built-in Features:")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .font(.system(size: 18))
                                                     .fontWeight(.semibold)
                                                 
                                                 Text("• Essay Helper\n• Note Curation")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .padding(.top, 5)
                                                     .padding(.leading, 10)
                                                     .font(.system(size: 15))
@@ -653,6 +661,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 
                                                 Text("From $10.50/month")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .font(.system(size: 12))
                                                     .minimumScaleFactor(0.5)
                                                     .fontWeight(.thin)
@@ -679,6 +688,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 
                                                 Text("From $120/year")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .font(.system(size: 12))
                                                     .minimumScaleFactor(0.5)
                                                     .fontWeight(.thin)
@@ -726,12 +736,14 @@ struct SignUpScreen : View, KeyboardReadable {
                                             VStack {
                                                 Text("Description")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .font(.system(size: 18))
                                                     .fontWeight(.semibold)
                                                 
                                                 /*Text("The Pro Plan is **coming soon**. The plan builds on top of the Basic Plan giving 2x upload and backup limits; further, the Pro Plan gives users access to a multitude of helpful features that allows for a more feasible experience when studying/doing homework. See the features to the right.")*/
                                                 Text("The Pro Plan equips you with everything from the Basic Plan and more.\nWith the Pro Plan, you get 2x the limit on the uploads and backups enabling you to upload 200+ images of notes at once and enabling you to store roughly 1M curated sets of notes. Further, the Pro Plan equips you with a model of EZNotes AI that is capable of adapting to your handwriting and curating a essay in your handwriting.")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .padding(.top, 5)
                                                     .padding([.bottom, .leading], 10)
                                                     .font(.system(size: 14))
@@ -744,11 +756,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                             VStack {
                                                 Text("Uploads:")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .font(.system(size: 18))
                                                     .fontWeight(.semibold)
                                                 
                                                 Text("• 2gb Upload Limit\n\t◦ 200-250 Image Upload Limit\n• 10gb Backup Limit\n\t◦ Roughly 1M notes can be backed up")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .padding(.top, 5)
                                                     .padding(.leading, 10)
                                                     .font(.system(size: 15))
@@ -759,11 +773,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                             VStack {
                                                 Text("AI Access:")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .font(.system(size: 18))
                                                     .fontWeight(.semibold)
                                                 
                                                 Text("• EZNotes LLM\n\t◦ Powers the automated note-curation\n• EZNotes Chatbot\n\t◦ Your personal tutor")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .padding(.top, 5)
                                                     .padding(.leading, 10)
                                                     .font(.system(size: 15))
@@ -774,11 +790,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                             VStack {
                                                 Text("Built-in Features:")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .font(.system(size: 18))
                                                     .fontWeight(.semibold)
                                                 
                                                 Text("• Essay Helper\n• Handwritten Note Curation\n• Integrated Note-taking Styles\n• Note Curation")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .padding(.top, 5)
                                                     .padding(.leading, 10)
                                                     .font(.system(size: 15))
@@ -806,6 +824,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 
                                                 Text("From $16/month")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(.white)
                                                     .font(.system(size: 12))
                                                     .minimumScaleFactor(0.5)
                                                     .fontWeight(.thin)
@@ -816,6 +835,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 Button(action: { print("Select Pro Plan") }) {
                                                     Text("Select Annually")
                                                         .frame(maxWidth: (prop.size.width - 40) - 40, alignment: .center)
+                                                        .foregroundStyle(.white)
                                                         .padding([.top, .bottom], 8)
                                                         .foregroundStyle(.white)
                                                         .font(.system(size: 20, design: .rounded))
@@ -1169,6 +1189,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                     .padding(.bottom, 20)
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .background(Color.EZNotesBlack)
                                 .popover(isPresented: $showPrivacyPolicy) {
                                     WebView(url: URL(string: "https://www.eznotes.space/privacy_policy")!)
                                         .navigationBarTitle("Privacy Policy", displayMode: .inline)
@@ -1200,6 +1221,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                 if self.makeContentRed { self.makeContentRed = false }
                                 
                                 self.section = "select_state_and_college"
+                                UserDefaults.standard.set("select_state_and_college", forKey: "last_signup_section")
                             } else {
                                 if self.section == "select_state_and_college" {
                                     if self.state == "" || self.college == "" || self.major == "" {
@@ -1231,6 +1253,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             
                                             self.accountID = r.Good!.Message
                                             self.section = "code_input"
+                                            UserDefaults.standard.set("code_input", forKey: "last_signup_section")
                                         }
                                     }
                                 } else {
@@ -1323,6 +1346,13 @@ struct SignUpScreen : View, KeyboardReadable {
         .background(Color.EZNotesBlack)
         .onAppear {
             self.isLargerScreen = prop.size.height / 2.5 > 300
+            
+            /*guard UserDefaults.standard.object(forKey: "last_signup_section") != nil else {
+                UserDefaults.standard.set("main", forKey: "last_signup_section")
+                return
+            }
+            
+            self.section = UserDefaults.standard.string(forKey: "last_signup_section")!*/
         }
         /*VStack {
             Spacer()
