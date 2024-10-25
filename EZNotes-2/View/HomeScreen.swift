@@ -72,7 +72,7 @@ struct HomeScreen: View {
                     .logoImageModifier(prop: prop)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .padding(.top, 50)
+            .padding(.top, prop.size.height / 2.5 > 300 ? 50 : 0)
             
             /*VStack {
                 Image("Logo")
@@ -174,7 +174,7 @@ struct HomeScreen: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
-            .frame(maxWidth: .infinity, maxHeight: 200, alignment: .bottom)
+            .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 200 : 150, alignment: .bottom)
             /*.background(.blue.opacity(0.2))//Color.EZNotesLightBlack.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
             .cornerRadius(15, corners: [.topLeft, .topRight])
             .shadow(color: .black, radius: 2.5, x: 0, y: -2)*/

@@ -7,6 +7,7 @@
 import SwiftUI
 import Combine
 import WebKit
+import StripePayments
 
 extension Notification {
     var keyboardHeight: CGFloat {
@@ -129,14 +130,93 @@ struct SignUpScreen : View, KeyboardReadable {
     
     @State private var isPlanPicked: Bool = false
     @State private var planPicked: String = ""
+    @State private var planName: String = "" /* MARK: The name to display at the top of the payment popover. */
     @State private var cardHolderName: String = ""
     @State private var cardNumber: String = ""
     @State private var expMonth: String = ""
     @State private var expYear: String = ""
-    @State private var cvc: String = ""
+    @State private var cvv: String = ""
     @State private var lastCardNumberLength: Int = 0
     @State private var cardNumberIndex: Int = 0
     @State private var showPrivacyPolicy: Bool = false
+    @State private var processingPayment: Bool = false
+    @State private var paymentGood: Bool = true
+    @State private var paymentDone: Bool = false
+    
+    private let planNames: [String: String] = [
+        "basic_plan_monthly": "Monthly Basic Plan",
+        "basic_plan_annually": "Annual Basic Plan",
+        "pro_monthly_plan": "Monthly Pro Plan",
+        "pro_annual_plan": "Annual Pro Plan"
+    ]
+    
+    private func payForSubscription(_ paymentMethodId: String, comp: @escaping (String) -> Void) {
+        guard let url = URL(string: "http://192.168.1.109:8088")?.appendingPathComponent("/create-stripe-checkout-mobile") else {
+            print("Failed")
+            return
+        }
+        
+        let body: [String: Any] = [
+            "name": self.cardHolderName,
+            "email": self.email,
+            "paymentID": paymentMethodId,
+            "priceID": self.planPicked
+        ]
+        
+        var request = URLRequest(url: url)
+        
+        request.addValue("yes", forHTTPHeaderField: "Fm")
+        
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        let _: Void = URLSession.shared.dataTask(with: request, completionHandler: { (data, response, error) in
+            /*guard
+                let response = response as? HTTPURLResponse,
+                response.statusCode == 200,
+                let data = data,
+                let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any],
+                let customer = json["customer"] as? String,
+                let clientSecret = json["paymentIntent"] as? String
+            else {
+                let message = error?.localizedDescription ?? "Failed to decode response from server."
+                print("Error - \(message)")
+                return
+            }*/
+            guard let response = response as? HTTPURLResponse else {
+                comp("failed")
+                return
+            }
+            
+            print(response)
+            
+            DispatchQueue.main.async {
+                comp("success")
+            }
+        }).resume()
+    }
+    
+    private func createPaymentMethod(_ comp: @escaping (String) -> Void) {
+        let result = STPPaymentMethodCardParams()
+        result.number = self.cardNumber
+        result.expMonth = NSNumber(value: Int(self.expMonth)!)
+        result.expYear = NSNumber(value: Int(self.expYear)!)
+        result.cvc = self.cvv
+        
+        let paymentMethodParams = STPPaymentMethodParams(card: result, billingDetails: nil, metadata: nil)
+        
+        STPAPIClient.shared.createPaymentMethod(with: paymentMethodParams) { paymentMethod, error in
+            if let createError = error {
+                print("Error creating Payment Method \(createError)")
+                return
+            }
+            
+            if paymentMethod != nil {
+                self.payForSubscription(paymentMethod!.stripeId, comp: comp)
+            }
+        }
+    }
     
     var borderBottomColor: LinearGradient = LinearGradient(
         gradient: Gradient(
@@ -643,8 +723,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                         HStack {
                                             VStack {
                                                 Button(action: {
-                                                    self.isPlanPicked = true
                                                     self.planPicked = "basic_plan_monthly"
+                                                    self.isPlanPicked = true
                                                 }) {
                                                     Text("Select Monthly")
                                                         .frame(maxWidth: (prop.size.width - 40) - 40, alignment: .center)
@@ -670,8 +750,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                             
                                             VStack {
                                                 Button(action: {
-                                                    self.isPlanPicked = true
                                                     self.planPicked = "basic_plan_annually"
+                                                    self.isPlanPicked = true
                                                 }) {
                                                     Text("Select Annually")
                                                         .frame(maxWidth: (prop.size.width - 40) - 40, alignment: .center)
@@ -872,321 +952,333 @@ struct SignUpScreen : View, KeyboardReadable {
                             }
                             .popover(isPresented: $isPlanPicked) {
                                 VStack {
-                                    VStack {
-                                        Text(self.planPicked == "basic_plan_monthly"
-                                            ? "Monthly Basic Plan"
-                                             : self.planPicked == "basic_plan_annually"
-                                                ? "Annual Basic Plan"
-                                                : "Pro Plan")
-                                            .padding()
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 30, design: .rounded))
-                                            .fontWeight(.heavy)
-                                        
-                                        Divider()
-                                            .frame(maxWidth: prop.size.width - 40)
-                                        
+                                    if self.processingPayment {
                                         VStack {
-                                            Text("Card Details")
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                .padding(.bottom)
+                                            Text("Processing...")
                                                 .foregroundStyle(.white)
-                                                .font(.system(size: 22))
-                                                .fontWeight(.medium)
+                                                .font(.system(size: 25))
                                             
-                                            TextField("Card Holder Name", text: $cardHolderName)
-                                                .frame(
-                                                    maxWidth: .infinity,
-                                                    maxHeight: self.isLargerScreen ? 40 : 30
-                                                )
-                                                .padding(.leading, 15)
-                                                .padding([.top, .bottom], 5)
-                                                .padding(.horizontal, 25)
-                                                .background(
-                                                    Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                                        .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                                        .border(
-                                                            width: 1,
-                                                            edges: [.bottom],
-                                                            lcolor: !self.makeContentRed
-                                                                ? self.borderBottomColor
-                                                                : self.major == "" ? self.borderBottomColorError : self.borderBottomColor
-                                                        )
-                                                )
+                                            ProgressView()
                                                 .tint(Color.EZNotesBlue)
-                                                .font(.system(size: 18))
-                                                .fontWeight(.medium)
-                                                .autocapitalization(.words)
-                                                .disableAutocorrection(true)
-                                                .padding(.horizontal, 10)
-                                                .overlay(
-                                                    HStack {
-                                                        Image(systemName: "person.crop.circle")
-                                                            .foregroundColor(.gray)
-                                                            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .leading)
-                                                            .padding(.leading, 15)
-                                                    }
-                                                )
-                                            
-                                            TextField("Card Number", text: $cardNumber)
-                                                .frame(
-                                                    maxWidth: .infinity,
-                                                    maxHeight: self.isLargerScreen ? 40 : 30
-                                                )
-                                                .padding(.leading, 15)
-                                                .padding([.top, .bottom], 5)
-                                                .padding(.horizontal, 25)
-                                                .background(
-                                                    Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                                        .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                                        .border(
-                                                            width: 1,
-                                                            edges: [.bottom],
-                                                            lcolor: !self.makeContentRed
-                                                                ? self.borderBottomColor
-                                                                : self.major == "" ? self.borderBottomColorError : self.borderBottomColor
-                                                        )
-                                                )
-                                                .tint(Color.EZNotesBlue)
-                                                .font(.system(size: 18))
-                                                .fontWeight(.medium)
-                                                .autocapitalization(.words)
-                                                .disableAutocorrection(true)
-                                                .padding(.horizontal, 10)
-                                                .overlay(
-                                                    HStack {
-                                                        Image(systemName: "creditcard")
-                                                            .foregroundColor(.gray)
-                                                            .frame(
-                                                                minWidth: 0, maxWidth: .infinity,
-                                                                minHeight: 0, maxHeight: .infinity,
-                                                                alignment: .leading
-                                                            )
-                                                            .padding(.leading, 15)
-                                                    }
-                                                )
-                                                .textContentType(.creditCardNumber)
-                                                .onChange(of: self.cardNumber) {
-                                                    if self.cardNumber.count >= 16 {
-                                                        self.cardNumber = String(self.cardNumber.prefix(16))
-                                                    }
-                                                }
-                                            
-                                            /*TextField("02/27", text: $expYear)
-                                                .frame(
-                                                    maxWidth: .infinity,
-                                                    maxHeight: self.isLargerScreen ? 40 : 30
-                                                )
-                                                .padding(.leading, 15)
-                                                .padding([.top, .bottom], 5)
-                                                .padding(.horizontal, 25)
-                                                .background(
-                                                    Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                                        .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                                        .border(
-                                                            width: 1,
-                                                            edges: [.bottom],
-                                                            lcolor: !self.makeContentRed
-                                                                ? self.borderBottomColor
-                                                                : self.major == "" ? self.borderBottomColorError : self.borderBottomColor
-                                                        )
-                                                )
-                                                .tint(Color.EZNotesBlue)
-                                                .font(.system(size: 18))
-                                                .fontWeight(.medium)
-                                                .autocapitalization(.words)
-                                                .disableAutocorrection(true)
-                                                .padding(.horizontal, 10)
-                                                .overlay(
-                                                    HStack {
-                                                        Image(systemName: "calendar")
-                                                            .foregroundColor(.gray)
-                                                            .frame(
-                                                                minWidth: 0, maxWidth: .infinity,
-                                                                minHeight: 0, maxHeight: .infinity,
-                                                                alignment: .leading
-                                                            )
-                                                            .padding(.leading, 15)
-                                                    }
-                                                )*/
-                                            
-                                            HStack {
-                                                HStack {
-                                                    VStack {
-                                                        TextField("02", text: $expMonth)
-                                                            .frame(
-                                                                maxWidth: .infinity,
-                                                                maxHeight: self.isLargerScreen ? 40 : 30,
-                                                                alignment: .leading
-                                                            )
-                                                            .padding(.leading, 5)
-                                                            .padding([.top], 5)
-                                                        //.padding(.horizontal, 25)
-                                                            .background(
-                                                                Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                                                    .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                                                    .border(
-                                                                        width: 1,
-                                                                        edges: [.bottom],
-                                                                        lcolor: !self.makeContentRed
-                                                                        ? self.borderBottomColor
-                                                                        : self.major == "" ? self.borderBottomColorError : self.borderBottomColor
-                                                                    )
-                                                            )
-                                                            .tint(Color.EZNotesBlue)
-                                                            .font(.system(size: 18))
-                                                            .fontWeight(.medium)
-                                                            .autocapitalization(.words)
-                                                            .disableAutocorrection(true)
-                                                            .padding(.horizontal, 10)
-                                                        
-                                                        Text("Month")
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .foregroundStyle(.secondary)
-                                                            .padding(.leading, 15)
-                                                            .font(.system(size: 12))
-                                                            .fontWeight(.thin)
-                                                    }
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    
-                                                    VStack {
-                                                        TextField("27", text: $expYear)
-                                                            .frame(
-                                                                maxWidth: .infinity,
-                                                                maxHeight: self.isLargerScreen ? 40 : 30,
-                                                                alignment: .trailing
-                                                            )
-                                                            .padding(.leading, 5)
-                                                            .padding([.top], 5)
-                                                            //.padding(.horizontal, 25)
-                                                            .background(
-                                                                Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                                                    .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                                                    .border(
-                                                                        width: 1,
-                                                                        edges: [.bottom],
-                                                                        lcolor: !self.makeContentRed
-                                                                        ? self.borderBottomColor
-                                                                        : self.major == "" ? self.borderBottomColorError : self.borderBottomColor
-                                                                    )
-                                                            )
-                                                            .tint(Color.EZNotesBlue)
-                                                            .font(.system(size: 18))
-                                                            .fontWeight(.medium)
-                                                            .autocapitalization(.words)
-                                                            .disableAutocorrection(true)
-                                                            .padding(.horizontal, 10)
-                                                        
-                                                        Text("Year")
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .foregroundStyle(.secondary)
-                                                            .padding(.leading, 15)
-                                                            .font(.system(size: 12))
-                                                            .fontWeight(.thin)
-                                                    }
-                                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                                }
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                
-                                                HStack {
-                                                    TextField("CVC", text: $expYear)
-                                                        .frame(
-                                                            maxWidth: .infinity,
-                                                            maxHeight: self.isLargerScreen ? 40 : 30,
-                                                            alignment: .leading
-                                                        )
-                                                        .padding(.leading, 15)
-                                                        .padding([.top], 5)
-                                                        .padding(.horizontal, 25)
-                                                        .background(
-                                                            Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                                                .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                                                .border(
-                                                                    width: 1,
-                                                                    edges: [.bottom],
-                                                                    lcolor: !self.makeContentRed
-                                                                    ? self.borderBottomColor
-                                                                    : self.major == "" ? self.borderBottomColorError : self.borderBottomColor
-                                                                )
-                                                        )
-                                                        .tint(Color.EZNotesBlue)
-                                                        .font(.system(size: 18))
-                                                        .fontWeight(.medium)
-                                                        .autocapitalization(.words)
-                                                        .disableAutocorrection(true)
-                                                        .padding(.horizontal, 10)
-                                                        .overlay(
-                                                            HStack {
-                                                                Image(systemName: "key")
-                                                                    .foregroundColor(.gray)
-                                                                    .frame(
-                                                                        minWidth: 0, maxWidth: .infinity,
-                                                                        minHeight: 0, maxHeight: .infinity,
-                                                                        alignment: .leading
-                                                                    )
-                                                                    .padding(.leading, 15)
-                                                            }
-                                                        )
-                                                }
-                                                .frame(maxWidth: .infinity, alignment: .trailing)
-                                                .padding(.bottom, 18)
-                                            }
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            
-                                            
-                                            Text("All purchases are handled securely by Stripe. Stripe is our partner for processing payments for subscriptions. If you have any questions, do not hesitate to contact us.\n\nBy clicking \"Submit Payment\" below, you agree to EZNotes Terms of Use and confirm you have read and understood our Privacy and Policy.")
+                                                .controlSize(.regular)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                        .background(Color.EZNotesBlack.opacity(0.7))
+                                    } else {
+                                        VStack {
+                                            Text(self.planName)
                                                 .frame(maxWidth: .infinity, alignment: .center)
-                                                .padding(.top)
-                                                .padding(.bottom, 2)
-                                                .foregroundStyle(.secondary)
-                                                .font(.system(size: 13))
-                                                .minimumScaleFactor(0.5)
-                                                .fontWeight(.light)
+                                                .padding()
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: self.isLargerScreen ? 30 : 25, design: .rounded))
+                                                .fontWeight(.heavy)
                                             
-                                            Button(action: { self.showPrivacyPolicy.toggle() }) {
-                                                Text("Privacy & Policy")
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .foregroundStyle(.blue)
-                                                    .font(.system(size: 13))
+                                            if !self.paymentGood {
+                                                Text("An error ocurred while processing your payment. Check over the details and try again. If problems persist, contact us.")
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                    .foregroundStyle(.red)
+                                                    .font(.system(size: 12))
                                                     .minimumScaleFactor(0.5)
                                                     .fontWeight(.light)
                                             }
-                                            .buttonStyle(NoLongPressButtonStyle())
+                                            
+                                            Divider()
+                                                .frame(maxWidth: prop.size.width - 40)
+                                            
+                                            VStack {
+                                                Text("Card Details")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.bottom)
+                                                    .foregroundStyle(.white)
+                                                    .font(.system(size: 22))
+                                                    .fontWeight(.medium)
+                                                
+                                                TextField("Card Holder Name", text: $cardHolderName)
+                                                    .frame(
+                                                        maxWidth: .infinity,
+                                                        maxHeight: self.isLargerScreen ? 40 : 30
+                                                    )
+                                                    .padding(.leading, 15)
+                                                    .padding([.top, .bottom], 5)
+                                                    .padding(.horizontal, 25)
+                                                    .background(
+                                                        Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                            .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
+                                                            .border(
+                                                                width: 1,
+                                                                edges: [.bottom],
+                                                                lcolor: !self.makeContentRed
+                                                                ? self.borderBottomColor
+                                                                : self.major == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                            )
+                                                    )
+                                                    .tint(Color.EZNotesBlue)
+                                                    .foregroundStyle(Color.EZNotesBlue)
+                                                    .font(.system(size: 18))
+                                                    .fontWeight(.medium)
+                                                    .autocapitalization(.words)
+                                                    .disableAutocorrection(true)
+                                                    .padding(.horizontal, 10)
+                                                    .overlay(
+                                                        HStack {
+                                                            Image(systemName: "person.crop.circle")
+                                                                .foregroundColor(.gray)
+                                                                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .leading)
+                                                                .padding(.leading, 15)
+                                                        }
+                                                    )
+                                                
+                                                TextField("Card Number", text: $cardNumber)
+                                                    .frame(
+                                                        maxWidth: .infinity,
+                                                        maxHeight: self.isLargerScreen ? 40 : 30
+                                                    )
+                                                    .padding(.leading, 15)
+                                                    .padding([.top, .bottom], 5)
+                                                    .padding(.horizontal, 25)
+                                                    .background(
+                                                        Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                            .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
+                                                            .border(
+                                                                width: 1,
+                                                                edges: [.bottom],
+                                                                lcolor: !self.makeContentRed
+                                                                ? self.borderBottomColor
+                                                                : self.major == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                            )
+                                                    )
+                                                    .tint(Color.EZNotesBlue)
+                                                    .foregroundStyle(Color.EZNotesBlue)
+                                                    .font(.system(size: 18))
+                                                    .fontWeight(.medium)
+                                                    .autocapitalization(.words)
+                                                    .disableAutocorrection(true)
+                                                    .padding(.horizontal, 10)
+                                                    .overlay(
+                                                        HStack {
+                                                            Image(systemName: "creditcard")
+                                                                .foregroundColor(.gray)
+                                                                .frame(
+                                                                    minWidth: 0, maxWidth: .infinity,
+                                                                    minHeight: 0, maxHeight: .infinity,
+                                                                    alignment: .leading
+                                                                )
+                                                                .padding(.leading, 15)
+                                                        }
+                                                    )
+                                                    .textContentType(.creditCardNumber)
+                                                    .onChange(of: self.cardNumber) {
+                                                        if self.cardNumber.count >= 16 {
+                                                            self.cardNumber = String(self.cardNumber.prefix(16))
+                                                        }
+                                                    }
+                                                
+                                                HStack {
+                                                    HStack {
+                                                        VStack {
+                                                            TextField("02", text: $expMonth)
+                                                                .frame(
+                                                                    maxWidth: .infinity,
+                                                                    maxHeight: self.isLargerScreen ? 40 : 30,
+                                                                    alignment: .leading
+                                                                )
+                                                                .padding(.leading, 5)
+                                                                .padding([.top], 5)
+                                                                .background(
+                                                                    Rectangle()
+                                                                        .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
+                                                                        .border(
+                                                                            width: 1,
+                                                                            edges: [.bottom],
+                                                                            lcolor: !self.makeContentRed
+                                                                            ? self.borderBottomColor
+                                                                            : self.major == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                                        )
+                                                                )
+                                                                .tint(Color.EZNotesBlue)
+                                                                .foregroundStyle(Color.EZNotesBlue)
+                                                                .font(.system(size: 18))
+                                                                .fontWeight(.medium)
+                                                                .autocapitalization(.words)
+                                                                .disableAutocorrection(true)
+                                                                .padding(.horizontal, 10)
+                                                                .onChange(of: self.expMonth) {
+                                                                    if self.expMonth.count >= 2 {
+                                                                        self.expMonth = String(self.expMonth.prefix(2))
+                                                                    }
+                                                                }
+                                                            
+                                                            Text("Month")
+                                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                                .foregroundStyle(.white)
+                                                                .padding(.leading, 15)
+                                                                .font(.system(size: 12))
+                                                                .fontWeight(.thin)
+                                                        }
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        
+                                                        VStack {
+                                                            TextField("27", text: $expYear)
+                                                                .frame(
+                                                                    maxWidth: .infinity,
+                                                                    maxHeight: self.isLargerScreen ? 40 : 30,
+                                                                    alignment: .trailing
+                                                                )
+                                                                .padding(.leading, 5)
+                                                                .padding([.top], 5)
+                                                                .background(
+                                                                    Rectangle()
+                                                                        .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
+                                                                        .border(
+                                                                            width: 1,
+                                                                            edges: [.bottom],
+                                                                            lcolor: !self.makeContentRed
+                                                                            ? self.borderBottomColor
+                                                                            : self.major == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                                        )
+                                                                )
+                                                                .tint(Color.EZNotesBlue)
+                                                                .foregroundStyle(Color.EZNotesBlue)
+                                                                .font(.system(size: 18))
+                                                                .fontWeight(.medium)
+                                                                .autocapitalization(.words)
+                                                                .disableAutocorrection(true)
+                                                                .padding(.horizontal, 10)
+                                                                .onChange(of: self.expYear) {
+                                                                    if self.expYear.count >= 2 {
+                                                                        self.expYear = String(self.expYear.prefix(2))
+                                                                    }
+                                                                }
+                                                            
+                                                            Text("Year")
+                                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                                .foregroundStyle(.white)
+                                                                .padding(.leading, 15)
+                                                                .font(.system(size: 12))
+                                                                .fontWeight(.thin)
+                                                        }
+                                                        .frame(maxWidth: .infinity, alignment: .trailing)
+                                                    }
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    
+                                                    HStack {
+                                                        TextField("CVV", text: $cvv)
+                                                            .frame(
+                                                                maxWidth: .infinity,
+                                                                maxHeight: self.isLargerScreen ? 40 : 30,
+                                                                alignment: .leading
+                                                            )
+                                                            .padding(.leading, 15)
+                                                            .padding([.top], 5)
+                                                            .padding(.horizontal, 25)
+                                                            .background(
+                                                                Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                                    .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
+                                                                    .border(
+                                                                        width: 1,
+                                                                        edges: [.bottom],
+                                                                        lcolor: !self.makeContentRed
+                                                                        ? self.borderBottomColor
+                                                                        : self.major == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                                    )
+                                                            )
+                                                            .tint(Color.EZNotesBlue)
+                                                            .foregroundStyle(Color.EZNotesBlue)
+                                                            .font(.system(size: 18))
+                                                            .fontWeight(.medium)
+                                                            .autocapitalization(.words)
+                                                            .disableAutocorrection(true)
+                                                            .padding(.horizontal, 10)
+                                                            .overlay(
+                                                                HStack {
+                                                                    Image(systemName: "key")
+                                                                        .foregroundColor(.gray)
+                                                                        .frame(
+                                                                            minWidth: 0, maxWidth: .infinity,
+                                                                            minHeight: 0, maxHeight: .infinity,
+                                                                            alignment: .leading
+                                                                        )
+                                                                        .padding(.leading, 15)
+                                                                }
+                                                            )
+                                                    }
+                                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                                    .padding(.bottom, 18)
+                                                }
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                
+                                                
+                                                Text("All purchases are handled securely by Stripe. Stripe is our partner for processing payments for subscriptions. If you have any questions, do not hesitate to contact us.\n\nBy clicking \"Submit Payment\" below, you agree to EZNotes Terms of Use and confirm you have read and understood our Privacy and Policy.")
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                    .padding(.top)
+                                                    .padding(.bottom, 2)
+                                                    .foregroundStyle(.secondary)
+                                                    .font(.system(size: 13))
+                                                    .minimumScaleFactor(0.5)
+                                                    .fontWeight(.light)
+                                                
+                                                Button(action: { self.showPrivacyPolicy.toggle() }) {
+                                                    Text("Privacy & Policy")
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .foregroundStyle(.blue)
+                                                        .font(.system(size: 13))
+                                                        .minimumScaleFactor(0.5)
+                                                        .fontWeight(.light)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                            }
+                                            .frame(maxWidth: prop.size.width - 80, alignment: .top)
+                                            .padding(.top, 20)
+                                            .ignoresSafeArea(.keyboard, edges: .bottom)
                                         }
                                         .frame(maxWidth: prop.size.width - 80, alignment: .top)
-                                        .padding(.top, 20)
                                         .ignoresSafeArea(.keyboard, edges: .bottom)
+                                        
+                                        
+                                        Spacer()
+                                        
+                                        Button(action: {
+                                            self.processingPayment = true
+                                            
+                                            self.createPaymentMethod() { status in
+                                                if status != "success" {
+                                                    self.processingPayment = false
+                                                    self.paymentGood = false
+                                                    return
+                                                }
+                                                
+                                                self.processingPayment = false
+                                                self.paymentGood = true
+                                                self.isPlanPicked = false
+                                                self.paymentDone = true
+                                                
+                                                /* Continue to account. */
+                                                self.setLoginStatus()
+                                            }
+                                        }) {
+                                            Text("Submit Payment")
+                                                .frame(
+                                                    width: prop.isIpad
+                                                    ? UIDevice.current.orientation.isLandscape
+                                                    ? prop.size.width - 800
+                                                    : prop.size.width - 450
+                                                    : prop.size.width - 90,
+                                                    height: 10
+                                                )
+                                                .padding([.top, .bottom])
+                                                .font(.system(size: 25, design: .rounded))
+                                                .fontWeight(.semibold)
+                                                .foregroundStyle(.black)
+                                                .contentShape(Rectangle())
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                        .padding(.leading, 5)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(.white)
+                                        )
+                                        .padding(.bottom, 20)
                                     }
-                                    .frame(maxWidth: prop.size.width - 80, alignment: .top)
-                                    .ignoresSafeArea(.keyboard, edges: .bottom)
-                                    
-                                    Spacer()
-                                    
-                                    Button(action: {
-                                        print("Submit Payment!")
-                                    }) {
-                                        Text("Submit Payment")
-                                            .frame(
-                                                width: prop.isIpad
-                                                ? UIDevice.current.orientation.isLandscape
-                                                ? prop.size.width - 800
-                                                : prop.size.width - 450
-                                                : prop.size.width - 90,
-                                                height: 10
-                                            )
-                                            .padding([.top, .bottom])
-                                            .font(.system(size: 25, design: .rounded))
-                                            .fontWeight(.semibold)
-                                            .foregroundStyle(.black)
-                                            .contentShape(Rectangle())
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    .padding(.leading, 5)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(.white)
-                                    )
-                                    .padding(.bottom, 20)
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .background(Color.EZNotesBlack)
@@ -1194,6 +1286,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                     WebView(url: URL(string: "https://www.eznotes.space/privacy_policy")!)
                                         .navigationBarTitle("Privacy Policy", displayMode: .inline)
                                 }
+                                .onChange(of: prop.size.height) {
+                                    self.isLargerScreen = prop.size.height / 2.5 > 200
+                                }
+                                .onAppear(perform: {
+                                    /* MARK: This is so stupid, but it is needed to be able to correctly display the title. */
+                                    self.planName = self.planNames[self.planPicked]!
+                                })
                             }
                         }
                     }
