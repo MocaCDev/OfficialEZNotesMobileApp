@@ -202,9 +202,128 @@ struct LoginScreen: View, KeyboardReadable {
                 
                 self.lastHeight = prop.size.height
             }
+            
+            Spacer()
+            
+            VStack {
+                Button(action: {
+                    if self.username == "" || self.password == "" { self.makeContentRed = true; return }
+                    
+                    if self.makeContentRed { self.makeContentRed = false }
+                    
+                    RequestAction<LoginRequestData>(
+                        parameters: LoginRequestData(
+                            Username: self.username,
+                            Password: self.password
+                        )
+                    ).perform(action: complete_login_req) { statusCode, resp in
+                        guard resp != nil && statusCode == 200 else {
+                            self.loginError = true
+                            return
+                        }
+                        
+                        UserDefaults.standard.set(resp!["Username"] as? String, forKey: "username")
+                        UserDefaults.standard.set(resp!["Email"] as? String, forKey: "email")
+                        UserDefaults.standard.set(resp!["AccountID"] as? String, forKey: "account_id")
+                        UserDefaults.standard.set(resp!["CustomerSubscriptionID"] as? String, forKey: "client_sub_id")
+                        self.setLoginStatus()
+                    }
+                    
+                    /*RequestAction<LoginRequestData>(
+                        parameters: LoginRequestData(
+                            Username: self.username,
+                            Password: self.password
+                        )
+                    ).perform(action: complete_login_req) { r in
+                        if r.Good == nil {
+                            self.loginError = true
+                            return
+                        } else {
+                            UserDefaults.standard.set(self.username, forKey: "username")
+                            
+                            if UserDefaults.standard.object(forKey: "email") == nil || UserDefaults.standard.string(forKey: "email") == "" {
+                                RequestAction<GetEmailData>(
+                                    parameters: GetEmailData(
+                                        AccountId: r.Good!.Message
+                                    )
+                                ).perform(action: get_user_email_req) { resp in
+                                    print(resp)
+                                    if resp.Good == nil {
+                                        self.loginError = true
+                                        return
+                                    } else {
+                                        UserDefaults.standard.set(resp.Good!.Message, forKey: "email")
+                                    }
+                                }
+                            }
+                            
+                            if UserDefaults.standard.string(forKey: "faceID_enabled") == "not_enabled" {
+                                self.showPopup = true
+                            } else {
+                                UserDefaults.standard.set(true, forKey: "logged_in")
+                                self.userHasSignedIn = true
+                                self.startupScreen.goBackToLogin = false
+                                self.startupScreen.faceIDAuthenticated = true
+                            }
+                            
+                            return
+                        }
+                    }*/
+                }) {
+                    Text("Login")
+                    .frame(
+                        width: prop.isIpad
+                        ? UIDevice.current.orientation.isLandscape
+                        ? prop.size.width - 800
+                        : prop.size.width - 450
+                        : prop.size.width - 90,
+                        height: 10
+                    )
+                    .padding([.top, .bottom])
+                    .font(.system(size: 25, design: .rounded))
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.black)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(NoLongPressButtonStyle())
+                .padding(.leading, 5)
+                .background(
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(.white)
+                )
+                
+                Button(action: {
+                    self.screen = "home"
+                }) {
+                    Text("Go Back")
+                        .frame(
+                            width: prop.isIpad
+                            ? UIDevice.current.orientation.isLandscape
+                            ? prop.size.width - 800
+                            : prop.size.width - 450
+                            : prop.size.width - 90,
+                            height: 10
+                        )
+                        .padding([.top, .bottom])
+                        .font(.system(size: 25, design: .rounded))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(NoLongPressButtonStyle())
+                .background(
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.EZNotesLightBlack)
+                )
+            }
+            .padding(.bottom, 30)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.EZNotesBlack)
+        .onAppear {
+            self.isLargerScreen = prop.size.height / 2.5 > 300
+            self.lastHeight = prop.size.height
+        }
         /*VStack {
             VStack {
                 LinearGradient(

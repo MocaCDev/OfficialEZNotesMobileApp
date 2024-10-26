@@ -187,8 +187,12 @@ struct ContentView: View {
                     accountInfo.setEmail(email: UserDefaults.standard.string(forKey: "email")!)
                 }
                 
-                if UserDefaults.standard.object(forKey: "client_id") != nil {
-                    accountInfo.setAccountID(accountID: UserDefaults.standard.string(forKey: "client_id")!)
+                if UserDefaults.standard.object(forKey: "account_id") != nil {
+                    accountInfo.setAccountID(accountID: UserDefaults.standard.string(forKey: "account_id")!)
+                }
+                
+                if UserDefaults.standard.object(forKey: "client_sub_id") != nil {
+                    accountInfo.setClientSubID(subID: UserDefaults.standard.string(forKey: "client_sub_id")!)
                 }
                 
                 if UserDefaults.standard.string(forKey: "faceID_enabled") == "enabled" {

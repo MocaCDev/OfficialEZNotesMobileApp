@@ -484,8 +484,9 @@ struct TopNavHome: View {
             VStack {
                 ProfileIconView(prop: prop, showAccountPopup: $showAccountPopup)
             }
-            .frame(maxWidth: 90, maxHeight: .infinity,  alignment: .leading)
-            .padding(.top, 55)
+            //.frame(maxWidth: 90,  alignment: .leading)
+            .padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15) /* MARK: Aligns icon for larger screens. */
+            //.padding(.bottom, prop.size.height / 2.5 > 300 ? 0 : 10) /* MARK: Aligns icon for smaller screens. */
             .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo) }
             
             Spacer()
@@ -560,7 +561,7 @@ struct TopNavHome: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
-                .padding([.top], prop.size.height > 340 ? 55 : 45)
+                .padding([.top], prop.size.height > 340 ? 50 : 45)
             } else {
                 if self.changeNavbarColor {
                     VStack {
@@ -589,7 +590,7 @@ struct TopNavHome: View {
                         .foregroundStyle(Color.EZNotesOrange)
                 }
                 .buttonStyle(NoLongPressButtonStyle())
-                .padding([.top], 5)
+                //.padding([.top], 5)
                 
                 Button(action: { self.aiChatPopover = true }) {
                     Image("AI-Chat-Icon")
@@ -603,16 +604,18 @@ struct TopNavHome: View {
                 .buttonStyle(NoLongPressButtonStyle())
             }
             .frame(maxWidth: 90, maxHeight: .infinity, alignment: .trailing)
-            .padding(.top, 55)
+            .padding(.top, prop.size.height / 2.5 > 300 ? 55 : 0)
+            .padding(.bottom, 10)
         }
-        .frame(maxWidth: .infinity, maxHeight: 115, alignment: .top)
+        .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 115 : 65, alignment: .top)
+        .padding(.top, 5)
         .background(
             !self.changeNavbarColor
                 ? AnyView(Color.clear)
                 : AnyView(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark).opacity(navbarOpacity))
         )
-        .ignoresSafeArea(.keyboard)
-        .zIndex(1)
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .zIndex(1) /* MARK: The navbar will always exist on top of content. This enables content under the navbar to scroll "under" it. */
         .onTapGesture {
             if self.showSearchBar { self.showSearchBar = false }
         }
@@ -1015,7 +1018,6 @@ struct TopNavChat: View {
                 .buttonStyle(NoLongPressButtonStyle())
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
-            .padding([.bottom, .trailing], 10)
         }
         .topNavSettings(prop: prop, backgroundColor: .clear)
         .padding([.top], 5)

@@ -51,7 +51,7 @@ struct SignUpScreen : View, KeyboardReadable {
     @State public var college: String = ""
     @State public var major: String = ""
     @State public var state: String = ""
-    @State public var section: String = "select_plan"
+    @State public var section: String = "main"
     @State public var makeContentRed: Bool = false
     
     @State public var imageOpacity: Double = 1
@@ -82,7 +82,7 @@ struct SignUpScreen : View, KeyboardReadable {
     ]
     
     private func payForSubscription(_ paymentMethodId: String, comp: @escaping (String, String?) -> Void) {
-        guard let url = URL(string: "http://192.168.1.109:8088")?.appendingPathComponent("/create-stripe-checkout-mobile") else {
+        guard let url = URL(string: "http://192.168.0.7:8088")?.appendingPathComponent("/create-stripe-checkout-mobile") else {
             print("Failed")
             return
         }
@@ -104,21 +104,16 @@ struct SignUpScreen : View, KeyboardReadable {
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         
         let _: Void = URLSession.shared.dataTask(with: request, completionHandler: { (data, response, error) in
-            guard let _ = response as? HTTPURLResponse else {
+            guard
+                let response = response as? HTTPURLResponse,
+                response.statusCode == 200,
+                let data = data,
+                let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
+            else {
                 comp("failed", nil)
                 return
             }
-            
-            guard let data = data else {
-                print("No data returned.")
-                return
-            }
-            
-            guard let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any] else {
-                print("Failed to obtain data from response.")
-                return
-            }
-                
+        
             DispatchQueue.main.async {
                 comp("success", resp["customerID"] as? String)
             }
@@ -135,8 +130,8 @@ struct SignUpScreen : View, KeyboardReadable {
         let paymentMethodParams = STPPaymentMethodParams(card: result, billingDetails: nil, metadata: nil)
         
         STPAPIClient.shared.createPaymentMethod(with: paymentMethodParams) { paymentMethod, error in
-            guard error != nil else {
-                print("Error creating Payment Method \(error!)")
+            if let error = error {
+                print("Error creating Payment Method: \(error)")
                 return
             }
             
@@ -1361,8 +1356,25 @@ struct SignUpScreen : View, KeyboardReadable {
                                             College: college,
                                             State: state
                                         )
-                                    ).perform(action: complete_signup1_req) { r in
-                                        if r.Bad != nil {
+                                    ).perform(action: complete_signup1_req) { statusCode, resp in
+                                        guard resp != nil && statusCode == 200 else {
+                                            if statusCode == 0x6970 {
+                                                self.section = "main"
+                                                self.userExists = true
+                                                return
+                                            }
+                                            
+                                            self.serverError = true
+                                            return
+                                        }
+                                        
+                                        if self.userExists { self.userExists = false }
+                                        
+                                        self.accountID = resp!["Message"] as! String
+                                        self.section = "code_input"
+                                        UserDefaults.standard.set("code_input", forKey: "last_signup_section")
+                                        
+                                        /*if r.Bad != nil {
                                             if r.Bad!.ErrorCode == 0x6970 {
                                                 self.section = "main"
                                                 self.userExists = true
@@ -1378,7 +1390,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             self.accountID = r.Good!.Message
                                             self.section = "code_input"
                                             UserDefaults.standard.set("code_input", forKey: "last_signup_section")
-                                        }
+                                        }*/
                                     }
                                 } else {
                                     if self.section == "code_input" {
@@ -1387,8 +1399,18 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 AccountID: accountID,
                                                 UserInputtedCode: userInputedCode
                                             )
-                                        ).perform(action: complete_signup2_req) {r in
-                                            if r.Bad != nil {
+                                        ).perform(action: complete_signup2_req) { statusCode, resp in
+                                            guard resp != nil && statusCode == 200 else {
+                                                self.wrongCode = true
+                                                return
+                                            }
+                                            
+                                            UserDefaults.standard.set(self.username, forKey: "username")
+                                            UserDefaults.standard.set(self.email, forKey: "email")
+                                            UserDefaults.standard.set("select_plan", forKey: "last_signup_section")
+                                            self.section = "select_plan"
+                                            
+                                            /*if r.Bad != nil {
                                                 self.wrongCode = true
                                                 return
                                             }
@@ -1397,7 +1419,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 UserDefaults.standard.set(self.email, forKey: "email")
                                                 UserDefaults.standard.set("select_plan", forKey: "last_signup_section")
                                                 self.section = "select_plan"
-                                            }
+                                            }*/
                                         }
                                         /* TODO: Add screen for the code to be put in.
                                          * TODO: After the screen is implemented, this else statement will take the code and send it to the server.*/
@@ -1473,12 +1495,12 @@ struct SignUpScreen : View, KeyboardReadable {
             self.isLargerScreen = prop.size.height / 2.5 > 300
             self.lastHeight = prop.size.height
             
-            /*guard UserDefaults.standard.object(forKey: "last_signup_section") != nil else {
+            guard UserDefaults.standard.object(forKey: "last_signup_section") != nil else {
                 UserDefaults.standard.set("main", forKey: "last_signup_section")
                 return
             }
             
-            self.section = UserDefaults.standard.string(forKey: "last_signup_section")!*/
+            self.section = UserDefaults.standard.string(forKey: "last_signup_section")!
         }
         /*VStack {
             Spacer()

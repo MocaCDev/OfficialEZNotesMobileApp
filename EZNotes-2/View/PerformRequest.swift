@@ -135,7 +135,7 @@ struct RequestAction<T> {
     
     var parameters: T
     
-    func perform(action: CSIARequest<T>, completion: @escaping (RequestResponse) -> Void) {
+    func perform(action: CSIARequest<T>, completion: @escaping (Int, [String: Any]?) -> Void) {
         
         let scheme: String = "https"
         let host: String = "www.eznotes.space"//"http://127.0.0.1:8088"//"www.eznotes.space"
@@ -182,8 +182,23 @@ struct RequestAction<T> {
         }
         
         
-        let _: Void = URLSession.shared.dataTask(with: request) { data, _, error in
-            if let data = data {
+        let _: Void = URLSession.shared.dataTask(with: request) { data, response, error in
+            guard
+                let response = response as? HTTPURLResponse,
+                let data = data,
+                let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
+            else {
+                DispatchQueue.main.async {
+                    completion(500, nil)
+                }
+                return
+            }
+            
+            DispatchQueue.main.async {
+                completion(response.statusCode, resp)
+            }
+            
+            /*if let data = data {
                 /* Attempt to get a good response. */
                 let response = try? JSONDecoder().decode(GoodResponse.self, from: data)
                 
@@ -216,7 +231,7 @@ struct RequestAction<T> {
                         )
                     ))
                 }
-            }
+            }*/
         }
         .resume()
     }

@@ -11,7 +11,8 @@ class AccountDetails: ObservableObject {
     @Published var email: String
     @Published var college: String
     @Published var major: String
-    @Published var clientID: String
+    @Published var accountID: String
+    @Published var subID: String
     
     /* MARK: PFP - will be on top of `profileBackgroundImage`. */
     @Published var profilePicture: Image
@@ -24,14 +25,16 @@ class AccountDetails: ObservableObject {
         email = ""
         college = ""
         major = ""
-        clientID = ""
+        accountID = ""
+        subID = ""
         profilePicture = Image(systemName: "person.crop.circle.fill")
         profileBackgroundPicture = Image("Pfp-Default-Bg")
     }
     
     final public func setUsername(username: String) { self.username = username }
     final public func setEmail(email: String) { self.email = email }
-    final public func setAccountID(accountID: String) { self.clientID = accountID }
+    final public func setAccountID(accountID: String) { self.accountID = accountID }
+    final public func setClientSubID(subID: String) { self.subID = subID }
     
     final public func setProfilePicture(pfp: UIImage) { self.profilePicture = Image(uiImage: pfp) }
     final public func setProfilePicture(pfp: Image) { self.profilePicture = pfp }
