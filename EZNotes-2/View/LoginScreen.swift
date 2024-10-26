@@ -51,9 +51,161 @@ struct LoginScreen: View, KeyboardReadable {
         )
         self.userHasSignedIn = true
     }
+    
+    /* TODO: Create a observed object for this. The below variables can be found in `SignUpScreen.swift` as well. */
+    @State private var isLargerScreen: Bool = false
+    @State private var lastHeight: CGFloat = 0.0
 
     var body: some View {
         VStack {
+            VStack {
+                Text("Login")
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.bottom, 5)
+                    .foregroundStyle(.white)
+                    .font(
+                        .system(
+                            size: prop.isIpad
+                            ? 90
+                            : self.isLargerScreen
+                            ? 40
+                            : 30
+                        )
+                    )
+                    .fontWeight(.bold)
+                
+                Text(
+                    !self.loginError
+                    ? "Use your Email or Username to login to your account"
+                    : "Email, Username or Password is incorrect"
+                )
+                .frame(maxWidth: prop.size.width - 30, minHeight: 45, alignment: .center)
+                .foregroundStyle(self.loginError ? Color.red : Color.white)
+                .font(
+                    .system(
+                        size: prop.isIpad || self.isLargerScreen
+                        ? 15
+                        : 13
+                    )
+                )
+                .multilineTextAlignment(.center)
+                
+                VStack {
+                    Text("Username or Email")
+                        .frame(
+                            width: prop.isIpad
+                            ? UIDevice.current.orientation.isLandscape
+                            ? prop.size.width - 800
+                            : prop.size.width - 450
+                            : prop.size.width - 100,
+                            height: 5,
+                            alignment: .leading
+                        )
+                        .padding(.top, 10)
+                        .font(
+                            .system(
+                                size: self.isLargerScreen ? 25 : 20
+                            )
+                        )
+                        .foregroundStyle(.white)
+                        .fontWeight(.medium)
+                    
+                    TextField("Username or Email...", text: $username)
+                        .frame(
+                            width: prop.isIpad
+                            ? UIDevice.current.orientation.isLandscape
+                            ? prop.size.width - 800
+                            : prop.size.width - 450
+                            : prop.size.width - 100,
+                            height: self.isLargerScreen ? 40 : 30
+                        )
+                        .padding([.leading], 15)
+                        .background(
+                            Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                .fill(.clear)
+                                .border(
+                                    width: 1,
+                                    edges: [.bottom],
+                                    lcolor: self.loginError || self.makeContentRed ? self.borderBottomColorError : self.borderBottomColor
+                                        /*!self.makeContentRed
+                                        ? self.loginError ? self.borderBottomColorError : self.borderBottomColor
+                                        : self.username == "" ? self.borderBottomColorError : self.borderBottomColor*/
+                                )
+                        )
+                        .foregroundStyle(Color.EZNotesBlue)
+                        .padding(self.isLargerScreen ? 10 : 8)
+                        .tint(Color.EZNotesBlue)
+                        .font(.system(size: 18))
+                        .fontWeight(.medium)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                        .keyboardType(.alphabet)
+                    
+                    Text("Password")
+                        .frame(
+                            width: prop.isIpad
+                            ? UIDevice.current.orientation.isLandscape
+                            ? prop.size.width - 800
+                            : prop.size.width - 450
+                            : prop.size.width - 100,
+                            height: 5,
+                            alignment: .leading
+                        )
+                        .padding(.top, 10)
+                        .font(
+                            .system(
+                                size: self.isLargerScreen ? 25 : 20
+                            )
+                        )
+                        .foregroundStyle(.white)
+                        .fontWeight(.medium)
+                    
+                    SecureField("Password...", text: $password)
+                        .frame(
+                            width: prop.isIpad
+                                ? UIDevice.current.orientation.isLandscape
+                                    ? prop.size.width - 800
+                                    : prop.size.width - 450
+                                : prop.size.width - 100,
+                            height: self.isLargerScreen ? 40 : 30
+                        )
+                        .padding([.leading], 15)
+                        .background(
+                            Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
+                                .border(
+                                    width: 1,
+                                    edges: [.bottom],
+                                    lcolor: self.loginError || self.makeContentRed ? self.borderBottomColorError : self.borderBottomColor
+                                        /*!self.makeContentRed
+                                    ? self.borderBottomColor
+                                    : self.password == "" ? self.borderBottomColorError : self.borderBottomColor*/
+                                )
+                        )
+                        .foregroundStyle(Color.EZNotesBlue)
+                        .padding(self.isLargerScreen ? 10 : 8)
+                        .tint(Color.EZNotesBlue)
+                        .font(.system(size: 18))
+                        .fontWeight(.medium)
+                        .focused($passwordFieldInFocus)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                }
+                .padding(.top, self.isLargerScreen ? 25 : 20)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .top) // Keep VStack aligned to the top
+            .ignoresSafeArea(.keyboard, edges: .bottom) // Ignore keyboard safe area
+            .onChange(of: prop.size.height) {
+                if prop.size.height < self.lastHeight { self.isLargerScreen = prop.size.height / 2.5 > 200 }
+                else { self.isLargerScreen = prop.size.height / 2.5 > 300 }
+                
+                self.lastHeight = prop.size.height
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.EZNotesBlack)
+        /*VStack {
             VStack {
                 LinearGradient(
                     gradient: Gradient(
@@ -511,7 +663,7 @@ struct LoginScreen: View, KeyboardReadable {
             }
         } message: {
             Text("Enabling FaceID will further secure your data")
-        }
+        }*/
     }
 }
 

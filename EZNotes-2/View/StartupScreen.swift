@@ -350,6 +350,17 @@ struct StartupScreen: View {
                         serverError: $serverError,
                         supportedStates: $supportedStates
                     )
+                case "login":
+                    LoginScreen(
+                        prop: prop,
+                        startupScreen: StartupScreen(
+                            userHasSignedIn: $userHasSignedIn,
+                            goBackToLogin: $goBackToLogin,
+                            faceIDAuthenticated: $faceIDAuthenticated
+                        ),
+                        screen: $screen,
+                        userHasSignedIn: $userHasSignedIn
+                    );
                 default:
                     HomeScreen(
                         prop: prop,

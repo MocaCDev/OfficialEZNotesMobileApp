@@ -593,7 +593,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     .foregroundStyle(.white)
                                                     .padding(.top, 5)
                                                     .padding([.bottom, .leading], 10)
-                                                    .font(.system(size: 14))
+                                                    .font(.system(size: 12))
                                                     .minimumScaleFactor(0.5)
                                                     .fontWeight(.light)
                                                     .multilineTextAlignment(.leading)
@@ -664,6 +664,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         .padding([.top, .bottom], 8)
                                                         .foregroundStyle(.white)
                                                         .font(.system(size: 20, design: .rounded))
+                                                        .minimumScaleFactor(0.5)
                                                         .fontWeight(.semibold)
                                                 }
                                                 .buttonStyle(NoLongPressButtonStyle())
@@ -691,6 +692,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         .padding([.top, .bottom], 8)
                                                         .foregroundStyle(.white)
                                                         .font(.system(size: 20, design: .rounded))
+                                                        .minimumScaleFactor(0.5)
                                                         .fontWeight(.semibold)
                                                 }
                                                 .buttonStyle(NoLongPressButtonStyle())
@@ -821,12 +823,16 @@ struct SignUpScreen : View, KeyboardReadable {
                                         
                                         HStack {
                                             VStack {
-                                                Button(action: { print("Select Pro Plan") }) {
+                                                Button(action: {
+                                                    self.planPicked = "pro_plan_monthly"
+                                                    self.isPlanPicked = true
+                                                }) {
                                                     Text("Select Monthly")
                                                         .frame(maxWidth: (prop.size.width - 40) - 40, alignment: .center)
                                                         .padding([.top, .bottom], 8)
                                                         .foregroundStyle(.white)
                                                         .font(.system(size: 20, design: .rounded))
+                                                        .minimumScaleFactor(0.5)
                                                         .fontWeight(.semibold)
                                                 }
                                                 .buttonStyle(NoLongPressButtonStyle())
@@ -845,13 +851,17 @@ struct SignUpScreen : View, KeyboardReadable {
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             
                                             VStack {
-                                                Button(action: { print("Select Pro Plan") }) {
+                                                Button(action: {
+                                                    self.planPicked = "pro_plan_annually"
+                                                    self.isPlanPicked = true
+                                                }) {
                                                     Text("Select Annually")
                                                         .frame(maxWidth: (prop.size.width - 40) - 40, alignment: .center)
                                                         .foregroundStyle(.white)
                                                         .padding([.top, .bottom], 8)
                                                         .foregroundStyle(.white)
                                                         .font(.system(size: 20, design: .rounded))
+                                                        .minimumScaleFactor(0.5)
                                                         .fontWeight(.semibold)
                                                 }
                                                 .buttonStyle(NoLongPressButtonStyle())
@@ -902,7 +912,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                             VStack {
                                                 Text(self.planName)
                                                     .frame(maxWidth: .infinity, alignment: .center)
-                                                    .padding()
+                                                    .padding([.top, .leading, .trailing])
+                                                    .padding(.bottom, 5)
                                                     .foregroundStyle(.white)
                                                     .font(.system(size: self.isLargerScreen ? 30 : 25, design: .rounded))
                                                     .fontWeight(.heavy)
@@ -953,6 +964,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         .autocapitalization(.words)
                                                         .disableAutocorrection(true)
                                                         .padding(.horizontal, 10)
+                                                        .keyboardType(.alphabet)
                                                         .overlay(
                                                             HStack {
                                                                 Image(systemName: "person.crop.circle")
@@ -1036,6 +1048,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                     .autocapitalization(.words)
                                                                     .disableAutocorrection(true)
                                                                     .padding(.horizontal, 10)
+                                                                    .keyboardType(.numberPad)
                                                                     .onChange(of: self.expMonth) {
                                                                         if self.expMonth.count >= 2 {
                                                                             self.expMonth = String(self.expMonth.prefix(2))
@@ -1078,6 +1091,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                     .autocapitalization(.words)
                                                                     .disableAutocorrection(true)
                                                                     .padding(.horizontal, 10)
+                                                                    .keyboardType(.numberPad)
                                                                     .onChange(of: self.expYear) {
                                                                         if self.expYear.count >= 2 {
                                                                             self.expYear = String(self.expYear.prefix(2))
@@ -1103,7 +1117,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                     alignment: .leading
                                                                 )
                                                                 .padding(.leading, 15)
-                                                                .padding([.top], 5)
+                                                                .padding([.top], self.isLargerScreen ? 5 : 0)
                                                                 .padding(.horizontal, 25)
                                                                 .background(
                                                                     Rectangle()//RoundedRectangle(cornerRadius: 15)
@@ -1123,6 +1137,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                 .autocapitalization(.words)
                                                                 .disableAutocorrection(true)
                                                                 .padding(.horizontal, 10)
+                                                                .keyboardType(.numberPad)
                                                                 .overlay(
                                                                     HStack {
                                                                         Image(systemName: "key")
@@ -1135,104 +1150,158 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                             .padding(.leading, 15)
                                                                     }
                                                                 )
+                                                                .onChange(of: self.cvv) {
+                                                                    if self.cvv.count >= 3 {
+                                                                        self.cvv = String(self.cvv.prefix(3))
+                                                                    }
+                                                                }
                                                         }
                                                         .frame(maxWidth: .infinity, alignment: .trailing)
-                                                        .padding(.bottom, 18)
+                                                        .padding(.bottom, self.isLargerScreen ? 18 : 14)
                                                     }
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     
-                                                    if !self.hideAgreementDetails {
-                                                        Text("All purchases are handled securely by Stripe. Stripe is our partner for processing payments for subscriptions. If you have any questions, do not hesitate to contact us.\n\nBy clicking \"Submit Payment\" below, you agree to EZNotes Terms and Conditions and confirm you have read and understood our Privacy and Policy.")
-                                                            .frame(maxWidth: .infinity, alignment: .center)
-                                                            .padding(.top)
-                                                            .padding(.bottom, 2)
-                                                            .foregroundStyle(.secondary)
-                                                            .font(.system(size: 13))
-                                                            .minimumScaleFactor(0.5)
-                                                            .fontWeight(.light)
-                                                        
-                                                        HStack {
-                                                            Button(action: { self.showPrivacyPolicy.toggle() }) {
-                                                                Text("Privacy & Policy")
-                                                                    .foregroundStyle(.blue)
-                                                                    .font(.system(size: 13))
-                                                                    .minimumScaleFactor(0.5)
-                                                                    .fontWeight(.light)
-                                                                    .underline()
-                                                            }
-                                                            .buttonStyle(NoLongPressButtonStyle())
-                                                            
-                                                            Divider()
-                                                            
-                                                            Button(action: { self.showPrivacyPolicy.toggle() }) {
-                                                                Text("Terms and Conditions")
-                                                                    .foregroundStyle(.blue)
-                                                                    .font(.system(size: 13))
-                                                                    .minimumScaleFactor(0.5)
-                                                                    .fontWeight(.light)
-                                                                    .underline()
-                                                            }
-                                                            .buttonStyle(NoLongPressButtonStyle())
+                                                    Text("All purchases are handled securely by Stripe. Stripe is our partner for processing payments for subscriptions. If you have any questions, do not hesitate to contact us.\n\nBy clicking \"Submit Payment\" below, you agree to EZNotes Terms and Conditions and confirm you have read and understood our Privacy and Policy.")
+                                                        .frame(maxWidth: .infinity, alignment: .center)
+                                                        .padding(.top)
+                                                        .padding(.bottom, 2)
+                                                        .foregroundStyle(.secondary)
+                                                        .font(.system(size: self.isLargerScreen ? 13 : 11))
+                                                        .minimumScaleFactor(0.5)
+                                                        .fontWeight(.light)
+                                                    
+                                                    HStack {
+                                                        Button(action: { self.showPrivacyPolicy.toggle() }) {
+                                                            Text("Privacy & Policy")
+                                                                .foregroundStyle(.blue)
+                                                                .font(.system(size: self.isLargerScreen ? 13 : 11))
+                                                                .minimumScaleFactor(0.5)
+                                                                .fontWeight(.light)
+                                                                .underline()
                                                         }
-                                                        .frame(maxWidth: .infinity, maxHeight: 26, alignment: .leading)
-                                                    } else {
-                                                        Spacer()
+                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                        
+                                                        Divider()
+                                                            .frame(height: 15)
+                                                        
+                                                        Button(action: { self.showPrivacyPolicy.toggle() }) {
+                                                            Text("Terms and Conditions")
+                                                                .foregroundStyle(.blue)
+                                                                .font(.system(size: self.isLargerScreen ? 13 : 11))
+                                                                .minimumScaleFactor(0.5)
+                                                                .fontWeight(.light)
+                                                                .underline()
+                                                        }
+                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                    }
+                                                    .frame(maxWidth: .infinity, maxHeight: 26, alignment: .leading)
+                                                    .padding(.top, self.isLargerScreen ? 0 : -5)
+                                                    
+                                                    if !self.isLargerScreen {
+                                                        Button(action: {
+                                                            self.processingPayment = true
+                                                            
+                                                            self.createPaymentMethod() { status, customerId in
+                                                                if status != "success" {
+                                                                    self.processingPayment = false
+                                                                    self.paymentGood = false
+                                                                    return
+                                                                }
+                                                                
+                                                                self.processingPayment = false
+                                                                self.paymentGood = true
+                                                                self.isPlanPicked = false
+                                                                self.paymentDone = true
+                                                                
+                                                                /* Continue to account. */
+                                                                UserDefaults.standard.set(self.username, forKey: "username")
+                                                                UserDefaults.standard.set(self.email, forKey: "email")
+                                                                UserDefaults.standard.set(customerId!, forKey: "client_id")
+                                                                self.setLoginStatus()
+                                                            }
+                                                        }) {
+                                                            Text("Submit Payment")
+                                                                .frame(
+                                                                    width: prop.isIpad
+                                                                    ? UIDevice.current.orientation.isLandscape
+                                                                    ? prop.size.width - 800
+                                                                    : prop.size.width - 450
+                                                                    : prop.size.width - 90,
+                                                                    height: 10
+                                                                )
+                                                                .padding([.top, .bottom])
+                                                                .font(.system(size: 25, design: .rounded))
+                                                                .fontWeight(.semibold)
+                                                                .foregroundStyle(.black)
+                                                                .contentShape(Rectangle())
+                                                        }
+                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                        .padding(.leading, 5)
+                                                        .background(
+                                                            RoundedRectangle(cornerRadius: 15)
+                                                                .fill(.white)
+                                                        )
                                                     }
                                                 }
                                                 .frame(maxWidth: prop.size.width - 80, alignment: .top)
-                                                .padding(.top, self.isLargerScreen ? 20 : 10)
+                                                .padding(.top, 20)
                                                 .ignoresSafeArea(.keyboard, edges: .bottom)
                                             }
-                                            .frame(maxWidth: prop.size.width - 80, alignment: .top)
+                                            .frame(maxWidth: prop.size.width - 80, maxHeight: .infinity, alignment: .top)
                                             .ignoresSafeArea(.keyboard, edges: .bottom)
                                             
+                                            //Spacer()
                                             
-                                            Spacer()
-                                            
-                                            Button(action: {
-                                                self.processingPayment = true
-                                                
-                                                self.createPaymentMethod() { status, customerId in
-                                                    if status != "success" {
-                                                        self.processingPayment = false
-                                                        self.paymentGood = false
-                                                        return
+                                            if self.isLargerScreen {
+                                                VStack {
+                                                    Button(action: {
+                                                        self.processingPayment = true
+                                                        
+                                                        self.createPaymentMethod() { status, customerId in
+                                                            if status != "success" {
+                                                                self.processingPayment = false
+                                                                self.paymentGood = false
+                                                                return
+                                                            }
+                                                            
+                                                            self.processingPayment = false
+                                                            self.paymentGood = true
+                                                            self.isPlanPicked = false
+                                                            self.paymentDone = true
+                                                            
+                                                            /* Continue to account. */
+                                                            UserDefaults.standard.set(self.username, forKey: "username")
+                                                            UserDefaults.standard.set(self.email, forKey: "email")
+                                                            UserDefaults.standard.set(customerId!, forKey: "client_id")
+                                                            self.setLoginStatus()
+                                                        }
+                                                    }) {
+                                                        Text("Submit Payment")
+                                                            .frame(
+                                                                width: prop.isIpad
+                                                                ? UIDevice.current.orientation.isLandscape
+                                                                ? prop.size.width - 800
+                                                                : prop.size.width - 450
+                                                                : prop.size.width - 90,
+                                                                height: 10
+                                                            )
+                                                            .padding([.top, .bottom])
+                                                            .font(.system(size: 25, design: .rounded))
+                                                            .fontWeight(.semibold)
+                                                            .foregroundStyle(.black)
+                                                            .contentShape(Rectangle())
                                                     }
-                                                    
-                                                    self.processingPayment = false
-                                                    self.paymentGood = true
-                                                    self.isPlanPicked = false
-                                                    self.paymentDone = true
-                                                    
-                                                    /* Continue to account. */
-                                                    UserDefaults.standard.set(self.username, forKey: "username")
-                                                    UserDefaults.standard.set(self.email, forKey: "email")
-                                                    UserDefaults.standard.set(customerId!, forKey: "client_id")
-                                                    self.setLoginStatus()
-                                                }
-                                            }) {
-                                                Text("Submit Payment")
-                                                    .frame(
-                                                        width: prop.isIpad
-                                                        ? UIDevice.current.orientation.isLandscape
-                                                        ? prop.size.width - 800
-                                                        : prop.size.width - 450
-                                                        : prop.size.width - 90,
-                                                        height: 10
+                                                    .buttonStyle(NoLongPressButtonStyle())
+                                                    .padding(.leading, 5)
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 15)
+                                                            .fill(.white)
                                                     )
-                                                    .padding([.top, .bottom])
-                                                    .font(.system(size: 25, design: .rounded))
-                                                    .fontWeight(.semibold)
-                                                    .foregroundStyle(.black)
-                                                    .contentShape(Rectangle())
+                                                    .padding(.bottom, 20)
+                                                    
+                                                }
+                                                .frame(maxWidth: .infinity)
                                             }
-                                            .buttonStyle(NoLongPressButtonStyle())
-                                            .padding(.leading, 5)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 15)
-                                                    .fill(.white)
-                                            )
-                                            .padding(.bottom, 20)
                                         }
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -1241,23 +1310,9 @@ struct SignUpScreen : View, KeyboardReadable {
                                         WebView(url: URL(string: "https://www.eznotes.space/privacy_policy")!)
                                             .navigationBarTitle("Privacy Policy", displayMode: .inline)
                                     }
-                                    .onChange(of: geometry.size.height) {
-                                        if geometry.size.height < self.lastHeight {
-                                            self.isLargerScreen = prop.size.height / 2.5 > 200
-                                            self.hideAgreementDetails = true
-                                            print(self.hideAgreementDetails)
-                                        }
-                                        else {
-                                            self.isLargerScreen = prop.size.height / 2.5 > 300
-                                            self.hideAgreementDetails = false
-                                        }
-                                        
-                                        self.lastHeight = geometry.size.height
-                                    }
                                     .onAppear(perform: {
                                         /* MARK: This is so stupid, but it is needed to be able to correctly display the title. */
                                         self.planName = self.planNames[self.planPicked]!
-                                        self.lastHeight = geometry.size.height
                                     })
                                 }
                             }
