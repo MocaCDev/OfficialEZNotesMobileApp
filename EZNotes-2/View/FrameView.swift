@@ -12,12 +12,15 @@ struct FrameView: View {
     var prop: Properties
     private let label = Text("frame")
     
+    @Binding public var loadingCameraView: Bool
+    
     var body: some View {
         if let image = image {
             Image(image, scale: 1, orientation: .up, label: label)
                 .interpolation(.high)
                 .resizable()
                 .aspectRatio(contentMode: .fill)//scaledToFit()
+                .onAppear(perform: { self.loadingCameraView = false })
         } else {
             if self.handler.permissionGranted {
                 VStack {
@@ -35,6 +38,7 @@ struct FrameView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.EZNotesLightBlack)
+                .onAppear(perform: { self.loadingCameraView = true })
             } else { /* MARK: builtInTelephotoCamera */
                 VStack {
                     VStack {

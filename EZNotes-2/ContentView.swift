@@ -189,6 +189,22 @@ struct ContentView: View {
                 
                 if UserDefaults.standard.object(forKey: "account_id") != nil {
                     accountInfo.setAccountID(accountID: UserDefaults.standard.string(forKey: "account_id")!)
+                    
+                    print("YES")
+                    
+                    PFP(accountID: UserDefaults.standard.string(forKey: "account_id"))
+                        .requestGetPFP() { statusCode, pfp in
+                            guard pfp != nil && statusCode == 200 else { return }
+                            
+                            accountInfo.setProfilePicture(pfp: UIImage(data: pfp!)!)
+                        }
+                    
+                    PFP(accountID: UserDefaults.standard.string(forKey: "account_id"))
+                        .requestGetPFPBg() { statusCode, pfp_bg in
+                            guard pfp_bg != nil && statusCode == 200 else { return }
+                            
+                            accountInfo.setProfilePictureBackground(bg: UIImage(data: pfp_bg!)!)
+                        }
                 }
                 
                 if UserDefaults.standard.object(forKey: "client_sub_id") != nil {

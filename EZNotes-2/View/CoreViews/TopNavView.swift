@@ -22,13 +22,18 @@ private extension View {
 struct ProfileIconView: View {
     var prop: Properties
     
+    @ObservedObject public var accountInfo: AccountDetails
+    
     @Binding public var showAccountPopup: Bool
     
     var body: some View {
         Button(action: { self.showAccountPopup = true }) {
-            Image(systemName: "person.crop.circle.fill")
+            /*Image(systemName: "person.crop.circle.fill")*/
+            self.accountInfo.profilePicture
                 .resizable()
+                .aspectRatio(contentMode: .fill)
                 .frame(maxWidth: 30, maxHeight: 30)
+                .clipShape(.circle)
                 .padding([.leading], 20)
                 .foregroundStyle(.white)
         }
@@ -47,10 +52,72 @@ struct AccountPopup: View {
     @State private var photoGalleryLaunchedFor: String = "pfp" /* MARK: Value can be `pfp` or `pfp_bg`. */
     @State private var newUsername: String = ""
     @State private var updateUsername: Bool = false
+    @State private var pfpUploadStatus: String = "none"
+    @State private var errorUploadingPFP: Bool = false
     
     var body: some View {
         VStack {
             VStack {
+                if self.pfpUploadStatus == "failed" {
+                    HStack {
+                        ZStack {
+                            
+                        }
+                        .frame(maxWidth: 25, alignment: .leading)
+                        
+                        Text("Error saving PFP. Try Again.")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .foregroundStyle(.white)
+                            .fontWeight(.medium)
+                            .font(.system(size: 12))
+                            .minimumScaleFactor(0.5)
+                        
+                        ZStack {
+                            Button(action: { self.pfpUploadStatus = "none" }) {
+                                Image(systemName: "multiply")
+                                    .resizable()
+                                    .frame(width: 12, height: 12)
+                                    .minimumScaleFactor(0.5)
+                                    .foregroundStyle(.white)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                        }
+                        .frame(maxWidth: 25, alignment: .trailing)
+                        .padding(.trailing, 15)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: 25)
+                    .background(Color.EZNotesRed)
+                } else {
+                    if self.pfpUploadStatus != "none" { /* MARK: We will assume if it isn't `none` and it isn't `failed` it is `good`. */
+                        HStack {
+                            ZStack {
+                                
+                            }
+                            .frame(maxWidth: 25, alignment: .leading)
+                            
+                            Text("Updated PFP")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .foregroundStyle(.white)
+                                .fontWeight(.medium)
+                                .font(.system(size: 12))
+                                .minimumScaleFactor(0.5)
+                            
+                            ZStack {
+                                Button(action: { self.pfpUploadStatus = "none" }) {
+                                    Image(systemName: "multiply")
+                                        .resizable()
+                                        .frame(width: 12, height: 12)
+                                        .minimumScaleFactor(0.5)
+                                        .foregroundStyle(.white)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                            }
+                            .frame(maxWidth: 25, alignment: .trailing)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: 25)
+                        .background(Color.EZNotesGreen)
+                    }
+                }
                 //Spacer()
                 
                 VStack {
@@ -62,16 +129,27 @@ struct AccountPopup: View {
                                         accountInfo.profilePicture
                                             .resizable()
                                             .aspectRatio(contentMode: .fill)
-                                            .frame(width: 90, height: 90, alignment: .center)
+                                            .frame(width: prop.size.height / 2.5 > 300 ? 90 : 80, height: prop.size.height / 2.5 > 300 ? 90 : 80, alignment: .center)
+                                            .minimumScaleFactor(0.8)
+                                            .foregroundStyle(.white)
                                             .clipShape(.rect)
                                             .cornerRadius(15)
-                                        //.overlay(Rectangle().stroke(Color.white, lineWidth: 2))
                                             .shadow(color: .black, radius: 2.5)
                                     }
                                     .onChange(of: self.pfpPhotoPicked) {
                                         Task {
                                             if let image = try? await pfpPhotoPicked!.loadTransferable(type: Image.self) {
                                                 self.accountInfo.profilePicture = image
+                                                PFP(pfp: image, accountID: self.accountInfo.accountID)
+                                                    .requestSavePFP() { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            self.pfpUploadStatus = "failed"
+                                                            return
+                                                        }
+                                                        
+                                                        if self.errorUploadingPFP { self.errorUploadingPFP = false }
+                                                        self.pfpUploadStatus = "good"
+                                                    }
                                             }
                                         }
                                     }
@@ -130,6 +208,16 @@ struct AccountPopup: View {
                                         Task {
                                             if let image = try? await pfpPhotoPicked!.loadTransferable(type: Image.self) {
                                                 self.accountInfo.profilePicture = image
+                                                PFP(pfp: image, accountID: self.accountInfo.accountID)
+                                                    .requestSavePFP() { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            self.pfpUploadStatus = "failed"
+                                                            return
+                                                        }
+                                                        
+                                                        if self.errorUploadingPFP { self.errorUploadingPFP = false }
+                                                        self.pfpUploadStatus = "good"
+                                                    }
                                             }
                                         }
                                     }
@@ -155,6 +243,13 @@ struct AccountPopup: View {
                                         Task {
                                             if let image = try? await pfpBackgroundPhotoPicked!.loadTransferable(type: Image.self) {
                                                 self.accountInfo.profileBackgroundPicture = image
+                                                
+                                                PFP(pfpBg: image, accountID: self.accountInfo.accountID)
+                                                    .requestSavePFPBg() { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else { return }
+                                                        
+                                                        print(resp!)
+                                                    }
                                             }
                                         }
                                     }
@@ -192,6 +287,7 @@ struct AccountPopup: View {
                 VStack {
                     Text("Account Details")
                         .frame(maxWidth: .infinity, maxHeight: 25)
+                        .foregroundStyle(.white)
                         .padding([.top], 15)
                         .font(.system(size: 20))
                         .fontWeight(.semibold)
@@ -216,6 +312,7 @@ struct AccountPopup: View {
                                             Image(systemName: "arrow.forward")
                                                 .resizable()
                                                 .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                     }
@@ -239,6 +336,7 @@ struct AccountPopup: View {
                                             Image(systemName: "arrow.forward")
                                                 .resizable()
                                                 .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                     }
@@ -262,6 +360,7 @@ struct AccountPopup: View {
                                             Image(systemName: "arrow.forward")
                                                 .resizable()
                                                 .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                     }
@@ -285,6 +384,7 @@ struct AccountPopup: View {
                                             Image(systemName: "arrow.forward")
                                                 .resizable()
                                                 .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                     }
@@ -394,13 +494,14 @@ struct AccountPopup: View {
                                         Image(systemName: "arrow.forward")
                                             .resizable()
                                             .frame(width: 15, height: 15)
+                                            .foregroundStyle(.white)
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                 }
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                                 .padding(.trailing, 15)
                             }
-                            .frame(maxWidth: .infinity, maxHeight: 55)
+                            .frame(maxWidth: prop.size.width - 40, maxHeight: prop.size.height / 2.5 > 300 ? 55 : 45)
                             .background(Color.EZNotesLightBlack)
                             .cornerRadius(15)
                             .onTapGesture {
@@ -421,14 +522,53 @@ struct AccountPopup: View {
                                         Image(systemName: "arrow.forward")
                                             .resizable()
                                             .frame(width: 15, height: 15)
+                                            .foregroundStyle(.white)
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                 }
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                                 .padding(.trailing, 15)
                             }
-                            .frame(maxWidth: .infinity, maxHeight: 55)
+                            .frame(maxWidth: prop.size.width - 40, maxHeight: prop.size.height / 2.5 > 300 ? 55 : 45)
                             .background(Color.EZNotesLightBlack)
+                            .cornerRadius(15)
+                            .onTapGesture {
+                                print("Report An Issue")
+                            }
+                            
+                            Divider()
+                                .frame(width: prop.size.width - 140)
+                                .padding([.top, .bottom])
+                            
+                            HStack {
+                                Text("Logout")
+                                    .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                    .padding(.leading, 15)
+                                    .padding([.top, .bottom])
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.semibold)
+                                
+                                ZStack {
+                                    Button(action: {
+                                        UserDefaults.standard.set(false, forKey: "logged_in")
+                                    }) {
+                                        Image(systemName: "door.left.hand.open")
+                                            .resizable()
+                                            .frame(width: 15, height: 15)
+                                            .foregroundStyle(.white)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                }
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .padding(.trailing, 15)
+                            }
+                            .frame(maxWidth: prop.size.width - 40, maxHeight: prop.size.height / 2.5 > 300 ? 55 : 45)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.EZNotesLightBlack)
+                                    .stroke(.red, lineWidth: 1)
+                            )
                             .cornerRadius(15)
                             .onTapGesture {
                                 print("Report An Issue")
@@ -442,13 +582,13 @@ struct AccountPopup: View {
                                 .fontWeight(.medium)
                         }
                     }
-                    .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+                    .frame(maxWidth: prop.size.width - 50, maxHeight: .infinity)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .cornerRadius(15)
                 .background(
-                    RoundedRectangle(cornerRadius: 15)
+                    Rectangle()
                         .fill(Color.EZNotesBlack)
+                        .cornerRadius(15, corners: prop.size.height / 2.5 > 300 ? [.topLeft, .topRight, .bottomLeft, .bottomRight] : [.topLeft, .topRight])
                         .shadow(color: .black, radius: 6.5)
                 )
                 .edgesIgnoringSafeArea(.bottom)
@@ -482,7 +622,7 @@ struct TopNavHome: View {
     var body: some View {
         HStack {
             VStack {
-                ProfileIconView(prop: prop, showAccountPopup: $showAccountPopup)
+                ProfileIconView(prop: prop, accountInfo: accountInfo, showAccountPopup: $showAccountPopup)
             }
             //.frame(maxWidth: 90,  alignment: .leading)
             .padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15) /* MARK: Aligns icon for larger screens. */
@@ -948,7 +1088,7 @@ struct TopNavUpload: View {
     var body: some View {
         HStack {
             VStack {
-                ProfileIconView(prop: prop, showAccountPopup: $showAccountPopup)
+                ProfileIconView(prop: prop, accountInfo: accountInfo, showAccountPopup: $showAccountPopup)
             }
             .padding([.bottom], 10)
             .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo) }
@@ -996,7 +1136,7 @@ struct TopNavChat: View {
     var body: some View {
         HStack {
             VStack {
-                ProfileIconView(prop: prop, showAccountPopup: $showAccountPopup)
+                ProfileIconView(prop: prop, accountInfo: accountInfo, showAccountPopup: $showAccountPopup)
             }
             .padding([.bottom], 10)
             .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo) }

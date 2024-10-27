@@ -21,26 +21,193 @@ struct ImageRequest : Encodable
     let fileName : String
 }
 
-struct UploadImages {
-    var imageUpload: Array<[String: UIImage]>
-    
+/* TODO: Make a better image upload client API. */
+struct MediaUpload {
     struct Media {
         let key: String
         let fileName: String
         let data: Data
         let mimeType: String
-
+        
         init?(withImage image: UIImage, withName name: String, forKey key: String) {
             self.key = key
             self.mimeType = "image/jpg"
             self.fileName = name
-
+            
             guard let data = image.jpegData(compressionQuality: 0.99) else { return nil }
             self.data = data
         }
     }
     
-    func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
+    public func createDataBody(media: [Media]?, boundary: String) -> Data {
+
+        let lineBreak = "\r\n"
+        var body = Data()
+
+        if let media = media {
+            for photo in media {
+                body.append("--\(boundary + lineBreak)")
+                body.append("Content-Disposition: form-data; name=\"\(photo.key)\"; filename=\"\(photo.fileName)\"\(lineBreak)")
+                body.append("Content-Type: \(photo.mimeType + lineBreak + lineBreak)")
+                body.append(photo.data)
+                body.append(lineBreak)
+            }
+        }
+
+        body.append("--\(boundary)--\(lineBreak)")
+
+        return body
+    }
+}
+
+struct PFP {
+    var pfp: Image?
+    var pfpBg: Image?
+    var accountID: String?
+    
+    private func perform(request: URLRequest, completion: @escaping (Int, [String: Any]?) -> Void) {
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard
+                let response = response as? HTTPURLResponse,
+                200..<300~=response.statusCode,
+                let data = data,
+                let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
+            else {
+                DispatchQueue.main.async { completion(500, nil) }
+                return
+            }
+            
+            DispatchQueue.main.async { completion(response.statusCode, resp) }
+        }.resume()
+    }
+    
+    @MainActor public func requestSavePFPBg(completion: @escaping (Int, [String: Any]?) -> Void) {
+        let url = URL(string: "\(server)/save_user_pfp_bg")
+        let boundary = "Boundary-\(NSUUID().uuidString)"
+        var request = URLRequest(url: url!)
+        
+        request.addValue("yes", forHTTPHeaderField: "Fm")
+        request.addValue(accountID!, forHTTPHeaderField: "Account-Id")
+        
+        request.httpMethod = "POST"
+
+        request.allHTTPHeaderFields = [
+            "X-User-Agent": "ios",
+            "Accept-Language": "en",
+            "Accept": "application/json",
+            "Content-Type": "multipart/form-data; boundary=\(boundary)",
+        ]
+        
+        let pfp = ImageRenderer(content: self.pfpBg).uiImage!
+        let pfpImage: MediaUpload.Media = MediaUpload.Media(withImage: pfp, withName: "\(arc4random()).jpeg", forKey: "pfp_image_bg")!
+        
+        let dataBody = MediaUpload().createDataBody(media: [pfpImage], boundary: boundary)
+        request.httpBody = dataBody
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard
+                let response = response as? HTTPURLResponse,
+                200..<300~=response.statusCode,
+                let data = data,
+                let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
+            else {
+                completion(500, nil)
+                return
+            }
+            
+            completion(response.statusCode, resp)
+        }.resume()
+    }
+    
+    @MainActor public func requestSavePFP(completion: @escaping (Int, [String: Any]?) -> Void) {
+        let url = URL(string: "\(server)/save_user_pfp")
+        let boundary = "Boundary-\(NSUUID().uuidString)"
+        var request = URLRequest(url: url!)
+        
+        request.addValue("yes", forHTTPHeaderField: "Fm")
+        request.addValue(accountID!, forHTTPHeaderField: "Account-Id")
+        
+        request.httpMethod = "POST"
+
+        request.allHTTPHeaderFields = [
+            "X-User-Agent": "ios",
+            "Accept-Language": "en",
+            "Accept": "application/json",
+            "Content-Type": "multipart/form-data; boundary=\(boundary)",
+        ]
+        
+        let pfp = ImageRenderer(content: self.pfp).uiImage!
+        let pfpImage: MediaUpload.Media = MediaUpload.Media(withImage: pfp, withName: "\(arc4random()).jpeg", forKey: "pfp_image")!
+        
+        let dataBody = MediaUpload().createDataBody(media: [pfpImage], boundary: boundary)
+        request.httpBody = dataBody
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard
+                let response = response as? HTTPURLResponse,
+                200..<300~=response.statusCode,
+                let data = data,
+                let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
+            else {
+                completion(500, nil)
+                return
+            }
+            
+            completion(response.statusCode, resp)
+        }.resume()
+    }
+    
+    public func requestGetPFP(completion: @escaping (Int, Data?) -> Void) {
+        var request = URLRequest(url: URL(string: "\(server)/get_user_pfp")!)
+        
+        request.addValue("yes", forHTTPHeaderField: "Fm")
+        request.addValue(accountID!, forHTTPHeaderField: "Account-Id")
+        
+        request.httpMethod = "GET"
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard
+                let response = response as? HTTPURLResponse,
+                200..<300~=response.statusCode,
+                let data = data,
+                let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
+            else {
+                completion(500, nil)
+                return
+            }
+            
+            completion(response.statusCode, Data(base64Encoded: resp["PFP"] as! String))
+        }.resume()
+    }
+    
+    public func requestGetPFPBg(completion: @escaping (Int, Data?) -> Void) {
+        var request = URLRequest(url: URL(string: "\(server)/get_user_pfp_bg")!)
+        
+        request.addValue("yes", forHTTPHeaderField: "Fm")
+        request.addValue(accountID!, forHTTPHeaderField: "Account-Id")
+        
+        request.httpMethod = "GET"
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard
+                let response = response as? HTTPURLResponse,
+                200..<300~=response.statusCode,
+                let data = data,
+                let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
+            else {
+                completion(500, nil)
+                return
+            }
+            
+            completion(response.statusCode, Data(base64Encoded: resp["PFP_BG"] as! String))
+        }.resume()
+    }
+}
+
+struct UploadImages {
+    var imageUpload: Array<[String: UIImage]>
+    
+    public func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
         //let localServer1 = "http://10.185.51.126:8088"
         //let localServer1 = "http://192.168.1.114:8088"
         let localServer1 = "http://192.168.0.12:8088"
@@ -50,11 +217,11 @@ struct UploadImages {
         let boundary = "Boundary-\(NSUUID().uuidString)"
         var request = URLRequest(url: url!)
         
-        var mediaImages: Array<Media> = []
+        var mediaImages: Array<MediaUpload.Media> = []
         
         for photo in imageUpload {
             for k in photo.keys {
-                mediaImages.append(Media(withImage: photo[k]!, withName: k, forKey: "file")!)
+                mediaImages.append(MediaUpload.Media(withImage: photo[k]!, withName: k, forKey: "file")!)
             }
         }
         
@@ -69,11 +236,10 @@ struct UploadImages {
                     "Content-Type": "multipart/form-data; boundary=\(boundary)",
                 ]
 
-        let dataBody = createDataBody(media: mediaImages, boundary: boundary)
+        let dataBody = MediaUpload().createDataBody(media: mediaImages, boundary: boundary)
         request.httpBody = dataBody
 
-        let session = URLSession.shared
-        session.dataTask(with: request) { (data, response, error) in
+        URLSession.shared.dataTask(with: request) { (data, response, error) in
             
             if let data = data {
                 /* Attempt to get a good response. */
@@ -108,26 +274,6 @@ struct UploadImages {
                 }
             }
         }.resume()
-    }
-    
-    func createDataBody(media: [Media]?, boundary: String) -> Data {
-
-        let lineBreak = "\r\n"
-        var body = Data()
-
-        if let media = media {
-            for photo in media {
-                body.append("--\(boundary + lineBreak)")
-                body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(photo.fileName)\"\(lineBreak)")
-                body.append("Content-Type: \(photo.mimeType + lineBreak + lineBreak)")
-                body.append(photo.data)
-                body.append(lineBreak)
-            }
-        }
-
-        body.append("--\(boundary)--\(lineBreak)")
-
-        return body
     }
 }
 

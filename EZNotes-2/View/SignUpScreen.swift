@@ -106,7 +106,7 @@ struct SignUpScreen : View, KeyboardReadable {
         let _: Void = URLSession.shared.dataTask(with: request, completionHandler: { (data, response, error) in
             guard
                 let response = response as? HTTPURLResponse,
-                response.statusCode == 200,
+                200..<300~=response.statusCode,
                 let data = data,
                 let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
             else {

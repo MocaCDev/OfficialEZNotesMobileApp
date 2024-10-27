@@ -11,6 +11,7 @@ struct UploadSection: View {
     @State private var isScaled = false
     @State private var focusLocation: CGPoint = .zero
     @State private var currentZoomFactor: CGFloat = 1.0
+    @State private var loadingCameraView: Bool = false
     
     @ObservedObject public var images_to_upload: ImagesUploads
     
@@ -37,15 +38,17 @@ struct UploadSection: View {
             VStack {
                 VStack {
                     Button(action: {
-                        self.images_to_upload.images_to_upload.append(
-                            ["\(arc4random()).jpeg": UIImage(cgImage: self.model.frame!)]
-                        )
+                        if !self.loadingCameraView {
+                            self.images_to_upload.images_to_upload.append(
+                                ["\(arc4random()).jpeg": UIImage(cgImage: self.model.frame!)]
+                            )
+                        }
                     }) {
                         ZStack {
                             Image(systemName: "circle")
                                 .resizable()
                                 .frame(width: 100, height: 100)
-                                .tint(Color.EZNotesBlue)
+                                .tint(!self.loadingCameraView ? Color.EZNotesBlue : Color.gray)
                         }
                     }
                     
@@ -64,7 +67,7 @@ struct UploadSection: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .background(
-            FrameView(handler: model, image: model.frame, prop: prop)
+            FrameView(handler: model, image: model.frame, prop: prop, loadingCameraView: $loadingCameraView)
                 .ignoresSafeArea()
                 .gesture(MagnificationGesture()
                     .onChanged { value in
