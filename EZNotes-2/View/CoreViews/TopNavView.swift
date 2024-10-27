@@ -32,7 +32,7 @@ struct ProfileIconView: View {
             self.accountInfo.profilePicture
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(maxWidth: 30, maxHeight: 30)
+                .frame(maxWidth: 35, maxHeight: 35)
                 .clipShape(.circle)
                 .padding([.leading], 20)
                 .foregroundStyle(.white)
@@ -299,6 +299,13 @@ struct AccountPopup: View {
                         VStack { }.frame(maxWidth: .infinity, maxHeight: 5)
                         
                         ScrollView(.vertical, showsIndicators: false) {
+                            Text("Account, Plans & Management")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .foregroundStyle(.white)
+                                .font(.system(size: 20))
+                                .minimumScaleFactor(0.5)
+                                .fontWeight(.bold)
+                            
                             VStack {
                                 HStack {
                                     Text("Plan Details")
@@ -323,6 +330,7 @@ struct AccountPopup: View {
                                 
                                 Divider()
                                     .frame(width: prop.size.width - 80)
+                                    .background(.black)
                                 
                                 HStack {
                                     Text("Change Username")
@@ -347,6 +355,7 @@ struct AccountPopup: View {
                                 
                                 Divider()
                                     .frame(width: prop.size.width - 80)
+                                    .background(.black)
                                 
                                 HStack {
                                     Text("Update Password")
@@ -371,6 +380,7 @@ struct AccountPopup: View {
                                 
                                 Divider()
                                     .frame(width: prop.size.width - 80)
+                                    .background(.black)
                                 
                                 HStack {
                                     Text("Change Schools")
@@ -407,6 +417,13 @@ struct AccountPopup: View {
                             
                             /* MARK: Custom `spacer`. Scrollview makes all the views within it kind of funky. */
                             VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
+                            
+                            Text("Core Actions")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .foregroundStyle(.white)
+                                .font(.system(size: 20))
+                                .minimumScaleFactor(0.5)
+                                .fontWeight(.bold)
                             
                             VStack {
                                 HStack {
@@ -477,70 +494,236 @@ struct AccountPopup: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             
                             Divider()
+                                .background(.white)
                                 .padding([.top, .bottom], 10)
                             
+                            Text("Privacy")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.bottom, 10)
+                                .foregroundStyle(.white)
+                                .font(.system(size: 20))
+                                .minimumScaleFactor(0.5)
+                                .fontWeight(.bold)
+                            
+                            VStack {
+                                HStack {
+                                    Text("Privacy & Policy")
+                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                        .padding(.leading, 15)
+                                        .padding([.top, .bottom])
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.semibold)
+                                    
+                                    ZStack {
+                                        Button(action: {
+                                            UserDefaults.standard.set(false, forKey: "logged_in")
+                                        }) {
+                                            Image(systemName: "arrow.forward")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                    .padding(.trailing, 25)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: 40)
+                                
+                                Divider()
+                                    .frame(width: prop.size.width - 80)
+                                    .background(.black)
+                                
+                                HStack {
+                                    Text("Terms & Conditions")
+                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                        .padding(.leading, 15)
+                                        .padding([.top, .bottom])
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.semibold)
+                                    
+                                    ZStack {
+                                        Button(action: {
+                                            UserDefaults.standard.set(false, forKey: "logged_in")
+                                        }) {
+                                            /*Image(systemName: "door.left.hand.open")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)*/
+                                            Image(systemName: "arrow.forward")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                    .padding(.trailing, 25)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: 40)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding([.top, .bottom], 18)
+                            .padding([.leading, .trailing], 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.EZNotesLightBlack)
+                            )
+                            .cornerRadius(15)
+                            
                             /* MARK: More details will show the user their account ID, session ID etc. */
-                            HStack {
-                                Text("More Details")
-                                    .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                    .padding(.leading, 15)
-                                    .padding([.top, .bottom])
-                                    .foregroundStyle(.white)
-                                    .font(.system(size: 18))
-                                    .fontWeight(.semibold)
-                                
-                                ZStack {
-                                    Button(action: { print("View More Account Details") }) {
-                                        Image(systemName: "arrow.forward")
-                                            .resizable()
-                                            .frame(width: 15, height: 15)
-                                            .foregroundStyle(.white)
+                            Text("Additional")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding([.top, .bottom], 10)
+                                .foregroundStyle(.white)
+                                .font(.system(size: 20))
+                                .minimumScaleFactor(0.5)
+                                .fontWeight(.bold)
+                            
+                            VStack {
+                                HStack {
+                                    Text("More Account Details")
+                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                        .padding(.leading, 15)
+                                        .padding([.top, .bottom])
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.semibold)
+                                    
+                                    ZStack {
+                                        Button(action: { print("View More Account Details") }) {
+                                            Image(systemName: "arrow.forward")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
                                     }
-                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .frame(maxWidth: 20, alignment: .trailing)
+                                    .padding(.trailing, 15)
                                 }
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                                .padding(.trailing, 15)
-                            }
-                            .frame(maxWidth: prop.size.width - 40, maxHeight: prop.size.height / 2.5 > 300 ? 55 : 45)
-                            .background(Color.EZNotesLightBlack)
-                            .cornerRadius(15)
-                            .onTapGesture {
-                                print("Show more account details")
-                            }
-                            
-                            HStack {
-                                Text("Report An Issue")
-                                    .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                    .padding(.leading, 15)
-                                    .padding([.top, .bottom])
-                                    .foregroundStyle(.white)
-                                    .font(.system(size: 18))
-                                    .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity, maxHeight: 40)
+                                .onTapGesture {
+                                    print("Show more account details")
+                                }
                                 
-                                ZStack {
-                                    Button(action: { print("Report An Issue") }) {
-                                        Image(systemName: "arrow.forward")
-                                            .resizable()
-                                            .frame(width: 15, height: 15)
-                                            .foregroundStyle(.white)
+                                Divider()
+                                    .frame(width: prop.size.width - 80)
+                                    .background(.black)
+                                
+                                HStack {
+                                    Text("Report An Issue")
+                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                        .padding(.leading, 15)
+                                        .padding([.top, .bottom])
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.semibold)
+                                    
+                                    ZStack {
+                                        Button(action: { print("Report An Issue") }) {
+                                            Image(systemName: "arrow.forward")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
                                     }
-                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                    .padding(.trailing, 15)
                                 }
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                                .padding(.trailing, 15)
+                                .frame(maxWidth: .infinity, maxHeight: 40)
+                                .onTapGesture {
+                                    print("Report An Issue")
+                                }
                             }
-                            .frame(maxWidth: prop.size.width - 40, maxHeight: prop.size.height / 2.5 > 300 ? 55 : 45)
-                            .background(Color.EZNotesLightBlack)
+                            .frame(maxWidth: .infinity)
+                            .padding([.top, .bottom], 18)
+                            .padding([.leading, .trailing], 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.EZNotesLightBlack)
+                            )
                             .cornerRadius(15)
-                            .onTapGesture {
-                                print("Report An Issue")
+                            
+                            Text("Account Actions")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding([.top, .bottom], 10)
+                                .foregroundStyle(.white)
+                                .font(.system(size: 20))
+                                .minimumScaleFactor(0.5)
+                                .fontWeight(.bold)
+                            
+                            VStack {
+                                HStack {
+                                    Text("Delete Account")
+                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                        .padding(.leading, 15)
+                                        .padding([.top, .bottom])
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.semibold)
+                                    
+                                    ZStack {
+                                        Button(action: {
+                                            UserDefaults.standard.set(false, forKey: "logged_in")
+                                        }) {
+                                            Image(systemName: "arrow.forward")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                    .padding(.trailing, 25)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: 40)
+                                
+                                Divider()
+                                    .frame(width: prop.size.width - 80)
+                                    .background(.black)
+                                
+                                HStack {
+                                    Text("Logout")
+                                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                        .padding(.leading, 15)
+                                        .padding([.top, .bottom])
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.semibold)
+                                    
+                                    ZStack {
+                                        Button(action: {
+                                            UserDefaults.standard.set(false, forKey: "logged_in")
+                                        }) {
+                                            /*Image(systemName: "door.left.hand.open")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)*/
+                                            Image(systemName: "arrow.forward")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                    .padding(.trailing, 25)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: 40)
                             }
-                            
-                            Divider()
-                                .frame(width: prop.size.width - 140)
-                                .padding([.top, .bottom])
-                            
-                            HStack {
+                            .frame(maxWidth: .infinity)
+                            .padding([.top, .bottom], 18)
+                            .padding([.leading, .trailing], 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.EZNotesLightBlack)
+                            )
+                            .cornerRadius(15)
+                            /*HStack {
                                 Text("Logout")
                                     .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
                                     .padding(.leading, 15)
@@ -572,7 +755,7 @@ struct AccountPopup: View {
                             .cornerRadius(15)
                             .onTapGesture {
                                 print("Report An Issue")
-                            }
+                            }*/
                             
                             Text("Joined 10/10/2024")
                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -616,6 +799,9 @@ struct TopNavHome: View {
     
     @State private var showSearchBar: Bool = false
     @FocusState private var categorySearchFocus: Bool
+    @State private var userSentMessages: Array<String> = ["Hi!", "What is 2+2?", "Yes"]
+    @State private var systemResponses: Array<String> = ["Hello, how can I help you?", "2+2 is 4, would you like to know more?"]
+    @State private var messageInput: String = ""
     
     @Binding public var lookedUpCategoriesAndSets: [String: Array<String>]
     
@@ -631,20 +817,20 @@ struct TopNavHome: View {
             
             Spacer()
             
-            if self.showSearchBar {
+            if self.showSearchBar && self.categoriesAndSets.count > 0 {
                 VStack {
                     TextField(
-                        "Search Categories...",
+                        prop.size.height / 2.5 > 300 ? "Search Categories..." : "Search...",
                         text: $categorySearch
                     )
                     .onAppear(perform: { print(prop.size.height / 2.5) })
                     .frame(
-                        maxWidth: prop.isIpad
-                        ? UIDevice.current.orientation.isLandscape
-                        ? prop.size.width - 800
-                        : prop.size.width - 450
-                        : 150,
-                        maxHeight: prop.size.height / 2.5 > 300 ? 25 : 20
+                        maxWidth: .infinity,/*prop.isIpad
+                            ? UIDevice.current.orientation.isLandscape
+                                ? prop.size.width - 800
+                                : prop.size.width - 450
+                            : 150,*/
+                        maxHeight: prop.size.height / 2.5 > 300 ? 20 : 15
                     )
                     .padding(7)
                     .padding(.horizontal, 25)
@@ -701,7 +887,8 @@ struct TopNavHome: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
-                .padding([.top], prop.size.height > 340 ? 50 : 45)
+                .padding(.top, prop.size.height / 2.5 > 300 ? 45 : 15)//.padding(.top, 10)
+                //.padding([.top], prop.size.height > 340 ? 50 : 45)
             } else {
                 if self.changeNavbarColor {
                     VStack {
@@ -716,7 +903,7 @@ struct TopNavHome: View {
                             .fontWeight(.thin)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    .padding(.top, prop.size.height > 340 ? 55 : 50)
+                    .padding(.top, prop.size.height / 2.5 > 300 ? 45 : 15)
                 }
             }
             
@@ -730,7 +917,7 @@ struct TopNavHome: View {
                         .foregroundStyle(Color.EZNotesOrange)
                 }
                 .buttonStyle(NoLongPressButtonStyle())
-                //.padding([.top], 5)
+                .padding([.top], 5)
                 
                 Button(action: { self.aiChatPopover = true }) {
                     Image("AI-Chat-Icon")
@@ -744,8 +931,8 @@ struct TopNavHome: View {
                 .buttonStyle(NoLongPressButtonStyle())
             }
             .frame(maxWidth: 90, maxHeight: .infinity, alignment: .trailing)
-            .padding(.top, prop.size.height / 2.5 > 300 ? 55 : 0)
-            .padding(.bottom, 10)
+            .padding(.top, prop.size.height / 2.5 > 300 ? 40 : 0)
+            //.padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 115 : 65, alignment: .top)
         .padding(.top, 5)
@@ -765,16 +952,115 @@ struct TopNavHome: View {
                     Text("EZNotes AI Chat")
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                         .foregroundStyle(.white)
-                        .font(.system(size: 30, design: .rounded))
-                        .shadow(color: .white, radius: 2)
+                        .font(.system(size: 22, design: .rounded))
+                        .minimumScaleFactor(0.5)
                 }
-                .frame(maxWidth: prop.size.width - 40, maxHeight: 90, alignment: .top)
+                .frame(maxWidth: prop.size.width - 40, maxHeight: 50, alignment: .top)
                 .border(width: 0.5, edges: [.bottom], color: .gray)
+                .padding(.bottom, 15)
+                
+                ZStack {
+                    ScrollView(.vertical) {
+                        ForEach(Array(self.userSentMessages.enumerated()), id: \.offset) { index, item in
+                            VStack {
+                                VStack {
+                                    VStack {
+                                        Text("You")
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: 12))
+                                            .foregroundStyle(.white)
+                                            .minimumScaleFactor(0.5)
+                                            .fontWeight(.semibold)
+                                        
+                                        VStack {
+                                            ZStack {
+                                                Text(item)
+                                                    .frame(minWidth: 10, alignment: .trailing)
+                                                    .padding(8)
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 10)
+                                                            .fill(Color.EZNotesBlue)
+                                                    )
+                                                    .font(.system(size: 13))
+                                                    .minimumScaleFactor(0.5)
+                                                    .multilineTextAlignment(.leading)
+                                                    .fontWeight(.semibold)
+                                            }
+                                            .frame(maxWidth: 220, alignment: .trailing)
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .trailing)
+                                    }
+                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
+                                    .padding(.bottom, 15)
+                                    
+                                    if !(index > self.systemResponses.count - 1) {
+                                        VStack {
+                                            Text("AI")
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .font(.system(size: 12))
+                                                .foregroundStyle(.white)
+                                                .minimumScaleFactor(0.5)
+                                                .fontWeight(.semibold)
+                                            
+                                            VStack {
+                                                ZStack {
+                                                    Text(self.systemResponses[index])
+                                                        .frame(minWidth: 10,  alignment: .leading)
+                                                        .foregroundStyle(.white)
+                                                        .padding(8)
+                                                        .background(
+                                                            RoundedRectangle(cornerRadius: 10)
+                                                                .fill(Color.EZNotesLightBlack)
+                                                        )
+                                                        .font(.system(size: 13))
+                                                        .minimumScaleFactor(0.5)
+                                                        .multilineTextAlignment(.leading)
+                                                        .fontWeight(.semibold)
+                                                }
+                                                .frame(maxWidth: 220, alignment: .leading)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                        }
+                                        .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                                        .padding(.bottom, 15)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .padding(.trailing, 10)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .frame(maxWidth: prop.size.width - 20, maxHeight: .infinity)
+                }
+                .ignoresSafeArea(.keyboard, edges: .bottom)
                 
                 Spacer()
                 
+                VStack {
+                    TextField("Message...", text: $messageInput)
+                        .frame(maxWidth: prop.size.width - 40, maxHeight: 30)
+                        .padding([.top, .bottom], 2.5)
+                        .foregroundStyle(.white)
+                        .padding(.leading, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(.clear)
+                                .stroke(LinearGradient(gradient: Gradient(
+                                    colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
+                                ), startPoint: .leading, endPoint: .trailing), lineWidth: 1)
+                        )
+                        .padding([.top, .bottom], 10)
+                }
+                
+                VStack {
+                    
+                }
+                .frame(maxWidth: .infinity, maxHeight: 5)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.EZNotesBlack)
         }
         /*VStack {
             HStack {
