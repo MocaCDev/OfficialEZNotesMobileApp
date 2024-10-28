@@ -994,7 +994,7 @@ struct TopNavHome: View {
                                                         .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
                                                         .init(0, 1), .init(0.5, 1), .init(1, 1)
                                                     ], colors: [
-                                                        Color.EZNotesBlue, Color.EZNotesGreen, Color.EZNotesBlue,
+                                                        Color.EZNotesBlue, Color.EZNotesGreen, .indigo,
                                                         Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
                                                         .mint, Color.EZNotesGreen, Color.EZNotesBlue
                                                         /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
