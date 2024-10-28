@@ -7,18 +7,6 @@
 import SwiftUI
 import PhotosUI
 
-private extension View {
-    func topNavSettings(prop: Properties, backgroundColor: Color) -> some View {
-        self
-            .frame(
-                maxWidth: .infinity,
-                maxHeight: prop.size.height / 2.5 > 300 ? 50 : 50
-            )
-            .background(backgroundColor.opacity(0.1).blur(radius: 3.5))
-            .edgesIgnoringSafeArea(.top)
-    }
-}
-
 struct ProfileIconView: View {
     var prop: Properties
     
@@ -30,9 +18,7 @@ struct ProfileIconView: View {
         Button(action: { self.showAccountPopup = true }) {
             /*Image(systemName: "person.crop.circle.fill")*/
             self.accountInfo.profilePicture
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(maxWidth: 35, maxHeight: 35)
+                .resizableImageFill(maxWidth: 35, maxHeight: 35)
                 .clipShape(.circle)
                 .padding([.leading], 20)
                 .foregroundStyle(.white)
@@ -82,8 +68,7 @@ struct AccountPopup: View {
                             }
                             .buttonStyle(NoLongPressButtonStyle())
                         }
-                        .frame(maxWidth: 25, alignment: .trailing)
-                        .padding(.trailing, 15)
+                        .frameAndPadding(maxWidth: 25, padEdges: .trailing, pad: 15)
                     }
                     .frame(maxWidth: .infinity, maxHeight: 25)
                     .background(Color.EZNotesRed)
@@ -98,15 +83,13 @@ struct AccountPopup: View {
                             Text("Updated PFP")
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .foregroundStyle(.white)
-                                .fontWeight(.medium)
-                                .font(.system(size: 12))
+                                .setFontSizeAndWeight(weight: .medium)
                                 .minimumScaleFactor(0.5)
                             
                             ZStack {
                                 Button(action: { self.pfpUploadStatus = "none" }) {
                                     Image(systemName: "multiply")
-                                        .resizable()
-                                        .frame(width: 12, height: 12)
+                                        .resizableImage(width: 12, height: 12)
                                         .minimumScaleFactor(0.5)
                                         .foregroundStyle(.white)
                                 }
@@ -127,9 +110,7 @@ struct AccountPopup: View {
                                 ZStack {
                                     PhotosPicker(selection: $pfpPhotoPicked, matching: .images) {
                                         accountInfo.profilePicture
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                            .frame(width: prop.size.height / 2.5 > 300 ? 90 : 80, height: prop.size.height / 2.5 > 300 ? 90 : 80, alignment: .center)
+                                            .resizableImageFill(width: prop.size.height / 2.5 > 300 ? 90 : 80, height: prop.size.height / 2.5 > 300 ? 90 : 80)
                                             .minimumScaleFactor(0.8)
                                             .foregroundStyle(.white)
                                             .clipShape(.rect)
@@ -163,8 +144,7 @@ struct AccountPopup: View {
                                         Text("\(self.accountInfo.username)")
                                             //.frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
                                             .foregroundStyle(.white)
-                                            .font(.system(size: 20, design: .rounded))
-                                            .fontWeight(.semibold)
+                                            .setFontSizeAndWeight(weight: .semibold, size: 20, design: .rounded)
                                         
                                         Divider()
                                             .frame(alignment: .leading)
@@ -172,24 +152,21 @@ struct AccountPopup: View {
                                         Text("0 Friends")
                                             .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
                                             .foregroundStyle(.white)
-                                            .font(.system(size: 18, design: .rounded))
-                                            .fontWeight(.semibold)
+                                            .setFontSizeAndWeight(weight: .semibold, size: 18, design: .rounded)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
                                     
                                     Text(self.accountInfo.email)
                                         .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
                                         .foregroundStyle(.white)
-                                        .font(.system(size: 14, design: .rounded))
+                                        .setFontSizeAndWeight(weight: .medium, size: 14, design: .rounded)
                                         .minimumScaleFactor(0.5)
-                                        .fontWeight(.medium)
                                     
                                     Text("Penn State University")
                                         .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
                                         .foregroundStyle(.white)
-                                        .font(.system(size: 14, design: .rounded))
+                                        .setFontSizeAndWeight(weight: .light, size: 14, design: .rounded)
                                         .minimumScaleFactor(0.5)
-                                        .fontWeight(.light)
                                 }
                                 .padding(.leading, 5)
                             }
@@ -201,8 +178,7 @@ struct AccountPopup: View {
                                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                                             .padding()
                                             .foregroundStyle(.white)
-                                            .font(.system(size: 14))
-                                            .fontWeight(.medium)
+                                            .setFontSizeAndWeight(weight: .medium, size: 14)
                                     }
                                     .onChange(of: self.pfpPhotoPicked) {
                                         Task {
@@ -236,8 +212,7 @@ struct AccountPopup: View {
                                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                                             .padding()
                                             .foregroundStyle(.white)
-                                            .font(.system(size: 14))
-                                            .fontWeight(.medium)
+                                            .setFontSizeAndWeight(weight: .medium, size: 14)
                                     }
                                     .onChange(of: self.pfpBackgroundPhotoPicked) {
                                         Task {
@@ -275,9 +250,7 @@ struct AccountPopup: View {
             .frame(maxWidth: .infinity, maxHeight: 235)
             .background(
                 accountInfo.profileBackgroundPicture
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .resizableImageFill()
                     .overlay(Color.EZNotesBlack.opacity(0.35))
                     .blur(radius: 2.5)
             )
@@ -289,8 +262,7 @@ struct AccountPopup: View {
                         .frame(maxWidth: .infinity, maxHeight: 25)
                         .foregroundStyle(.white)
                         .padding([.top], 15)
-                        .font(.system(size: 20))
-                        .fontWeight(.semibold)
+                        .setFontSizeAndWeight(weight: .semibold, size: 20)
                     
                     Divider()
                         .frame(width: prop.size.width - 50)
@@ -302,9 +274,8 @@ struct AccountPopup: View {
                             Text("Account, Plans & Management")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .foregroundStyle(.white)
-                                .font(.system(size: 20))
+                                .setFontSizeAndWeight(weight: .bold, size: 20)
                                 .minimumScaleFactor(0.5)
-                                .fontWeight(.bold)
                             
                             VStack {
                                 HStack {
@@ -316,9 +287,8 @@ struct AccountPopup: View {
                                     
                                     ZStack {
                                         Button(action: { print("Show Plan Detail") }) {
-                                            Image(systemName: "arrow.forward")
-                                                .resizable()
-                                                .frame(width: 15, height: 15)
+                                            Image(systemName: "chevron.right")
+                                                .resizableImage(width: 10, height: 15)
                                                 .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
@@ -341,9 +311,8 @@ struct AccountPopup: View {
                                     
                                     ZStack {
                                         Button(action: { print("Show Plan Detail") }) {
-                                            Image(systemName: "arrow.forward")
-                                                .resizable()
-                                                .frame(width: 15, height: 15)
+                                            Image(systemName: "chevron.right")
+                                                .resizableImage(width: 10, height: 15)
                                                 .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
@@ -366,9 +335,8 @@ struct AccountPopup: View {
                                     
                                     ZStack {
                                         Button(action: { print("Show Plan Detail") }) {
-                                            Image(systemName: "arrow.forward")
-                                                .resizable()
-                                                .frame(width: 15, height: 15)
+                                            Image(systemName: "chevron.right")
+                                                .resizableImage(width: 10, height: 15)
                                                 .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
@@ -391,9 +359,8 @@ struct AccountPopup: View {
                                     
                                     ZStack {
                                         Button(action: { print("Show Plan Detail") }) {
-                                            Image(systemName: "arrow.forward")
-                                                .resizable()
-                                                .frame(width: 15, height: 15)
+                                            Image(systemName: "chevron.right")
+                                                .resizableImage(width: 10, height: 15)
                                                 .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
@@ -519,9 +486,8 @@ struct AccountPopup: View {
                                         Button(action: {
                                             UserDefaults.standard.set(false, forKey: "logged_in")
                                         }) {
-                                            Image(systemName: "arrow.forward")
-                                                .resizable()
-                                                .frame(width: 15, height: 15)
+                                            Image(systemName: "chevron.right")
+                                                .resizableImage(width: 10, height: 15)
                                                 .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
@@ -541,8 +507,7 @@ struct AccountPopup: View {
                                         .padding(.leading, 15)
                                         .padding([.top, .bottom])
                                         .foregroundStyle(.white)
-                                        .font(.system(size: 18))
-                                        .fontWeight(.semibold)
+                                        .setFontSizeAndWeight(weight: .semibold, size: 18)
                                     
                                     ZStack {
                                         Button(action: {
@@ -552,9 +517,8 @@ struct AccountPopup: View {
                                                 .resizable()
                                                 .frame(width: 15, height: 15)
                                                 .foregroundStyle(.white)*/
-                                            Image(systemName: "arrow.forward")
-                                                .resizable()
-                                                .frame(width: 15, height: 15)
+                                            Image(systemName: "chevron.right")
+                                                .resizableImage(width: 10, height: 15)
                                                 .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
@@ -578,9 +542,8 @@ struct AccountPopup: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding([.top, .bottom], 10)
                                 .foregroundStyle(.white)
-                                .font(.system(size: 20))
+                                .setFontSizeAndWeight(weight: .bold, size: 20)
                                 .minimumScaleFactor(0.5)
-                                .fontWeight(.bold)
                             
                             VStack {
                                 HStack {
@@ -589,14 +552,12 @@ struct AccountPopup: View {
                                         .padding(.leading, 15)
                                         .padding([.top, .bottom])
                                         .foregroundStyle(.white)
-                                        .font(.system(size: 18))
-                                        .fontWeight(.semibold)
+                                        .setFontSizeAndWeight(weight: .semibold, size: 18)
                                     
                                     ZStack {
                                         Button(action: { print("View More Account Details") }) {
-                                            Image(systemName: "arrow.forward")
-                                                .resizable()
-                                                .frame(width: 15, height: 15)
+                                            Image(systemName: "chevron.right")
+                                                .resizableImage(width: 10, height: 15)
                                                 .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
@@ -619,14 +580,12 @@ struct AccountPopup: View {
                                         .padding(.leading, 15)
                                         .padding([.top, .bottom])
                                         .foregroundStyle(.white)
-                                        .font(.system(size: 18))
-                                        .fontWeight(.semibold)
+                                        .setFontSizeAndWeight(weight: .semibold, size: 18)
                                     
                                     ZStack {
                                         Button(action: { print("Report An Issue") }) {
-                                            Image(systemName: "arrow.forward")
-                                                .resizable()
-                                                .frame(width: 15, height: 15)
+                                            Image(systemName: "chevron.right")
+                                                .resizableImage(width: 10, height: 15)
                                                 .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
@@ -652,9 +611,8 @@ struct AccountPopup: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding([.top, .bottom], 10)
                                 .foregroundStyle(.white)
-                                .font(.system(size: 20))
+                                .setFontSizeAndWeight(weight: .bold, size: 20)
                                 .minimumScaleFactor(0.5)
-                                .fontWeight(.bold)
                             
                             VStack {
                                 HStack {
@@ -663,24 +621,18 @@ struct AccountPopup: View {
                                         .padding(.leading, 15)
                                         .padding([.top, .bottom])
                                         .foregroundStyle(.white)
-                                        .font(.system(size: 18))
-                                        .fontWeight(.semibold)
+                                        .setFontSizeAndWeight(weight: .semibold, size: 18)
                                     
                                     ZStack {
-                                        Button(action: {
-                                            UserDefaults.standard.set(false, forKey: "logged_in")
-                                        }) {
-                                            Image(systemName: "arrow.forward")
-                                                .resizable()
-                                                .frame(width: 15, height: 15)
-                                                .foregroundStyle(.white)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
+                                        Image(systemName: "chevron.right")
+                                            .resizableImage(width: 10, height: 15)
+                                            .foregroundStyle(.white)
                                     }
                                     .frame(maxWidth: .infinity, alignment: .trailing)
                                     .padding(.trailing, 25)
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: 40)
+                                .onTapGesture { UserDefaults.standard.set(false, forKey: "logged_in") }
                                 
                                 Divider()
                                     .background(Color.EZNotesBlack)
@@ -692,8 +644,7 @@ struct AccountPopup: View {
                                         .padding(.leading, 15)
                                         .padding([.top, .bottom])
                                         .foregroundStyle(.white)
-                                        .font(.system(size: 18))
-                                        .fontWeight(.semibold)
+                                        .setFontSizeAndWeight(weight: .semibold, size: 18)
                                     
                                     ZStack {
                                         Button(action: {
@@ -703,9 +654,8 @@ struct AccountPopup: View {
                                                 .resizable()
                                                 .frame(width: 15, height: 15)
                                                 .foregroundStyle(.white)*/
-                                            Image(systemName: "arrow.forward")
-                                                .resizable()
-                                                .frame(width: 15, height: 15)
+                                            Image(systemName: "chevron.right")
+                                                .resizableImage(width: 10, height: 15)
                                                 .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
@@ -761,8 +711,7 @@ struct AccountPopup: View {
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding([.top, .bottom], 40)
                                 .foregroundStyle(.white)
-                                .font(.system(size: 12))
-                                .fontWeight(.medium)
+                                .setFontSizeAndWeight(weight: .medium)
                         }
                     }
                     .frame(maxWidth: prop.size.width - 50, maxHeight: .infinity)
@@ -947,6 +896,7 @@ struct TopNavHome: View {
         .onTapGesture {
             if self.showSearchBar { self.showSearchBar = false }
         }
+        /* TODO: Change from popover to an actual view. */
         .popover(isPresented: $aiChatPopover) {
             VStack {
                 VStack {
@@ -971,7 +921,7 @@ struct TopNavHome: View {
                                                 .frame(minWidth: 10, alignment: .trailing)
                                                 .padding(8)
                                                 .background(
-                                                    RoundedRectangle(cornerRadius: 10)
+                                                    RoundedRectangle(cornerRadius: 15)
                                                         .fill(Color.EZNotesBlue)
                                                 )
                                                 .font(.system(size: 13))
@@ -979,7 +929,7 @@ struct TopNavHome: View {
                                                 .multilineTextAlignment(.leading)
                                                 .fontWeight(.semibold)
                                         }
-                                        .frame(maxWidth: 220, alignment: .trailing)
+                                        .frame(maxWidth: 340, alignment: .trailing)
                                     }
                                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
                                     .padding(.bottom, 15)
@@ -987,42 +937,40 @@ struct TopNavHome: View {
                                     if !(index > self.systemResponses.count - 1) {
                                         VStack {
                                             VStack {
-                                                Text(self.systemResponses[index])
-                                                    .frame(minWidth: 10,  alignment: .leading)
-                                                    .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
-                                                        .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                        .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                        .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                    ], colors: [
-                                                        Color.EZNotesBlue, Color.EZNotesGreen, .indigo,
-                                                        Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                                                        .mint, Color.EZNotesGreen, Color.EZNotesBlue
-                                                        /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                        Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                        Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                    ]))
-                                                    .padding(8)
+                                                HStack {
+                                                    Image("AI-Chat")//systemName: "sparkle")
+                                                        .resizableImage(width: 20, height: 20)
+                                                    
+                                                    Text(self.systemResponses[index])
+                                                        .frame(minWidth: 20,  alignment: .leading)
+                                                        .foregroundStyle(.black)
+                                                        .padding(8)
+                                                        .background(
+                                                            RoundedRectangle(cornerRadius: 15)
+                                                                .fill(.white.opacity(0.85))
+                                                        )
                                                     /*.background(
-                                                        RoundedRectangle(cornerRadius: 10)
-                                                            .fill(MeshGradient(width: 3, height: 3, points: [
-                                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                            ], colors: [
-                                                                Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                                                                Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                                                                Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                            ])).overlay(Color.EZNotesBlack.opacity(0.4))//(Color.EZNotesLightBlack)
-                                                    )*/
-                                                    .font(.system(size: 13))
-                                                    .minimumScaleFactor(0.5)
-                                                    .multilineTextAlignment(.leading)
-                                                    .fontWeight(.semibold)
+                                                     RoundedRectangle(cornerRadius: 10)
+                                                     .fill(MeshGradient(width: 3, height: 3, points: [
+                                                     .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                     .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                     .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                     ], colors: [
+                                                     Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                                     Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                                     Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                                     /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                      Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                      Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                     ])).overlay(Color.EZNotesBlack.opacity(0.4))//(Color.EZNotesLightBlack)
+                                                     )*/
+                                                        .font(.system(size: 13))
+                                                        .minimumScaleFactor(0.5)
+                                                        .multilineTextAlignment(.leading)
+                                                        .fontWeight(.semibold)
+                                                }
                                             }
-                                            .frame(maxWidth: 220, alignment: .leading)
+                                            .frame(maxWidth: 340, alignment: .leading)
                                         }
                                         .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                                         .padding(.bottom, 15)
@@ -1037,6 +985,9 @@ struct TopNavHome: View {
                     .frame(maxWidth: prop.size.width - 20, maxHeight: .infinity)
                 }
                 .ignoresSafeArea(.keyboard, edges: .bottom)
+                .onTapGesture {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }
                 
                 Spacer()
                 
@@ -1046,21 +997,24 @@ struct TopNavHome: View {
                             Button(action: { print("Upload File") }) {
                                 Image(systemName: "square.and.arrow.up")
                                     .resizable()
-                                    .frame(width: 20, height: 25)
-                                    .foregroundStyle(Color.EZNotesOrange)
+                                    .frame(width: 15, height: 20)
+                                    .foregroundStyle(.white)//(Color.EZNotesOrange)
                             }
                             .buttonStyle(NoLongPressButtonStyle())
-                            .padding([.top, .bottom], 12)
+                            .padding(.bottom, 2.5)
                         }
                         .frame(minWidth: 10, alignment: .leading)
-                        .padding(.leading, 15)
+                        .padding(12.5)
+                        .background(Color.EZNotesLightBlack.opacity(0.65))
+                        .clipShape(.circle)
+                        .padding(.leading, 10)
                         
                         VStack {
                             Button(action: { print("Take live picture to get instant feedback") }) {
                                 Image(systemName: "camera")
                                     .resizable()
-                                    .frame(width: 25, height: 20)
-                                    .foregroundStyle(
+                                    .frame(width: 20, height: 15)
+                                    .foregroundStyle(.white)/*(
                                         MeshGradient(width: 3, height: 3, points: [
                                             .init(0, 0), .init(0.3, 0), .init(1, 0),
                                             .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
@@ -1073,28 +1027,53 @@ struct TopNavHome: View {
                                             Color.EZNotesOrange, .mint, Color.EZNotesBlue,
                                             Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
                                         ])
-                                    )
+                                    )*/
                             }
                             .buttonStyle(NoLongPressButtonStyle())
-                            .padding(.top, 5)
+                            //.padding(.top, 5)
                         }
                         .frame(minWidth: 10, alignment: .leading)
-                        .padding(.leading, 5)
-                        .padding(.trailing, 10)
+                        .padding(12.5)
+                        .background(Color.EZNotesLightBlack.opacity(0.65))
+                        .clipShape(.circle)
+                        .padding(.trailing, 5)
                     }
                     
                     VStack {
-                        TextField("Message...", text: $messageInput)
-                            .frame(maxWidth: prop.size.width - 40, maxHeight: 30)
-                            .padding([.top, .bottom], 2.5)
+                        TextField("Message...", text: $messageInput, axis: .vertical)
+                            .frame(maxWidth: prop.size.width - 40, minHeight: 30)
+                            .padding(4)
                             .foregroundStyle(.white)
                             .padding(.leading, 10)
+                            .cornerRadius(15)
                             .background(
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(.clear)
-                                    .stroke(LinearGradient(gradient: Gradient(
-                                        colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
-                                    ), startPoint: .leading, endPoint: .trailing), lineWidth: 1)
+                                self.hideLeftsideContent
+                                    ? AnyView(RoundedRectangle(cornerRadius: 15)
+                                        .fill(.clear)
+                                        .stroke(LinearGradient(gradient: Gradient(
+                                            colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
+                                        ), startPoint: .leading, endPoint: .trailing), lineWidth: 1))
+                                    : AnyView(RoundedRectangle(cornerRadius: 15)
+                                        .fill(.clear)
+                                        .border(width: 1, edges: [.bottom], lcolor: LinearGradient(gradient: Gradient(
+                                            colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
+                                        ), startPoint: .leading, endPoint: .trailing)))
+                            )
+                            .overlay(
+                                HStack {
+                                    /* MARK: Exists to push the `x` button to the end of the textfield. */
+                                    VStack { }.frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                                    
+                                    if self.messageInput.count > 0 {
+                                        Button(action: {
+                                            self.messageInput.removeAll()
+                                        }) {
+                                            Image(systemName: "multiply.circle.fill")
+                                                .foregroundColor(.gray)
+                                                .padding(.trailing, 15)
+                                        }
+                                    }
+                                }
                             )
                             .padding([.top, .bottom], 10)
                             .onChange(of: self.messageInput) {
@@ -1103,7 +1082,42 @@ struct TopNavHome: View {
                             }
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.trailing, 15)
+                    .padding(.trailing, !self.hideLeftsideContent ? 15 : 0)
+                    .padding(.leading, !self.hideLeftsideContent ? 0 : 10)
+                    
+                    if self.hideLeftsideContent {
+                        VStack {
+                            Button(action: {
+                                self.userSentMessages.append(self.messageInput)
+                                self.messageInput.removeAll()
+                            }) {
+                                Image(systemName: "arrow.up")
+                                    .resizableImage(width: 15, height: 20)
+                                    .foregroundStyle(.white)/*(
+                                        MeshGradient(width: 3, height: 3, points: [
+                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                        ], colors: [
+                                            Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                            Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                            Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                            Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                            Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                        ])
+                                    )*/
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            //.padding(.top, 5)
+                        }
+                        .frame(minWidth: 10, alignment: .leading)
+                        .padding(12.5)
+                        .background(Color.EZNotesLightBlack.opacity(0.65))
+                        .clipShape(.circle)
+                        .padding(.trailing, 10)
+                        .padding(.leading, 5)
+                    }
                 }
                 
                 VStack {
