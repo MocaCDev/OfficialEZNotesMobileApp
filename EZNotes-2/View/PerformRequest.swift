@@ -210,10 +210,10 @@ struct UploadImages {
     public func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
         //let localServer1 = "http://10.185.51.126:8088"
         //let localServer1 = "http://192.168.1.114:8088"
-        let localServer1 = "http://192.168.0.12:8088"
+        //let localServer1 = "http://192.168.0.12:8088"
         //let localServer1 = "https://www.eznotes.space"
         
-        let url = URL(string: "\(localServer1)/handle_uploads")
+        let url = URL(string: "\(server)/handle_uploads")
         let boundary = "Boundary-\(NSUUID().uuidString)"
         var request = URLRequest(url: url!)
         
@@ -323,6 +323,15 @@ struct RequestAction<T> {
             case is GetEmailData.Type:
                 guard let params: GetEmailData = (parameters as? GetEmailData) else { return }
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                break
+            case is StartAIChatData.Type:
+                guard let params: StartAIChatData = (parameters as? StartAIChatData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                break
+            case is SendAIChatMessageData.Type:
+                guard let params: SendAIChatMessageData = (parameters as? SendAIChatMessageData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.Message, forHTTPHeaderField: "Message")
                 break
             default: break
         }

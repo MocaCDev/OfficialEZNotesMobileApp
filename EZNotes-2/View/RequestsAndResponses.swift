@@ -9,7 +9,7 @@ import SwiftUI
 
 /* MARK: URLs used for requests. */
 //let server = "https://www.eznotes.space"
-let server = "http://192.168.1.109:8088"
+let server = "http://192.168.1.114:8088"
 //let server = "http://192.168.0.7:8088"//"http://192.168.1.114:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
@@ -25,6 +25,15 @@ struct LoginRequestData {
 
 struct GetEmailData {
     let AccountId: String
+}
+
+struct StartAIChatData {
+    let AccountId: String
+}
+
+struct SendAIChatMessageData {
+    let AccountId: String
+    let Message: String
 }
 
 struct SavePFPData {
@@ -133,4 +142,16 @@ let get_user_email_req: CSIARequest = CSIARequest(
     url: "\(server)/get_user_email",
     method: "get",
     reqData: GetEmailData.self
+)
+
+let start_ai_chat_req: CSIARequest = CSIARequest(
+    url: "\(server)/mobile_start_aichat",
+    method: "get",
+    reqData: StartAIChatData.self
+)
+
+let send_ai_chat_message_req: CSIARequest = CSIARequest(
+    url: "\(server)/mobile_send_aichat",
+    method: "post",
+    reqData: SendAIChatMessageData.self
 )

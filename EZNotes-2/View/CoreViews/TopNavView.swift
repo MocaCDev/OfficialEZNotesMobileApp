@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import PhotosUI
+import Combine
 
 struct ProfileIconView: View {
     var prop: Properties
@@ -748,10 +749,16 @@ struct TopNavHome: View {
     
     @State private var showSearchBar: Bool = false
     @FocusState private var categorySearchFocus: Bool
-    @State private var userSentMessages: Array<String> = ["Hi!", "What is 2+2?", "Yes"]
-    @State private var systemResponses: Array<String> = ["Hello, how can I help you?", "2+2 is 4, would you like to know more?"]
+    /*@State private var userSentMessages: Array<String> = []//["Hi!", "What is 2+2?", "Yes"]
+    @State private var systemResponses: Array<String> = []*///["Hello, how can I help you?", "2+2 is 4, would you like to know more?"]
+    //@State private var messages: [String: String] = [:] /* MARK: Key is the user sent message, value is the AI response. */
+    @State private var systemResponses: [String: String] = [:] /* MARK: Key will be the user sent message, value will be the AI response */
+    @State private var waitingToSend: Array<String> = []
+    @State private var processingMessage: Bool = false
     @State private var messageInput: String = ""
     @State private var hideLeftsideContent: Bool = false
+    
+    @Binding public var messages: Array<MessageDetails>
     
     @Binding public var lookedUpCategoriesAndSets: [String: Array<String>]
     
@@ -869,7 +876,20 @@ struct TopNavHome: View {
                 .buttonStyle(NoLongPressButtonStyle())
                 .padding([.top], 5)
                 
-                Button(action: { self.aiChatPopover = true }) {
+                Button(action: {
+                    RequestAction<StartAIChatData>(
+                        parameters: StartAIChatData(AccountId: self.accountInfo.accountID)
+                    )
+                    .perform(action: start_ai_chat_req) { statusCode, resp in
+                        guard resp != nil && statusCode == 200 else {
+                            /* self.aiChatStartError = true*/
+                            return
+                        }
+                        
+                        //self.accountInfo.setAIChatID(chatID: resp!["ChatID"]! as! String)
+                        self.aiChatPopover = true
+                    }
+                }) {
                     Image("AI-Chat-Icon")
                         .resizable()
                         .frame(
@@ -911,8 +931,90 @@ struct TopNavHome: View {
                 .padding(.bottom, 15)
                 
                 ZStack {
-                    ScrollView(.vertical) {
-                        ForEach(Array(self.userSentMessages.enumerated()), id: \.offset) { index, item in
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack {
+                                ForEach(messagess, id: \.self) { message in
+                                    MessageView(message: message)
+                                        .id(message)
+                                }
+                            }
+                            .onReceive(Just(messagess)) { _ in
+                                withAnimation {
+                                    proxy.scrollTo(messagess.last)
+                                }
+                            }.onAppear {
+                                withAnimation {
+                                    proxy.scrollTo(messagess.last, anchor: .bottom)
+                                }
+                            }
+                        }
+                    }
+                    //ScrollView(.vertical) {
+                        /*ForEach(self.messages.sorted(by: <), id: \.key) { key, value in//ForEach(Array(self.messages.keys), id: \.self) { key in
+                            VStack {
+                                VStack {
+                                    Text(key)
+                                        .frame(minWidth: 10, alignment: .trailing)
+                                        .padding(8)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesBlue)
+                                        )
+                                        .font(.system(size: 13))
+                                        .minimumScaleFactor(0.5)
+                                        .multilineTextAlignment(.leading)
+                                        .fontWeight(.semibold)
+                                }
+                                .frame(maxWidth: 340, alignment: .trailing)
+                            }
+                            .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
+                            .padding(.bottom, 15)
+                            
+                            if value.count > 0 {
+                                VStack {
+                                    VStack {
+                                        HStack {
+                                            Image("AI-Chat")//systemName: "sparkle")
+                                                .resizableImage(width: 20, height: 20)
+                                            
+                                            Text(value)
+                                                .frame(minWidth: 20,  alignment: .leading)
+                                                .foregroundStyle(.black)
+                                                .padding(8)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(.white.opacity(0.85))
+                                                )
+                                            /*.background(
+                                             RoundedRectangle(cornerRadius: 10)
+                                             .fill(MeshGradient(width: 3, height: 3, points: [
+                                             .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                             .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                             .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                             ], colors: [
+                                             Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                             Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                             Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                             /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                              Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                              Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                             ])).overlay(Color.EZNotesBlack.opacity(0.4))//(Color.EZNotesLightBlack)
+                                             )*/
+                                                .font(.system(size: 13))
+                                                .minimumScaleFactor(0.5)
+                                                .multilineTextAlignment(.leading)
+                                                .fontWeight(.semibold)
+                                        }
+                                    }
+                                    .frame(maxWidth: 340, alignment: .leading)
+                                }
+                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                                .padding(.bottom, 15)
+                            }
+                        }*/
+                        
+                        /*ForEach(Array(self.userSentMessages.enumerated()), id: \.offset) { index, item in
                             VStack {
                                 VStack {
                                     VStack {
@@ -980,10 +1082,11 @@ struct TopNavHome: View {
                                 .padding(.trailing, 10)
                             }
                             .frame(maxWidth: .infinity)
-                        }
-                    }
+                        }*/
+                    //}
                     .frame(maxWidth: prop.size.width - 20, maxHeight: .infinity)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea(.keyboard, edges: .bottom)
                 .onTapGesture {
                     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -1088,7 +1191,26 @@ struct TopNavHome: View {
                     if self.hideLeftsideContent {
                         VStack {
                             Button(action: {
-                                self.userSentMessages.append(self.messageInput)
+                                self.messagess.append(MessageDetails(
+                                    MessageID: UUID(),
+                                    MessageContent: self.messageInput,
+                                    userSent: true
+                                ))
+                                
+                                RequestAction<SendAIChatMessageData>(
+                                    parameters: SendAIChatMessageData(AccountId: self.accountInfo.accountID, Message: self.messageInput)
+                                ).perform(action: send_ai_chat_message_req) { statusCode, resp in
+                                    guard resp != nil && statusCode == 200 else {
+                                        return
+                                    }
+                                    
+                                    self.messagess.append(MessageDetails(
+                                        MessageID: UUID(),
+                                        MessageContent: resp!["AIResponse"] as! String,
+                                        userSent: false
+                                    ))
+                                }
+                                
                                 self.messageInput.removeAll()
                             }) {
                                 Image(systemName: "arrow.up")
