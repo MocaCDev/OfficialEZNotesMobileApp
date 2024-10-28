@@ -329,8 +329,8 @@ struct AccountPopup: View {
                                 .frame(maxWidth: .infinity, maxHeight: 40)
                                 
                                 Divider()
+                                    .background(Color.EZNotesBlack)
                                     .frame(width: prop.size.width - 80)
-                                    .background(.black)
                                 
                                 HStack {
                                     Text("Change Username")
@@ -354,8 +354,8 @@ struct AccountPopup: View {
                                 .frame(maxWidth: .infinity, maxHeight: 40)
                                 
                                 Divider()
+                                    .background(Color.EZNotesBlack)
                                     .frame(width: prop.size.width - 80)
-                                    .background(.black)
                                 
                                 HStack {
                                     Text("Update Password")
@@ -379,8 +379,8 @@ struct AccountPopup: View {
                                 .frame(maxWidth: .infinity, maxHeight: 40)
                                 
                                 Divider()
+                                    .background(Color.EZNotesBlack)
                                     .frame(width: prop.size.width - 80)
-                                    .background(.black)
                                 
                                 HStack {
                                     Text("Change Schools")
@@ -494,10 +494,10 @@ struct AccountPopup: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             
                             Divider()
-                                .background(.white)
+                                .background(.gray)
                                 .padding([.top, .bottom], 10)
                             
-                            Text("Privacy")
+                            Text("Privacy & Terms")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.bottom, 10)
                                 .foregroundStyle(.white)
@@ -532,8 +532,8 @@ struct AccountPopup: View {
                                 .frame(maxWidth: .infinity, maxHeight: 40)
                                 
                                 Divider()
+                                    .background(Color.EZNotesBlack)
                                     .frame(width: prop.size.width - 80)
-                                    .background(.black)
                                 
                                 HStack {
                                     Text("Terms & Conditions")
@@ -610,8 +610,8 @@ struct AccountPopup: View {
                                 }
                                 
                                 Divider()
+                                    .background(Color.EZNotesBlack)
                                     .frame(width: prop.size.width - 80)
-                                    .background(.black)
                                 
                                 HStack {
                                     Text("Report An Issue")
@@ -683,8 +683,8 @@ struct AccountPopup: View {
                                 .frame(maxWidth: .infinity, maxHeight: 40)
                                 
                                 Divider()
+                                    .background(Color.EZNotesBlack)
                                     .frame(width: prop.size.width - 80)
-                                    .background(.black)
                                 
                                 HStack {
                                     Text("Logout")
@@ -802,6 +802,7 @@ struct TopNavHome: View {
     @State private var userSentMessages: Array<String> = ["Hi!", "What is 2+2?", "Yes"]
     @State private var systemResponses: Array<String> = ["Hello, how can I help you?", "2+2 is 4, would you like to know more?"]
     @State private var messageInput: String = ""
+    @State private var hideLeftsideContent: Bool = false
     
     @Binding public var lookedUpCategoriesAndSets: [String: Array<String>]
     
@@ -965,62 +966,63 @@ struct TopNavHome: View {
                             VStack {
                                 VStack {
                                     VStack {
-                                        Text("You")
-                                            .frame(maxWidth: .infinity, alignment: .trailing)
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 12))
-                                            .foregroundStyle(.white)
-                                            .minimumScaleFactor(0.5)
-                                            .fontWeight(.semibold)
-                                        
                                         VStack {
-                                            ZStack {
-                                                Text(item)
-                                                    .frame(minWidth: 10, alignment: .trailing)
-                                                    .padding(8)
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 10)
-                                                            .fill(Color.EZNotesBlue)
-                                                    )
-                                                    .font(.system(size: 13))
-                                                    .minimumScaleFactor(0.5)
-                                                    .multilineTextAlignment(.leading)
-                                                    .fontWeight(.semibold)
-                                            }
-                                            .frame(maxWidth: 220, alignment: .trailing)
+                                            Text(item)
+                                                .frame(minWidth: 10, alignment: .trailing)
+                                                .padding(8)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 10)
+                                                        .fill(Color.EZNotesBlue)
+                                                )
+                                                .font(.system(size: 13))
+                                                .minimumScaleFactor(0.5)
+                                                .multilineTextAlignment(.leading)
+                                                .fontWeight(.semibold)
                                         }
-                                        .frame(maxWidth: .infinity, alignment: .trailing)
+                                        .frame(maxWidth: 220, alignment: .trailing)
                                     }
                                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
                                     .padding(.bottom, 15)
                                     
                                     if !(index > self.systemResponses.count - 1) {
                                         VStack {
-                                            Text("AI")
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                .font(.system(size: 12))
-                                                .foregroundStyle(.white)
-                                                .minimumScaleFactor(0.5)
-                                                .fontWeight(.semibold)
-                                            
                                             VStack {
-                                                ZStack {
-                                                    Text(self.systemResponses[index])
-                                                        .frame(minWidth: 10,  alignment: .leading)
-                                                        .foregroundStyle(.white)
-                                                        .padding(8)
-                                                        .background(
-                                                            RoundedRectangle(cornerRadius: 10)
-                                                                .fill(Color.EZNotesLightBlack)
-                                                        )
-                                                        .font(.system(size: 13))
-                                                        .minimumScaleFactor(0.5)
-                                                        .multilineTextAlignment(.leading)
-                                                        .fontWeight(.semibold)
-                                                }
-                                                .frame(maxWidth: 220, alignment: .leading)
+                                                Text(self.systemResponses[index])
+                                                    .frame(minWidth: 10,  alignment: .leading)
+                                                    .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
+                                                        .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                        .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                        .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                    ], colors: [
+                                                        Color.EZNotesBlue, Color.EZNotesGreen, Color.EZNotesBlue,
+                                                        Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                                        .mint, Color.EZNotesGreen, Color.EZNotesBlue
+                                                        /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                        Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                        Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                    ]))
+                                                    .padding(8)
+                                                    /*.background(
+                                                        RoundedRectangle(cornerRadius: 10)
+                                                            .fill(MeshGradient(width: 3, height: 3, points: [
+                                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                            ], colors: [
+                                                                Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                                                Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                                                Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                            ])).overlay(Color.EZNotesBlack.opacity(0.4))//(Color.EZNotesLightBlack)
+                                                    )*/
+                                                    .font(.system(size: 13))
+                                                    .minimumScaleFactor(0.5)
+                                                    .multilineTextAlignment(.leading)
+                                                    .fontWeight(.semibold)
                                             }
-                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .frame(maxWidth: 220, alignment: .leading)
                                         }
                                         .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                                         .padding(.bottom, 15)
@@ -1038,20 +1040,70 @@ struct TopNavHome: View {
                 
                 Spacer()
                 
-                VStack {
-                    TextField("Message...", text: $messageInput)
-                        .frame(maxWidth: prop.size.width - 40, maxHeight: 30)
-                        .padding([.top, .bottom], 2.5)
-                        .foregroundStyle(.white)
-                        .padding(.leading, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(.clear)
-                                .stroke(LinearGradient(gradient: Gradient(
-                                    colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
-                                ), startPoint: .leading, endPoint: .trailing), lineWidth: 1)
-                        )
-                        .padding([.top, .bottom], 10)
+                HStack {
+                    if !self.hideLeftsideContent {
+                        VStack {
+                            Button(action: { print("Upload File") }) {
+                                Image(systemName: "square.and.arrow.up")
+                                    .resizable()
+                                    .frame(width: 20, height: 25)
+                                    .foregroundStyle(Color.EZNotesOrange)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .padding([.top, .bottom], 12)
+                        }
+                        .frame(minWidth: 10, alignment: .leading)
+                        .padding(.leading, 15)
+                        
+                        VStack {
+                            Button(action: { print("Take live picture to get instant feedback") }) {
+                                Image(systemName: "camera")
+                                    .resizable()
+                                    .frame(width: 25, height: 20)
+                                    .foregroundStyle(
+                                        MeshGradient(width: 3, height: 3, points: [
+                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                        ], colors: [
+                                            Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                            Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                            Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                            Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                            Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                        ])
+                                    )
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .padding(.top, 5)
+                        }
+                        .frame(minWidth: 10, alignment: .leading)
+                        .padding(.leading, 5)
+                        .padding(.trailing, 10)
+                    }
+                    
+                    VStack {
+                        TextField("Message...", text: $messageInput)
+                            .frame(maxWidth: prop.size.width - 40, maxHeight: 30)
+                            .padding([.top, .bottom], 2.5)
+                            .foregroundStyle(.white)
+                            .padding(.leading, 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(.clear)
+                                    .stroke(LinearGradient(gradient: Gradient(
+                                        colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
+                                    ), startPoint: .leading, endPoint: .trailing), lineWidth: 1)
+                            )
+                            .padding([.top, .bottom], 10)
+                            .onChange(of: self.messageInput) {
+                                if self.messageInput.count > 0 { self.hideLeftsideContent = true }
+                                else { self.hideLeftsideContent = false }
+                            }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.trailing, 15)
                 }
                 
                 VStack {
