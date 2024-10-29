@@ -769,7 +769,7 @@ struct TopNavHome: View {
             VStack {
                 ProfileIconView(prop: prop, accountInfo: accountInfo, showAccountPopup: $showAccountPopup)
             }
-            //.frame(maxWidth: 90,  alignment: .leading)
+            .frame(maxWidth: 90,  alignment: .leading)
             .padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15) /* MARK: Aligns icon for larger screens. */
             //.padding(.bottom, prop.size.height / 2.5 > 300 ? 0 : 10) /* MARK: Aligns icon for smaller screens. */
             .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo) }
@@ -1515,6 +1515,7 @@ struct TopNavCategoryView: View {
     var totalSets: Int
     
     @Binding public var launchCategory: Bool
+    @Binding public var showTitle: Bool
     
     var body: some View {
         VStack {
@@ -1533,6 +1534,12 @@ struct TopNavCategoryView: View {
                 .padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15)
                 
                 Spacer()
+                
+                if self.showTitle {
+                    Text("TITLE!")
+                    
+                    Spacer()
+                }
                 
                 //Spacer()
                 

@@ -76,6 +76,7 @@ struct HomeView: View {
     //@State private var currentNavOpacity: Double = 1.0
     
     @State private var launchCategory: Bool = false
+    @State private var categoryDescription: String? = nil
     @State private var categoryLaunched: String = ""
     @State private var categoryBackground: UIImage = UIImage(systemName: "arrow.left")! /* TODO: Figure out how to initialize a UIImage variable. */
     
@@ -245,6 +246,7 @@ struct HomeView: View {
                                                     Button(action: {
                                                         self.launchCategory = true
                                                         self.categoryLaunched = key
+                                                        self.categoryDescription = self.categoryDescriptions[key]
                                                         self.categoryBackground = self.categoryImages[key]!
                                                     }) {
                                                         HStack {
@@ -1144,6 +1146,7 @@ struct HomeView: View {
                 prop: prop,
                 categoryName: categoryLaunched,
                 creationDate: "\(self.categoryCreationDates[self.categoryLaunched]!.formatted(date: .numeric, time: .omitted))",
+                categoryDescription: self.categoryDescription,
                 categoriesAndSets: categoriesAndSets,
                 categoryBackground: categoryBackground,
                 launchCategory: $launchCategory
