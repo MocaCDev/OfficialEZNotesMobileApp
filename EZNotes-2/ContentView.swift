@@ -192,8 +192,6 @@ struct ContentView: View {
                 if UserDefaults.standard.object(forKey: "account_id") != nil {
                     accountInfo.setAccountID(accountID: UserDefaults.standard.string(forKey: "account_id")!)
                     
-                    print("YES")
-                    
                     PFP(accountID: UserDefaults.standard.string(forKey: "account_id"))
                         .requestGetPFP() { statusCode, pfp in
                             guard pfp != nil && statusCode == 200 else { return }

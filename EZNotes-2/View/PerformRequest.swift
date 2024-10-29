@@ -111,11 +111,11 @@ struct PFP {
                 let data = data,
                 let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
             else {
-                completion(500, nil)
+                DispatchQueue.main.async { completion(500, nil) }
                 return
             }
             
-            completion(response.statusCode, resp)
+            DispatchQueue.main.async { completion(response.statusCode, resp) }
         }.resume()
     }
     
@@ -149,11 +149,11 @@ struct PFP {
                 let data = data,
                 let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
             else {
-                completion(500, nil)
+                DispatchQueue.main.async { completion(500, nil) }
                 return
             }
             
-            completion(response.statusCode, resp)
+            DispatchQueue.main.async { completion(response.statusCode, resp) }
         }.resume()
     }
     
@@ -172,11 +172,11 @@ struct PFP {
                 let data = data,
                 let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
             else {
-                completion(500, nil)
+                DispatchQueue.main.async { completion(500, nil) }
                 return
             }
             
-            completion(response.statusCode, Data(base64Encoded: resp["PFP"] as! String))
+            DispatchQueue.main.async { completion(response.statusCode, Data(base64Encoded: resp["PFP"] as! String)) }
         }.resume()
     }
     
@@ -195,11 +195,11 @@ struct PFP {
                 let data = data,
                 let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
             else {
-                completion(500, nil)
+                DispatchQueue.main.async { completion(500, nil) }
                 return
             }
             
-            completion(response.statusCode, Data(base64Encoded: resp["PFP_BG"] as! String))
+            DispatchQueue.main.async { completion(response.statusCode, Data(base64Encoded: resp["PFP_BG"] as! String)) }
         }.resume()
     }
 }

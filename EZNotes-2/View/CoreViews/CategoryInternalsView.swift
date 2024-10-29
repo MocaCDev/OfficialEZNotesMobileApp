@@ -10,6 +10,7 @@ struct CategoryInternalsView: View {
     
     var prop: Properties
     var categoryName: String
+    var creationDate: String
     var categoriesAndSets: [String: Array<String>]
     var categoryBackground: UIImage
     
@@ -17,24 +18,40 @@ struct CategoryInternalsView: View {
     
     var body: some View {
         VStack {
-            ZStack {
-                TopNavCategoryView(
-                    prop: prop,
-                    categoryName: categoryName,
-                    totalSets: self.categoriesAndSets[self.categoryName]!.count,
-                    launchCategory: $launchCategory
-                )
+            TopNavCategoryView(
+                prop: prop,
+                categoryName: categoryName,
+                totalSets: self.categoriesAndSets[self.categoryName]!.count,
+                launchCategory: $launchCategory
+            )
+            
+            VStack {
+                HStack {
+                    VStack {
+                        Text(self.categoryName)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .foregroundStyle(.white)
+                            .setFontSizeAndWeight(weight: .semibold, size: 35)
+                            .minimumScaleFactor(0.5)
+                        
+                        Text(self.creationDate)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .foregroundStyle(.white)
+                            .setFontSizeAndWeight(weight: .thin, size: 14)
+                            .minimumScaleFactor(0.5)
+                    }
+                }
+                .frame(maxWidth: prop.size.width - 40, alignment: .topLeading)
+                
+                VStack {
+                    
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            Image(uiImage: categoryBackground)
-                //.resizable()
-                //.frame(maxWidth: .infinity, maxHeight: .infinity)
-                //.scaledToFill()//.aspectRatio(contentMode: .fill)
-                //.overlay(Color.EZNotesBlack.opacity(0.4))
-                .blur(radius: 2.5)
-        )
+        .edgesIgnoringSafeArea(.top)
+        .background(.black)
     }
 }

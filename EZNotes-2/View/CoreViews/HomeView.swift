@@ -33,6 +33,7 @@ struct NoLongPressButtonStyle: ButtonStyle {
 }
 
 struct HomeView: View {
+    @Binding public var messages: Array<MessageDetails>
     @Binding public var section: String
     @Binding public var categoriesAndSets: [String: Array<String>]
     @Binding public var categoryImages: [String: UIImage]
@@ -183,6 +184,7 @@ struct HomeView: View {
                     navbarOpacity: $topNavOpacity,
                     categorySearch: $categorySearch,
                     searchDone: $searchDone,
+                    messages: $messages,
                     lookedUpCategoriesAndSets: $lookedUpCategoriesAndSets
                 )
                 
@@ -1141,6 +1143,7 @@ struct HomeView: View {
             CategoryInternalsView(
                 prop: prop,
                 categoryName: categoryLaunched,
+                creationDate: "\(self.categoryCreationDates[self.categoryLaunched]!.formatted(date: .numeric, time: .omitted))",
                 categoriesAndSets: categoriesAndSets,
                 categoryBackground: categoryBackground,
                 launchCategory: $launchCategory

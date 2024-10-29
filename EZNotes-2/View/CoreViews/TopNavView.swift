@@ -122,6 +122,7 @@ struct AccountPopup: View {
                                         Task {
                                             if let image = try? await pfpPhotoPicked!.loadTransferable(type: Image.self) {
                                                 self.accountInfo.profilePicture = image
+                                                
                                                 PFP(pfp: image, accountID: self.accountInfo.accountID)
                                                     .requestSavePFP() { statusCode, resp in
                                                         guard resp != nil && statusCode == 200 else {
@@ -185,6 +186,7 @@ struct AccountPopup: View {
                                         Task {
                                             if let image = try? await pfpPhotoPicked!.loadTransferable(type: Image.self) {
                                                 self.accountInfo.profilePicture = image
+                                                
                                                 PFP(pfp: image, accountID: self.accountInfo.accountID)
                                                     .requestSavePFP() { statusCode, resp in
                                                         guard resp != nil && statusCode == 200 else {
@@ -934,18 +936,18 @@ struct TopNavHome: View {
                     ScrollViewReader { proxy in
                         ScrollView {
                             LazyVStack {
-                                ForEach(messagess, id: \.self) { message in
+                                ForEach(messages, id: \.self) { message in
                                     MessageView(message: message)
                                         .id(message)
                                 }
                             }
-                            .onReceive(Just(messagess)) { _ in
+                            .onReceive(Just(messages)) { _ in
                                 withAnimation {
-                                    proxy.scrollTo(messagess.last)
+                                    proxy.scrollTo(messages.last)
                                 }
                             }.onAppear {
                                 withAnimation {
-                                    proxy.scrollTo(messagess.last, anchor: .bottom)
+                                    proxy.scrollTo(messages.last, anchor: .bottom)
                                 }
                             }
                         }
@@ -1139,6 +1141,33 @@ struct TopNavHome: View {
                         .padding(12.5)
                         .background(Color.EZNotesLightBlack.opacity(0.65))
                         .clipShape(.circle)
+                        
+                        VStack {
+                            Button(action: { print("Select category to talk to the AI chat about") }) {
+                                Image("Categories-Icon")
+                                    .resizableImage(width: 20, height: 20)
+                                    .foregroundStyle(.white)/*(
+                                        MeshGradient(width: 3, height: 3, points: [
+                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                        ], colors: [
+                                            Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                            Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                            Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                            Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                            Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                        ])
+                                    )*/
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            //.padding(.top, 5)
+                        }
+                        .frame(minWidth: 10, alignment: .leading)
+                        .padding(12.5)
+                        .background(Color.EZNotesLightBlack.opacity(0.65))
+                        .clipShape(.circle)
                         .padding(.trailing, 5)
                     }
                     
@@ -1191,10 +1220,10 @@ struct TopNavHome: View {
                     if self.hideLeftsideContent {
                         VStack {
                             Button(action: {
-                                self.messagess.append(MessageDetails(
-                                    MessageID: UUID(),
-                                    MessageContent: self.messageInput,
-                                    userSent: true
+                                self.messages.append(MessageDetails(
+                                        MessageID: UUID(),
+                                        MessageContent: self.messageInput,
+                                        userSent: true
                                 ))
                                 
                                 RequestAction<SendAIChatMessageData>(
@@ -1204,10 +1233,10 @@ struct TopNavHome: View {
                                         return
                                     }
                                     
-                                    self.messagess.append(MessageDetails(
-                                        MessageID: UUID(),
-                                        MessageContent: resp!["AIResponse"] as! String,
-                                        userSent: false
+                                    self.messages.append(MessageDetails(
+                                            MessageID: UUID(),
+                                            MessageContent: resp!["AIResponse"] as! String,
+                                            userSent: false
                                     ))
                                 }
                                 
@@ -1501,25 +1530,11 @@ struct TopNavCategoryView: View {
                     .padding([.leading], 20)
                 }
                 .frame(maxWidth: 50, alignment: .leading)
-                .padding([.top], 45)
+                .padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15)
                 
                 Spacer()
                 
-                VStack {
-                    Text(categoryName)
-                        .foregroundStyle(.primary)
-                        .font(.system(size: 22, design: .rounded))
-                        .fontWeight(.thin)
-                    
-                    Text("Sets: \(self.totalSets)")
-                        .foregroundStyle(.white)
-                        .font(.system(size: 14, design: .rounded))
-                        .fontWeight(.thin)
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding([.top], prop.size.height > 340 ? 50 : 45)
-                
-                Spacer()
+                //Spacer()
                 
                 VStack {
                     Button(action: { print("POPUP!") }) {
@@ -1533,13 +1548,13 @@ struct TopNavCategoryView: View {
                     }
                     .buttonStyle(NoLongPressButtonStyle())
                 }
-                .frame(maxWidth: 50, alignment: .trailing)
-                .padding([.top], 45)
+                .frame(maxWidth: 90, maxHeight: .infinity, alignment: .trailing)
+                .padding(.top, prop.size.height / 2.5 > 300 ? 40 : 0)
             }
-            .frame(maxWidth: .infinity, maxHeight: 100, alignment: .top)
-            .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 115 : 65, alignment: .top)
+        .padding(.top, 5)
         .edgesIgnoringSafeArea(.top)
         .zIndex(1)
     }

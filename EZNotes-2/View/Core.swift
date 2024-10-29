@@ -120,6 +120,8 @@ struct CoreApp: View {
     
     @State private var errorType: String = ""
     
+    @State private var messages: Array<MessageDetails> = []
+    
     var body: some View {
         VStack {
             if self.section == "upload" {
@@ -162,6 +164,7 @@ struct CoreApp: View {
                 )
             } else if self.section == "home" {
                 HomeView(
+                    messages: $messages,
                     section: $section,
                     categoriesAndSets: $categoriesAndSets,
                     categoryImages: $categoryImages,
