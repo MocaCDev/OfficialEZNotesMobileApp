@@ -77,6 +77,7 @@ struct HomeView: View {
     
     @State private var launchCategory: Bool = false
     @State private var categoryDescription: String? = nil
+    @State private var categoryTitleColor: Color? = nil
     @State private var categoryLaunched: String = ""
     @State private var categoryBackground: UIImage = UIImage(systemName: "arrow.left")! /* TODO: Figure out how to initialize a UIImage variable. */
     
@@ -247,6 +248,7 @@ struct HomeView: View {
                                                         self.launchCategory = true
                                                         self.categoryLaunched = key
                                                         self.categoryDescription = self.categoryDescriptions[key]
+                                                        self.categoryTitleColor = self.categoryCustomTextColors[key]
                                                         self.categoryBackground = self.categoryImages[key]!
                                                     }) {
                                                         HStack {
@@ -316,6 +318,7 @@ struct HomeView: View {
                                                                                             )
                                                                                             .padding([.leading], 20)
                                                                                             .minimumScaleFactor(0.2)
+                                                                                            .truncationMode(.tail)
                                                                                             .fontWeight(.light)
                                                                                             .multilineTextAlignment(.leading)
                                                                                     } else {
@@ -631,16 +634,17 @@ struct HomeView: View {
                                                     .cornerRadius(7.5)
                                                     .lineLimit(3...5)
                                                     .onChange(of: self.newCategoryDescription) {
-                                                        if self.newCategoryDescription.count > 80 {
-                                                            self.newCategoryDescription = String(self.newCategoryDescription.prefix(80))
+                                                        if self.newCategoryDescription.count > 150 {
+                                                            self.newCategoryDescription = String(self.newCategoryDescription.prefix(150))
                                                         }
                                                     }
                                                     
-                                                    Text("\(self.newCategoryDescription.count) out of 80 characters")
+                                                    Text("\(self.newCategoryDescription.count) out of 150 characters")
                                                         .frame(maxWidth: .infinity, maxHeight: 15, alignment: .leading)
                                                         .padding([.leading], 5)
-                                                        .foregroundStyle(self.newCategoryDescription.count < 80
-                                                                ? self.newCategoryDescription.count > 70 && self.newCategoryDescription.count < 80
+                                                        .foregroundStyle(
+                                                            self.newCategoryDescription.count < 150
+                                                                ? self.newCategoryDescription.count > 140 && self.newCategoryDescription.count < 150
                                                                     ? .yellow
                                                                     : Color.secondary
                                                                 : .red
@@ -785,6 +789,9 @@ struct HomeView: View {
                                                             self.categoryDescriptions[self.categoryBeingEdited] = self.newCategoryDescription
                                                             writeCategoryDescriptions(categoryDescriptions: self.categoryDescriptions)
                                                             //self.newCategoryDescription.removeAll()
+                                                        } else {
+                                                            self.categoryDescriptions.removeValue(forKey: self.categoryBeingEdited)
+                                                            writeCategoryDescriptions(categoryDescriptions: self.categoryDescriptions)
                                                         }
                                                     }) {
                                                         Text("Okay")
@@ -1147,6 +1154,7 @@ struct HomeView: View {
                 categoryName: categoryLaunched,
                 creationDate: "\(self.categoryCreationDates[self.categoryLaunched]!.formatted(date: .numeric, time: .omitted))",
                 categoryDescription: self.categoryDescription,
+                categoryTitleColor: self.categoryTitleColor,
                 categoriesAndSets: categoriesAndSets,
                 categoryBackground: categoryBackground,
                 launchCategory: $launchCategory

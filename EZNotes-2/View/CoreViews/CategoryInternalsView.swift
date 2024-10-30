@@ -12,6 +12,7 @@ struct CategoryInternalsView: View {
     var categoryName: String
     var creationDate: String
     var categoryDescription: String?
+    var categoryTitleColor: Color?
     var categoriesAndSets: [String: Array<String>]
     var categoryBackground: UIImage
     
@@ -34,6 +35,142 @@ struct CategoryInternalsView: View {
     var body: some View {
         VStack {
             TopNavCategoryView(
+                prop: prop,
+                categoryName: categoryName,
+                totalSets: self.categoriesAndSets[self.categoryName]!.count,
+                launchCategory: $launchCategory,
+                showTitle: $show_category_internal_title
+            )
+            
+            HStack {
+                VStack {
+                    Text(self.categoryName)
+                        .frame(maxWidth: prop.size.width - 40, alignment: .leading)
+                        .padding(.leading, 5)
+                        .foregroundStyle(self.categoryTitleColor == nil ? Color.EZNotesOrange : self.categoryTitleColor!)
+                        .setFontSizeAndWeight(weight: .semibold, size: prop.size.height / 2.5 > 300 ? 50 : 40)
+                        .multilineTextAlignment(.center)
+                    
+                    HStack {
+                        Text("\(self.categoriesAndSets[self.categoryName]!.count) \(self.categoriesAndSets[self.categoryName]!.count > 1 ? "Sets" : "Set")")
+                            .frame(alignment: .leading)
+                            .setFontSizeAndWeight(weight: .thin, size: prop.size.height / 2.5 > 300 ? 12.5 : 10.5)
+                            //.padding([.leading, .trailing], 8)
+                            .padding([.top, .bottom], 2.5)
+                        
+                        Divider()
+                            .background(.white)
+                        
+                        Text("Created \(self.creationDate)")
+                            .frame(alignment: .trailing)
+                            .setFontSizeAndWeight(weight: .thin, size: prop.size.height / 2.5 > 300 ? 12.5 : 10.5)
+                            //.padding([.leading, .trailing], 8)
+                            .padding([.top, .bottom], 2.5)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                    .padding(.top, -20)
+                    .padding(.bottom, 5)
+                    
+                    if self.categoryDescription != nil {
+                        Text(self.categoryDescription!)
+                            .frame(maxWidth: .infinity, maxHeight: 80, alignment: .leading)//(maxWidth: prop.size.width - 60, alignment: .leading)
+                            .foregroundStyle(.white)
+                            .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 18 : 13)
+                            .minimumScaleFactor(0.5)
+                            .multilineTextAlignment(.leading)
+                            .truncationMode(.tail)
+                    } else {
+                        VStack {
+                            Button(action: { print("AI-generated description of subject") }) {
+                                Text("Generate Description")
+                                    .frame(maxWidth: 200, alignment: .center)
+                                    .padding([.top, .bottom], 5)
+                                    .foregroundStyle(
+                                        MeshGradient(width: 3, height: 3, points: [
+                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                        ], colors: [
+                                            .indigo, .indigo, Color.EZNotesBlue,
+                                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                            Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                            Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                        ])
+                                    )
+                                    .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 16 : 13)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(.white)
+                                            .strokeBorder(.white, lineWidth: 1)
+                                    )
+                            }
+                            .padding(.top, 15)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                VStack {
+                    Button(action: { }) {
+                        Text("Edit")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(2.5)
+                            .background(Color.EZNotesBlue)
+                            .cornerRadius(15)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(NoLongPressButtonStyle())
+                    
+                    Button(action: { }) {
+                        Text("Share")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(2.5)
+                            .background(Color.EZNotesBlue)
+                            .cornerRadius(15)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(NoLongPressButtonStyle())
+                    
+                    Button(action: { }) {
+                        Text("Delete")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(2.5)
+                            .background(Color.EZNotesRed)
+                            .cornerRadius(15)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(NoLongPressButtonStyle())
+                }
+                .frame(maxWidth: 120, alignment: .trailing)//.frame(maxWidth: prop.size.width - 40, maxHeight: 30)
+                .padding(.trailing, 10)
+            }
+            .frame(maxWidth: prop.size.width - 40, alignment: .top)
+            .frame(width: nil, height: 250, alignment: .top)
+            .padding(.top, -15)
+            /*.background(
+                Image(uiImage: self.categoryBackground)
+                    .resizableImageFill()
+                    .overlay(Color.EZNotesBlack.opacity(0.8))
+            )*/
+            
+            VStack {
+                VStack {
+                    
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background(
+                Rectangle()
+                    .fill(.black)
+                    .cornerRadius(15, corners: [.topLeft, .topRight])
+                    .shadow(color: .white, radius: 10)
+            )
+            .padding(.top, -45)
+            /*TopNavCategoryView(
                 prop: prop,
                 categoryName: categoryName,
                 totalSets: self.categoriesAndSets[self.categoryName]!.count,
@@ -294,10 +431,10 @@ struct CategoryInternalsView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.top, 115)*/
+            .padding(.top, 115)*/*/
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .edgesIgnoringSafeArea(.top)
+        .edgesIgnoringSafeArea([.top, .bottom])
         .background(.black)
     }
 }
