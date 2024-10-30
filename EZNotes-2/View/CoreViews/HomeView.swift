@@ -78,6 +78,7 @@ struct HomeView: View {
     @State private var launchCategory: Bool = false
     @State private var categoryDescription: String? = nil
     @State private var categoryTitleColor: Color? = nil
+    @State private var categoryBackgroundColor: Color? = nil
     @State private var categoryLaunched: String = ""
     @State private var categoryBackground: UIImage = UIImage(systemName: "arrow.left")! /* TODO: Figure out how to initialize a UIImage variable. */
     
@@ -249,6 +250,7 @@ struct HomeView: View {
                                                         self.categoryLaunched = key
                                                         self.categoryDescription = self.categoryDescriptions[key]
                                                         self.categoryTitleColor = self.categoryCustomTextColors[key]
+                                                        self.categoryBackgroundColor = self.categoryCustomColors[key]
                                                         self.categoryBackground = self.categoryImages[key]!
                                                     }) {
                                                         HStack {
@@ -1155,6 +1157,7 @@ struct HomeView: View {
                 creationDate: "\(self.categoryCreationDates[self.categoryLaunched]!.formatted(date: .numeric, time: .omitted))",
                 categoryDescription: self.categoryDescription,
                 categoryTitleColor: self.categoryTitleColor,
+                categoryBackgroundColor: self.categoryBackgroundColor,
                 categoriesAndSets: categoriesAndSets,
                 categoryBackground: categoryBackground,
                 launchCategory: $launchCategory

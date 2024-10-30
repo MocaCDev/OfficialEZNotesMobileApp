@@ -13,6 +13,7 @@ struct CategoryInternalsView: View {
     var creationDate: String
     var categoryDescription: String?
     var categoryTitleColor: Color?
+    var categoryBackgroundColor: Color?
     var categoriesAndSets: [String: Array<String>]
     var categoryBackground: UIImage
     
@@ -435,6 +436,6 @@ struct CategoryInternalsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .edgesIgnoringSafeArea([.top, .bottom])
-        .background(.black)
+        .background(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : .black)//.background(.black)
     }
 }
