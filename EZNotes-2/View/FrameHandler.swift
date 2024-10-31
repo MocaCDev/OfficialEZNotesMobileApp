@@ -49,11 +49,49 @@ class FrameHandler: NSObject, ObservableObject {
         }
     }
     
+    private func getListOfCameras() -> [AVCaptureDevice] {
+        
+    #if os(iOS)
+        let session = AVCaptureDevice.DiscoverySession(
+            deviceTypes: [
+                .builtInTripleCamera,
+                .builtInWideAngleCamera,
+                .builtInTelephotoCamera
+            ],
+            mediaType: .video,
+            position: .unspecified)
+    #elseif os(macOS)
+        let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(
+            deviceTypes: [
+                .builtInWideAngleCamera
+            ],
+            mediaType: .video,
+            position: .unspecified)
+    #endif
+        
+        return session.devices
+    }
+    
     func setupCaptureSession() -> Void {
         self.videoOutput = AVCaptureVideoDataOutput()
         
         guard permissionGranted else { return }
-        guard let videoDevice = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) else { return }
+        let devices: [AVCaptureDevice] = self.getListOfCameras()
+        var devicesNames: [String] = []
+        
+        for device in devices {
+            devicesNames.append(device.localizedName)
+        }
+        
+        print(devicesNames)
+        
+        var videoDevice: AVCaptureDevice! = nil
+        
+        if devicesNames.contains("Back Triple Camera") {
+            videoDevice = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back)
+        } else {
+            videoDevice = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: .back)
+        }
         
         guard let deviceInput = try? AVCaptureDeviceInput(device: videoDevice) else { return }
         self.videoDeviceInput = deviceInput
