@@ -38,29 +38,49 @@ struct UploadSection: View {
                 backgroundColor: Color.clear
             )
             
-            VStack {
+            if self.model.permissionGranted {
                 VStack {
-                    Button(action: {
-                        if !self.loadingCameraView {
-                            self.images_to_upload.images_to_upload.append(
-                                ["\(arc4random()).jpeg": UIImage(cgImage: self.model.frame!)]
-                            )
+                    VStack {
+                        Button(action: {
+                            if !self.loadingCameraView {
+                                self.images_to_upload.images_to_upload.append(
+                                    ["\(arc4random()).jpeg": UIImage(cgImage: self.model.frame!)]
+                                )
+                            }
+                        }) {
+                            ZStack {
+                                Image(systemName: "circle")
+                                    .resizable()
+                                    .frame(width: 100, height: 100)
+                                    .tint(!self.loadingCameraView ? Color.EZNotesBlue : Color.gray)
+                            }
                         }
-                    }) {
-                        ZStack {
-                            Image(systemName: "circle")
-                                .resizable()
-                                .frame(width: 100, height: 100)
-                                .tint(!self.loadingCameraView ? Color.EZNotesBlue : Color.gray)
-                        }
+                        
+                        Text("\(String(round(self.currentZoomFactor * 10.00) / 10.00))x")
+                            .foregroundStyle(.white)
+                            .padding([.bottom], prop.size.height / 2.5 > 300 ? -10 : -40)
                     }
-                    
-                    Text("\(String(round(self.currentZoomFactor * 10.00) / 10.00))x")
-                        .foregroundStyle(.white)
-                        .padding([.bottom], prop.size.height / 2.5 > 300 ? -10 : -40)
+                    .padding([.bottom], 40)
+                }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            } else {
+                VStack {
+                    VStack {
+                        Text("Access to camera was denied.")
+                            .frame(maxWidth: prop.size.width - 60, alignment: .center)
+                            .setFontSizeAndWeight(weight: .medium, size: 30)
+                            .minimumScaleFactor(0.5)
+                            .multilineTextAlignment(.center)
+                        
+                        Button(action: { self.model.requestPermission() }) {
+                            Text("Allow access")
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 15)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 }
-                .padding([.bottom], 40)
-            }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
             
             ButtomNavbar(
                 section: $section,
@@ -70,7 +90,8 @@ struct UploadSection: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .background(
-            FrameView(handler: model, image: model.frame, prop: prop, loadingCameraView: $loadingCameraView)
+            self.model.permissionGranted
+            ? AnyView(FrameView(handler: model, image: model.frame, prop: prop, loadingCameraView: $loadingCameraView)
                 .ignoresSafeArea()
                 .gesture(MagnificationGesture()
                     .onChanged { value in
@@ -92,6 +113,9 @@ struct UploadSection: View {
                         }
                     })
                 )
+            )
+            : AnyView(Color.clear)
         )
+        .onAppear(perform: { self.model.permissionGranted = false })
     }
 }

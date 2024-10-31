@@ -37,6 +37,7 @@ class FrameHandler: NSObject, ObservableObject {
                 
             // Combine the two other cases into the default case
             default:
+                self.requestPermission()
                 self.permissionGranted = false
         }
     }
@@ -44,7 +45,7 @@ class FrameHandler: NSObject, ObservableObject {
     func requestPermission() {
         // Strong reference not a problem here but might become one in the future.
         AVCaptureDevice.requestAccess(for: .video) { [unowned self] granted in
-            self.permissionGranted = granted
+            DispatchQueue.main.async { self.permissionGranted = granted }
         }
     }
     

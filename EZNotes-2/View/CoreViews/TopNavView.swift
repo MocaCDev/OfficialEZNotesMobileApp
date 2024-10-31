@@ -46,6 +46,7 @@ struct AccountPopup: View {
     @State private var pfpUploadStatus: String = "none"
     @State private var errorUploadingPFP: Bool = false
     @State private var showPrivacyPolicy: Bool = false
+    @State private var changingProfilePic: Bool = false
     
     var body: some View {
         VStack {
@@ -123,19 +124,36 @@ struct AccountPopup: View {
                                             .clipShape(.rect)
                                             .cornerRadius(15)
                                             .shadow(color: .black, radius: 2.5)
+                                            .overlay(
+                                                VStack {
+                                                    if self.changingProfilePic {
+                                                        Text("Updating")
+                                                            .frame(maxWidth: .infinity, alignment: .center)
+                                                            .setFontSizeAndWeight(weight: .medium, size: 12)
+                                                            .minimumScaleFactor(0.5)
+                                                        
+                                                        ProgressView()
+                                                            .tint(Color.EZNotesBlue)
+                                                    }
+                                                }
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                                .background(self.changingProfilePic ? Color.EZNotesBlack.opacity(0.6) : .clear)
+                                            )
                                     }
                                     .onChange(of: self.pfpPhotoPicked) {
                                         Task {
                                             if let image = try? await pfpPhotoPicked!.loadTransferable(type: Image.self) {
-                                                self.accountInfo.profilePicture = image
+                                                self.changingProfilePic = true
                                                 
                                                 PFP(pfp: image, accountID: self.accountInfo.accountID)
                                                     .requestSavePFP() { statusCode, resp in
+                                                        self.changingProfilePic = false
                                                         guard resp != nil && statusCode == 200 else {
                                                             self.pfpUploadStatus = "failed"
                                                             return
                                                         }
                                                         
+                                                        self.accountInfo.profilePicture = image
                                                         if self.errorUploadingPFP { self.errorUploadingPFP = false }
                                                         self.pfpUploadStatus = "good"
                                                     }
@@ -191,15 +209,18 @@ struct AccountPopup: View {
                                     .onChange(of: self.pfpPhotoPicked) {
                                         Task {
                                             if let image = try? await pfpPhotoPicked!.loadTransferable(type: Image.self) {
-                                                self.accountInfo.profilePicture = image
+                                                self.changingProfilePic = true
                                                 
                                                 PFP(pfp: image, accountID: self.accountInfo.accountID)
                                                     .requestSavePFP() { statusCode, resp in
+                                                        self.changingProfilePic = false
+                                                        
                                                         guard resp != nil && statusCode == 200 else {
                                                             self.pfpUploadStatus = "failed"
                                                             return
                                                         }
                                                         
+                                                        self.accountInfo.profilePicture = image
                                                         if self.errorUploadingPFP { self.errorUploadingPFP = false }
                                                         self.pfpUploadStatus = "good"
                                                     }

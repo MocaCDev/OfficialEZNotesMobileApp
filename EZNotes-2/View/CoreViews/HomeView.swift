@@ -461,7 +461,7 @@ struct HomeView: View {
                                                     }
                                                     .buttonStyle(NoLongPressButtonStyle())
                                                 }
-                                                .frame(maxWidth: prop.size.width - 20, maxHeight: 190)
+                                                .frame(maxWidth: prop.size.width - 20)
                                                 .background(RoundedRectangle(cornerRadius: 15).fill(Color.EZNotesBlack.opacity(0.65)).shadow(color: Color.EZNotesBlack, radius: 4))
                                                 .padding([.bottom], 5)
                                             }

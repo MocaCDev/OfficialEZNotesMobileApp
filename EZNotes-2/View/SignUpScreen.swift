@@ -509,6 +509,15 @@ struct SignUpScreen : View, KeyboardReadable {
                             .fontWeight(.medium)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
+                        } else if self.section == "loading_code" {
+                            VStack {
+                                Text("Registering your account...")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .setFontSizeAndWeight(weight: .medium, size: 26)
+                                    .minimumScaleFactor(0.5)
+                                ProgressView()
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                         } else if self.section == "code_input" {
                             Text("Code")
                                 .frame(
@@ -1348,6 +1357,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                         return
                                     }
                                     
+                                    self.section = "loading_code"
+                                    
                                     RequestAction<SignUpRequestData>(
                                         parameters: SignUpRequestData(
                                             Username: username,
@@ -1369,6 +1380,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                         }
                                         
                                         if self.userExists { self.userExists = false }
+                                        if self.makeContentRed { self.makeContentRed = false }
                                         
                                         self.accountID = resp!["Message"] as! String
                                         self.section = "code_input"
@@ -1408,6 +1420,9 @@ struct SignUpScreen : View, KeyboardReadable {
                                             UserDefaults.standard.set(self.username, forKey: "username")
                                             UserDefaults.standard.set(self.email, forKey: "email")
                                             UserDefaults.standard.set("select_plan", forKey: "last_signup_section")
+                                            
+                                            if self.makeContentRed { self.makeContentRed = false }
+                                            if self.wrongCode { self.wrongCode = false }
                                             self.section = "select_plan"
                                             
                                             /*if r.Bad != nil {

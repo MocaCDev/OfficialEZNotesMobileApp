@@ -258,6 +258,9 @@ struct CoreApp: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea(.keyboard)
+        .onAppear(perform: {
+            if !self.model.permissionGranted { self.model.requestPermission() }
+        })
         /*.onAppear(perform: {
                 print(prop.size.height / 2.5)
             }

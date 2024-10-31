@@ -207,6 +207,7 @@ struct UploadReview: View {
                                         
                                         self.lastSection = self.section
                                         self.section = "upload_error"
+                                        self.errorText = resp.Bad!.Message
                                         self.errorType = resp.Bad!.Message
                                     }
                                     

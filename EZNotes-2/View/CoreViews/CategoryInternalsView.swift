@@ -218,7 +218,6 @@ struct CategoryInternalsView: View {
                     .buttonStyle(NoLongPressButtonStyle())
                 }
                 .frame(maxWidth: 120, alignment: .trailing)//.frame(maxWidth: prop.size.width - 40, maxHeight: 30)
-                .padding(.trailing, 10)
             }
             .frame(maxWidth: prop.size.width - 40, alignment: .top)
             .frame(width: nil, height: 250, alignment: .top)
@@ -230,10 +229,16 @@ struct CategoryInternalsView: View {
             )*/
             
             VStack {
-                VStack {
-                    
+                ForEach(Array(self.categoriesAndSets.keys), id: \.self) { key in
+                    HStack {
+                        Text(key)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(5)
+                    }
+                    .frame(maxWidth: prop.size.width - 20, maxHeight: 190)
+                    .background(RoundedRectangle(cornerRadius: 15).fill(Color.EZNotesBlack.opacity(0.65)).shadow(color: Color.EZNotesBlack, radius: 4))
+                    .padding([.bottom], 5)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(
