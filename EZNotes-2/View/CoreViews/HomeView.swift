@@ -90,6 +90,8 @@ struct HomeView: View {
     
     @ObservedObject public var accountInfo: AccountDetails
     
+    @Binding public var userHasSignedIn: Bool
+    
     /* TODO: Eventually the app will enable users to set the outline of there categories as they please. Get this implemented. */
     let columns = [
         GridItem(.flexible()),
@@ -188,7 +190,8 @@ struct HomeView: View {
                     categorySearch: $categorySearch,
                     searchDone: $searchDone,
                     messages: $messages,
-                    lookedUpCategoriesAndSets: $lookedUpCategoriesAndSets
+                    lookedUpCategoriesAndSets: $lookedUpCategoriesAndSets,
+                    userHasSignedIn: $userHasSignedIn
                 )
                 
                 ZStack {
@@ -281,7 +284,8 @@ struct HomeView: View {
                                                                                     .multilineTextAlignment(.center)
                                                                                 
                                                                                 Divider()
-                                                                                    .frame(height: 35)
+                                                                                    .frame(height: 25)
+                                                                                    .overlay(.black)
                                                                                 
                                                                                 Text("Sets: \(self.categoriesAndSets[key]!.count)")
                                                                                     .frame(maxWidth: 80, alignment: .trailing)
@@ -1155,12 +1159,13 @@ struct HomeView: View {
                 prop: prop,
                 categoryName: categoryLaunched,
                 creationDate: "\(self.categoryCreationDates[self.categoryLaunched]!.formatted(date: .numeric, time: .omitted))",
-                categoryDescription: self.categoryDescription,
+                //categoryDescription: self.categoryDescription,
                 categoryTitleColor: self.categoryTitleColor,
                 categoryBackgroundColor: self.categoryBackgroundColor,
                 categoriesAndSets: categoriesAndSets,
                 categoryBackground: categoryBackground,
-                launchCategory: $launchCategory
+                launchCategory: $launchCategory,
+                categoryDescriptions: $categoryDescriptions
             )
         }
     }

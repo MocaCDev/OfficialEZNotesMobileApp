@@ -8,8 +8,8 @@ import Foundation
 import SwiftUI
 
 /* MARK: URLs used for requests. */
-//let server = "https://www.eznotes.space"
-let server = "http://192.168.1.114:8088"
+let server = "https://www.eznotes.space"
+//let server = "http://192.168.1.114:8088"
 //let server = "http://192.168.0.11:8088"//"http://192.168.1.114:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
@@ -95,6 +95,10 @@ struct ImageUploadRequestResponse: Decodable {
     let Bad: BadResponse?
 }
 
+struct GenerateDescRequestData {
+    let Subject: String
+}
+
 /* MARK: All request actions. */
 struct CSIARequest<T> {
     let url: String
@@ -154,4 +158,10 @@ let send_ai_chat_message_req: CSIARequest = CSIARequest(
     url: "\(server)/mobile_send_aichat",
     method: "post",
     reqData: SendAIChatMessageData.self
+)
+
+let generate_desc_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_description_for_subject",
+    method: "get",
+    reqData: GenerateDescRequestData.self
 )

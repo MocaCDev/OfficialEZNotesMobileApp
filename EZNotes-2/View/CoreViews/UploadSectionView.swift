@@ -24,12 +24,15 @@ struct UploadSection: View {
     
     @ObservedObject public var accountInfo: AccountDetails
     
+    @Binding public var userHasSignedIn: Bool
+    
     var body: some View {
         VStack {
             TopNavUpload(
                 accountInfo: accountInfo,
                 section: $section,
                 lastSection: $lastSection,
+                userHasSignedIn: $userHasSignedIn,
                 images_to_upload: images_to_upload,
                 prop: prop,
                 backgroundColor: Color.clear

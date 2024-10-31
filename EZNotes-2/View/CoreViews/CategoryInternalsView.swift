@@ -11,13 +11,17 @@ struct CategoryInternalsView: View {
     var prop: Properties
     var categoryName: String
     var creationDate: String
-    var categoryDescription: String?
     var categoryTitleColor: Color?
     var categoryBackgroundColor: Color?
     var categoriesAndSets: [String: Array<String>]
     var categoryBackground: UIImage
     
+    @State private var categoryDescription: String? = nil
+    @State private var generatingDesc: Bool = false
+    @State private var errorGenerating: Bool = false
+    
     @Binding public var launchCategory: Bool
+    @Binding public var categoryDescriptions: [String: String]
     
     @State private var show_category_internal_title: Bool = false
     
@@ -45,12 +49,32 @@ struct CategoryInternalsView: View {
             
             HStack {
                 VStack {
-                    Text(self.categoryName)
-                        .frame(maxWidth: prop.size.width - 40, alignment: .leading)
-                        .padding(.leading, 5)
-                        .foregroundStyle(self.categoryTitleColor == nil ? Color.EZNotesOrange : self.categoryTitleColor!)
-                        .setFontSizeAndWeight(weight: .semibold, size: prop.size.height / 2.5 > 300 ? 50 : 40)
-                        .multilineTextAlignment(.center)
+                    HStack {
+                        ZStack {
+                            Image(uiImage: self.categoryBackground)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: prop.size.height / 2.5 > 300 ? 60 : 50, height: prop.size.height / 2.5 > 300 ? 60 : 50, alignment: .center)
+                                .minimumScaleFactor(0.3)
+                                .foregroundStyle(.white)
+                                .clipShape(.rect)
+                                .cornerRadius(15)
+                                .shadow(color: .black, radius: 2.5)
+                        }
+                        .frame(width: prop.size.height / 2.5 > 300 ? 60 : 50, height: prop.size.height / 2.5 > 300 ? 60 : 50, alignment: .center)
+                        .background(
+                            RoundedRectangle(cornerRadius: 15)
+                                .strokeBorder(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange, lineWidth: 1)
+                        )
+                        
+                        Text(self.categoryName)
+                            .frame(maxWidth: prop.size.width - 40, alignment: .leading)
+                            .padding(.leading, 5)
+                            .foregroundStyle(self.categoryTitleColor == nil ? Color.EZNotesOrange : self.categoryTitleColor!)
+                            .setFontSizeAndWeight(weight: .semibold, size: prop.size.height / 2.5 > 300 ? 50 : 40)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     
                     HStack {
                         Text("\(self.categoriesAndSets[self.categoryName]!.count) \(self.categoriesAndSets[self.categoryName]!.count > 1 ? "Sets" : "Set")")
@@ -82,32 +106,80 @@ struct CategoryInternalsView: View {
                             .truncationMode(.tail)
                     } else {
                         VStack {
-                            Button(action: { print("AI-generated description of subject") }) {
-                                Text("Generate Description")
-                                    .frame(maxWidth: 200, alignment: .center)
-                                    .padding([.top, .bottom], 5)
-                                    .foregroundStyle(
-                                        MeshGradient(width: 3, height: 3, points: [
-                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                        ], colors: [
-                                            .indigo, .indigo, Color.EZNotesBlue,
-                                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                            Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                            Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                        ])
-                                    )
-                                    .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 16 : 13)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(.white)
-                                            .strokeBorder(.white, lineWidth: 1)
-                                    )
+                            if !self.generatingDesc {
+                                Button(action: {
+                                    self.generatingDesc = true
+                                    
+                                    RequestAction<GenerateDescRequestData>(
+                                        parameters: GenerateDescRequestData(
+                                            Subject: self.categoryName
+                                        )
+                                    ).perform(action: generate_desc_req) { statusCode, resp in
+                                        guard resp != nil && statusCode == 200 else {
+                                            self.generatingDesc = false
+                                            return
+                                        }
+                                        
+                                        self.categoryDescriptions[self.categoryName] = resp!["Desc"] as? String
+                                        self.categoryDescription = resp!["Desc"] as? String
+                                        writeCategoryDescriptions(categoryDescriptions: self.categoryDescriptions)
+                                    }
+                                }) {
+                                    Text("Generate Description")
+                                        .frame(maxWidth: 200, alignment: .center)
+                                        .padding([.top, .bottom], 5)
+                                        .foregroundStyle(
+                                            MeshGradient(width: 3, height: 3, points: [
+                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                            ], colors: [
+                                                .indigo, .indigo, Color.EZNotesBlue,
+                                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                            ])
+                                        )
+                                        .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 16 : 13)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(.white)
+                                                .strokeBorder(.white, lineWidth: 1)
+                                        )
+                                }
+                                .padding(.top, 15)
+                                
+                                if self.errorGenerating {
+                                    Text("Error generating description.. try again")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .setFontSizeAndWeight(weight: .medium, size: 16)
+                                        .minimumScaleFactor(0.5)
+                                }
+                            } else {
+                                Text("Generating Description...")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding(.top, 15)
+                                    .setFontSizeAndWeight(weight: .medium, size: 12)
+                                
+                                ProgressView()
+                                    .foregroundStyle(.blue)
+                                /*.tint(
+                                 MeshGradient(width: 3, height: 3, points: [
+                                 .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                 .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                 .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                 ], colors: [
+                                 .indigo, .indigo, Color.EZNotesBlue,
+                                 Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                 .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                 /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                  Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                  Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                 ])
+                                 )*/
                             }
-                            .padding(.top, 15)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -168,7 +240,11 @@ struct CategoryInternalsView: View {
                 Rectangle()
                     .fill(.black)
                     .cornerRadius(15, corners: [.topLeft, .topRight])
-                    .shadow(color: .white, radius: 10)
+                    .shadow(color: self.categoryBackgroundColor != nil
+                            ? self.categoryBackgroundColor != Color.black
+                                ? self.categoryBackgroundColor!
+                                : Color.EZNotesOrange
+                            : Color.EZNotesOrange, radius: 10)
             )
             .padding(.top, -45)
             /*TopNavCategoryView(
@@ -436,6 +512,9 @@ struct CategoryInternalsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .edgesIgnoringSafeArea([.top, .bottom])
-        .background(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : .black)//.background(.black)
+        .background(.black)//.background(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : .black)//.background(.black)
+        .onAppear {
+            self.categoryDescription = self.categoryDescriptions[self.categoryName]
+        }
     }
 }

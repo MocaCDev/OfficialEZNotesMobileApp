@@ -87,6 +87,8 @@ struct CoreApp: View {
     
     @ObservedObject public var accountInfo: AccountDetails
     
+    @Binding public var userHasSignedIn: Bool
+    
     @State private var categories: Array<String> = []
     @State private var sets: Array<String> = []
     @State private var photos: Array<String> = []
@@ -131,7 +133,8 @@ struct CoreApp: View {
                     lastSection: $lastSection,
                     section: $section,
                     prop: prop,
-                    accountInfo: accountInfo
+                    accountInfo: accountInfo,
+                    userHasSignedIn: $userHasSignedIn
                 )
             } else if self.section == "upload_review" {
                 UploadReview(
@@ -173,13 +176,15 @@ struct CoreApp: View {
                     categoryCustomColors: $categoryCustomColors,
                     categoryCustomTextColors: $categoryCustomTextColors,
                     prop: prop,
-                    accountInfo: accountInfo
+                    accountInfo: accountInfo,
+                    userHasSignedIn: $userHasSignedIn
                 )
             } else if self.section == "chat" {
                 ChatView(
                     section: $section,
                     prop: prop,
-                    accountInfo: accountInfo
+                    accountInfo: accountInfo,
+                    userHasSignedIn: $userHasSignedIn
                 )
             } else if self.section == "upload_error" {
                 VStack {

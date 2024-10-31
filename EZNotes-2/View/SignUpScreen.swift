@@ -82,7 +82,7 @@ struct SignUpScreen : View, KeyboardReadable {
     ]
     
     private func payForSubscription(_ paymentMethodId: String, comp: @escaping (String, String?) -> Void) {
-        guard let url = URL(string: "http://192.168.0.7:8088")?.appendingPathComponent("/create-stripe-checkout-mobile") else {
+        guard let url = URL(string: server)?.appendingPathComponent("/create-stripe-checkout-mobile") else {
             print("Failed")
             return
         }

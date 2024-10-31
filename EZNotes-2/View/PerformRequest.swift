@@ -333,6 +333,10 @@ struct RequestAction<T> {
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
                 request.addValue(params.Message, forHTTPHeaderField: "Message")
                 break
+            case is GenerateDescRequestData.Type:
+                guard let params: GenerateDescRequestData = (parameters as? GenerateDescRequestData) else { return }
+                request.addValue(params.Subject, forHTTPHeaderField: "Subject")
+                break
             default: break
         }
         

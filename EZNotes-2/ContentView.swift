@@ -124,7 +124,8 @@ struct ContentView: View {
                             categoryDescriptions: $categoryDescriptions,
                             categoryCustomColors: $categoryCustomColors,
                             categoryCustomTextColors: $categoryCustomTextColors,
-                            accountInfo: accountInfo
+                            accountInfo: accountInfo,
+                            userHasSignedIn: $userHasSignedIn
                         )
                     }
                 } else {

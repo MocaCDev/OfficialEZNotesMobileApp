@@ -15,11 +15,14 @@ struct ChatView: View {
     
     @ObservedObject public var accountInfo: AccountDetails
     
+    @Binding public var userHasSignedIn: Bool
+    
     var body: some View {
         VStack {
             TopNavChat(
                 accountInfo: accountInfo,
                 friendSearch: $friendSearch,
+                userHasSignedIn: $userHasSignedIn,
                 prop: prop,
                 backgroundColor: Color.EZNotesLightBlack
             )
