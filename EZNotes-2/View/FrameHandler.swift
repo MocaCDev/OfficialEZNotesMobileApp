@@ -90,7 +90,11 @@ class FrameHandler: NSObject, ObservableObject {
         if devicesNames.contains("Back Triple Camera") {
             videoDevice = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back)
         } else {
-            videoDevice = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: .back)
+            if devicesNames.contains("Back Dual Camera") {
+                videoDevice = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: .back)
+            } else {
+                videoDevice = AVCaptureDevice.default(.builtInTrueDepthCamera, for: .video, position: .back)
+            }
         }
         
         guard let deviceInput = try? AVCaptureDeviceInput(device: videoDevice) else { return }
