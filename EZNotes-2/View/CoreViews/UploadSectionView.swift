@@ -39,29 +39,58 @@ struct UploadSection: View {
             )
             
             if self.model.permissionGranted {
-                VStack {
+                if !self.model.cameraDeviceFound {
                     VStack {
-                        Button(action: {
-                            if !self.loadingCameraView {
-                                self.images_to_upload.images_to_upload.append(
-                                    ["\(arc4random()).jpeg": UIImage(cgImage: self.model.frame!)]
-                                )
-                            }
-                        }) {
-                            ZStack {
-                                Image(systemName: "circle")
-                                    .resizable()
-                                    .frame(width: 100, height: 100)
-                                    .tint(!self.loadingCameraView ? Color.EZNotesBlue : Color.gray)
-                            }
+                        VStack {
+                            
+                            Image(systemName: "exclamationmark.warninglight.fill")
+                                .resizable()
+                                .frame(width: 60, height: 60)
+                                .padding([.top, .bottom], 15)
+                                .foregroundStyle(Color.EZNotesRed)
+                            
+                            Text("Camera Device Not Found")
+                                .frame(maxWidth: prop.size.width - 60, alignment: .center)
+                                .setFontSizeAndWeight(weight: .medium, size: 30)
+                                .minimumScaleFactor(0.5)
+                                .multilineTextAlignment(.center)
+                            
+                            Text("(Beta Testers) If you are using a older iPhone model, a iPhone with 2 lenses or have a older iOS version, please report this issue via TestFlight:\n\n• Open TestFlight on your iPhone\n• Select EZNotes-2\n• Select \"Send Feedback\"\n\t• Provide the iPhone model, iOS version and issue you are experiencing")
+                                .frame(maxWidth: prop.size.width - 60, alignment: .center)
+                                .padding(.top, 5)
+                                .setFontSizeAndWeight(weight: .medium, size: 14)
+                                .minimumScaleFactor(0.5)
+                                .multilineTextAlignment(.center)
                         }
-                        
-                        Text("\(String(round(self.currentZoomFactor * 10.00) / 10.00))x")
-                            .foregroundStyle(.white)
-                            .padding([.bottom], prop.size.height / 2.5 > 300 ? -10 : -40)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 15)
                     }
-                    .padding([.bottom], 40)
-                }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                } else {
+                    VStack {
+                        VStack {
+                            Button(action: {
+                                if !self.loadingCameraView {
+                                    self.images_to_upload.images_to_upload.append(
+                                        ["\(arc4random()).jpeg": UIImage(cgImage: self.model.frame!)]
+                                    )
+                                }
+                            }) {
+                                ZStack {
+                                    Image(systemName: "circle")
+                                        .resizable()
+                                        .frame(width: 100, height: 100)
+                                        .tint(!self.loadingCameraView ? Color.EZNotesBlue : Color.gray)
+                                }
+                            }
+                            
+                            Text("\(String(round(self.currentZoomFactor * 10.00) / 10.00))x")
+                                .foregroundStyle(.white)
+                                .padding([.bottom], prop.size.height / 2.5 > 300 ? -10 : -40)
+                        }
+                        .padding([.bottom], 40)
+                    }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                }
             } else {
                 VStack {
                     VStack {
@@ -90,7 +119,7 @@ struct UploadSection: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .background(
-            self.model.permissionGranted
+            self.model.permissionGranted && self.model.cameraDeviceFound
             ? AnyView(FrameView(handler: model, image: model.frame, prop: prop, loadingCameraView: $loadingCameraView)
                 .ignoresSafeArea()
                 .gesture(MagnificationGesture()

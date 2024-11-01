@@ -10,7 +10,8 @@ import CoreImage
 
 class FrameHandler: NSObject, ObservableObject {
     @Published var frame: CGImage?
-    @Published var permissionGranted = true
+    @Published var permissionGranted: Bool = true
+    @Published var cameraDeviceFound: Bool = true
     
     public let captureSession = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "sessionQueue")
@@ -91,13 +92,18 @@ class FrameHandler: NSObject, ObservableObject {
             videoDevice = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back)
         } else {
             if devicesNames.contains("Back Dual Camera") {
-                videoDevice = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: .back)
+                videoDevice = AVCaptureDevice.default(.builtInDualWideCamera, for: .video, position: .back)
             } else {
-                videoDevice = AVCaptureDevice.default(.builtInTrueDepthCamera, for: .video, position: .back)
+                videoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
             }
         }
         
-        guard let deviceInput = try? AVCaptureDeviceInput(device: videoDevice) else { return }
+        guard videoDevice != nil else { return }
+        
+        guard let deviceInput = try? AVCaptureDeviceInput(device: videoDevice) else {
+            self.cameraDeviceFound = false
+            return
+        }
         self.videoDeviceInput = deviceInput
         
         guard captureSession.canAddInput(self.videoDeviceInput!) else { return }

@@ -33,6 +33,18 @@ class AccountDetails: ObservableObject {
         profileBackgroundPicture = Image("Pfp-Default-Bg")
     }
     
+    final public func reset() {
+        username = ""
+        email = ""
+        college = ""
+        major = ""
+        accountID = ""
+        subID = ""
+        aiChatID = ""
+        profilePicture = Image(systemName: "person.crop.circle.fill")
+        profileBackgroundPicture = Image("Pfp-Default-Bg")
+    }
+    
     final public func setUsername(username: String) { self.username = username }
     final public func setEmail(email: String) { self.email = email }
     final public func setAccountID(accountID: String) { self.accountID = accountID }

@@ -677,6 +677,7 @@ struct AccountPopup: View {
                                 Button(action: {
                                     UserDefaults.standard.set(false, forKey: "logged_in")
                                     self.userHasSignedIn = false
+                                    self.accountInfo.reset()
                                 }) {
                                     HStack {
                                         Text("Logout")

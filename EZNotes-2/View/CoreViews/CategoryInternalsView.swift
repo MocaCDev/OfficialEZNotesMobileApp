@@ -72,7 +72,8 @@ struct CategoryInternalsView: View {
                             .padding(.leading, 5)
                             .foregroundStyle(self.categoryTitleColor == nil ? Color.EZNotesOrange : self.categoryTitleColor!)
                             .setFontSizeAndWeight(weight: .semibold, size: prop.size.height / 2.5 > 300 ? 50 : 40)
-                            .multilineTextAlignment(.center)
+                            .minimumScaleFactor(0.5)
+                            .multilineTextAlignment(.leading)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     

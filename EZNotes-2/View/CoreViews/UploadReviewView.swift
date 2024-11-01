@@ -24,6 +24,20 @@ struct UploadReview: View {
     var prop: Properties
     
     @State private var uploadState: String = "review"
+    @State private var imageSelected: UIImage! = nil
+    @State private var showLargerImage: Bool = false
+    
+    let cols4 = [
+        GridItem(.flexible()),
+        GridItem(.flexible()),
+        GridItem(.flexible()),
+        GridItem(.flexible())
+    ]
+    
+    let cols2 = [
+        GridItem(.flexible()),
+        GridItem(.flexible())
+    ]
     
     private func findImage(for key: String) -> UIImage? {
         for dictionary in self.images_to_upload.images_to_upload {
@@ -49,32 +63,46 @@ struct UploadReview: View {
                 HStack(spacing: 0) {
                     VStack {
                         Button(action: {
+                            if self.showLargerImage {
+                                self.showLargerImage = false
+                                self.imageSelected = nil
+                                return
+                            }
+                            
                             self.section = self.lastSection
                             self.lastSection = self.section
                         }) {
-                            HStack {
+                            VStack {
                                 Image("Back")
                                     .resizable()
                                     .frame(width: 20, height: 20)
                                     .padding([.leading], 20)
                                     .padding([.top], prop.size.height / 2.5 > 300 ? 20 : -5)
+                                
+                                if self.showLargerImage {
+                                    Text("Exit Preview")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .padding([.leading], 20)
+                                        .font(.system(size: 8))
+                                        .minimumScaleFactor(0.5)
+                                        .fontWeight(.medium)
+                                }
                             }
                         }
                     }
-                    .frame(maxWidth: 50, alignment: .leading)
-                    
-                    Spacer()
+                    .frame(maxWidth: 70, alignment: .leading)
                     
                     VStack {
                         Text("Review Uploads")
                             .foregroundStyle(.white)
                             .font(.system(size: 30))
                             .padding([.top], prop.size.height / 2.5 > 300 ? 10 : -10)
-                            .padding([.leading], -30)
+                            //.padding([.leading], -30)
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     
-                    Spacer()
+                    /* MARK: The below `ZStack` forces the above `VStack` to be in th middle. */
+                    ZStack { }.frame(maxWidth: 70, alignment: .trailing)
                 }
                 .frame(maxWidth: .infinity)
                 
@@ -113,7 +141,70 @@ struct UploadReview: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .centerLastTextBaseline)
                     .padding([.bottom], 25)
                 } else {
-                    ScrollView(.horizontal, showsIndicators: false) {
+                    if self.showLargerImage {
+                        VStack {
+                            Image(uiImage: self.imageSelected)
+                                .resizable()
+                                .frame(width: prop.size.width - 100, height: 550)
+                                .clipShape(.rect(cornerRadius: 10))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.clear)
+                                )
+                                .shadow(color: Color.EZNotesLightBlack, radius: 3.5)
+                            
+                            HStack {
+                                Button(action: {
+                                    self.section = self.lastSection
+                                    self.lastSection = ""
+                                    
+                                    self.images_to_upload.images_to_upload.remove(at: 0)
+                                }) {
+                                    Image(systemName: "trash")
+                                        .resizable()
+                                        .frame(width: 20, height: 20)
+                                        .foregroundStyle(.red)
+                                    
+                                    Text("Delete")
+                                        .foregroundStyle(.red)
+                                        .font(.system(size: 16))
+                                }
+                            }
+                            .padding([.top], 10)
+                            .padding([.bottom], 30)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        .padding([.bottom], 25)
+                    } else {
+                        ScrollView(.vertical, showsIndicators: false) {
+                            LazyVGrid(columns: self.images_to_upload.images_to_upload.count >= 8 ? cols4 : cols2, spacing: 5) {
+                                ForEach(Array(self.images_to_upload.images_to_upload.enumerated()), id: \.offset) { index, value in
+                                    ForEach(Array(self.images_to_upload.images_to_upload[index].keys), id: \.self) { key in
+                                        Button(action: {
+                                            self.showLargerImage = true
+                                            self.imageSelected = self.images_to_upload.images_to_upload[index][key]!
+                                        }) {
+                                            Image(uiImage: self.images_to_upload.images_to_upload[index][key]!)
+                                                .resizable()
+                                                .frame(width: 80, height: 130)
+                                                .minimumScaleFactor(0.5)
+                                                .clipShape(.rect(cornerRadius: 10))
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 10)
+                                                        .fill(Color.clear)
+                                                        .strokeBorder(.white, lineWidth: 1)
+                                                )
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .top)
+                            .padding(.top, 5)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    /*ScrollView(.horizontal, showsIndicators: false) {
                         HStack {
                             ForEach(Array(self.images_to_upload.images_to_upload.enumerated()), id: \.offset) { index, value in
                                 ForEach(Array(value.enumerated()), id: \.offset) { index2, photo in
@@ -157,7 +248,7 @@ struct UploadReview: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .centerFirstTextBaseline)
                         .padding([.bottom], 25)
-                    }
+                    }*/
                 }
                 
                 VStack {
