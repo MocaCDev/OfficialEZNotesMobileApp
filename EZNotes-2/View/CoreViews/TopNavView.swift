@@ -765,6 +765,13 @@ struct AccountPopup: View {
     }
 }
 
+struct ViewPositionKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
 struct TopNavHome: View {
     @ObservedObject public var accountInfo: AccountDetails
     
@@ -790,10 +797,20 @@ struct TopNavHome: View {
     @State private var processingMessage: Bool = false
     @State private var messageInput: String = ""
     @State private var hideLeftsideContent: Bool = false
+    @State private var aiIsTyping: Bool = false
+    @State private var messageBoxTapped: Bool = false
+    @State private var currentYPosOfMessageBox: CGFloat = 0
     
     @Binding public var messages: Array<MessageDetails>
     @Binding public var lookedUpCategoriesAndSets: [String: Array<String>]
     @Binding public var userHasSignedIn: Bool
+    
+    @State private var numberOfTheAnimationgBall = 3
+    
+    // MAKR: - Drawing Constants
+    let ballSize: CGFloat = 10
+    let speed: Double = 0.3
+    let chatUUID: UUID = UUID()
     
     var body: some View {
         HStack {
@@ -968,15 +985,60 @@ struct TopNavHome: View {
                         ScrollView {
                             LazyVStack {
                                 ForEach(messages, id: \.self) { message in
-                                    MessageView(message: message)
+                                    MessageView(message: message, aiIsTyping: $aiIsTyping)
                                         .id(message)
                                 }
+                                
+                                if self.aiIsTyping {
+                                    HStack(alignment: .firstTextBaseline) {
+                                        ForEach(0..<3) { i in
+                                            Capsule()
+                                                .foregroundColor((self.numberOfTheAnimationgBall == i) ? .blue : Color(UIColor.darkGray))
+                                                .frame(width: self.ballSize, height: self.ballSize)
+                                                .offset(y: (self.numberOfTheAnimationgBall == i) ? -5 : 0)
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .animation(Animation.spring(response: 0.5, dampingFraction: 0.7, blendDuration: 0.1).speed(2))
+                                    .onAppear {
+                                        Timer.scheduledTimer(withTimeInterval: self.speed, repeats: true) { _ in
+                                            var randomNumb: Int
+                                            repeat {
+                                                randomNumb = Int.random(in: 0...2)
+                                            } while randomNumb == self.numberOfTheAnimationgBall
+                                            self.numberOfTheAnimationgBall = randomNumb
+                                        }
+                                    }
+                                }
                             }
-                            .onReceive(Just(messages)) { _ in
+                            .onChange(of: messages) {
                                 withAnimation {
                                     proxy.scrollTo(messages.last)
                                 }
-                            }.onAppear {
+                            }
+                            .onChange(of: self.aiIsTyping) {
+                                //if self.aiIsTyping {
+                                //    proxy.scrollTo(self.chatUUID)
+                                //}
+                            }
+                            .onChange(of: self.messageBoxTapped) {
+                                withAnimation {
+                                    proxy.scrollTo(messages.last)
+                                }
+                            }
+                            /*.onReceive(Just(messages)) { _ in
+                                withAnimation {
+                                    proxy.scrollTo(messages.last)
+                                }
+                            }
+                            .onReceive(Just(self.aiIsTyping)) { _ in
+                                if self.aiIsTyping {
+                                    proxy.scrollTo(self.chatUUID)
+                                } else {
+                                    proxy.scrollTo(messages.last)
+                                }
+                            }*/
+                            .onAppear {
                                 withAnimation {
                                     proxy.scrollTo(messages.last, anchor: .bottom)
                                 }
@@ -1123,6 +1185,7 @@ struct TopNavHome: View {
                 .ignoresSafeArea(.keyboard, edges: .bottom)
                 .onTapGesture {
                     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    self.messageBoxTapped = false
                 }
                 
                 Spacer()
@@ -1224,6 +1287,11 @@ struct TopNavHome: View {
                             )
                             .overlay(
                                 HStack {
+                                    GeometryReader { geometry in
+                                        Color.clear
+                                            .preference(key: ViewPositionKey.self, value: geometry.frame(in: .global).minY)
+                                    }.frame(width: 0, height: 0)
+                                    
                                     /* MARK: Exists to push the `x` button to the end of the textfield. */
                                     VStack { }.frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                                     
@@ -1247,10 +1315,19 @@ struct TopNavHome: View {
                     .frame(maxWidth: .infinity)
                     .padding(.trailing, !self.hideLeftsideContent ? 15 : 0)
                     .padding(.leading, !self.hideLeftsideContent ? 0 : 10)
+                    .onPreferenceChange(ViewPositionKey.self) { value in
+                        if value < self.currentYPosOfMessageBox {
+                            self.messageBoxTapped = true
+                        }
+                        
+                        self.currentYPosOfMessageBox = value
+                    }
                     
                     if self.hideLeftsideContent {
                         VStack {
                             Button(action: {
+                                self.aiIsTyping = true
+                                
                                 self.messages.append(MessageDetails(
                                         MessageID: UUID(),
                                         MessageContent: self.messageInput,
@@ -1260,14 +1337,16 @@ struct TopNavHome: View {
                                 RequestAction<SendAIChatMessageData>(
                                     parameters: SendAIChatMessageData(AccountId: self.accountInfo.accountID, Message: self.messageInput)
                                 ).perform(action: send_ai_chat_message_req) { statusCode, resp in
+                                    self.aiIsTyping = false
+                                    
                                     guard resp != nil && statusCode == 200 else {
                                         return
                                     }
                                     
                                     self.messages.append(MessageDetails(
-                                            MessageID: UUID(),
-                                            MessageContent: resp!["AIResponse"] as! String,
-                                            userSent: false
+                                        MessageID: UUID(),
+                                        MessageContent: resp!["AIResponse"] as! String,
+                                        userSent: false
                                     ))
                                 }
                                 

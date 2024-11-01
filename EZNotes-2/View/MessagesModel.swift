@@ -15,6 +15,8 @@ struct MessageDetails: Hashable {
 struct MessageView: View {
     var message: MessageDetails
     
+    @Binding public var aiIsTyping: Bool
+    
     var body: some View {
         VStack {
             if !message.userSent {
