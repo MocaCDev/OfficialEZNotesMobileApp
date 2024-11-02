@@ -357,6 +357,10 @@ struct RequestAction<T> {
                 guard let params: GetCustomMajorsRequestData = (parameters as? GetCustomMajorsRequestData) else { return }
                 request.addValue(params.CMajorField, forHTTPHeaderField: "CMajor-Field")
                 break
+            case is GetCustomTopicsData.Type:
+                guard let params: GetCustomTopicsData = (parameters as? GetCustomTopicsData) else { return }
+                request.addValue(params.Major, forHTTPHeaderField: "Major")
+                break
             default: break
         }
         

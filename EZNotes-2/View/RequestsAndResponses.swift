@@ -113,6 +113,10 @@ struct GetCustomMajorsRequestData {
     let CMajorField: String /* MARK: `CMajorField` stands for Custom Major Field. This is if the user puts in a custom field for their major. */
 }
 
+struct GetCustomTopicsData {
+    let Major: String
+}
+
 /* MARK: All request actions. */
 struct CSIARequest<T> {
     let url: String
@@ -202,4 +206,10 @@ let get_custom_majors_req: CSIARequest = CSIARequest(
     url: "\(server)/generate_majors_for_custom_major_field",
     method: "get",
     reqData: GetCustomMajorsRequestData.self
+)
+
+let get_custom_topics_req: CSIARequest = CSIARequest(
+    url: "\(server)/generate_topics",
+    method: "get",
+    reqData: GetCustomTopicsData.self
 )

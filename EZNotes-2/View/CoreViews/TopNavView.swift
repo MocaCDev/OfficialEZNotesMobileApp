@@ -45,7 +45,8 @@ struct AccountPopup: View {
     @State private var updateUsername: Bool = false
     @State private var pfpUploadStatus: String = "none"
     @State private var errorUploadingPFP: Bool = false
-    @State private var showPrivacyPolicy: Bool = false
+    @State private var showPrivacyAndPolicy: Bool = false
+    @State private var showTermsAndConditions: Bool = false
     @State private var changingProfilePic: Bool = false
     
     var body: some View {
@@ -555,7 +556,7 @@ struct AccountPopup: View {
                                 .fontWeight(.bold)
                             
                             VStack {
-                                Button(action: { self.showPrivacyPolicy = true }) {
+                                Button(action: { self.showPrivacyAndPolicy = true }) {
                                     HStack {
                                         Text("Privacy & Policy")
                                             .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
@@ -575,12 +576,16 @@ struct AccountPopup: View {
                                     .frame(maxWidth: .infinity, maxHeight: 40)
                                 }
                                 .buttonStyle(NoLongPressButtonStyle())
+                                .popover(isPresented: $showPrivacyAndPolicy) {
+                                    WebView(url: URL(string: "https://www.eznotes.space/privacy_policy")!)
+                                        .navigationBarTitle("Privacy Policy", displayMode: .inline)
+                                }
                                 
                                 Divider()
                                     .frame(width: prop.size.width - 80)
                                     .overlay(.black)
                                 
-                                Button(action: { print("Show terms & conditions") }) {
+                                Button(action: { self.showTermsAndConditions = true }) {
                                     HStack {
                                         Text("Terms & Conditions")
                                             .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
@@ -600,6 +605,10 @@ struct AccountPopup: View {
                                     .frame(maxWidth: .infinity, maxHeight: 40)
                                 }
                                 .buttonStyle(NoLongPressButtonStyle())
+                                .popover(isPresented: $showTermsAndConditions) {
+                                    WebView(url: URL(string: "https://www.eznotes.space/terms_and_conditions")!)
+                                        .navigationBarTitle("Terms & Conditions", displayMode: .inline)
+                                }
                             }
                             .frame(maxWidth: prop.size.width - 50)
                             .padding([.top, .bottom], 8)
@@ -609,10 +618,6 @@ struct AccountPopup: View {
                                     .fill(Color.EZNotesLightBlack)
                             )
                             .cornerRadius(15)
-                            .popover(isPresented: $showPrivacyPolicy) {
-                                WebView(url: URL(string: "https://www.eznotes.space/privacy_policy")!)
-                                    .navigationBarTitle("Privacy Policy", displayMode: .inline)
-                            }
                             
                             /* MARK: More details will show the user their account ID, session ID etc. */
                             Text("Additional")
@@ -845,6 +850,7 @@ struct TopNavHome: View {
     @State private var currentYPosOfMessageBox: CGFloat = 0
     @State private var chatIsLive: Bool = false
     @State private var creatingNewChat: Bool = false
+    @State private var errorGeneratingTopicsForMajor: Bool = false
     
     @Binding public var messages: Array<MessageDetails>
     @Binding public var lookedUpCategoriesAndSets: [String: Array<String>]
@@ -1024,56 +1030,68 @@ struct TopNavHome: View {
                 .frame(maxWidth: prop.size.width - 40, maxHeight: 50, alignment: .top)
                 .border(width: 0.5, edges: [.bottom], color: .gray)
                 
-                HStack {
-                    Button(action: { print("Start new chat") }) {
-                        HStack {
-                            Image(systemName: "plus")
-                                .resizable()
-                                .frame(width: 15, height: 15, alignment: .leading)
-                                .foregroundStyle(.white)
-                            
-                            Text("New Chat")
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 20))
-                                .minimumScaleFactor(0.5)
-                                .fontWeight(.medium)
-                            
-                            ZStack { }.frame(maxWidth: 15, alignment: .trailing)
+                if !self.errorGeneratingTopicsForMajor {
+                    HStack {
+                        Button(action: {
+                            RequestAction<GetCustomTopicsData>(parameters: GetCustomTopicsData(Major: self.accountInfo.major))
+                                .perform(action: get_custom_topics_req) { statusCode, resp in
+                                    guard resp != nil && statusCode == 200 else {
+                                        self.errorGeneratingTopicsForMajor = true
+                                        return
+                                    }
+                                    
+                                    print(resp!)
+                                }
+                        }) {
+                            HStack {
+                                Image(systemName: "plus")
+                                    .resizable()
+                                    .frame(width: 15, height: 15, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                
+                                Text("New Chat")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 20))
+                                    .minimumScaleFactor(0.5)
+                                    .fontWeight(.medium)
+                                
+                                ZStack { }.frame(maxWidth: 15, alignment: .trailing)
+                            }
+                            .padding([.top, .bottom], 8)
+                            .padding([.leading, .trailing], 10)
+                            .background(Color.EZNotesLightBlack.shadow(color: .black, radius: 2.5))
+                            .cornerRadius(15)
                         }
-                        .padding([.top, .bottom], 8)
-                        .padding([.leading, .trailing], 10)
-                        .background(Color.EZNotesLightBlack.shadow(color: .black, radius: 2.5))
-                        .cornerRadius(15)
-                    }
-                    .buttonStyle(NoLongPressButtonStyle())
-                    .padding([.top, .bottom])
-                    
-                    Button(action: { print("Delete All Chats") }) {
-                        HStack {
-                            Image(systemName: "trash")
-                                .resizable()
-                                .frame(width: 15, height: 15, alignment: .leading)
-                                .foregroundStyle(.white)
-                            
-                            Text("Delete All")
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 20))
-                                .minimumScaleFactor(0.5)
-                                .fontWeight(.medium)
-                            
-                            ZStack { }.frame(maxWidth: 15, alignment: .trailing)
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .padding([.top, .bottom])
+                        
+                        Button(action: { print("Delete All Chats") }) {
+                            HStack {
+                                Image(systemName: "trash")
+                                    .resizable()
+                                    .frame(width: 15, height: 15, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                
+                                Text("Delete All")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 20))
+                                    .minimumScaleFactor(0.5)
+                                    .fontWeight(.medium)
+                                
+                                ZStack { }.frame(maxWidth: 15, alignment: .trailing)
+                            }
+                            .padding([.top, .bottom], 8)
+                            .padding([.leading, .trailing], 10)
+                            .background(Color.EZNotesRed.shadow(color: .black, radius: 2.5))
+                            .cornerRadius(15)
                         }
-                        .padding([.top, .bottom], 8)
-                        .padding([.leading, .trailing], 10)
-                        .background(Color.EZNotesRed.shadow(color: .black, radius: 2.5))
-                        .cornerRadius(15)
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .padding([.top, .bottom])
                     }
-                    .buttonStyle(NoLongPressButtonStyle())
-                    .padding([.top, .bottom])
+                    .frame(maxWidth: prop.size.width - 40)
                 }
-                .frame(maxWidth: prop.size.width - 40)
                 
                 if self.chatIsLive {
                     ZStack {
@@ -1484,15 +1502,60 @@ struct TopNavHome: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: 5)
                 } else {
-                    VStack {
-                        Text("No Chat History")
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                            .foregroundStyle(.white)
-                            .font(.system(size: 25, design: .rounded))
-                            .minimumScaleFactor(0.5)
-                            .fontWeight(.medium)
+                    if !self.errorGeneratingTopicsForMajor {
+                        VStack {
+                            Text("No Chat History")
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                .foregroundStyle(.white)
+                                .font(.system(size: 25, design: .rounded))
+                                .minimumScaleFactor(0.5)
+                                .fontWeight(.medium)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    } else {
+                        VStack {
+                            Image(systemName: "exclamationmark.warninglight.fill")
+                                .resizable()
+                                .frame(width: 65, height: 60)
+                                .padding([.top, .bottom], 15)
+                                .foregroundStyle(Color.EZNotesRed)
+                            
+                            Text("Error generating topics for \(self.accountInfo.major)")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .foregroundStyle(.white)
+                                .font(.system(size: 25, design: .rounded))
+                                .minimumScaleFactor(0.5)
+                                .fontWeight(.medium)
+                            
+                            Button(action: {
+                                self.errorGeneratingTopicsForMajor = false
+                                
+                                /* MARK: Precautionary measure. */
+                                if self.chatIsLive { self.chatIsLive = false }
+                            }) {
+                                Text("Go Back")
+                                    .frame(
+                                        width: prop.isIpad
+                                        ? UIDevice.current.orientation.isLandscape
+                                        ? prop.size.width - 800
+                                        : prop.size.width - 450
+                                        : prop.size.width - 90,
+                                        height: 10
+                                    )
+                                    .padding([.top, .bottom])
+                                    .font(.system(size: 25, design: .rounded))
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.white)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.EZNotesLightBlack)
+                            )
+                        }
+                        .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .top)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
