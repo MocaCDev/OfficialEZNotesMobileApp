@@ -69,13 +69,13 @@ struct HomeScreen: View {
     
     var body: some View {
         VStack {
-            if self.userNotFound {
+            if !self.userNotFound {
                 HStack {
                     ZStack { }.frame(maxWidth: 30, alignment: .leading)
                     
                     Text("Error: User Not Found.")
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                        .padding(.top, 25)
+                        .padding(.top, 45)
                         .foregroundStyle(.white)
                         .font(.system(size: 20))
                         .minimumScaleFactor(0.5)
@@ -83,7 +83,7 @@ struct HomeScreen: View {
                     
                     ZStack { }.frame(maxWidth: 30, alignment: .trailing)
                 }
-                .frame(maxWidth: .infinity, maxHeight: 80)
+                .frame(maxWidth: .infinity, maxHeight: 90)
                 .background(Color.EZNotesRed.opacity(0.85))
             }
             
@@ -93,7 +93,12 @@ struct HomeScreen: View {
                     .logoImageModifier(prop: prop)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .padding(.top, prop.size.height / 2.5 > 300 ? 50 : 0)
+            .padding(
+                .top,
+                prop.size.height / 2.5 > 300
+                    ? !self.userNotFound ? -15 : 50
+                    : 0
+            )
             
             /*VStack {
                 Image("Logo")
@@ -224,6 +229,9 @@ struct HomeScreen: View {
             .opacity(0.5)
         )
         .edgesIgnoringSafeArea([.top, .bottom])
+        .onAppear {
+            print(UIDevice.current.localizedModel)
+        }
     }
 }
 

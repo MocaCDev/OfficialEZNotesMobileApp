@@ -1132,7 +1132,7 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity, maxHeight: 30, alignment: .bottom)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .edgesIgnoringSafeArea(.top)
+            //.edgesIgnoringSafeArea(.top)
             .background(
                 LinearGradient(
                     gradient: Gradient(

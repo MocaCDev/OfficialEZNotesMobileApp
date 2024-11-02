@@ -863,7 +863,7 @@ struct TopNavHome: View {
                 ProfileIconView(prop: prop, accountInfo: accountInfo, showAccountPopup: $showAccountPopup)
             }
             .frame(maxWidth: 90,  alignment: .leading)
-            .padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15) /* MARK: Aligns icon for larger screens. */
+            .padding(.bottom, 10)//.padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15) /* MARK: Aligns icon for larger screens. */
             //.padding(.bottom, prop.size.height / 2.5 > 300 ? 0 : 10) /* MARK: Aligns icon for smaller screens. */
             .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
             
@@ -996,11 +996,11 @@ struct TopNavHome: View {
                 .buttonStyle(NoLongPressButtonStyle())
             }
             .frame(maxWidth: 90, maxHeight: .infinity, alignment: .trailing)
-            .padding(.top, prop.size.height / 2.5 > 300 ? 40 : 0)
-            //.padding(.bottom, 10)
+            //.padding(.top, prop.size.height / 2.5 > 300 ? 40 : 0)
+            .padding(.bottom, 10)
         }
-        .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 115 : 65, alignment: .top)
-        .padding(.top, 5)
+        .topNavSettings(prop: prop, backgroundColor: .clear)
+        .padding([.top], 5)
         .background(
             !self.changeNavbarColor
                 ? AnyView(Color.clear)
@@ -1030,6 +1030,7 @@ struct TopNavHome: View {
                             Image(systemName: "plus")
                                 .resizable()
                                 .frame(width: 15, height: 15, alignment: .leading)
+                                .foregroundStyle(.white)
                             
                             Text("New Chat")
                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -1037,6 +1038,8 @@ struct TopNavHome: View {
                                 .font(.system(size: 20))
                                 .minimumScaleFactor(0.5)
                                 .fontWeight(.medium)
+                            
+                            ZStack { }.frame(maxWidth: 15, alignment: .trailing)
                         }
                         .padding([.top, .bottom], 8)
                         .padding([.leading, .trailing], 10)
@@ -1051,6 +1054,7 @@ struct TopNavHome: View {
                             Image(systemName: "trash")
                                 .resizable()
                                 .frame(width: 15, height: 15, alignment: .leading)
+                                .foregroundStyle(.white)
                             
                             Text("Delete All")
                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -1058,6 +1062,8 @@ struct TopNavHome: View {
                                 .font(.system(size: 20))
                                 .minimumScaleFactor(0.5)
                                 .fontWeight(.medium)
+                            
+                            ZStack { }.frame(maxWidth: 15, alignment: .trailing)
                         }
                         .padding([.top, .bottom], 8)
                         .padding([.leading, .trailing], 10)

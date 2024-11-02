@@ -9,8 +9,8 @@ import SwiftUI
 
 /* MARK: URLs used for requests. */
 //let server = "https://www.eznotes.space"
-//let server = "http://192.168.1.114:8088"
-let server = "http://192.168.0.11:8088"//"http://192.168.1.114:8088"
+let server = "http://192.168.1.114:8088"
+//let server = "http://192.168.0.11:8088"//"http://192.168.1.114:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
