@@ -84,7 +84,7 @@ class FrameHandler: NSObject, ObservableObject {
             devicesNames.append(device.localizedName)
         }
         
-        print(devicesNames)
+        print("DEVICES: \(devicesNames)")
         
         var videoDevice: AVCaptureDevice! = nil
         

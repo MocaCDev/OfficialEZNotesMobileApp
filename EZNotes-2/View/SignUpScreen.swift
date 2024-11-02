@@ -81,6 +81,31 @@ struct SignUpScreen : View, KeyboardReadable {
         "pro_annual_plan": "Annual Pro Plan"
     ]
     
+    let states = [
+        "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+        "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
+        "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
+        "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
+        "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+        "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
+        "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
+        "Wisconsin", "Wyoming"
+    ]
+    
+    @State private var loadingCollegeInfoSection: Bool = false
+    @State private var colleges: Array<String> = []
+    @State private var majorFields: Array<String> = []
+    @State private var majorField: String = ""
+    @State private var majorFieldIsOther: Bool = false
+    @State private var majorIsOther: Bool = false
+    @State private var collegeIsOther: Bool = false
+    @State private var otherCollege: String = ""
+    @State private var otherMajorField: String = ""
+    @State private var otherMajor: String = ""
+    @FocusState private var otherMajorFieldFocus: Bool
+    @State private var showCheckMajorFieldAlert: Bool = false
+    @State private var majors: Array<String> = []
+    
     private func payForSubscription(_ paymentMethodId: String, comp: @escaping (String, String?) -> Void) {
         guard let url = URL(string: server)?.appendingPathComponent("/create-stripe-checkout-mobile") else {
             print("Failed")
@@ -192,8 +217,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                 size: prop.isIpad
                                     ? 90
                                     : self.isLargerScreen
-                                        ? 40
-                                        : 30
+                                        ? 35
+                                        : 25
                             )
                         )
                         .fontWeight(.bold)
@@ -371,144 +396,311 @@ struct SignUpScreen : View, KeyboardReadable {
                                 .autocapitalization(.none)
                                 .disableAutocorrection(true)
                         } else if self.section == "select_state_and_college" {
-                            Text("State")
-                                .frame(
-                                    width: prop.isIpad
-                                        ? prop.size.width - 450
-                                        : prop.size.width - 100,
-                                    height: 5,
-                                    alignment: .leading
-                                )
-                                .padding(.top, 15)
-                                .padding([.top], 10)
-                                .font(.system(size: self.isLargerScreen ? 25 : 20))
-                                .foregroundStyle(.white)
-                                .fontWeight(.medium)
+                            HStack {
+                                Text("State")
+                                /*.frame(
+                                 width: prop.isIpad
+                                 ? prop.size.width - 450
+                                 : prop.size.width - 100,
+                                 height: 5,
+                                 alignment: .leading
+                                 )*/
+                                    .frame(alignment: .leading)
+                                    .padding(.top, 25)
+                                    .font(.system(size: self.isLargerScreen ? 20 : 15))
+                                    .foregroundStyle(.white)
+                                    .fontWeight(.medium)
+                                
+                                Picker("States", selection: $state) {
+                                    ForEach(states, id: \.self) { state in
+                                        Text(state)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .padding(.top, 25)
+                                .padding(.leading, 15)
+                                .tint(Color.EZNotesBlue)
+                                //.padding(.trailing, 15)
+                                .onChange(of: self.state) {
+                                    RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(State: self.state))
+                                        .perform(action: get_colleges) { statusCode, resp in
+                                            guard
+                                                resp != nil,
+                                                resp!.keys.contains("Colleges"),
+                                                statusCode == 200
+                                            else {
+                                                self.serverError = true
+                                                return
+                                            }
+                                            
+                                            self.colleges = resp!["Colleges"] as! [String]
+                                        }
+                                }
+                            }
+                            .frame(maxWidth: prop.size.width - 100)
                             
-                            TextField(
-                                "State name...",
-                                text: $state,
-                                onEditingChanged: set_image_opacity
-                            )
-                            .frame(
-                                width: prop.isIpad
-                                    ? UIDevice.current.orientation.isLandscape
-                                        ? prop.size.width - 800
-                                        : prop.size.width - 450
-                                    : prop.size.width - 100,
-                                height: self.isLargerScreen ? 40 : 30
-                            )
-                            .padding([.leading], 15)
-                            .background(
-                                Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                    .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                    .border(
-                                        width: 1,
-                                        edges: [.bottom],
-                                        lcolor: !self.makeContentRed
-                                            ? self.borderBottomColor
-                                            : self.state == "" ? self.borderBottomColorError : self.borderBottomColor
+                            if self.colleges.count > 0 {
+                                HStack {
+                                    Text("College")
+                                    /*.frame(
+                                     width: prop.isIpad
+                                     ? prop.size.width - 450
+                                     : prop.size.width - 100,
+                                     height: 5,
+                                     alignment: .leading
+                                     )*/
+                                        .frame(alignment: .leading)
+                                        .font(.system(size: self.isLargerScreen ? 20 : 15))
+                                        .foregroundStyle(.white)
+                                        .fontWeight(.medium)
+                                    
+                                    Picker("College", selection: $college) {
+                                        ForEach(colleges, id: \.self) { c in
+                                            Text(c)
+                                                .id(UUID())
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                    .padding(.leading, 15)
+                                    .tint(Color.EZNotesBlue)
+                                    .minimumScaleFactor(0.5)
+                                    //.padding(.trailing, 15)
+                                    .onChange(of: self.college) {
+                                        if self.college == "Other" { self.collegeIsOther = true }
+                                        else {
+                                            if self.collegeIsOther { self.collegeIsOther = false }
+                                            if self.majorFields.count == 0 {
+                                                RequestAction<ReqPlaceholder>(parameters: ReqPlaceholder())
+                                                    .perform(action: get_major_fields_req) { statusCode, resp in
+                                                        self.loadingCollegeInfoSection = false
+                                                        
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            self.serverError = true
+                                                            return
+                                                        }
+                                                        
+                                                        self.majorFields = resp!["Categories"] as! [String]
+                                                        self.majorFields.append("Other")
+                                                        self.majorField = self.majorFields[0]
+                                                    }
+                                            }
+                                        }
+                                    }
+                                }
+                                .frame(maxWidth: prop.size.width - 100)
+                                .padding()
+                                .padding(.bottom, self.college.count >= 22 ? 10 : 0)
+                            }
+                            
+                            if self.collegeIsOther {
+                                TextField("Other...", text: $otherCollege)
+                                    .frame(
+                                        width: prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                                ? prop.size.width - 800
+                                                : prop.size.width - 450
+                                            : prop.size.width - 100,
+                                        height: self.isLargerScreen ? 40 : 30
                                     )
-                            )
-                            .foregroundStyle(Color.EZNotesBlue)
-                            .padding(self.isLargerScreen ? 10 : 8)
-                            .tint(Color.EZNotesBlue)
-                            .font(.system(size: 18))
-                            .fontWeight(.medium)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                            
-                            Text("College Being Attended")
-                                .frame(
-                                    width: prop.isIpad
-                                        ? prop.size.width - 450
-                                        : prop.size.width - 100,
-                                    height: 5,
-                                    alignment: .leading
-                                )
-                                .padding(.top, 15)
-                                .font(.system(size: self.isLargerScreen ? 25 : 20))
-                                .foregroundStyle(.white)
-                                .fontWeight(.medium)
-                            
-                            TextField(
-                                "College name...",
-                                text: $college,
-                                onEditingChanged: set_image_opacity
-                            )
-                            .frame(
-                                width: prop.isIpad
-                                    ? UIDevice.current.orientation.isLandscape
-                                        ? prop.size.width - 800
-                                        : prop.size.width - 450
-                                    : prop.size.width - 100,
-                                height: self.isLargerScreen ? 40 : 30
-                            )
-                            .padding([.leading], 15)
-                            .background(
-                                Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                    .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                    .border(
-                                        width: 1,
-                                        edges: [.bottom],
-                                        lcolor: !self.makeContentRed
-                                            ? self.borderBottomColor
-                                            : self.college == "" ? self.borderBottomColorError : self.borderBottomColor
+                                    .padding([.leading], 15)
+                                    .background(
+                                        Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                            .fill(.clear)
+                                            .border(
+                                                width: 1,
+                                                edges: [.bottom],
+                                                lcolor: !self.makeContentRed
+                                                ? self.userExists ? self.borderBottomColorError : self.borderBottomColor
+                                                : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
+                                            )
                                     )
-                            )
-                            .foregroundStyle(Color.EZNotesBlue)
-                            .padding(self.isLargerScreen ? 10 : 8)
-                            .tint(Color.EZNotesBlue)
-                            .font(.system(size: 18))
-                            .fontWeight(.medium)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
+                                    .foregroundStyle(Color.EZNotesBlue)
+                                    .padding(self.isLargerScreen ? 10 : 8)
+                                    .tint(Color.EZNotesBlue)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.medium)
+                                    .autocapitalization(.none)
+                                    .disableAutocorrection(true)
+                                    .keyboardType(.alphabet)
+                            }
                             
-                            Text("Major")
-                                .frame(
-                                    width: prop.isIpad
-                                        ? prop.size.width - 450
+                            if self.majorFields.count > 0 {
+                                HStack {
+                                    Text("Field")
+                                        .frame(alignment: .leading)
+                                        .font(.system(size: self.isLargerScreen ? 20 : 15))
+                                        .foregroundStyle(.white)
+                                        .fontWeight(.medium)
+                                    
+                                    Picker("Fields", selection: $majorField) {
+                                        ForEach(majorFields, id: \.self) { f in
+                                            Text(f)
+                                                .id(UUID())
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                    .tint(Color.EZNotesBlue)
+                                    .padding(.leading, 15)
+                                    .onChange(of: self.majorField) {
+                                        if self.majorField == "Other" { self.majorFieldIsOther = true }
+                                        else {
+                                            if self.majorFieldIsOther { self.majorFieldIsOther = false }
+                                            if self.majors.count == 0 {
+                                                RequestAction<GetMajorsRequestData>(parameters: GetMajorsRequestData(MajorField: self.majorField))
+                                                    .perform(action: get_majors_req) { statusCode, resp in
+                                                        self.loadingCollegeInfoSection = false
+                                                        
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            self.serverError = true
+                                                            return
+                                                        }
+                                                        
+                                                        self.majors = resp!["Majors"] as! [String]
+                                                        self.majors.append("Other")
+                                                        self.major = self.majors[0]
+                                                    }
+                                            }
+                                        }
+                                    }
+                                }
+                                .frame(maxWidth: prop.size.width - 100)
+                            }
+                            
+                            if self.majorFieldIsOther {
+                                TextField("Other...", text: $otherMajorField)
+                                    .frame(
+                                        width: prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                                ? prop.size.width - 800
+                                                : prop.size.width - 450
                                         : prop.size.width - 100,
-                                    height: 5,
-                                    alignment: .leading
-                                )
-                                .padding(.top, 15)
-                                .font(.system(size: self.isLargerScreen ? 25 : 20))
-                                .foregroundStyle(.white)
-                                .fontWeight(.medium)
-                            
-                            TextField(
-                                "Major...",
-                                text: $major,
-                                onEditingChanged: set_image_opacity
-                            )
-                            .frame(
-                                width: prop.isIpad
-                                    ? UIDevice.current.orientation.isLandscape
-                                        ? prop.size.width - 800
-                                        : prop.size.width - 450
-                                    : prop.size.width - 100,
-                                height: self.isLargerScreen ? 40 : 30
-                            )
-                            .padding([.leading], 15)
-                            .background(
-                                Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                    .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                    .border(
-                                        width: 1,
-                                        edges: [.bottom],
-                                        lcolor: !self.makeContentRed
-                                            ? self.borderBottomColor
-                                            : self.major == "" ? self.borderBottomColorError : self.borderBottomColor
+                                        height: self.isLargerScreen ? 40 : 30
                                     )
-                            )
-                            .foregroundStyle(Color.EZNotesBlue)
-                            .padding(self.isLargerScreen ? 10 : 8)
-                            .tint(Color.EZNotesBlue)
-                            .font(.system(size: 18))
-                            .fontWeight(.medium)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
+                                    .padding([.leading], 15)
+                                    .background(
+                                        Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                            .fill(.clear)
+                                            .border(
+                                                width: 1,
+                                                edges: [.bottom],
+                                                lcolor: !self.makeContentRed
+                                                ? self.userExists ? self.borderBottomColorError : self.borderBottomColor
+                                                : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
+                                            )
+                                    )
+                                    .foregroundStyle(Color.EZNotesBlue)
+                                    .padding(self.isLargerScreen ? 10 : 8)
+                                    .tint(Color.EZNotesBlue)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.medium)
+                                    .autocapitalization(.none)
+                                    .disableAutocorrection(true)
+                                    .keyboardType(.alphabet)
+                                    .focused($otherMajorFieldFocus)
+                                    .onChange(of: self.otherMajorFieldFocus) {
+                                        if !self.otherMajorFieldFocus {
+                                            /* MARK: We will assume editing is done. */
+                                            self.showCheckMajorFieldAlert = true
+                                        }
+                                    }
+                                    .alert("Do we have this right?", isPresented: $showCheckMajorFieldAlert) {
+                                        Button(action: {
+                                            RequestAction<GetCustomMajorsRequestData>(parameters: GetCustomMajorsRequestData(
+                                                CMajorField: self.otherMajorField
+                                            ))
+                                            .perform(action: get_custom_majors_req) { statusCode, resp in
+                                                guard
+                                                    resp != nil,
+                                                    statusCode == 200
+                                                else {
+                                                    self.serverError = true
+                                                    return
+                                                }
+                                                
+                                                guard resp!.keys.contains("Majors") else {
+                                                    self.serverError = true
+                                                    return
+                                                }
+                                                
+                                                self.majors = resp!["Majors"] as! [String]
+                                                self.majors.append("Other")
+                                                self.major = self.majors[0]
+                                                
+                                                self.otherMajorFieldFocus = false
+                                                self.majorFields.remove(at: self.majorFields.count - 1)
+                                                self.majorFields.append(self.otherMajorField)
+                                                self.majorFields.append("Other")
+                                                self.majorField = self.otherMajorField
+                                            }
+                                        }) {
+                                            Text("Yes")
+                                        }
+                                        
+                                        Button("Not correct", role: .cancel) {}
+                                    } message: {
+                                        Text("Is \(self.otherMajorField) the correct field?")
+                                    }
+                            }
+                            
+                            if self.majors.count > 0 {
+                                HStack {
+                                    Text("Major")
+                                        .frame(alignment: .leading)
+                                        .font(.system(size: self.isLargerScreen ? 20 : 15))
+                                        .foregroundStyle(.white)
+                                        .fontWeight(.medium)
+                                    
+                                    Picker("Majors", selection: $major) {
+                                        ForEach(majors, id: \.self) { m in
+                                            Text(m)
+                                                .id(UUID())
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                    .padding(.top, 5)
+                                    .tint(Color.EZNotesBlue)
+                                    .padding(.leading, 15)
+                                    .onChange(of: self.major) {
+                                        if self.major == "Other" { self.majorIsOther = true }
+                                        else {
+                                            if self.majorIsOther { self.majorIsOther = false }
+                                        }
+                                    }
+                                }
+                                .frame(maxWidth: prop.size.width - 100)
+                            }
+                            
+                            if self.majorIsOther {
+                                TextField("Other...", text: $otherMajor)
+                                    .frame(
+                                        width: prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                                ? prop.size.width - 800
+                                                : prop.size.width - 450
+                                        : prop.size.width - 100,
+                                        height: self.isLargerScreen ? 40 : 30
+                                    )
+                                    .padding([.leading], 15)
+                                    .background(
+                                        Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                            .fill(.clear)
+                                            .border(
+                                                width: 1,
+                                                edges: [.bottom],
+                                                lcolor: !self.makeContentRed
+                                                ? self.userExists ? self.borderBottomColorError : self.borderBottomColor
+                                                : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
+                                            )
+                                    )
+                                    .foregroundStyle(Color.EZNotesBlue)
+                                    .padding(self.isLargerScreen ? 10 : 8)
+                                    .tint(Color.EZNotesBlue)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.medium)
+                                    .autocapitalization(.none)
+                                    .disableAutocorrection(true)
+                                    .keyboardType(.alphabet)
+                            }
                         } else if self.section == "loading_code" {
                             VStack {
                                 Text("Registering your account...")
@@ -1365,7 +1557,9 @@ struct SignUpScreen : View, KeyboardReadable {
                                             Email: email,
                                             Password: password,
                                             College: college,
-                                            State: state
+                                            State: state,
+                                            Field: majorField,
+                                            Major: major
                                         )
                                     ).perform(action: complete_signup1_req) { statusCode, resp in
                                         guard resp != nil && statusCode == 200 else {
@@ -1412,6 +1606,10 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 UserInputtedCode: userInputedCode
                                             )
                                         ).perform(action: complete_signup2_req) { statusCode, resp in
+                                            if resp != nil {
+                                                print(resp!)
+                                            }
+                                            
                                             guard resp != nil && statusCode == 200 else {
                                                 self.wrongCode = true
                                                 return
@@ -1419,6 +1617,10 @@ struct SignUpScreen : View, KeyboardReadable {
                                             
                                             UserDefaults.standard.set(self.username, forKey: "username")
                                             UserDefaults.standard.set(self.email, forKey: "email")
+                                            UserDefaults.standard.set(self.majorField, forKey: "major_field")
+                                            UserDefaults.standard.set(self.major, forKey: "major_name")
+                                            UserDefaults.standard.set(self.state, forKey: "college_state")
+                                            UserDefaults.standard.set(self.college, forKey: "college_name")
                                             UserDefaults.standard.set("select_plan", forKey: "last_signup_section")
                                             
                                             if self.makeContentRed { self.makeContentRed = false }

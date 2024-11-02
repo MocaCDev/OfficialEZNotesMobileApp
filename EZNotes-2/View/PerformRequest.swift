@@ -157,7 +157,7 @@ struct PFP {
         }.resume()
     }
     
-    public func requestGetPFP(completion: @escaping (Int, Data?) -> Void) {
+    public func requestGetPFP(completion: @escaping (Int, Data?, [String: Any]?) -> Void) {
         var request = URLRequest(url: URL(string: "\(server)/get_user_pfp")!)
         
         request.addValue("yes", forHTTPHeaderField: "Fm")
@@ -168,15 +168,21 @@ struct PFP {
         URLSession.shared.dataTask(with: request) { data, response, error in
             guard
                 let response = response as? HTTPURLResponse,
-                200..<300~=response.statusCode,
                 let data = data,
                 let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
             else {
-                DispatchQueue.main.async { completion(500, nil) }
+                DispatchQueue.main.async { completion(500, nil, nil) }
                 return
             }
             
-            DispatchQueue.main.async { completion(response.statusCode, Data(base64Encoded: resp["PFP"] as! String)) }
+            guard
+                200..<300~=response.statusCode
+            else {
+                DispatchQueue.main.async { completion(response.statusCode, nil, resp) }
+                return
+            }
+            
+            DispatchQueue.main.async { completion(response.statusCode, Data(base64Encoded: resp["PFP"] as! String), resp) }
         }.resume()
     }
     
@@ -312,6 +318,8 @@ struct RequestAction<T> {
                 request.addValue(params.Email, forHTTPHeaderField: "N-Em")
                 request.addValue(params.State, forHTTPHeaderField: "N-St")
                 request.addValue(params.College, forHTTPHeaderField: "N-Cl")
+                request.addValue(params.College, forHTTPHeaderField: "N-Field")
+                request.addValue(params.College, forHTTPHeaderField: "N-Major")
                 request.addValue("", forHTTPHeaderField: "N-Bgimg")
                 request.addValue("", forHTTPHeaderField: "N-Cip")
                 break
@@ -336,6 +344,18 @@ struct RequestAction<T> {
             case is GenerateDescRequestData.Type:
                 guard let params: GenerateDescRequestData = (parameters as? GenerateDescRequestData) else { return }
                 request.addValue(params.Subject, forHTTPHeaderField: "Subject")
+                break
+            case is GetCollegesRequestData.Type:
+                guard let params: GetCollegesRequestData = (parameters as? GetCollegesRequestData) else { return }
+                request.addValue(params.State, forHTTPHeaderField: "State")
+                break
+            case is GetMajorsRequestData.Type:
+                guard let params: GetMajorsRequestData = (parameters as? GetMajorsRequestData) else { return }
+                request.addValue(params.MajorField, forHTTPHeaderField: "Major-Field")
+                break
+            case is GetCustomMajorsRequestData.Type:
+                guard let params: GetCustomMajorsRequestData = (parameters as? GetCustomMajorsRequestData) else { return }
+                request.addValue(params.CMajorField, forHTTPHeaderField: "CMajor-Field")
                 break
             default: break
         }

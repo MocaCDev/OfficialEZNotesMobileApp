@@ -8,8 +8,8 @@ import Foundation
 import SwiftUI
 
 /* MARK: URLs used for requests. */
-let server = "https://www.eznotes.space"
-//let server = "http://192.168.1.114:8088"
+//let server = "https://www.eznotes.space"
+let server = "http://192.168.1.114:8088"
 //let server = "http://192.168.0.11:8088"//"http://192.168.1.114:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
@@ -46,6 +46,8 @@ struct SignUpRequestData {
     let Password: String
     let College: String
     let State: String
+    let Field: String
+    let Major: String
 }
 
 struct SignUp2RequestData {
@@ -97,6 +99,18 @@ struct ImageUploadRequestResponse: Decodable {
 
 struct GenerateDescRequestData {
     let Subject: String
+}
+
+struct GetCollegesRequestData {
+    let State: String
+}
+
+struct GetMajorsRequestData {
+    let MajorField: String
+}
+
+struct GetCustomMajorsRequestData {
+    let CMajorField: String /* MARK: `CMajorField` stands for Custom Major Field. This is if the user puts in a custom field for their major. */
 }
 
 /* MARK: All request actions. */
@@ -164,4 +178,28 @@ let generate_desc_req: CSIARequest = CSIARequest(
     url: "\(server)/get_description_for_subject",
     method: "get",
     reqData: GenerateDescRequestData.self
+)
+
+let get_colleges: CSIARequest = CSIARequest(
+    url: "\(server)/get_colleges",
+    method: "get",
+    reqData: GetCollegesRequestData.self
+)
+
+let get_major_fields_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_major_categories",
+    method: "get",
+    reqData: ReqPlaceholder.self
+)
+
+let get_majors_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_majors",
+    method: "get",
+    reqData: GetMajorsRequestData.self
+)
+
+let get_custom_majors_req: CSIARequest = CSIARequest(
+    url: "\(server)/generate_majors_for_custom_major_field",
+    method: "get",
+    reqData: GetCustomMajorsRequestData.self
 )

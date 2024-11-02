@@ -47,6 +47,8 @@ class AccountDetails: ObservableObject {
     
     final public func setUsername(username: String) { self.username = username }
     final public func setEmail(email: String) { self.email = email }
+    final public func setCollegeName(collegeName: String) { self.college = collegeName }
+    final public func setMajorName(majorName: String) { self.major = majorName }
     final public func setAccountID(accountID: String) { self.accountID = accountID }
     final public func setClientSubID(subID: String) { self.subID = subID }
     final public func setAIChatID(chatID: String) { self.aiChatID = chatID }

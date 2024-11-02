@@ -81,6 +81,7 @@ struct ContentView: View {
     }
     
     @State public var userHasSignedIn: Bool = UserDefaults.standard.bool(forKey: "logged_in")
+    @State public var userNotFound: Bool = false
     @State private var goBackToLogin: Bool = false
     @StateObject private var model: FrameHandler = FrameHandler()
     
@@ -102,6 +103,7 @@ struct ContentView: View {
         if !userHasSignedIn {
             StartupScreen(
                 userHasSignedIn: $userHasSignedIn,
+                userNotFound: $userNotFound,
                 goBackToLogin: $goBackToLogin,
                 faceIDAuthenticated: $faceIDAuthenticated
             )
@@ -132,6 +134,7 @@ struct ContentView: View {
                     if self.goBackToLogin {
                         StartupScreen(
                             userHasSignedIn: $userHasSignedIn,
+                            userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,
                             faceIDAuthenticated: $faceIDAuthenticated
                         )
@@ -190,12 +193,34 @@ struct ContentView: View {
                     accountInfo.setEmail(email: UserDefaults.standard.string(forKey: "email")!)
                 }
                 
+                if UserDefaults.standard.object(forKey: "college_name") != nil {
+                    accountInfo.setCollegeName(collegeName: UserDefaults.standard.string(forKey: "college_name")!)
+                }
+                
+                if UserDefaults.standard.object(forKey: "major_name") != nil {
+                    accountInfo.setMajorName(majorName: UserDefaults.standard.string(forKey: "major_name")!)
+                }
+                
                 if UserDefaults.standard.object(forKey: "account_id") != nil {
                     accountInfo.setAccountID(accountID: UserDefaults.standard.string(forKey: "account_id")!)
                     
                     PFP(accountID: UserDefaults.standard.string(forKey: "account_id"))
-                        .requestGetPFP() { statusCode, pfp in
-                            guard pfp != nil && statusCode == 200 else { return }
+                        .requestGetPFP() { statusCode, pfp, resp in
+                            guard pfp != nil && statusCode == 200 else {
+                                guard resp != nil else { return }
+                                
+                                if resp!["ErrorCode"] as! Int == 0x6966 {
+                                    UserDefaults.standard.removeObject(forKey: "username")
+                                    UserDefaults.standard.removeObject(forKey: "email")
+                                    UserDefaults.standard.removeObject(forKey: "client_id")
+                                    UserDefaults.standard.removeObject(forKey: "account_id")
+                                    UserDefaults.standard.set(false, forKey: "logged_in")
+                                    self.userHasSignedIn = false
+                                    self.userNotFound = true
+                                }
+                                
+                                return
+                            }
                             
                             accountInfo.setProfilePicture(pfp: UIImage(data: pfp!)!)
                         }

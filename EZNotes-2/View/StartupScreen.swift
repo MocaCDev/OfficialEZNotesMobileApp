@@ -115,6 +115,7 @@ struct StartupScreen: View {
     @State public var screen: String = "home"
     
     @Binding public var userHasSignedIn: Bool
+    @Binding public var userNotFound: Bool
     @Binding public var goBackToLogin: Bool
     @Binding public var faceIDAuthenticated: Bool
     
@@ -331,8 +332,10 @@ struct StartupScreen: View {
                     HomeScreen(
                         prop: prop,
                         screen: $screen,
+                        userNotFound: $userNotFound,
                         startupScreen: StartupScreen(
                             userHasSignedIn: $userHasSignedIn,
+                            userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,
                             faceIDAuthenticated: $faceIDAuthenticated
                         )
@@ -342,6 +345,7 @@ struct StartupScreen: View {
                         prop: prop,
                         startupScreen: StartupScreen(
                             userHasSignedIn: $userHasSignedIn,
+                            userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,
                             faceIDAuthenticated: $faceIDAuthenticated
                         ),
@@ -355,6 +359,7 @@ struct StartupScreen: View {
                         prop: prop,
                         startupScreen: StartupScreen(
                             userHasSignedIn: $userHasSignedIn,
+                            userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,
                             faceIDAuthenticated: $faceIDAuthenticated
                         ),
@@ -365,8 +370,10 @@ struct StartupScreen: View {
                     HomeScreen(
                         prop: prop,
                         screen: $screen,
+                        userNotFound: $userNotFound,
                         startupScreen: StartupScreen(
                             userHasSignedIn: $userHasSignedIn,
+                            userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,
                             faceIDAuthenticated: $faceIDAuthenticated
                         )

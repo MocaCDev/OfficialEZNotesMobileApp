@@ -10,6 +10,7 @@ struct MessageDetails: Hashable {
     let MessageID: UUID
     let MessageContent: String
     let userSent: Bool
+    let dateSent: Date
 }
 
 struct MessageView: View {

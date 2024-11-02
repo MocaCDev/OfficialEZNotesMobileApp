@@ -41,7 +41,7 @@ private func obtainJSON<T: Decodable>(type: T.Type, filename: String) throws -> 
         
         return data
     } catch let error {
-        print(error)
+        print("ERROR: \(error)")
         throw error
     }
 }

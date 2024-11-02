@@ -61,11 +61,32 @@ struct SUILabel: UIViewRepresentable {
 
 struct HomeScreen: View {
     public var prop: Properties
+    
     @Binding public var screen: String
+    @Binding public var userNotFound: Bool
+    
     public var startupScreen: StartupScreen
     
     var body: some View {
         VStack {
+            if self.userNotFound {
+                HStack {
+                    ZStack { }.frame(maxWidth: 30, alignment: .leading)
+                    
+                    Text("Error: User Not Found.")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        .padding(.top, 25)
+                        .foregroundStyle(.white)
+                        .font(.system(size: 20))
+                        .minimumScaleFactor(0.5)
+                        .fontWeight(.semibold)
+                    
+                    ZStack { }.frame(maxWidth: 30, alignment: .trailing)
+                }
+                .frame(maxWidth: .infinity, maxHeight: 80)
+                .background(Color.EZNotesRed.opacity(0.85))
+            }
+            
             /* "Header" */
             VStack {
                 Image("Logo")
