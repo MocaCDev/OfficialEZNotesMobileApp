@@ -363,7 +363,7 @@ struct AccountPopup: View {
                                         .padding(.trailing, 25)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 40)
-                                    .padding(.bottom, 5)
+                                    .padding([.top, .bottom], 5)
                                 }
                                 .buttonStyle(NoLongPressButtonStyle())
                                 
@@ -388,7 +388,7 @@ struct AccountPopup: View {
                                         .padding(.trailing, 25)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 40)
-                                    .padding(.bottom, 5)
+                                    .padding([.top, .bottom], 5)
                                 }
                                 .buttonStyle(NoLongPressButtonStyle())
                                 
@@ -413,7 +413,7 @@ struct AccountPopup: View {
                                         .padding(.trailing, 25)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 40)
-                                    .padding(.bottom, 5)
+                                    .padding([.top, .bottom], 5)
                                 }
                                 .buttonStyle(NoLongPressButtonStyle())
                                 
@@ -438,7 +438,7 @@ struct AccountPopup: View {
                                         .padding(.trailing, 25)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 40)
-                                    .padding(.bottom, 5)
+                                    .padding(.top, 5)
                                 }
                                 .buttonStyle(NoLongPressButtonStyle())
                             }

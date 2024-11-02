@@ -35,8 +35,9 @@ struct UploadSection: View {
                 userHasSignedIn: $userHasSignedIn,
                 images_to_upload: images_to_upload,
                 prop: prop,
-                backgroundColor: Color.clear
+                backgroundColor: !(self.model.permissionGranted && self.model.cameraDeviceFound) ? Color.black : Color.clear
             )
+            .background(!(self.model.permissionGranted && self.model.cameraDeviceFound) ? Color.EZNotesBlack : Color.clear)
             
             if self.model.permissionGranted {
                 if !self.model.cameraDeviceFound {
@@ -94,8 +95,15 @@ struct UploadSection: View {
             } else {
                 VStack {
                     VStack {
+                        Image(systemName: "exclamationmark.warninglight.fill")
+                            .resizable()
+                            .frame(width: 65, height: 60)
+                            .padding([.top, .bottom], 15)
+                            .foregroundStyle(Color.EZNotesRed)
+                        
                         Text("Access to camera was denied.")
                             .frame(maxWidth: prop.size.width - 60, alignment: .center)
+                            .foregroundColor(.white)
                             .setFontSizeAndWeight(weight: .medium, size: 30)
                             .minimumScaleFactor(0.5)
                             .multilineTextAlignment(.center)
@@ -113,7 +121,7 @@ struct UploadSection: View {
             
             ButtomNavbar(
                 section: $section,
-                backgroundColor: Color.EZNotesLightBlack.opacity(0.85),
+                backgroundColor: !(self.model.permissionGranted && self.model.cameraDeviceFound) ? Color.EZNotesBlack : Color.EZNotesLightBlack.opacity(0.85),
                 prop: prop
             )
         }
@@ -143,7 +151,7 @@ struct UploadSection: View {
                     })
                 )
             )
-            : AnyView(Color.clear)
+            : AnyView(Color.EZNotesBlack)
         )
         .onAppear(perform: { self.model.permissionGranted = false })
     }
