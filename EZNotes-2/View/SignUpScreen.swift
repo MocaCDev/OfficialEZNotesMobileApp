@@ -45,6 +45,7 @@ struct SignUpScreen : View, KeyboardReadable {
     @State public var userInputedCode: String = ""
     @State public var wrongCode: Bool = false
     @State public var userExists: Bool = false
+    @State public var emailExists: Bool = false
     @State public var username: String = ""
     @State public var email: String = ""
     @State public var password: String = ""
@@ -227,17 +228,19 @@ struct SignUpScreen : View, KeyboardReadable {
                         self.wrongCode
                             ? "Wrong code. Try again"
                             : self.userExists
-                                ? "A user with the email and/or username you provided already exists"
-                                : self.section == "main"
-                                    ? "Sign up with a unique username, your email and a unique password"
-                                    : self.section == "select_state_and_college"
-                                        ? "Tell us about your college and your degree :)"
-                                        : self.section == "code_input"
-                                            ? "A code has been sent to your email. Input the code below"
-                                            : "Select a plan that best suits you"
+                                ? "A user with the username you provided already exists"
+                                : self.emailExists
+                                    ? "A user with the email you provided already exists"
+                                    : self.section == "main"
+                                        ? "Sign up with a unique username, your email and a unique password"
+                                        : self.section == "select_state_and_college"
+                                            ? "Tell us about your college and your degree :)"
+                                            : self.section == "code_input"
+                                                ? "A code has been sent to your email. Input the code below"
+                                                : "Select a plan that best suits you"
                     )
                     .frame(maxWidth: prop.size.width - 30, minHeight: 45, alignment: .center)
-                    .foregroundStyle(self.wrongCode || self.userExists ? Color.red : Color.white)
+                    .foregroundStyle(self.wrongCode || self.userExists || self.emailExists ? Color.red : Color.white)
                     .font(
                         .system(
                             size: prop.isIpad || self.isLargerScreen
@@ -1537,11 +1540,39 @@ struct SignUpScreen : View, KeyboardReadable {
                                     return
                                 }
                                 
-                                if self.userExists { self.userExists = false }
-                                if self.makeContentRed { self.makeContentRed = false }
-                                
-                                self.section = "select_state_and_college"
-                                UserDefaults.standard.set("select_state_and_college", forKey: "last_signup_section")
+                                RequestAction<CheckUsernameRequestData>(parameters: CheckUsernameRequestData(
+                                    Username: self.username
+                                ))
+                                .perform(action: check_username_req) { statusCode, resp in
+                                    guard resp != nil && statusCode == 200 else {
+                                        /* MARK: Stay in the "main" section. Just set `userExists` error to true and make content red. */
+                                        self.userExists = true
+                                        self.makeContentRed = true
+                                        return
+                                    }
+                                    
+                                    if self.userExists { self.userExists = false }
+                                    if self.makeContentRed { self.makeContentRed = false }
+                                    
+                                    RequestAction<CheckEmailRequestData>(parameters: CheckEmailRequestData(
+                                        Email: self.email
+                                    ))
+                                    .perform(action: check_email_req) { statusCode, resp in
+                                        guard resp != nil && statusCode == 200 else {
+                                            /* MARK: Stay in the "main" section. Just set `userExists` error to true and make content red. */
+                                            self.emailExists = true
+                                            self.makeContentRed = true
+                                            return
+                                        }
+                                        
+                                        if self.emailExists { self.emailExists = false }
+                                        if self.makeContentRed { self.makeContentRed = false }
+                                        
+                                        /* MARK: If this request is good (status returned is 200), proceed with the sign up process. */
+                                        self.section = "select_state_and_college"
+                                        UserDefaults.standard.set("select_state_and_college", forKey: "last_signup_section")
+                                    }
+                                }
                             } else {
                                 if self.section == "select_state_and_college" {
                                     if self.state == "" || self.college == "" || self.major == "" {

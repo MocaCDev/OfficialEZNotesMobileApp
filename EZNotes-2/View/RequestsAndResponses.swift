@@ -8,15 +8,22 @@ import Foundation
 import SwiftUI
 
 /* MARK: URLs used for requests. */
-let server = "https://www.eznotes.space"
-//let server = "http://192.168.1.109:8088"
-//let server = "http://192.168.0.11:8088"//"http://192.168.1.114:8088"
+//let server = "https://www.eznotes.space"
+let server = "http://192.168.0.9:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
  * to be sent to the endpoint.
  * */
 struct ReqPlaceholder {}
+
+struct CheckUsernameRequestData {
+    let Username: String
+}
+
+struct CheckEmailRequestData {
+    let Email: String
+}
 
 struct LoginRequestData {
     let Username: String
@@ -125,6 +132,18 @@ struct CSIARequest<T> {
     let method: String
     let reqData: T.Type
 }
+
+let check_username_req: CSIARequest = CSIARequest(
+    url: "\(server)/cu",
+    method: "get",
+    reqData: CheckUsernameRequestData.self
+)
+
+let check_email_req: CSIARequest = CSIARequest(
+    url: "\(server)/ce",
+    method: "get",
+    reqData: CheckEmailRequestData.self
+)
 
 let check_server_active_req: CSIARequest = CSIARequest(
     url: "\(server)/EZNotes_Software_Network_Test",

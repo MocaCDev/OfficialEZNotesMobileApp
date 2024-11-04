@@ -306,6 +306,14 @@ struct RequestAction<T> {
         
         switch(action.reqData.self)
         {
+            case is CheckUsernameRequestData.Type://"complete_login":
+                guard let params: CheckUsernameRequestData = (parameters as? CheckUsernameRequestData) else { return }
+                request.addValue(params.Username, forHTTPHeaderField: "Username");
+                break
+            case is CheckEmailRequestData.Type://"complete_login":
+                guard let params: CheckEmailRequestData = (parameters as? CheckEmailRequestData) else { return }
+                request.addValue(params.Email, forHTTPHeaderField: "Email");
+                break
             case is LoginRequestData.Type://"complete_login":
                 guard let params: LoginRequestData = (parameters as? LoginRequestData) else { return }
                 request.addValue(params.Username, forHTTPHeaderField: "Un");
