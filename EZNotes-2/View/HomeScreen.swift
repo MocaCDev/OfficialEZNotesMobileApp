@@ -76,7 +76,7 @@ struct HomeScreen: View {
                     
                     Text("Error: User Not Found.")
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                        .padding(.top, 45)
+                        .padding(.top, prop.size.height / 2.5 > 300 ? 45 : 10)
                         .foregroundStyle(.white)
                         .font(.system(size: 20))
                         .minimumScaleFactor(0.5)
@@ -84,7 +84,7 @@ struct HomeScreen: View {
                     
                     ZStack { }.frame(maxWidth: 30, alignment: .trailing)
                 }
-                .frame(maxWidth: .infinity, maxHeight: 90)
+                .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 90 : 60)
                 .background(Color.EZNotesRed.opacity(0.85))
             }
             
@@ -93,61 +93,67 @@ struct HomeScreen: View {
                 Image("Logo")
                     .logoImageModifier(prop: prop)
                 
-                MeshGradient(width: 3, height: 3, points: [
-                    .init(0, 0.3), .init(0.3, 0), .init(1, 0),
-                    .init(0.0, 0.3), .init(0, 0.5), .init(1, 0.3),
-                    .init(0, 1), .init(0.5, 1), .init(1, 1)
-                ], colors: [
-                    Color.EZNotesGreen, Color.EZNotesOrange, Color.EZNotesBlue,
-                    Color.EZNotesGreen, Color.EZNotesGreen, Color.EZNotesOrange,
-                    Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesBlue
-                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                    Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                    Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                ])
-                .frame(maxWidth: prop.size.width - 40, maxHeight: 300, alignment: .top)
-                .mask(
-                    VStack {
-                        Text("Hello, and Welcome")
-                        //.frame(maxWidth: prop.size.width - 40, alignment: .top)
-                            .contrast(10)
-                            .shadow(color: .white, radius: 2.5)
-                        //.frame(width: prop.isIpad ? 550 : 350, height: prop.isIpad ? 300 : 250)
-                        //.padding([.bottom], -80)
-                            .fontWeight(.heavy)
-                        /*.font(
-                         .system(
-                         size: prop.isIpad
-                         ? 105
-                         : prop.size.height / 2.5 > 300
-                         ? 65
-                         : 55
-                         )
-                         )*/
-                            .font(Font.custom("Poppins-ExtraLight", size: prop.isIpad
-                                              ? 105
-                                              : prop.size.height / 2.5 > 300
-                                              ? 65
-                                              : 55))
-                            .multilineTextAlignment(.center)
-                        
-                        Text("To Your New Note-Taking Bestfriend")
-                            .frame(maxWidth: prop.size.width - 80, alignment: .top)
-                            .font(Font.custom("Poppins-ExtraLight", size: 20))
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white)
-                            //.setFontSizeAndWeight(weight: .bold, size: 20)
-                            .minimumScaleFactor(0.5)
-                            .multilineTextAlignment(.center)
-                    }
+                if prop.size.height / 2.5 > 300 { Spacer() }
+                
+                ZStack {
+                    MeshGradient(width: 3, height: 3, points: [
+                        .init(0, 0.5), .init(0.5, 0), .init(1, 0),
+                        .init(0.0, 0.3), .init(0, 0.3), .init(1, 0.3),
+                        .init(0, 1), .init(0.5, 1), .init(1, 1)
+                    ], colors: [
+                        Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesBlue,
+                        Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                        Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesRed
+                        /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                         Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                         Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                    ])
+                    .frame(maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width - 40 : prop.size.width - 20, maxHeight: 350, alignment: .top)
+                    .mask(
+                        VStack {
+                            Text("No Pen, No Pencil")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .contrast(10)
+                                .shadow(color: .white, radius: 2.5)
+                                .fontWeight(.heavy)
+                                .font(Font.custom("Poppins-Regular", size: prop.isIpad
+                                                  ? 105
+                                                  : prop.size.height / 2.5 > 300
+                                                  ? 40
+                                                  : 30)
+                                )
+                                .multilineTextAlignment(.center)
+                            
+                            Text("Never miss a detail—your notes are taken, sorted, and ready automatically.")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .contrast(10)
+                                .shadow(color: .white, radius: 2.5)
+                                .fontWeight(.heavy)
+                                .font(Font.custom("Poppins-ExtraLight", size: prop.isIpad
+                                                  ? 105
+                                                  : prop.size.height / 2.5 > 300
+                                                  ? 18
+                                                  : 14)
+                                )
+                                .multilineTextAlignment(.center)
+                        }
+                    )
+                }
+                .frame(maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width - 40 : prop.size.width - 60, maxHeight: 260, alignment: .center)//(maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width - 40 : prop.size.width - 20, maxHeight: 320)
+                .background(
+                    Image("Test-Bg-3")
+                        .overlay(Color.EZNotesBlack.opacity(0.6))
+                        .blur(radius: 2.5)
                 )
+                
+                if prop.size.height / 2.5 > 300 { Spacer() }
             }
             .frame(maxWidth: .infinity, alignment: .top)
             .padding(
                 .top,
                 prop.size.height / 2.5 > 300
                     ? self.userNotFound ? -15 : 50
-                    : 0
+                    : self.userNotFound ? -45 : -30
             )
             
             Spacer()

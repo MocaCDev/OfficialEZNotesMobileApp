@@ -367,6 +367,10 @@ struct RequestAction<T> {
                 guard let params: GetCustomMajorsRequestData = (parameters as? GetCustomMajorsRequestData) else { return }
                 request.addValue(params.CMajorField, forHTTPHeaderField: "CMajor-Field")
                 break
+            case is GetCustomCollegeFieldsData.Type:
+                guard let params: GetCustomCollegeFieldsData = (parameters as? GetCustomCollegeFieldsData) else { return }
+                request.addValue(params.College, forHTTPHeaderField: "CCollege")
+                break
             case is GetCustomTopicsData.Type:
                 guard let params: GetCustomTopicsData = (parameters as? GetCustomTopicsData) else { return }
                 request.addValue(params.Major, forHTTPHeaderField: "Major")

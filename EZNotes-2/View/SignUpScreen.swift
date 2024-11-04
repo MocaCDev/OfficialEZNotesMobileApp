@@ -51,7 +51,6 @@ struct SignUpScreen : View, KeyboardReadable {
     @State public var password: String = ""
     @State public var college: String = ""
     @State public var major: String = ""
-    @State public var state: String = ""
     @State public var section: String = "main"
     @State public var makeContentRed: Bool = false
     
@@ -93,6 +92,7 @@ struct SignUpScreen : View, KeyboardReadable {
         "Wisconsin", "Wyoming"
     ]
     
+    @State public var state: String = "Ohio"
     @State private var loadingCollegeInfoSection: Bool = false
     @State private var colleges: Array<String> = []
     @State private var majorFields: Array<String> = []
@@ -104,6 +104,8 @@ struct SignUpScreen : View, KeyboardReadable {
     @State private var otherMajorField: String = ""
     @State private var otherMajor: String = ""
     @FocusState private var otherMajorFieldFocus: Bool
+    @FocusState private var otherCollegeFocus: Bool
+    @State private var showCheckCollegeAlert: Bool = false
     @State private var showCheckMajorFieldAlert: Bool = false
     @State private var majors: Array<String> = []
     
@@ -417,6 +419,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                 Picker("States", selection: $state) {
                                     ForEach(states, id: \.self) { state in
                                         Text(state)
+                                            .id(UUID())
                                     }
                                 }
                                 .frame(maxWidth: .infinity, alignment: .trailing)
@@ -425,6 +428,18 @@ struct SignUpScreen : View, KeyboardReadable {
                                 .tint(Color.EZNotesBlue)
                                 //.padding(.trailing, 15)
                                 .onChange(of: self.state) {
+                                    if self.colleges.count > 0 {
+                                        self.colleges.removeAll()
+                                        self.college = ""
+                                    }
+                                    if self.majorFields.count > 0 {
+                                        self.majorFields.removeAll()
+                                        self.majorField = ""
+                                    }
+                                    if self.majors.count > 0 {
+                                        self.majors.removeAll()
+                                        self.major = ""
+                                    }
                                     RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(State: self.state))
                                         .perform(action: get_colleges) { statusCode, resp in
                                             guard
@@ -436,13 +451,20 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 return
                                             }
                                             
-                                            self.colleges = resp!["Colleges"] as! [String]
+                                            let respColleges = resp!["Colleges"] as! [String]
+                                            
+                                            for c in respColleges {
+                                                if !self.colleges.contains(c) { self.colleges.append(c) }
+                                            }
+                                            
+                                            self.colleges.append("Other")
+                                            self.college = self.colleges[0]
                                         }
                                 }
                             }
                             .frame(maxWidth: prop.size.width - 100)
                             
-                            if self.colleges.count > 0 {
+                            if self.college != "" {
                                 HStack {
                                     Text("College")
                                     /*.frame(
@@ -472,7 +494,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                         if self.college == "Other" { self.collegeIsOther = true }
                                         else {
                                             if self.collegeIsOther { self.collegeIsOther = false }
-                                            if self.majorFields.count == 0 {
+                                            //if self.majorFields.count == 0 {
                                                 RequestAction<ReqPlaceholder>(parameters: ReqPlaceholder())
                                                     .perform(action: get_major_fields_req) { statusCode, resp in
                                                         self.loadingCollegeInfoSection = false
@@ -482,11 +504,16 @@ struct SignUpScreen : View, KeyboardReadable {
                                                             return
                                                         }
                                                         
-                                                        self.majorFields = resp!["Categories"] as! [String]
+                                                        let respMajorFields = resp!["Categories"] as! [String]
+                                                        
+                                                        for mf in respMajorFields {
+                                                            if !self.majorFields.contains(mf) { self.majorFields.append(mf) }
+                                                        }
+                                                        
                                                         self.majorFields.append("Other")
                                                         self.majorField = self.majorFields[0]
                                                     }
-                                            }
+                                            //}
                                         }
                                     }
                                 }
@@ -525,9 +552,53 @@ struct SignUpScreen : View, KeyboardReadable {
                                     .autocapitalization(.none)
                                     .disableAutocorrection(true)
                                     .keyboardType(.alphabet)
+                                    .focused($otherCollegeFocus)
+                                    .onChange(of: self.otherCollegeFocus) {
+                                        if !self.otherCollegeFocus {
+                                            /* MARK: We will assume editing is done. */
+                                            self.showCheckCollegeAlert = true
+                                        }
+                                    }
+                                    .alert("Do we have the college right?", isPresented: $showCheckCollegeAlert) {
+                                        Button(action: {
+                                            RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+                                                College: self.otherCollege
+                                            ))
+                                            .perform(action: get_custom_college_fields_req) { statusCode, resp in
+                                                guard
+                                                    resp != nil,
+                                                    statusCode == 200
+                                                else {
+                                                    self.serverError = true
+                                                    return
+                                                }
+                                                
+                                                guard resp!.keys.contains("Majors") else {
+                                                    self.serverError = true
+                                                    return
+                                                }
+                                                
+                                                self.majorFields = resp!["Fields"] as! [String]
+                                                self.majorFields.append("Other")
+                                                self.majorField = self.majorFields[0]
+                                                
+                                                self.otherCollegeFocus = false
+                                                self.colleges.remove(at: self.colleges.count - 1)
+                                                self.colleges.append(self.otherCollege)
+                                                self.colleges.append("Other")
+                                                self.college = self.otherCollege
+                                            }
+                                        }) {
+                                            Text("Yes")
+                                        }
+                                        
+                                        Button("Not correct", role: .cancel) {}
+                                    } message: {
+                                        Text("Is \(self.otherMajorField) the correct college?")
+                                    }
                             }
                             
-                            if self.majorFields.count > 0 {
+                            if self.majorField != "" {
                                 HStack {
                                     Text("Field")
                                         .frame(alignment: .leading)
@@ -548,7 +619,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                         if self.majorField == "Other" { self.majorFieldIsOther = true }
                                         else {
                                             if self.majorFieldIsOther { self.majorFieldIsOther = false }
-                                            if self.majors.count == 0 {
+                                            //if self.majors.count == 0 {
                                                 RequestAction<GetMajorsRequestData>(parameters: GetMajorsRequestData(MajorField: self.majorField))
                                                     .perform(action: get_majors_req) { statusCode, resp in
                                                         self.loadingCollegeInfoSection = false
@@ -562,7 +633,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         self.majors.append("Other")
                                                         self.major = self.majors[0]
                                                     }
-                                            }
+                                            //}
                                         }
                                     }
                                 }
@@ -606,7 +677,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             self.showCheckMajorFieldAlert = true
                                         }
                                     }
-                                    .alert("Do we have this right?", isPresented: $showCheckMajorFieldAlert) {
+                                    .alert("Do we have the field of major right?", isPresented: $showCheckMajorFieldAlert) {
                                         Button(action: {
                                             RequestAction<GetCustomMajorsRequestData>(parameters: GetCustomMajorsRequestData(
                                                 CMajorField: self.otherMajorField
@@ -1570,7 +1641,14 @@ struct SignUpScreen : View, KeyboardReadable {
                                         
                                         /* MARK: If this request is good (status returned is 200), proceed with the sign up process. */
                                         self.section = "select_state_and_college"
+                                        
+                                        /* MARK: Set the last section. */
                                         UserDefaults.standard.set("select_state_and_college", forKey: "last_signup_section")
+                                        
+                                        /* MARK: Ensure to (temporarily) store username, email and password (just in case they leave the app and come back). */
+                                        UserDefaults.standard.set(self.username, forKey: "temp_username")
+                                        UserDefaults.standard.set(self.email, forKey: "temp_email")
+                                        UserDefaults.standard.set(self.password, forKey: "temp_password")
                                     }
                                 }
                             } else {
@@ -1612,7 +1690,12 @@ struct SignUpScreen : View, KeyboardReadable {
                                         
                                         self.accountID = resp!["Message"] as! String
                                         self.section = "code_input"
+                                        
                                         UserDefaults.standard.set("code_input", forKey: "last_signup_section")
+                                        UserDefaults.standard.set(self.state, forKey: "temp_state")
+                                        UserDefaults.standard.set(self.college, forKey: "temp_college")
+                                        UserDefaults.standard.set(self.majorField, forKey: "temp_field")
+                                        UserDefaults.standard.set(self.major, forKey: "temp_major")
                                         
                                         /*if r.Bad != nil {
                                             if r.Bad!.ErrorCode == 0x6970 {
@@ -1752,6 +1835,76 @@ struct SignUpScreen : View, KeyboardReadable {
             }
             
             self.section = UserDefaults.standard.string(forKey: "last_signup_section")!
+            if UserDefaults.standard.object(forKey: "temp_username") != nil { self.username = UserDefaults.standard.string(forKey: "temp_username")! }
+            if UserDefaults.standard.object(forKey: "temp_email") != nil { self.email = UserDefaults.standard.string(forKey: "temp_email")! }
+            if UserDefaults.standard.object(forKey: "temp_password") != nil { self.password = UserDefaults.standard.string(forKey: "temp_password")! }
+            
+            if self.section == "select_state_and_college" {
+                if UserDefaults.standard.object(forKey: "temp_state") != nil {
+                    self.state = UserDefaults.standard.string(forKey: "temp_state")!
+                    
+                    RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(State: self.state))
+                        .perform(action: get_colleges) { statusCode, resp in
+                            guard
+                                resp != nil,
+                                resp!.keys.contains("Colleges"),
+                                statusCode == 200
+                            else {
+                                self.serverError = true
+                                return
+                            }
+                            
+                            let respColleges = resp!["Colleges"] as! [String]
+                            
+                            for c in respColleges {
+                                if !self.colleges.contains(c) { self.colleges.append(c) }
+                            }
+                            
+                            self.colleges.append("Other")
+                            self.college = self.colleges[0]
+                        }
+                }
+                if UserDefaults.standard.object(forKey: "temp_college") != nil {
+                    self.college = UserDefaults.standard.string(forKey: "temp_college")!
+                    
+                    RequestAction<ReqPlaceholder>(parameters: ReqPlaceholder())
+                        .perform(action: get_major_fields_req) { statusCode, resp in
+                            self.loadingCollegeInfoSection = false
+                            
+                            guard resp != nil && statusCode == 200 else {
+                                self.serverError = true
+                                return
+                            }
+                            
+                            let respMajorFields = resp!["Categories"] as! [String]
+                            
+                            for mf in respMajorFields {
+                                if !self.majorFields.contains(mf) { self.majorFields.append(mf) }
+                            }
+                            
+                            self.majorFields.append("Other")
+                            self.majorField = self.majorFields[0]
+                        }
+                }
+                if UserDefaults.standard.object(forKey: "temp_field") != nil {
+                    self.majorField = UserDefaults.standard.string(forKey: "temp_field")!
+                    
+                    RequestAction<GetMajorsRequestData>(parameters: GetMajorsRequestData(MajorField: self.majorField))
+                        .perform(action: get_majors_req) { statusCode, resp in
+                            self.loadingCollegeInfoSection = false
+                            
+                            guard resp != nil && statusCode == 200 else {
+                                self.serverError = true
+                                return
+                            }
+                            
+                            self.majors = resp!["Majors"] as! [String]
+                            self.majors.append("Other")
+                            self.major = self.majors[0]
+                        }
+                }
+                if UserDefaults.standard.object(forKey: "temp_major") != nil { self.major = UserDefaults.standard.string(forKey: "temp_major")! }
+            }
         }
         /*VStack {
             Spacer()

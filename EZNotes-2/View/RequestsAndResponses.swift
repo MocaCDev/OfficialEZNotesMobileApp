@@ -9,7 +9,7 @@ import SwiftUI
 
 /* MARK: URLs used for requests. */
 //let server = "https://www.eznotes.space"
-let server = "http://192.168.0.9:8088"
+let server = "http://192.168.1.114:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
@@ -126,6 +126,10 @@ struct GetCustomTopicsData {
     let Major: String
 }
 
+struct GetCustomCollegeFieldsData {
+    let College: String
+}
+
 /* MARK: All request actions. */
 struct CSIARequest<T> {
     let url: String
@@ -227,6 +231,12 @@ let get_custom_majors_req: CSIARequest = CSIARequest(
     url: "\(server)/generate_majors_for_custom_major_field",
     method: "get",
     reqData: GetCustomMajorsRequestData.self
+)
+
+let get_custom_college_fields_req: CSIARequest = CSIARequest(
+    url: "\(server)/generate_fields_for_custom_college",
+    method: "get",
+    reqData: GetCustomCollegeFieldsData.self
 )
 
 let get_custom_topics_req: CSIARequest = CSIARequest(
