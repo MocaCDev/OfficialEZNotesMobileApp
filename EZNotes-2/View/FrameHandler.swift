@@ -120,7 +120,12 @@ class FrameHandler: NSObject, ObservableObject {
         previewLayer.frame = view.bounds
         captureSession.layer.addSublayer(previewLayer)*/
         
-        self.videoOutput!.connection(with: .video)?.videoRotationAngle = 90
+        if #available(iOS 17.0, *) {
+            self.videoOutput!.connection(with: .video)?.videoRotationAngle = 90
+        } else {
+            // Fallback on earlier versions
+            self.videoOutput!.connection(with: .video)?.videoOrientation = .portrait
+        }
         
         guard let device = self.videoDeviceInput?.device else { return }
         do {

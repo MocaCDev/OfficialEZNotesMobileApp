@@ -67,9 +67,10 @@ struct HomeScreen: View {
     
     public var startupScreen: StartupScreen
     
+    @available(iOS 18.0, *)
     var body: some View {
         VStack {
-            if !self.userNotFound {
+            if self.userNotFound {
                 HStack {
                     ZStack { }.frame(maxWidth: 30, alignment: .leading)
                     
@@ -91,95 +92,63 @@ struct HomeScreen: View {
             VStack {
                 Image("Logo")
                     .logoImageModifier(prop: prop)
+                
+                MeshGradient(width: 3, height: 3, points: [
+                    .init(0, 0.3), .init(0.3, 0), .init(1, 0),
+                    .init(0.0, 0.3), .init(0, 0.5), .init(1, 0.3),
+                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                ], colors: [
+                    Color.EZNotesGreen, Color.EZNotesOrange, Color.EZNotesBlue,
+                    Color.EZNotesGreen, Color.EZNotesGreen, Color.EZNotesOrange,
+                    Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesBlue
+                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                    Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                    Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                ])
+                .frame(maxWidth: prop.size.width - 40, maxHeight: 300, alignment: .top)
+                .mask(
+                    VStack {
+                        Text("Hello, and Welcome")
+                        //.frame(maxWidth: prop.size.width - 40, alignment: .top)
+                            .contrast(10)
+                            .shadow(color: .white, radius: 2.5)
+                        //.frame(width: prop.isIpad ? 550 : 350, height: prop.isIpad ? 300 : 250)
+                        //.padding([.bottom], -80)
+                            .fontWeight(.heavy)
+                        /*.font(
+                         .system(
+                         size: prop.isIpad
+                         ? 105
+                         : prop.size.height / 2.5 > 300
+                         ? 65
+                         : 55
+                         )
+                         )*/
+                            .font(Font.custom("Poppins-ExtraLight", size: prop.isIpad
+                                              ? 105
+                                              : prop.size.height / 2.5 > 300
+                                              ? 65
+                                              : 55))
+                            .multilineTextAlignment(.center)
+                        
+                        Text("To Your New Note-Taking Bestfriend")
+                            .frame(maxWidth: prop.size.width - 80, alignment: .top)
+                            .font(Font.custom("Poppins-ExtraLight", size: 20))
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            //.setFontSizeAndWeight(weight: .bold, size: 20)
+                            .minimumScaleFactor(0.5)
+                            .multilineTextAlignment(.center)
+                    }
+                )
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .frame(maxWidth: .infinity, alignment: .top)
             .padding(
                 .top,
                 prop.size.height / 2.5 > 300
-                    ? !self.userNotFound ? -15 : 50
+                    ? self.userNotFound ? -15 : 50
                     : 0
             )
-            
-            /*VStack {
-                Image("Logo")
-                    .logoImageModifier(prop: prop)
-                
-                VStack {
-                    /*LinearGradient(
-                        gradient: Gradient(
-                            colors: [
-                                /*Color.EZNotesBlue,
-                                Color.EZNotesBlue,
-                                Color.EZNotesOrange,
-                                Color.EZNotesOrange*/
-                                Color.white
-                            ]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                    )
-                    .frame(width: prop.isIpad ? 550 : 350, height: prop.isIpad ? 300 : 250)
-                    .mask(*/
-                        Text("Hello, and Welcome")
-                            .contrast(10)
-                            .shadow(color: .white, radius: 8)
-                            //.frame(width: prop.isIpad ? 550 : 350, height: prop.isIpad ? 300 : 250)
-                            .padding(
-                                [.top],
-                                prop.isIpad
-                                    ? 30
-                                    : prop.size.height / 2.5 > 300
-                                        ? 0
-                                        : 20)
-                            .padding([.bottom], -80)
-                            .fontWeight(.medium)
-                            .font(
-                                .system(
-                                    size: prop.isIpad
-                                            ? 105
-                                            : prop.size.height / 2.5 > 300
-                                                ? 65
-                                                : 55,
-                                    design: .rounded
-                                )
-                            )
-                            .multilineTextAlignment(.center)
-                    //)
-                    
-                    /*Text("**To your New & Completely Automated Note Taking App**")
-                        .frame(
-                            maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width  - 100 : prop.size.width - 60,
-                            maxHeight: prop.size.height / 2, alignment: .top)
-                        .padding([.top], prop.size.height / 2.5 > 300 ? 0 : -70)
-                        .font(
-                            .system(
-                                size: prop.size.height / 2.5 > 300 ? 20 : 17,
-                                design: .monospaced
-                            )
-                        )
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)*/
-                }
-                
-                //Spacer()
-            }
-            .padding(
-                [.top],
-                prop.size.height / 2.5 > 300
-                    ? prop.isIpad
-                        ? 60
-                        : 110
-                    : -50
-            )
-            .frame(
-                width: prop.isIpad
-                        ? 400
-                        : nil,
-                height: prop.isIpad
-                        ? 850
-                        : prop.size.height / 2.5 > 300
-                            ? 550
-                            : (prop.size.height / 2.5) + 300
-            )*/
             
             Spacer()
             
@@ -198,35 +167,14 @@ struct HomeScreen: View {
                         action: { self.screen = "signup" }
                     )
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .frame(maxWidth: .infinity, alignment: .center)
             }
-            .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 200 : 150, alignment: .bottom)
-            /*.background(.blue.opacity(0.2))//Color.EZNotesLightBlack.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
-            .cornerRadius(15, corners: [.topLeft, .topRight])
-            .shadow(color: .black, radius: 2.5, x: 0, y: -2)*/
-            //.edgesIgnoringSafeArea(.bottom)
-            /*.padding(
-                [.bottom],
-                prop.isIpad
-                    ? prop.isLandscape ? 140 : 60
-                    : prop.size.height / 2.5 > 300
-                        ? 40
-                        : 30)*/
+            .frame(maxWidth: .infinity, maxHeight: 100, alignment: .bottom)
+            .padding(.bottom, prop.size.height / 2.5 > 300 ? 40 : 10)
+
         }
         .background(
-            MeshGradient(width: 3, height: 3, points: [
-                .init(0, 0), .init(0.3, 0), .init(1, 0),
-                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                .init(0, 1), .init(0.5, 1), .init(1, 1)
-            ], colors: [
-                Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-            ])
-            .opacity(0.5)
+            Color.EZNotesBlack
         )
         .edgesIgnoringSafeArea([.top, .bottom])
         .onAppear {

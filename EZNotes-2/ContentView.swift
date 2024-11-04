@@ -180,7 +180,7 @@ struct ContentView: View {
                     //}//UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
                 //}
             }
-            .onChange(of: scenePhase) { oldPhase, newPhase in
+            .onChange(of: scenePhase) { newPhase in
                 if newPhase == .inactive || newPhase == .background {
                     UserDefaults.standard.set(true, forKey: "requires_faceID")
                 }
