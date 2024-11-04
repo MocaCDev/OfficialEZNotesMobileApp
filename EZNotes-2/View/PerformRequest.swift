@@ -335,6 +335,8 @@ struct RequestAction<T> {
             case is StartAIChatData.Type:
                 guard let params: StartAIChatData = (parameters as? StartAIChatData) else { return }
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.Major, forHTTPHeaderField: "Major")
+                request.addValue(params.Topic, forHTTPHeaderField: "Topic")
                 break
             case is SendAIChatMessageData.Type:
                 guard let params: SendAIChatMessageData = (parameters as? SendAIChatMessageData) else { return }

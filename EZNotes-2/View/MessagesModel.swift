@@ -6,7 +6,7 @@
 //
 import SwiftUI
 
-struct MessageDetails: Hashable {
+struct MessageDetails: Hashable, Encodable, Decodable {
     let MessageID: UUID
     let MessageContent: String
     let userSent: Bool

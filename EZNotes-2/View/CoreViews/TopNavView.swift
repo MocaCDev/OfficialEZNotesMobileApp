@@ -855,6 +855,7 @@ struct TopNavHome: View {
     @Binding public var messages: Array<MessageDetails>
     @Binding public var lookedUpCategoriesAndSets: [String: Array<String>]
     @Binding public var userHasSignedIn: Bool
+    @Binding public var tempChatHistory: [String: Array<MessageDetails>]
     
     @State private var numberOfTheAnimationgBall = 3
     
@@ -862,6 +863,15 @@ struct TopNavHome: View {
     let ballSize: CGFloat = 10
     let speed: Double = 0.3
     let chatUUID: UUID = UUID()
+    
+    let topicsColumns = [
+        GridItem(.adaptive(minimum: 100))
+    ]
+    
+    @State private var loadingTopics: Bool = false
+    @State private var generatedTopics: Array<String> = []
+    @State private var generatedTopicsImages: [String: Data] = [:]
+    @State private var topicPicked: String = ""
     
     var body: some View {
         HStack {
@@ -977,20 +987,7 @@ struct TopNavHome: View {
                 .buttonStyle(NoLongPressButtonStyle())
                 .padding([.top], 5)
                 
-                Button(action: {
-                    RequestAction<StartAIChatData>(
-                        parameters: StartAIChatData(AccountId: self.accountInfo.accountID)
-                    )
-                    .perform(action: start_ai_chat_req) { statusCode, resp in
-                        guard resp != nil && statusCode == 200 else {
-                            /* self.aiChatStartError = true*/
-                            return
-                        }
-                        
-                        //self.accountInfo.setAIChatID(chatID: resp!["ChatID"]! as! String)
-                        self.aiChatPopover = true
-                    }
-                }) {
+                Button(action: { self.aiChatPopover = true }) {
                     Image("AI-Chat-Icon")
                         .resizable()
                         .frame(
@@ -1017,544 +1014,802 @@ struct TopNavHome: View {
         .onTapGesture {
             if self.showSearchBar { self.showSearchBar = false }
         }
+        .onChange(of: self.aiChatPopover) {
+            if !self.aiChatPopover {
+                /*var topicNumber = 0
+                
+                for (topic, _) in self.tempChatHistory {
+                    if topic.contains(self.topicPicked) { topicNumber += 1 }
+                }*/
+                
+                self.tempChatHistory[self.topicPicked] = self.messages
+                writeTemporaryChatHistory(chatHistory: self.tempChatHistory)
+                
+                self.topicPicked = ""
+                self.generatedTopics.removeAll()
+                self.chatIsLive = false
+                self.messages.removeAll()
+            }
+        }
         /* TODO: Change from popover to an actual view. */
         .popover(isPresented: $aiChatPopover) {
             VStack {
-                VStack {
-                    Text("EZNotes AI Chat")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                        .foregroundStyle(.white)
-                        .font(.system(size: 22, design: .rounded))
-                        .minimumScaleFactor(0.5)
-                }
-                .frame(maxWidth: prop.size.width - 40, maxHeight: 50, alignment: .top)
-                .border(width: 0.5, edges: [.bottom], color: .gray)
-                
-                if !self.errorGeneratingTopicsForMajor {
+                if self.loadingTopics {
+                    VStack {
+                        Text("Loading Topics")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .foregroundStyle(.white)
+                            .setFontSizeAndWeight(weight: .medium, size: 20)
+                            .minimumScaleFactor(0.5)
+                        
+                        ProgressView()
+                            .tint(Color.EZNotesBlue)
+                    }
+                    .frame(maxWidth: prop.size.width - 100, maxHeight: .infinity, alignment: .center)
+                    .padding()
+                } else {
                     HStack {
-                        Button(action: {
-                            RequestAction<GetCustomTopicsData>(parameters: GetCustomTopicsData(Major: self.accountInfo.major))
-                                .perform(action: get_custom_topics_req) { statusCode, resp in
-                                    guard resp != nil && statusCode == 200 else {
-                                        self.errorGeneratingTopicsForMajor = true
-                                        return
-                                    }
-                                    
-                                    print(resp!)
-                                }
-                        }) {
-                            HStack {
-                                Image(systemName: "plus")
-                                    .resizable()
-                                    .frame(width: 15, height: 15, alignment: .leading)
-                                    .foregroundStyle(.white)
+                        if self.topicPicked != "" {
+                            Button(action: {
+                                /* MARK: First, save the message history. */
+                                self.tempChatHistory[self.topicPicked] = self.messages
+                                writeTemporaryChatHistory(chatHistory: self.tempChatHistory)
                                 
-                                Text("New Chat")
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .foregroundStyle(.white)
-                                    .font(.system(size: 20))
-                                    .minimumScaleFactor(0.5)
-                                    .fontWeight(.medium)
+                                self.chatIsLive = false
                                 
-                                ZStack { }.frame(maxWidth: 15, alignment: .trailing)
-                            }
-                            .padding([.top, .bottom], 8)
-                            .padding([.leading, .trailing], 10)
-                            .background(Color.EZNotesLightBlack.shadow(color: .black, radius: 2.5))
-                            .cornerRadius(15)
-                        }
-                        .buttonStyle(NoLongPressButtonStyle())
-                        .padding([.top, .bottom])
-                        
-                        Button(action: { print("Delete All Chats") }) {
-                            HStack {
-                                Image(systemName: "trash")
-                                    .resizable()
-                                    .frame(width: 15, height: 15, alignment: .leading)
-                                    .foregroundStyle(.white)
-                                
-                                Text("Delete All")
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .foregroundStyle(.white)
-                                    .font(.system(size: 20))
-                                    .minimumScaleFactor(0.5)
-                                    .fontWeight(.medium)
-                                
-                                ZStack { }.frame(maxWidth: 15, alignment: .trailing)
-                            }
-                            .padding([.top, .bottom], 8)
-                            .padding([.leading, .trailing], 10)
-                            .background(Color.EZNotesRed.shadow(color: .black, radius: 2.5))
-                            .cornerRadius(15)
-                        }
-                        .buttonStyle(NoLongPressButtonStyle())
-                        .padding([.top, .bottom])
-                    }
-                    .frame(maxWidth: prop.size.width - 40)
-                }
-                
-                if self.chatIsLive {
-                    ZStack {
-                        ScrollViewReader { proxy in
-                            ScrollView {
-                                LazyVStack {
-                                    ForEach(messages, id: \.self) { message in
-                                        MessageView(message: message, aiIsTyping: $aiIsTyping)
-                                            .id(message)
-                                    }
-                                    
-                                    if self.aiIsTyping {
-                                        HStack(alignment: .firstTextBaseline) {
-                                            ForEach(0..<3) { i in
-                                                Capsule()
-                                                    .foregroundColor((self.numberOfTheAnimationgBall == i) ? .blue : Color(UIColor.darkGray))
-                                                    .frame(width: self.ballSize, height: self.ballSize)
-                                                    .offset(y: (self.numberOfTheAnimationgBall == i) ? -5 : 0)
-                                            }
-                                        }
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .animation(Animation.spring(response: 0.5, dampingFraction: 0.7, blendDuration: 0.1).speed(2), value: UUID())
-                                        .onAppear {
-                                            Timer.scheduledTimer(withTimeInterval: self.speed, repeats: true) { _ in
-                                                var randomNumb: Int
-                                                repeat {
-                                                    randomNumb = Int.random(in: 0...2)
-                                                } while randomNumb == self.numberOfTheAnimationgBall
-                                                self.numberOfTheAnimationgBall = randomNumb
-                                            }
-                                        }
-                                    }
-                                }
-                                .onChange(of: messages) {
-                                    withAnimation {
-                                        proxy.scrollTo(messages.last)
-                                    }
-                                }
-                                .onChange(of: self.aiIsTyping) {
-                                    //if self.aiIsTyping {
-                                    //    proxy.scrollTo(self.chatUUID)
-                                    //}
-                                }
-                                .onChange(of: self.messageBoxTapped) {
-                                    withAnimation {
-                                        proxy.scrollTo(messages.last)
-                                    }
-                                }
-                                /*.onReceive(Just(messages)) { _ in
-                                 withAnimation {
-                                 proxy.scrollTo(messages.last)
-                                 }
-                                 }
-                                 .onReceive(Just(self.aiIsTyping)) { _ in
-                                 if self.aiIsTyping {
-                                 proxy.scrollTo(self.chatUUID)
-                                 } else {
-                                 proxy.scrollTo(messages.last)
-                                 }
-                                 }*/
-                                .onAppear {
-                                    withAnimation {
-                                        proxy.scrollTo(messages.last, anchor: .bottom)
-                                    }
-                                }
-                            }
-                        }
-                        //ScrollView(.vertical) {
-                        /*ForEach(self.messages.sorted(by: <), id: \.key) { key, value in//ForEach(Array(self.messages.keys), id: \.self) { key in
-                         VStack {
-                         VStack {
-                         Text(key)
-                         .frame(minWidth: 10, alignment: .trailing)
-                         .padding(8)
-                         .background(
-                         RoundedRectangle(cornerRadius: 15)
-                         .fill(Color.EZNotesBlue)
-                         )
-                         .font(.system(size: 13))
-                         .minimumScaleFactor(0.5)
-                         .multilineTextAlignment(.leading)
-                         .fontWeight(.semibold)
-                         }
-                         .frame(maxWidth: 340, alignment: .trailing)
-                         }
-                         .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
-                         .padding(.bottom, 15)
-                         
-                         if value.count > 0 {
-                         VStack {
-                         VStack {
-                         HStack {
-                         Image("AI-Chat")//systemName: "sparkle")
-                         .resizableImage(width: 20, height: 20)
-                         
-                         Text(value)
-                         .frame(minWidth: 20,  alignment: .leading)
-                         .foregroundStyle(.black)
-                         .padding(8)
-                         .background(
-                         RoundedRectangle(cornerRadius: 15)
-                         .fill(.white.opacity(0.85))
-                         )
-                         /*.background(
-                          RoundedRectangle(cornerRadius: 10)
-                          .fill(MeshGradient(width: 3, height: 3, points: [
-                          .init(0, 0), .init(0.3, 0), .init(1, 0),
-                          .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                          .init(0, 1), .init(0.5, 1), .init(1, 1)
-                          ], colors: [
-                          Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                          Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                          Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                          /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                           Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                           Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                          ])).overlay(Color.EZNotesBlack.opacity(0.4))//(Color.EZNotesLightBlack)
-                          )*/
-                         .font(.system(size: 13))
-                         .minimumScaleFactor(0.5)
-                         .multilineTextAlignment(.leading)
-                         .fontWeight(.semibold)
-                         }
-                         }
-                         .frame(maxWidth: 340, alignment: .leading)
-                         }
-                         .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                         .padding(.bottom, 15)
-                         }
-                         }*/
-                        
-                        /*ForEach(Array(self.userSentMessages.enumerated()), id: \.offset) { index, item in
-                         VStack {
-                         VStack {
-                         VStack {
-                         VStack {
-                         Text(item)
-                         .frame(minWidth: 10, alignment: .trailing)
-                         .padding(8)
-                         .background(
-                         RoundedRectangle(cornerRadius: 15)
-                         .fill(Color.EZNotesBlue)
-                         )
-                         .font(.system(size: 13))
-                         .minimumScaleFactor(0.5)
-                         .multilineTextAlignment(.leading)
-                         .fontWeight(.semibold)
-                         }
-                         .frame(maxWidth: 340, alignment: .trailing)
-                         }
-                         .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
-                         .padding(.bottom, 15)
-                         
-                         if !(index > self.systemResponses.count - 1) {
-                         VStack {
-                         VStack {
-                         HStack {
-                         Image("AI-Chat")//systemName: "sparkle")
-                         .resizableImage(width: 20, height: 20)
-                         
-                         Text(self.systemResponses[index])
-                         .frame(minWidth: 20,  alignment: .leading)
-                         .foregroundStyle(.black)
-                         .padding(8)
-                         .background(
-                         RoundedRectangle(cornerRadius: 15)
-                         .fill(.white.opacity(0.85))
-                         )
-                         /*.background(
-                          RoundedRectangle(cornerRadius: 10)
-                          .fill(MeshGradient(width: 3, height: 3, points: [
-                          .init(0, 0), .init(0.3, 0), .init(1, 0),
-                          .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                          .init(0, 1), .init(0.5, 1), .init(1, 1)
-                          ], colors: [
-                          Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                          Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                          Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                          /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                           Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                           Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                          ])).overlay(Color.EZNotesBlack.opacity(0.4))//(Color.EZNotesLightBlack)
-                          )*/
-                         .font(.system(size: 13))
-                         .minimumScaleFactor(0.5)
-                         .multilineTextAlignment(.leading)
-                         .fontWeight(.semibold)
-                         }
-                         }
-                         .frame(maxWidth: 340, alignment: .leading)
-                         }
-                         .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                         .padding(.bottom, 15)
-                         }
-                         }
-                         .frame(maxWidth: .infinity, alignment: .trailing)
-                         .padding(.trailing, 10)
-                         }
-                         .frame(maxWidth: .infinity)
-                         }*/
-                        //}
-                        .frame(maxWidth: prop.size.width - 20, maxHeight: .infinity)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .ignoresSafeArea(.keyboard, edges: .bottom)
-                    .onTapGesture {
-                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                        self.messageBoxTapped = false
-                    }
-                    
-                    Spacer()
-                    
-                    HStack {
-                        if !self.hideLeftsideContent {
-                            VStack {
-                                Button(action: { print("Upload File") }) {
-                                    Image(systemName: "square.and.arrow.up")
+                                self.topicPicked = ""
+                                self.generatedTopics.removeAll()
+                                self.chatIsLive = false
+                                self.messages.removeAll()
+                            }) {
+                                ZStack {
+                                    Image(systemName: "arrow.backward")
                                         .resizable()
-                                        .frame(width: 15, height: 20)
-                                        .foregroundStyle(.white)//(Color.EZNotesOrange)
+                                        .frame(width: 20, height: 20)
+                                        .foregroundStyle(Color.EZNotesBlue)
                                 }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                .padding(.bottom, 2.5)
+                                .frame(maxWidth: 30, alignment: .leading)
                             }
-                            .frame(minWidth: 10, alignment: .leading)
-                            .padding(12.5)
-                            .background(Color.EZNotesLightBlack.opacity(0.65))
-                            .clipShape(.circle)
-                            .padding(.leading, 10)
-                            
-                            VStack {
-                                Button(action: { print("Take live picture to get instant feedback") }) {
-                                    Image(systemName: "camera")
-                                        .resizable()
-                                        .frame(width: 20, height: 15)
-                                        .foregroundStyle(.white)/*(
-                                                                 MeshGradient(width: 3, height: 3, points: [
-                                                                 .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                 .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                 .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                                 ], colors: [
-                                                                 Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                                                                 Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                                                                 Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                 /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                  Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                  Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                                 ])
-                                                                 )*/
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                //.padding(.top, 5)
-                            }
-                            .frame(minWidth: 10, alignment: .leading)
-                            .padding(12.5)
-                            .background(Color.EZNotesLightBlack.opacity(0.65))
-                            .clipShape(.circle)
-                            
-                            VStack {
-                                Button(action: { print("Select category to talk to the AI chat about") }) {
-                                    Image("Categories-Icon")
-                                        .resizableImage(width: 20, height: 20)
-                                        .foregroundStyle(.white)/*(
-                                                                 MeshGradient(width: 3, height: 3, points: [
-                                                                 .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                 .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                 .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                                 ], colors: [
-                                                                 Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                                                                 Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                                                                 Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                 /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                  Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                  Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                                 ])
-                                                                 )*/
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                //.padding(.top, 5)
-                            }
-                            .frame(minWidth: 10, alignment: .leading)
-                            .padding(12.5)
-                            .background(Color.EZNotesLightBlack.opacity(0.65))
-                            .clipShape(.circle)
-                            .padding(.trailing, 5)
                         }
                         
-                        VStack {
-                            TextField("Message...", text: $messageInput, axis: .vertical)
-                                .frame(maxWidth: prop.size.width - 40, minHeight: 30)
-                                .padding(4)
-                                .foregroundStyle(.white)
-                                .padding(.leading, 10)
-                                .cornerRadius(15)
-                                .background(
-                                    self.hideLeftsideContent
-                                    ? AnyView(RoundedRectangle(cornerRadius: 15)
-                                        .fill(.clear)
-                                        .stroke(LinearGradient(gradient: Gradient(
-                                            colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
-                                        ), startPoint: .leading, endPoint: .trailing), lineWidth: 1))
-                                    : AnyView(RoundedRectangle(cornerRadius: 15)
-                                        .fill(.clear)
-                                        .border(width: 1, edges: [.bottom], lcolor: LinearGradient(gradient: Gradient(
-                                            colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
-                                        ), startPoint: .leading, endPoint: .trailing)))
-                                )
-                                .overlay(
-                                    HStack {
-                                        GeometryReader { geometry in
-                                            Color.clear
-                                                .preference(key: ViewPositionKey.self, value: geometry.frame(in: .global).minY)
-                                        }.frame(width: 0, height: 0)
-                                        
-                                        /* MARK: Exists to push the `x` button to the end of the textfield. */
-                                        VStack { }.frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                                        
-                                        if self.messageInput.count > 0 {
-                                            Button(action: {
-                                                self.messageInput.removeAll()
-                                            }) {
-                                                Image(systemName: "multiply.circle.fill")
-                                                    .foregroundColor(.gray)
-                                                    .padding(.trailing, 15)
-                                            }
-                                        }
-                                    }
-                                )
-                                .padding([.top, .bottom], 10)
-                                .onChange(of: self.messageInput) {
-                                    if self.messageInput.count > 0 { self.hideLeftsideContent = true }
-                                    else { self.hideLeftsideContent = false }
-                                }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.trailing, !self.hideLeftsideContent ? 15 : 0)
-                        .padding(.leading, !self.hideLeftsideContent ? 0 : 10)
-                        .onPreferenceChange(ViewPositionKey.self) { value in
-                            if value < self.currentYPosOfMessageBox {
-                                self.messageBoxTapped = true
-                            }
-                            
-                            self.currentYPosOfMessageBox = value
-                        }
+                        Text(self.topicPicked == ""
+                             ? self.generatedTopics.count == 0 ? "EZNotes AI Chat" : "Select Topic"
+                             : self.topicPicked)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                            .foregroundStyle(.white)
+                            .font(.system(size: 30, design: .rounded))
+                            .fontWeight(.heavy)
+                            .minimumScaleFactor(0.5)
                         
-                        if self.hideLeftsideContent {
-                            VStack {
+                        if self.topicPicked != "" { ZStack{ }.frame(maxWidth: 30, alignment: .trailing) }
+                    }
+                    .frame(maxWidth: prop.size.width - 40, maxHeight: 50, alignment: .top)
+                    .border(width: 0.5, edges: [.bottom], color: .gray)
+                    
+                    if !self.chatIsLive {
+                        if !self.errorGeneratingTopicsForMajor {
+                            HStack {
                                 Button(action: {
-                                    self.aiIsTyping = true
+                                    self.loadingTopics = true
                                     
-                                    self.messages.append(MessageDetails(
-                                        MessageID: UUID(),
-                                        MessageContent: self.messageInput,
-                                        userSent: true,
-                                        dateSent: Date.now
-                                    ))
-                                    
-                                    RequestAction<SendAIChatMessageData>(
-                                        parameters: SendAIChatMessageData(AccountId: self.accountInfo.accountID, Message: self.messageInput)
-                                    ).perform(action: send_ai_chat_message_req) { statusCode, resp in
-                                        self.aiIsTyping = false
-                                        
-                                        guard resp != nil && statusCode == 200 else {
-                                            return
+                                    RequestAction<GetCustomTopicsData>(parameters: GetCustomTopicsData(Major: self.accountInfo.major))
+                                        .perform(action: get_custom_topics_req) { statusCode, resp in
+                                            self.loadingTopics = false
+                                            guard resp != nil && statusCode == 200 else {
+                                                if let resp = resp { print(resp) }
+                                                self.errorGeneratingTopicsForMajor = true
+                                                return
+                                            }
+                                            
+                                            self.generatedTopics = resp!["Topics"] as! [String]
+                                            /*let images = resp!["Images"] as! [String: Any]
+                                            
+                                            for (key, value) in images {
+                                                self.generatedTopicsImages[key] = Data(base64Encoded: value as! String)
+                                            }
+                                            
+                                            print(self.generatedTopics)*/
                                         }
+                                }) {
+                                    HStack {
+                                        Text("New Chat")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: 20))
+                                            .minimumScaleFactor(0.5)
+                                            .fontWeight(.medium)
+                                    }
+                                    .padding([.top, .bottom], 8)
+                                    .padding(.leading, 10)
+                                    .background(Color.EZNotesLightBlack.shadow(color: .black, radius: 2.5))
+                                    .cornerRadius(15)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                .padding([.top, .bottom])
+                                
+                                Button(action: { print("Delete All Chats") }) {
+                                    HStack {
+                                        Text("Delete All")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: 20))
+                                            .minimumScaleFactor(0.5)
+                                            .fontWeight(.medium)
+                                    }
+                                    .padding([.top, .bottom], 8)
+                                    .padding([.leading, .trailing], 10)
+                                    .background(Color.EZNotesRed.shadow(color: .black, radius: 2.5))
+                                    .cornerRadius(15)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                .padding([.top, .bottom])
+                            }
+                            .frame(maxWidth: prop.size.width - 40)
+                        }
+                    }
+                    
+                    if self.chatIsLive {
+                        ZStack {
+                            ScrollViewReader { proxy in
+                                ScrollView {
+                                    LazyVStack {
+                                        ForEach(messages, id: \.self) { message in
+                                            MessageView(message: message, aiIsTyping: $aiIsTyping)
+                                                .id(message)
+                                        }
+                                        
+                                        if self.aiIsTyping {
+                                            HStack(alignment: .firstTextBaseline) {
+                                                ForEach(0..<3) { i in
+                                                    Capsule()
+                                                        .foregroundColor((self.numberOfTheAnimationgBall == i) ? .blue : Color(UIColor.darkGray))
+                                                        .frame(width: self.ballSize, height: self.ballSize)
+                                                        .offset(y: (self.numberOfTheAnimationgBall == i) ? -5 : 0)
+                                                }
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .animation(Animation.spring(response: 0.5, dampingFraction: 0.7, blendDuration: 0.1).speed(2), value: UUID())
+                                            .onAppear {
+                                                Timer.scheduledTimer(withTimeInterval: self.speed, repeats: true) { _ in
+                                                    var randomNumb: Int
+                                                    repeat {
+                                                        randomNumb = Int.random(in: 0...2)
+                                                    } while randomNumb == self.numberOfTheAnimationgBall
+                                                    self.numberOfTheAnimationgBall = randomNumb
+                                                }
+                                            }
+                                        }
+                                    }
+                                    .onChange(of: messages) {
+                                        withAnimation {
+                                            proxy.scrollTo(messages.last)
+                                        }
+                                    }
+                                    .onChange(of: self.aiIsTyping) {
+                                        //if self.aiIsTyping {
+                                        //    proxy.scrollTo(self.chatUUID)
+                                        //}
+                                    }
+                                    .onChange(of: self.messageBoxTapped) {
+                                        withAnimation {
+                                            proxy.scrollTo(messages.last)
+                                        }
+                                    }
+                                    /*.onReceive(Just(messages)) { _ in
+                                     withAnimation {
+                                     proxy.scrollTo(messages.last)
+                                     }
+                                     }
+                                     .onReceive(Just(self.aiIsTyping)) { _ in
+                                     if self.aiIsTyping {
+                                     proxy.scrollTo(self.chatUUID)
+                                     } else {
+                                     proxy.scrollTo(messages.last)
+                                     }
+                                     }*/
+                                    .onAppear {
+                                        withAnimation {
+                                            proxy.scrollTo(messages.last, anchor: .bottom)
+                                        }
+                                    }
+                                }
+                            }
+                            //ScrollView(.vertical) {
+                            /*ForEach(self.messages.sorted(by: <), id: \.key) { key, value in//ForEach(Array(self.messages.keys), id: \.self) { key in
+                             VStack {
+                             VStack {
+                             Text(key)
+                             .frame(minWidth: 10, alignment: .trailing)
+                             .padding(8)
+                             .background(
+                             RoundedRectangle(cornerRadius: 15)
+                             .fill(Color.EZNotesBlue)
+                             )
+                             .font(.system(size: 13))
+                             .minimumScaleFactor(0.5)
+                             .multilineTextAlignment(.leading)
+                             .fontWeight(.semibold)
+                             }
+                             .frame(maxWidth: 340, alignment: .trailing)
+                             }
+                             .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
+                             .padding(.bottom, 15)
+                             
+                             if value.count > 0 {
+                             VStack {
+                             VStack {
+                             HStack {
+                             Image("AI-Chat")//systemName: "sparkle")
+                             .resizableImage(width: 20, height: 20)
+                             
+                             Text(value)
+                             .frame(minWidth: 20,  alignment: .leading)
+                             .foregroundStyle(.black)
+                             .padding(8)
+                             .background(
+                             RoundedRectangle(cornerRadius: 15)
+                             .fill(.white.opacity(0.85))
+                             )
+                             /*.background(
+                              RoundedRectangle(cornerRadius: 10)
+                              .fill(MeshGradient(width: 3, height: 3, points: [
+                              .init(0, 0), .init(0.3, 0), .init(1, 0),
+                              .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                              .init(0, 1), .init(0.5, 1), .init(1, 1)
+                              ], colors: [
+                              Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                              Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                              Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                              /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                               Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                               Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                              ])).overlay(Color.EZNotesBlack.opacity(0.4))//(Color.EZNotesLightBlack)
+                              )*/
+                             .font(.system(size: 13))
+                             .minimumScaleFactor(0.5)
+                             .multilineTextAlignment(.leading)
+                             .fontWeight(.semibold)
+                             }
+                             }
+                             .frame(maxWidth: 340, alignment: .leading)
+                             }
+                             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                             .padding(.bottom, 15)
+                             }
+                             }*/
+                            
+                            /*ForEach(Array(self.userSentMessages.enumerated()), id: \.offset) { index, item in
+                             VStack {
+                             VStack {
+                             VStack {
+                             VStack {
+                             Text(item)
+                             .frame(minWidth: 10, alignment: .trailing)
+                             .padding(8)
+                             .background(
+                             RoundedRectangle(cornerRadius: 15)
+                             .fill(Color.EZNotesBlue)
+                             )
+                             .font(.system(size: 13))
+                             .minimumScaleFactor(0.5)
+                             .multilineTextAlignment(.leading)
+                             .fontWeight(.semibold)
+                             }
+                             .frame(maxWidth: 340, alignment: .trailing)
+                             }
+                             .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
+                             .padding(.bottom, 15)
+                             
+                             if !(index > self.systemResponses.count - 1) {
+                             VStack {
+                             VStack {
+                             HStack {
+                             Image("AI-Chat")//systemName: "sparkle")
+                             .resizableImage(width: 20, height: 20)
+                             
+                             Text(self.systemResponses[index])
+                             .frame(minWidth: 20,  alignment: .leading)
+                             .foregroundStyle(.black)
+                             .padding(8)
+                             .background(
+                             RoundedRectangle(cornerRadius: 15)
+                             .fill(.white.opacity(0.85))
+                             )
+                             /*.background(
+                              RoundedRectangle(cornerRadius: 10)
+                              .fill(MeshGradient(width: 3, height: 3, points: [
+                              .init(0, 0), .init(0.3, 0), .init(1, 0),
+                              .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                              .init(0, 1), .init(0.5, 1), .init(1, 1)
+                              ], colors: [
+                              Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                              Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                              Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                              /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                               Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                               Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                              ])).overlay(Color.EZNotesBlack.opacity(0.4))//(Color.EZNotesLightBlack)
+                              )*/
+                             .font(.system(size: 13))
+                             .minimumScaleFactor(0.5)
+                             .multilineTextAlignment(.leading)
+                             .fontWeight(.semibold)
+                             }
+                             }
+                             .frame(maxWidth: 340, alignment: .leading)
+                             }
+                             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                             .padding(.bottom, 15)
+                             }
+                             }
+                             .frame(maxWidth: .infinity, alignment: .trailing)
+                             .padding(.trailing, 10)
+                             }
+                             .frame(maxWidth: .infinity)
+                             }*/
+                            //}
+                            .frame(maxWidth: prop.size.width - 20, maxHeight: .infinity)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .ignoresSafeArea(.keyboard, edges: .bottom)
+                        .onTapGesture {
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                            self.messageBoxTapped = false
+                        }
+                        
+                        Spacer()
+                        
+                        HStack {
+                            if !self.hideLeftsideContent {
+                                VStack {
+                                    Button(action: { print("Upload File") }) {
+                                        Image(systemName: "square.and.arrow.up")
+                                            .resizable()
+                                            .frame(width: 15, height: 20)
+                                            .foregroundStyle(.white)//(Color.EZNotesOrange)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .padding(.bottom, 2.5)
+                                }
+                                .frame(minWidth: 10, alignment: .leading)
+                                .padding(12.5)
+                                .background(Color.EZNotesLightBlack.opacity(0.65))
+                                .clipShape(.circle)
+                                .padding(.leading, 10)
+                                
+                                VStack {
+                                    Button(action: { print("Take live picture to get instant feedback") }) {
+                                        Image(systemName: "camera")
+                                            .resizable()
+                                            .frame(width: 20, height: 15)
+                                            .foregroundStyle(.white)/*(
+                                                                     MeshGradient(width: 3, height: 3, points: [
+                                                                     .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                     .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                     .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                                     ], colors: [
+                                                                     Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                                                     Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                                                     Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                     /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                      Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                      Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                                     ])
+                                                                     )*/
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    //.padding(.top, 5)
+                                }
+                                .frame(minWidth: 10, alignment: .leading)
+                                .padding(12.5)
+                                .background(Color.EZNotesLightBlack.opacity(0.65))
+                                .clipShape(.circle)
+                                
+                                VStack {
+                                    Button(action: { print("Select category to talk to the AI chat about") }) {
+                                        Image("Categories-Icon")
+                                            .resizableImage(width: 20, height: 20)
+                                            .foregroundStyle(.white)/*(
+                                                                     MeshGradient(width: 3, height: 3, points: [
+                                                                     .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                     .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                     .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                                     ], colors: [
+                                                                     Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                                                     Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                                                     Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                     /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                      Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                      Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                                     ])
+                                                                     )*/
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    //.padding(.top, 5)
+                                }
+                                .frame(minWidth: 10, alignment: .leading)
+                                .padding(12.5)
+                                .background(Color.EZNotesLightBlack.opacity(0.65))
+                                .clipShape(.circle)
+                                .padding(.trailing, 5)
+                            }
+                            
+                            VStack {
+                                TextField("Message...", text: $messageInput, axis: .vertical)
+                                    .frame(maxWidth: prop.size.width - 40, minHeight: 30)
+                                    .padding(4)
+                                    .foregroundStyle(.white)
+                                    .padding(.leading, 10)
+                                    .cornerRadius(15)
+                                    .background(
+                                        self.hideLeftsideContent
+                                        ? AnyView(RoundedRectangle(cornerRadius: 15)
+                                            .fill(.clear)
+                                            .stroke(LinearGradient(gradient: Gradient(
+                                                colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
+                                            ), startPoint: .leading, endPoint: .trailing), lineWidth: 1))
+                                        : AnyView(RoundedRectangle(cornerRadius: 15)
+                                            .fill(.clear)
+                                            .border(width: 1, edges: [.bottom], lcolor: LinearGradient(gradient: Gradient(
+                                                colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
+                                            ), startPoint: .leading, endPoint: .trailing)))
+                                    )
+                                    .overlay(
+                                        HStack {
+                                            GeometryReader { geometry in
+                                                Color.clear
+                                                    .preference(key: ViewPositionKey.self, value: geometry.frame(in: .global).minY)
+                                            }.frame(width: 0, height: 0)
+                                            
+                                            /* MARK: Exists to push the `x` button to the end of the textfield. */
+                                            VStack { }.frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                                            
+                                            if self.messageInput.count > 0 {
+                                                Button(action: {
+                                                    self.messageInput.removeAll()
+                                                }) {
+                                                    Image(systemName: "multiply.circle.fill")
+                                                        .foregroundColor(.gray)
+                                                        .padding(.trailing, 15)
+                                                }
+                                            }
+                                        }
+                                    )
+                                    .padding([.top, .bottom], 10)
+                                    .onChange(of: self.messageInput) {
+                                        if self.messageInput.count > 0 { self.hideLeftsideContent = true }
+                                        else { self.hideLeftsideContent = false }
+                                    }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.trailing, !self.hideLeftsideContent ? 15 : 0)
+                            .padding(.leading, !self.hideLeftsideContent ? 0 : 10)
+                            .onPreferenceChange(ViewPositionKey.self) { value in
+                                if value < self.currentYPosOfMessageBox {
+                                    self.messageBoxTapped = true
+                                }
+                                
+                                self.currentYPosOfMessageBox = value
+                            }
+                            
+                            if self.hideLeftsideContent {
+                                VStack {
+                                    Button(action: {
+                                        self.aiIsTyping = true
                                         
                                         self.messages.append(MessageDetails(
                                             MessageID: UUID(),
-                                            MessageContent: resp!["AIResponse"] as! String,
-                                            userSent: false,
+                                            MessageContent: self.messageInput,
+                                            userSent: true,
                                             dateSent: Date.now
                                         ))
+                                        
+                                        RequestAction<SendAIChatMessageData>(
+                                            parameters: SendAIChatMessageData(AccountId: self.accountInfo.accountID, Message: self.messageInput)
+                                        ).perform(action: send_ai_chat_message_req) { statusCode, resp in
+                                            self.aiIsTyping = false
+                                            
+                                            guard resp != nil && statusCode == 200 else {
+                                                return
+                                            }
+                                            
+                                            self.messages.append(MessageDetails(
+                                                MessageID: UUID(),
+                                                MessageContent: resp!["AIResponse"] as! String,
+                                                userSent: false,
+                                                dateSent: Date.now
+                                            ))
+                                        }
+                                        
+                                        self.messageInput.removeAll()
+                                    }) {
+                                        Image(systemName: "arrow.up")
+                                            .resizableImage(width: 15, height: 20)
+                                            .foregroundStyle(.white)/*(
+                                                                     MeshGradient(width: 3, height: 3, points: [
+                                                                     .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                     .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                     .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                                     ], colors: [
+                                                                     Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                                                     Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                                                     Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                     /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                      Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                      Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                                     ])
+                                                                     )*/
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    //.padding(.top, 5)
+                                }
+                                .frame(minWidth: 10, alignment: .leading)
+                                .padding(12.5)
+                                .background(Color.EZNotesLightBlack.opacity(0.65))
+                                .clipShape(.circle)
+                                .padding(.trailing, 10)
+                                .padding(.leading, 5)
+                            }
+                        }
+                        
+                        VStack {
+                            
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: 5)
+                    } else {
+                        if self.generatedTopics.count == 0 {
+                            if !self.errorGeneratingTopicsForMajor {
+                                VStack {
+                                    Text("Chat History:")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 25))
+                                        .minimumScaleFactor(0.5)
+                                        .fontWeight(.bold)
+                                    
+                                    if self.tempChatHistory == [:] {
+                                        Text("No Chat History")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                            .padding(.top)
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: 15, design: .rounded))
+                                            .minimumScaleFactor(0.5)
+                                            .fontWeight(.light)
+                                    } else {
+                                        ForEach(Array(self.tempChatHistory.keys), id: \.self) { key in
+                                            Button(action: {
+                                                self.topicPicked = key
+                                                
+                                                RequestAction<StartAIChatData>(
+                                                    parameters: StartAIChatData(
+                                                        AccountId: self.accountInfo.accountID,
+                                                        Major: self.accountInfo.major,
+                                                        Topic: key
+                                                    )
+                                                )
+                                                .perform(action: start_ai_chat_req) { statusCode, resp in
+                                                    guard resp != nil && statusCode == 200 else {
+                                                        /* self.aiChatStartError = true*/
+                                                        return
+                                                    }
+                                                    
+                                                    //self.accountInfo.setAIChatID(chatID: resp!["ChatID"]! as! String)
+                                                    //self.aiChatPopover = true
+                                                    self.chatIsLive = true
+                                                    self.messages = self.tempChatHistory[key]!
+                                                }
+                                            }) {
+                                                HStack {
+                                                    VStack {
+                                                        Text(key)
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .foregroundStyle(.white)
+                                                            .padding(.leading, 10)
+                                                            .setFontSizeAndWeight(weight: .bold, size: 18, design: .rounded)
+                                                            .minimumScaleFactor(0.5)
+                                                            .multilineTextAlignment(.leading)
+                                                            .cornerRadius(8)
+                                                        
+                                                        if self.tempChatHistory[key]!.count > 0 {
+                                                            Text("Last Message On: \(self.tempChatHistory[key]![self.tempChatHistory[key]!.count - 1].dateSent.formatted(date: .numeric, time: .omitted))")
+                                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                                .padding([.top, .bottom], 5)
+                                                                .foregroundStyle(.white)
+                                                                .padding(.leading, 10)
+                                                                .setFontSizeAndWeight(weight: .light, size: 12)
+                                                                .minimumScaleFactor(0.5)
+                                                                .multilineTextAlignment(.leading)
+                                                        } else {
+                                                            Text("No Messages")
+                                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                                .padding([.top, .bottom], 5)
+                                                                .foregroundStyle(.white)
+                                                                .padding(.leading, 10)
+                                                                .setFontSizeAndWeight(weight: .light, size: 12)
+                                                                .minimumScaleFactor(0.5)
+                                                                .multilineTextAlignment(.leading)
+                                                        }
+                                                    }
+                                                    
+                                                    ZStack {
+                                                        Image(systemName: "chevron.right")
+                                                            .resizableImage(width: 10, height: 15)
+                                                            .foregroundStyle(Color.EZNotesBlue)
+                                                    }
+                                                    .frame(maxWidth: 15, alignment: .trailing)
+                                                    .padding(.trailing, 25)
+                                                }
+                                                .frame(maxWidth: prop.size.width - 40)
+                                                .padding(12)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(Color.EZNotesLightBlack.opacity(0.3))
+                                                        .shadow(color: Color.black, radius: 2.5)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .top)
+                            } else {
+                                VStack {
+                                    Image(systemName: "exclamationmark.warninglight.fill")
+                                        .resizable()
+                                        .frame(width: 65, height: 60)
+                                        .padding([.top, .bottom], 15)
+                                        .foregroundStyle(Color.EZNotesRed)
+                                    
+                                    Text("Error generating topics for \(self.accountInfo.major)")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 25, design: .rounded))
+                                        .minimumScaleFactor(0.5)
+                                        .fontWeight(.medium)
+                                    
+                                    Button(action: {
+                                        self.errorGeneratingTopicsForMajor = false
+                                        
+                                        /* MARK: Precautionary measure. */
+                                        if self.chatIsLive { self.chatIsLive = false }
+                                    }) {
+                                        Text("Go Back")
+                                            .frame(
+                                                width: prop.isIpad
+                                                ? UIDevice.current.orientation.isLandscape
+                                                ? prop.size.width - 800
+                                                : prop.size.width - 450
+                                                : prop.size.width - 90,
+                                                height: 10
+                                            )
+                                            .padding([.top, .bottom])
+                                            .font(.system(size: 25, design: .rounded))
+                                            .fontWeight(.semibold)
+                                            .foregroundStyle(.white)
+                                            .contentShape(Rectangle())
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(Color.EZNotesLightBlack)
+                                    )
+                                }
+                                .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .top)
+                            }
+                        } else {
+                            VStack {
+                                ScrollView(.vertical, showsIndicators: false) {
+                                    ForEach(self.generatedTopics, id: \.self) { topic in
+                                        Button(action: {
+                                            self.topicPicked = topic
+                                            var topicNumber = 0
+                                            
+                                            for (topic, _) in self.tempChatHistory {
+                                                if topic.contains(self.topicPicked) { topicNumber += 1 }
+                                            }
+                                            
+                                            if topicNumber > 0 {
+                                                self.topicPicked = "\(self.topicPicked) \(topicNumber)"
+                                            }
+                                            
+                                            RequestAction<StartAIChatData>(
+                                                parameters: StartAIChatData(
+                                                    AccountId: self.accountInfo.accountID,
+                                                    Major: self.accountInfo.major,
+                                                    Topic: topic
+                                                )
+                                            )
+                                            .perform(action: start_ai_chat_req) { statusCode, resp in
+                                                guard resp != nil && statusCode == 200 else {
+                                                    /* self.aiChatStartError = true*/
+                                                    return
+                                                }
+                                                
+                                                //self.accountInfo.setAIChatID(chatID: resp!["ChatID"]! as! String)
+                                                //self.aiChatPopover = true
+                                                self.chatIsLive = true
+                                            }
+                                        }) {
+                                            HStack {
+                                                Text("\(topic)")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 10)
+                                                    .setFontSizeAndWeight(weight: .bold, size: 22, design: .rounded)
+                                                    .minimumScaleFactor(0.5)
+                                                    .multilineTextAlignment(.leading)
+                                                    .cornerRadius(8)
+                                                    .foregroundColor(.white)
+                                                
+                                                ZStack {
+                                                    Image(systemName: "chevron.right")
+                                                        .resizableImage(width: 10, height: 15)
+                                                        .foregroundStyle(.white)
+                                                }
+                                                .frame(maxWidth: 15, alignment: .trailing)
+                                                .padding(.trailing, 25)
+                                            }
+                                            .frame(maxWidth: prop.size.width - 40)
+                                            .padding(8)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(Color.EZNotesLightBlack)
+                                                    .shadow(color: Color.black, radius: 2.5)
+                                            )
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
                                     }
                                     
-                                    self.messageInput.removeAll()
-                                }) {
-                                    Image(systemName: "arrow.up")
-                                        .resizableImage(width: 15, height: 20)
-                                        .foregroundStyle(.white)/*(
-                                                                 MeshGradient(width: 3, height: 3, points: [
-                                                                 .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                 .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                 .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                                 ], colors: [
-                                                                 Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                                                                 Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                                                                 Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                 /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                  Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                  Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                                 ])
-                                                                 )*/
+                                    Button(action: {
+                                        self.topicPicked = "Other"
+                                        
+                                        RequestAction<StartAIChatData>(
+                                            parameters: StartAIChatData(
+                                                AccountId: self.accountInfo.accountID,
+                                                Major: self.accountInfo.major,
+                                                Topic: "Other"
+                                            )
+                                        )
+                                        .perform(action: start_ai_chat_req) { statusCode, resp in
+                                            guard resp != nil && statusCode == 200 else {
+                                                /* self.aiChatStartError = true*/
+                                                return
+                                            }
+                                            
+                                            //self.accountInfo.setAIChatID(chatID: resp!["ChatID"]! as! String)
+                                            //self.aiChatPopover = true
+                                            self.chatIsLive = true
+                                        }
+                                    }) {
+                                        HStack {
+                                            Text("Other Topic")
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .padding(.leading, 10)
+                                                .setFontSizeAndWeight(weight: .bold, size: 22, design: .rounded)
+                                                .minimumScaleFactor(0.5)
+                                                .multilineTextAlignment(.leading)
+                                                .cornerRadius(8)
+                                                .foregroundColor(.white)
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizableImage(width: 10, height: 15)
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: 15, alignment: .trailing)
+                                            .padding(.trailing, 25)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding(8)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesLightBlack)
+                                                .shadow(color: Color.black, radius: 2.5)
+                                        )
+                                    }
                                 }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                //.padding(.top, 5)
                             }
-                            .frame(minWidth: 10, alignment: .leading)
-                            .padding(12.5)
-                            .background(Color.EZNotesLightBlack.opacity(0.65))
-                            .clipShape(.circle)
-                            .padding(.trailing, 10)
-                            .padding(.leading, 5)
+                            .frame(maxWidth: prop.size.width - 60, maxHeight: .infinity)
+                            .padding(.top, 15)
                         }
-                    }
-                    
-                    VStack {
-                        
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: 5)
-                } else {
-                    if !self.errorGeneratingTopicsForMajor {
-                        VStack {
-                            Text("No Chat History")
-                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 25, design: .rounded))
-                                .minimumScaleFactor(0.5)
-                                .fontWeight(.medium)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    } else {
-                        VStack {
-                            Image(systemName: "exclamationmark.warninglight.fill")
-                                .resizable()
-                                .frame(width: 65, height: 60)
-                                .padding([.top, .bottom], 15)
-                                .foregroundStyle(Color.EZNotesRed)
-                            
-                            Text("Error generating topics for \(self.accountInfo.major)")
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 25, design: .rounded))
-                                .minimumScaleFactor(0.5)
-                                .fontWeight(.medium)
-                            
-                            Button(action: {
-                                self.errorGeneratingTopicsForMajor = false
-                                
-                                /* MARK: Precautionary measure. */
-                                if self.chatIsLive { self.chatIsLive = false }
-                            }) {
-                                Text("Go Back")
-                                    .frame(
-                                        width: prop.isIpad
-                                        ? UIDevice.current.orientation.isLandscape
-                                        ? prop.size.width - 800
-                                        : prop.size.width - 450
-                                        : prop.size.width - 90,
-                                        height: 10
-                                    )
-                                    .padding([.top, .bottom])
-                                    .font(.system(size: 25, design: .rounded))
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(.white)
-                                    .contentShape(Rectangle())
-                            }
-                            .buttonStyle(NoLongPressButtonStyle())
-                            .background(
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(Color.EZNotesLightBlack)
-                            )
-                        }
-                        .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .top)
                     }
                 }
             }

@@ -1563,12 +1563,15 @@ struct SignUpScreen : View, KeyboardReadable {
                                         )
                                     ).perform(action: complete_signup1_req) { statusCode, resp in
                                         guard resp != nil && statusCode == 200 else {
-                                            if statusCode == 0x6970 {
-                                                self.section = "main"
-                                                self.userExists = true
-                                                return
+                                            if let resp = resp {
+                                                if resp["ErrorCode"] as! Int == 0x6970 {
+                                                    self.section = "main"
+                                                    self.userExists = true
+                                                    return
+                                                }
                                             }
                                             
+                                            self.section = "main"
                                             self.serverError = true
                                             return
                                         }

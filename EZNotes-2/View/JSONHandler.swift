@@ -144,6 +144,13 @@ public func writeCategoryTextColors(categoryTextColors: [String: Color]) -> Void
     }
 }
 
+func writeTemporaryChatHistory(chatHistory: [String: Array<MessageDetails>]) -> Void {
+    guard let _ = try? writeJSON(data: chatHistory, filename: "temp_chat_history.json") else {
+        print("[writeTemporaryChatHistory] -> Failed to write \(chatHistory) to cache")
+        return
+    }
+}
+
 public func getCategoryData() -> [String: Array<String>] {
     if let result = try? obtainJSON(type: [String: Array<String>].self, filename: "categories_data.json") { return result }
     else {
@@ -214,4 +221,13 @@ public func getCategoryCustomTextColors() -> [String: Color] {
     }
     
     return retData
+}
+
+func getTemporaryStoredChats() -> [String: Array<MessageDetails>] {
+    guard let result = try? obtainJSON(type: [String: Array<MessageDetails>].self, filename: "temp_chat_history.json") else {
+        print("[getTemporaryStoredChats] -> Failed to get temporary stores chats from cache")
+        return [:]
+    }
+    
+    return result
 }

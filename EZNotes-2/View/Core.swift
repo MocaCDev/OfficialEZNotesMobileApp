@@ -88,6 +88,7 @@ struct CoreApp: View {
     @ObservedObject public var accountInfo: AccountDetails
     
     @Binding public var userHasSignedIn: Bool
+    @Binding public var tempChatHistory: [String: Array<MessageDetails>]
     
     @State private var categories: Array<String> = []
     @State private var sets: Array<String> = []
@@ -177,7 +178,8 @@ struct CoreApp: View {
                     categoryCustomTextColors: $categoryCustomTextColors,
                     prop: prop,
                     accountInfo: accountInfo,
-                    userHasSignedIn: $userHasSignedIn
+                    userHasSignedIn: $userHasSignedIn,
+                    tempChatHistory: $tempChatHistory
                 )
             } else if self.section == "chat" {
                 ChatView(

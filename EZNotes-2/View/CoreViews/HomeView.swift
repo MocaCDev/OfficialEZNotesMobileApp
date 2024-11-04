@@ -91,6 +91,7 @@ struct HomeView: View {
     @ObservedObject public var accountInfo: AccountDetails
     
     @Binding public var userHasSignedIn: Bool
+    @Binding public var tempChatHistory: [String: Array<MessageDetails>]
     
     /* TODO: Eventually the app will enable users to set the outline of there categories as they please. Get this implemented. */
     let columns = [
@@ -191,7 +192,8 @@ struct HomeView: View {
                     searchDone: $searchDone,
                     messages: $messages,
                     lookedUpCategoriesAndSets: $lookedUpCategoriesAndSets,
-                    userHasSignedIn: $userHasSignedIn
+                    userHasSignedIn: $userHasSignedIn,
+                    tempChatHistory: $tempChatHistory
                 )
                 
                 ZStack {
