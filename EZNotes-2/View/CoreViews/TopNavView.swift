@@ -835,6 +835,7 @@ struct TopNavHome: View {
     @Binding public var categorySearch: String
     @Binding public var searchDone: Bool
     
+    @State private var deleteAllMessagesConfirmAlert: Bool = false
     @State private var showSearchBar: Bool = false
     @FocusState private var categorySearchFocus: Bool
     /*@State private var userSentMessages: Array<String> = []//["Hi!", "What is 2+2?", "Yes"]
@@ -855,7 +856,7 @@ struct TopNavHome: View {
     @Binding public var messages: Array<MessageDetails>
     @Binding public var lookedUpCategoriesAndSets: [String: Array<String>]
     @Binding public var userHasSignedIn: Bool
-    @Binding public var tempChatHistory: [String: Array<MessageDetails>]
+    @Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
     
     @State private var numberOfTheAnimationgBall = 3
     
@@ -1024,7 +1025,7 @@ struct TopNavHome: View {
                     return
                 }
                 
-                self.tempChatHistory[self.topicPicked] = self.messages
+                self.tempChatHistory[self.topicPicked] = [self.accountInfo.aiChatID: self.messages]
                 writeTemporaryChatHistory(chatHistory: self.tempChatHistory)
                 
                 self.topicPicked = ""
@@ -1054,7 +1055,7 @@ struct TopNavHome: View {
                         if self.topicPicked != "" || self.chatIsLive {
                             Button(action: {
                                 /* MARK: First, save the message history. */
-                                self.tempChatHistory[self.topicPicked] = self.messages
+                                self.tempChatHistory[self.topicPicked] = [self.accountInfo.aiChatID: self.messages]
                                 writeTemporaryChatHistory(chatHistory: self.tempChatHistory)
                                 
                                 self.chatIsLive = false
@@ -1120,20 +1121,22 @@ struct TopNavHome: View {
                                     HStack {
                                         Text("New Chat")
                                             .frame(maxWidth: .infinity, alignment: .center)
-                                            .foregroundStyle(.white)
+                                            .foregroundStyle(.black)
                                             .font(.system(size: 20))
                                             .minimumScaleFactor(0.5)
                                             .fontWeight(.medium)
                                     }
                                     .padding([.top, .bottom], 4)
                                     .padding([.leading, .trailing], 8)
-                                    .background(Color.EZNotesLightBlack.shadow(color: .black, radius: 2.5))
+                                    .background(Color.white.shadow(color: .black, radius: 2.5))
                                     .cornerRadius(15)
                                 }
                                 .buttonStyle(NoLongPressButtonStyle())
                                 .padding([.top, .bottom])
                                 
-                                Button(action: { print("Delete All Chats") }) {
+                                Button(action: {
+                                    self.deleteAllMessagesConfirmAlert = true
+                                }) {
                                     HStack {
                                         Text("Delete All")
                                             .frame(maxWidth: .infinity, alignment: .center)
@@ -1149,6 +1152,18 @@ struct TopNavHome: View {
                                 }
                                 .buttonStyle(NoLongPressButtonStyle())
                                 .padding([.top, .bottom])
+                                .alert("Are You Sure?", isPresented: $deleteAllMessagesConfirmAlert) {
+                                    Button(action: {
+                                        self.tempChatHistory.removeAll()
+                                        writeTemporaryChatHistory(chatHistory: self.tempChatHistory)
+                                    }) {
+                                        Text("Yes")
+                                    }
+                                    
+                                    Button("No", role: .cancel) { }
+                                } message: {
+                                    Text("By clicking Yes, you will effectively delete all of your \(self.tempChatHistory.count) chats.")
+                                }
                             }
                             .frame(maxWidth: prop.size.width - 40)
                         }
@@ -1191,28 +1206,16 @@ struct TopNavHome: View {
                                             proxy.scrollTo(messages.last)
                                         }
                                     }
-                                    .onChange(of: self.aiIsTyping) {
+                                    /*.onChange(of: self.aiIsTyping) {
                                         //if self.aiIsTyping {
                                         //    proxy.scrollTo(self.chatUUID)
                                         //}
-                                    }
+                                    }*/
                                     .onChange(of: self.messageBoxTapped) {
                                         withAnimation {
                                             proxy.scrollTo(messages.last)
                                         }
                                     }
-                                    /*.onReceive(Just(messages)) { _ in
-                                     withAnimation {
-                                     proxy.scrollTo(messages.last)
-                                     }
-                                     }
-                                     .onReceive(Just(self.aiIsTyping)) { _ in
-                                     if self.aiIsTyping {
-                                     proxy.scrollTo(self.chatUUID)
-                                     } else {
-                                     proxy.scrollTo(messages.last)
-                                     }
-                                     }*/
                                     .onAppear {
                                         withAnimation {
                                             proxy.scrollTo(messages.last, anchor: .bottom)
@@ -1220,140 +1223,6 @@ struct TopNavHome: View {
                                     }
                                 }
                             }
-                            //ScrollView(.vertical) {
-                            /*ForEach(self.messages.sorted(by: <), id: \.key) { key, value in//ForEach(Array(self.messages.keys), id: \.self) { key in
-                             VStack {
-                             VStack {
-                             Text(key)
-                             .frame(minWidth: 10, alignment: .trailing)
-                             .padding(8)
-                             .background(
-                             RoundedRectangle(cornerRadius: 15)
-                             .fill(Color.EZNotesBlue)
-                             )
-                             .font(.system(size: 13))
-                             .minimumScaleFactor(0.5)
-                             .multilineTextAlignment(.leading)
-                             .fontWeight(.semibold)
-                             }
-                             .frame(maxWidth: 340, alignment: .trailing)
-                             }
-                             .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
-                             .padding(.bottom, 15)
-                             
-                             if value.count > 0 {
-                             VStack {
-                             VStack {
-                             HStack {
-                             Image("AI-Chat")//systemName: "sparkle")
-                             .resizableImage(width: 20, height: 20)
-                             
-                             Text(value)
-                             .frame(minWidth: 20,  alignment: .leading)
-                             .foregroundStyle(.black)
-                             .padding(8)
-                             .background(
-                             RoundedRectangle(cornerRadius: 15)
-                             .fill(.white.opacity(0.85))
-                             )
-                             /*.background(
-                              RoundedRectangle(cornerRadius: 10)
-                              .fill(MeshGradient(width: 3, height: 3, points: [
-                              .init(0, 0), .init(0.3, 0), .init(1, 0),
-                              .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                              .init(0, 1), .init(0.5, 1), .init(1, 1)
-                              ], colors: [
-                              Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                              Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                              Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                              /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                               Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                               Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                              ])).overlay(Color.EZNotesBlack.opacity(0.4))//(Color.EZNotesLightBlack)
-                              )*/
-                             .font(.system(size: 13))
-                             .minimumScaleFactor(0.5)
-                             .multilineTextAlignment(.leading)
-                             .fontWeight(.semibold)
-                             }
-                             }
-                             .frame(maxWidth: 340, alignment: .leading)
-                             }
-                             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                             .padding(.bottom, 15)
-                             }
-                             }*/
-                            
-                            /*ForEach(Array(self.userSentMessages.enumerated()), id: \.offset) { index, item in
-                             VStack {
-                             VStack {
-                             VStack {
-                             VStack {
-                             Text(item)
-                             .frame(minWidth: 10, alignment: .trailing)
-                             .padding(8)
-                             .background(
-                             RoundedRectangle(cornerRadius: 15)
-                             .fill(Color.EZNotesBlue)
-                             )
-                             .font(.system(size: 13))
-                             .minimumScaleFactor(0.5)
-                             .multilineTextAlignment(.leading)
-                             .fontWeight(.semibold)
-                             }
-                             .frame(maxWidth: 340, alignment: .trailing)
-                             }
-                             .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
-                             .padding(.bottom, 15)
-                             
-                             if !(index > self.systemResponses.count - 1) {
-                             VStack {
-                             VStack {
-                             HStack {
-                             Image("AI-Chat")//systemName: "sparkle")
-                             .resizableImage(width: 20, height: 20)
-                             
-                             Text(self.systemResponses[index])
-                             .frame(minWidth: 20,  alignment: .leading)
-                             .foregroundStyle(.black)
-                             .padding(8)
-                             .background(
-                             RoundedRectangle(cornerRadius: 15)
-                             .fill(.white.opacity(0.85))
-                             )
-                             /*.background(
-                              RoundedRectangle(cornerRadius: 10)
-                              .fill(MeshGradient(width: 3, height: 3, points: [
-                              .init(0, 0), .init(0.3, 0), .init(1, 0),
-                              .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                              .init(0, 1), .init(0.5, 1), .init(1, 1)
-                              ], colors: [
-                              Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                              Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                              Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                              /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                               Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                               Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                              ])).overlay(Color.EZNotesBlack.opacity(0.4))//(Color.EZNotesLightBlack)
-                              )*/
-                             .font(.system(size: 13))
-                             .minimumScaleFactor(0.5)
-                             .multilineTextAlignment(.leading)
-                             .fontWeight(.semibold)
-                             }
-                             }
-                             .frame(maxWidth: 340, alignment: .leading)
-                             }
-                             .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                             .padding(.bottom, 15)
-                             }
-                             }
-                             .frame(maxWidth: .infinity, alignment: .trailing)
-                             .padding(.trailing, 10)
-                             }
-                             .frame(maxWidth: .infinity)
-                             }*/
-                            //}
                             .frame(maxWidth: prop.size.width - 20, maxHeight: .infinity)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -1414,7 +1283,7 @@ struct TopNavHome: View {
                                 VStack {
                                     Button(action: { print("Select category to talk to the AI chat about") }) {
                                         Image("Categories-Icon")
-                                            .resizableImage(width: 20, height: 20)
+                                            .resizableImage(width: 15, height: 15)
                                             .foregroundStyle(.white)/*(
                                                                      MeshGradient(width: 3, height: 3, points: [
                                                                      .init(0, 0), .init(0.3, 0), .init(1, 0),
@@ -1443,10 +1312,11 @@ struct TopNavHome: View {
                             VStack {
                                 TextField("Message...", text: $messageInput, axis: .vertical)
                                     .frame(maxWidth: prop.size.width - 40, minHeight: 30)
-                                    .padding(4)
-                                    .foregroundStyle(.white)
-                                    .padding(.leading, 10)
-                                    .cornerRadius(15)
+                                    .padding([.top, .bottom], 4)
+                                    .padding(.leading, 8)
+                                    .padding(.trailing, 35)
+                                    .cornerRadius(7.5)
+                                    .padding(.horizontal, 5)
                                     .keyboardType(.alphabet)
                                     .background(
                                         self.hideLeftsideContent
@@ -1461,6 +1331,7 @@ struct TopNavHome: View {
                                                 colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
                                             ), startPoint: .leading, endPoint: .trailing)))
                                     )
+                                    .foregroundStyle(.white)
                                     .overlay(
                                         HStack {
                                             GeometryReader { geometry in
@@ -1512,7 +1383,11 @@ struct TopNavHome: View {
                                         ))
                                         
                                         RequestAction<SendAIChatMessageData>(
-                                            parameters: SendAIChatMessageData(AccountId: self.accountInfo.accountID, Message: self.messageInput)
+                                            parameters: SendAIChatMessageData(
+                                                ChatID: self.accountInfo.aiChatID,
+                                                AccountId: self.accountInfo.accountID,
+                                                Message: self.messageInput
+                                            )
                                         ).perform(action: send_ai_chat_message_req) { statusCode, resp in
                                             self.aiIsTyping = false
                                             
@@ -1568,7 +1443,7 @@ struct TopNavHome: View {
                             if !self.errorGeneratingTopicsForMajor {
                                 VStack {
                                     Text("Chat History:")
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .frame(maxWidth: prop.size.width - 40, alignment: .leading)
                                         .foregroundStyle(.white)
                                         .font(Font.custom("Poppins-Regular", size: 25))//.font(.system(size: 25))
                                         .minimumScaleFactor(0.5)
@@ -1576,88 +1451,168 @@ struct TopNavHome: View {
                                     
                                     if self.tempChatHistory == [:] {
                                         Text("No Chat History")
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .center)
                                             .padding(.top)
                                             .foregroundStyle(.white)
                                             .font(Font.custom("Poppins-ExtraLight", size: 15))//.font(.system(size: 15, design: .rounded))
                                             .minimumScaleFactor(0.5)
                                             .fontWeight(.light)
                                     } else {
-                                        ForEach(Array(self.tempChatHistory.keys), id: \.self) { key in
-                                            Button(action: {
-                                                self.topicPicked = key
-                                                
-                                                RequestAction<StartAIChatData>(
-                                                    parameters: StartAIChatData(
-                                                        AccountId: self.accountInfo.accountID,
-                                                        Major: self.accountInfo.major,
-                                                        Topic: key
-                                                    )
-                                                )
-                                                .perform(action: start_ai_chat_req) { statusCode, resp in
-                                                    guard resp != nil && statusCode == 200 else {
-                                                        /* self.aiChatStartError = true*/
-                                                        return
-                                                    }
-                                                    
-                                                    //self.accountInfo.setAIChatID(chatID: resp!["ChatID"]! as! String)
-                                                    //self.aiChatPopover = true
-                                                    self.chatIsLive = true
-                                                    self.messages = self.tempChatHistory[key]!
-                                                }
-                                            }) {
-                                                HStack {
-                                                    VStack {
-                                                        Text(key)
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .foregroundStyle(.white)
-                                                            .padding(.leading, 10)
-                                                            .setFontSizeAndWeight(weight: .bold, size: 18, design: .rounded)
-                                                            .minimumScaleFactor(0.5)
-                                                            .multilineTextAlignment(.leading)
-                                                            .cornerRadius(8)
+                                        ScrollView(.vertical, showsIndicators: false) {
+                                            VStack {
+                                                ForEach(Array(self.tempChatHistory.keys), id: \.self) { key in
+                                                    Button(action: {
+                                                        self.topicPicked = key
                                                         
-                                                        if self.tempChatHistory[key]!.count > 0 {
-                                                            Text("Last Message On: \(self.tempChatHistory[key]![self.tempChatHistory[key]!.count - 1].dateSent.formatted(date: .numeric, time: .omitted))")
-                                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                                .padding([.top, .bottom], 5)
-                                                                .foregroundStyle(.white)
-                                                                .padding(.leading, 10)
-                                                                .setFontSizeAndWeight(weight: .light, size: 12)
-                                                                .minimumScaleFactor(0.5)
-                                                                .multilineTextAlignment(.leading)
-                                                        } else {
-                                                            Text("No Messages")
-                                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                                .padding([.top, .bottom], 5)
-                                                                .foregroundStyle(.white)
-                                                                .padding(.leading, 10)
-                                                                .setFontSizeAndWeight(weight: .light, size: 12)
-                                                                .minimumScaleFactor(0.5)
-                                                                .multilineTextAlignment(.leading)
+                                                        for (key, value) in self.tempChatHistory[key]! {
+                                                            self.accountInfo.setAIChatID(chatID: key)
+                                                            
+                                                            self.messages = value
                                                         }
+                                                        
+                                                        self.chatIsLive = true
+                                                        
+                                                        /*RequestAction<StartAIChatData>(
+                                                            parameters: StartAIChatData(
+                                                                AccountId: self.accountInfo.accountID,
+                                                                Major: self.accountInfo.major,
+                                                                Topic: key
+                                                            )
+                                                        )
+                                                        .perform(action: start_ai_chat_req) { statusCode, resp in
+                                                            guard resp != nil && statusCode == 200 else {
+                                                                /* self.aiChatStartError = true*/
+                                                                return
+                                                            }
+                                                            
+                                                            //self.accountInfo.setAIChatID(chatID: resp!["ChatID"]! as! String)
+                                                            //self.aiChatPopover = true
+                                                            self.chatIsLive = true
+                                                            //self.messages = self.tempChatHistory[key]!
+                                                        }*/
+                                                    }) {
+                                                        HStack {
+                                                            HStack {
+                                                                VStack {
+                                                                    Text(key)
+                                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                                        .foregroundStyle(.white)
+                                                                        .padding(.leading, 10)
+                                                                        .setFontSizeAndWeight(weight: .bold, size: 18, design: .rounded)
+                                                                        .minimumScaleFactor(0.5)
+                                                                        .multilineTextAlignment(.leading)
+                                                                        .cornerRadius(8)
+                                                                    
+                                                                    if self.tempChatHistory[key]!.keys.count != 0 {
+                                                                        ForEach(Array(self.tempChatHistory[key]!.keys), id: \.self) { chatID in
+                                                                            if self.tempChatHistory[key]![chatID]!.count > 0 {
+                                                                                Text("Last Message On: \(self.tempChatHistory[key]![chatID]![self.tempChatHistory[key]![chatID]!.count - 1].dateSent.formatted(date: .numeric, time: .omitted))")
+                                                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                    .padding([.top, .bottom], 5)
+                                                                                    .foregroundStyle(.white)
+                                                                                    .padding(.leading, 10)
+                                                                                    .setFontSizeAndWeight(weight: .light, size: 12)
+                                                                                    .minimumScaleFactor(0.5)
+                                                                                    .multilineTextAlignment(.leading)
+                                                                            } else {
+                                                                                Text("No Messages")
+                                                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                    .padding([.top, .bottom], 5)
+                                                                                    .foregroundStyle(.white)
+                                                                                    .padding(.leading, 10)
+                                                                                    .setFontSizeAndWeight(weight: .light, size: 12)
+                                                                                    .minimumScaleFactor(0.5)
+                                                                                    .multilineTextAlignment(.leading)
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                    
+                                                                    //ForEach(self.tempChatHistory[key!]!.keys, id: \.self) { key2 in
+                                                                        /*if self.tempChatHistory[key!]![key2].count > 0 {
+                                                                            Text("Last Message On: \(self.tempChatHistory[key!]![key2]![self.tempChatHistory[key!]![key2]!.count - 1].dateSent.formatted(date: .numeric, time: .omitted))")
+                                                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                .padding([.top, .bottom], 5)
+                                                                                .foregroundStyle(.white)
+                                                                                .padding(.leading, 10)
+                                                                                .setFontSizeAndWeight(weight: .light, size: 12)
+                                                                                .minimumScaleFactor(0.5)
+                                                                                .multilineTextAlignment(.leading)
+                                                                        } else {
+                                                                            Text("No Messages")
+                                                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                .padding([.top, .bottom], 5)
+                                                                                .foregroundStyle(.white)
+                                                                                .padding(.leading, 10)
+                                                                                .setFontSizeAndWeight(weight: .light, size: 12)
+                                                                                .minimumScaleFactor(0.5)
+                                                                                .multilineTextAlignment(.leading)
+                                                                        }*/
+                                                                        //Text(key2)
+                                                                    //}
+                                                                    
+                                                                    HStack {
+                                                                        Button(action: {
+                                                                            self.tempChatHistory.removeValue(forKey: key)
+                                                                        }) {
+                                                                            Image(systemName: "trash")
+                                                                                .resizable()
+                                                                                .frame(width: 14.5, height: 14.5)
+                                                                                .foregroundStyle(.red)
+                                                                                .padding([.trailing, .top, .bottom], 10)
+                                                                            
+                                                                            Text("Delete")
+                                                                                .foregroundStyle(.white)
+                                                                                .font(.system(size: 13))
+                                                                                .fontWeight(.medium)
+                                                                                .padding([.leading], -10)
+                                                                        }
+                                                                        .padding([.leading], 10)
+                                                                        
+                                                                        Button(action: { print("Share") }) {
+                                                                            Image(systemName: "square.and.arrow.up")
+                                                                                .resizable()
+                                                                                .frame(width: 14.5, height: 19.5)
+                                                                                .foregroundStyle(Color.EZNotesBlue)
+                                                                                .padding([.trailing, .bottom], 10)
+                                                                                .padding([.top], 5)
+                                                                            
+                                                                            Text("Share")
+                                                                                .foregroundStyle(.white)
+                                                                                .font(.system(size: 13))
+                                                                                .fontWeight(.medium)
+                                                                                .padding([.leading], -10)
+                                                                        }
+                                                                        .padding(.leading, 10)
+                                                                    }
+                                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                                }
+                                                                
+                                                                ZStack {
+                                                                    Image(systemName: "chevron.right")
+                                                                        .resizableImage(width: 10, height: 15)
+                                                                        .foregroundStyle(Color.EZNotesBlue)
+                                                                }
+                                                                .frame(maxWidth: 15, alignment: .trailing)
+                                                                .padding(.trailing, 25)
+                                                            }
+                                                            .frame(maxWidth: prop.size.width - 80)
+                                                            .padding(12)
+                                                            .background(
+                                                                RoundedRectangle(cornerRadius: 15)
+                                                                    .fill(Color.EZNotesLightBlack.opacity(0.3))
+                                                                    .shadow(color: Color.black, radius: 2.5)
+                                                            )
+                                                        }
+                                                        .frame(maxWidth: .infinity)
                                                     }
-                                                    
-                                                    ZStack {
-                                                        Image(systemName: "chevron.right")
-                                                            .resizableImage(width: 10, height: 15)
-                                                            .foregroundStyle(Color.EZNotesBlue)
-                                                    }
-                                                    .frame(maxWidth: 15, alignment: .trailing)
-                                                    .padding(.trailing, 25)
                                                 }
-                                                .frame(maxWidth: prop.size.width - 40)
-                                                .padding(12)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 15)
-                                                        .fill(Color.EZNotesLightBlack.opacity(0.3))
-                                                        .shadow(color: Color.black, radius: 2.5)
-                                                )
                                             }
+                                            .padding(.top, 10)
                                         }
+                                        .frame(maxWidth: .infinity)
                                     }
                                 }
-                                .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .top)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                             } else {
                                 VStack {
                                     Image(systemName: "exclamationmark.warninglight.fill")
@@ -1731,8 +1686,10 @@ struct TopNavHome: View {
                                                     return
                                                 }
                                                 
-                                                //self.accountInfo.setAIChatID(chatID: resp!["ChatID"]! as! String)
+                                                //print(UUID(uuidString: resp!["ChatID"]! as! String)!)
+                                                self.accountInfo.setAIChatID(chatID: UUID(uuidString: resp!["ChatID"]! as! String)!)
                                                 //self.aiChatPopover = true
+                                                self.tempChatHistory[topic] = [UUID(uuidString: resp!["ChatID"]! as! String)!: []]
                                                 self.chatIsLive = true
                                             }
                                         }) {
@@ -1822,27 +1779,45 @@ struct TopNavHome: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(
-                /*LinearGradient(
+                LinearGradient(
                     gradient: Gradient(
                         colors: [
-                            .white,
-                            .black,
-                            .black,
-                            .black
+                            Color.EZNotesLightBlack,
+                            Color.EZNotesBlack,
+                            Color.EZNotesBlack,
+                            Color.EZNotesBlack
                         ]),
                     startPoint: .top,
                     endPoint: .bottom
-                )*/
-                .black.gradient
+                )
             )
             .onAppear {
-                guard self.messages.last?.dateSent != nil else { return }
+                //guard self.tempChatHistory.count > 0 && self.tempChatHistory[self.tempChatHistory.count - 1].dateSent != nil else { return }
+                /*for(chatTitle, value) in self.tempChatHistory {
+                    
+                    /*RequestAction<SaveChatHistoryData>(parameters: SaveChatHistoryData(
+                        AccountID: self.accountInfo.accountID, ChatTitle: chatTitle, ChatHistory: []
+                    ))
+                    .perform(action: save_chat_req) { statusCode, resp in
+                        guard resp != nil && statusCode == 200 else {
+                            return
+                        }
+                        
+                        print(resp!)
+                    }*/
+                    /* MARK: If the most recent message date is not the current date, save it to the server. */
+                    if value[value.count - 1].dateSent.formatted(date: .numeric, time: .omitted) != Date.now.formatted(date: .numeric, time: .omitted) {
+                    }
+                }*/
+                //guard self.tempChatHistory != [:] && self.tempChatHistory.
                 
-                if self.messages.last!.dateSent != Date.now {
+                /*if self.tempChatHistory.last!.dateSent != Date.now {
                     /* TODO: Request to save message history. */
                     /* TODO: Remove messages. */
                     /* TODO: Add support for showing chat history. */
-                }
+                } else {
+                    print("NAH")
+                }*/
             }
         }
         /*VStack {

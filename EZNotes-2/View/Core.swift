@@ -88,7 +88,7 @@ struct CoreApp: View {
     @ObservedObject public var accountInfo: AccountDetails
     
     @Binding public var userHasSignedIn: Bool
-    @Binding public var tempChatHistory: [String: Array<MessageDetails>]
+    @Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
     
     @State private var categories: Array<String> = []
     @State private var sets: Array<String> = []

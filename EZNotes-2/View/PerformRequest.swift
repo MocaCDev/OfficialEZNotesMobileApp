@@ -349,6 +349,7 @@ struct RequestAction<T> {
             case is SendAIChatMessageData.Type:
                 guard let params: SendAIChatMessageData = (parameters as? SendAIChatMessageData) else { return }
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.ChatID.uuidString, forHTTPHeaderField: "Chat-Id")
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
                 let jsonData: [String: String] = ["Message": params.Message]
                 request.httpBody = try? JSONSerialization.data(withJSONObject: jsonData)
@@ -377,6 +378,25 @@ struct RequestAction<T> {
             case is GetCustomTopicsData.Type:
                 guard let params: GetCustomTopicsData = (parameters as? GetCustomTopicsData) else { return }
                 request.addValue(params.Major, forHTTPHeaderField: "Major")
+                break
+            case is SaveChatHistoryData.Type:
+                guard let params: SaveChatHistoryData = (parameters as? SaveChatHistoryData) else { return }
+                request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                var jsonData: [String: Array<[String: Any]>] = [params.ChatTitle: []]
+                    
+                for value in params.ChatHistory {
+                    jsonData[params.ChatTitle]!.append([
+                        "MessageID": value.MessageID.uuidString,
+                        "MessageContent": value.MessageContent,
+                        "userSent": value.userSent,
+                        "dateSent": ISO8601DateFormatter().string(from: value.dateSent)
+                    ])
+                }
+            
+                print(jsonData)
+            
+                request.httpBody = try? JSONSerialization.data(withJSONObject: jsonData)
                 break
             default: break
         }

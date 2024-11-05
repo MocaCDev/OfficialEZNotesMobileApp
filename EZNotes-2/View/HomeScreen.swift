@@ -124,7 +124,7 @@ struct HomeScreen: View {
                                 )
                                 .multilineTextAlignment(.center)
                             
-                            Text("Never miss a detail—your notes are taken, sorted, and ready automatically.")
+                            Text("Never miss a detail—your notes are taken, sorted, and ready automatically for you.")
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .contrast(10)
                                 .shadow(color: .white, radius: 2.5)

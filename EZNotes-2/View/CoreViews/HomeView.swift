@@ -91,7 +91,7 @@ struct HomeView: View {
     @ObservedObject public var accountInfo: AccountDetails
     
     @Binding public var userHasSignedIn: Bool
-    @Binding public var tempChatHistory: [String: Array<MessageDetails>]
+    @Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
     
     /* TODO: Eventually the app will enable users to set the outline of there categories as they please. Get this implemented. */
     let columns = [

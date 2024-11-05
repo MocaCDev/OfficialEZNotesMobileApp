@@ -6,6 +6,20 @@
 //
 import SwiftUI
 
+public func attemptDeleteJSON(filename: String) {
+    do {
+        let fileURL = try FileManager.default
+            .url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+            .appendingPathComponent(filename)
+        
+        guard FileManager.default.fileExists(atPath: fileURL.path) else { return }
+        
+        try FileManager.default.removeItem(at: fileURL)
+    } catch {
+        print("[attemptDeleteJSON] Error deleting file \(filename): \(error.localizedDescription)")
+    }
+}
+
 /* MARK: Function used in functions writing JSON objects to cache. Exists to mitigate repetitive code (also to mitigate the length of the file).
  * */
 private func writeJSON<T: Encodable>(data: T, filename: String) throws -> Bool {
@@ -144,7 +158,7 @@ public func writeCategoryTextColors(categoryTextColors: [String: Color]) -> Void
     }
 }
 
-func writeTemporaryChatHistory(chatHistory: [String: Array<MessageDetails>]) -> Void {
+func writeTemporaryChatHistory(chatHistory: [String: [UUID: Array<MessageDetails>]]) -> Void {
     guard let _ = try? writeJSON(data: chatHistory, filename: "temp_chat_history.json") else {
         print("[writeTemporaryChatHistory] -> Failed to write \(chatHistory) to cache")
         return
@@ -223,8 +237,8 @@ public func getCategoryCustomTextColors() -> [String: Color] {
     return retData
 }
 
-func getTemporaryStoredChats() -> [String: Array<MessageDetails>] {
-    guard let result = try? obtainJSON(type: [String: Array<MessageDetails>].self, filename: "temp_chat_history.json") else {
+func getTemporaryStoredChats() -> [String: [UUID: Array<MessageDetails>]] {
+    guard let result = try? obtainJSON(type: [String: [UUID: Array<MessageDetails>]].self, filename: "temp_chat_history.json") else {
         print("[getTemporaryStoredChats] -> Failed to get temporary stores chats from cache")
         return [:]
     }

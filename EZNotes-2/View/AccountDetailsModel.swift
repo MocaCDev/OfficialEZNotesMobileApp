@@ -13,7 +13,7 @@ class AccountDetails: ObservableObject {
     @Published var major: String
     @Published var accountID: String
     @Published var subID: String
-    @Published var aiChatID: String
+    @Published var aiChatID: UUID
     
     /* MARK: PFP - will be on top of `profileBackgroundImage`. */
     @Published var profilePicture: Image
@@ -28,7 +28,7 @@ class AccountDetails: ObservableObject {
         major = ""
         accountID = ""
         subID = ""
-        aiChatID = ""
+        aiChatID = UUID()
         profilePicture = Image(systemName: "person.crop.circle.fill")
         profileBackgroundPicture = Image("Pfp-Default-Bg")
     }
@@ -40,7 +40,7 @@ class AccountDetails: ObservableObject {
         major = ""
         accountID = ""
         subID = ""
-        aiChatID = ""
+        aiChatID = UUID()
         profilePicture = Image(systemName: "person.crop.circle.fill")
         profileBackgroundPicture = Image("Pfp-Default-Bg")
     }
@@ -51,7 +51,7 @@ class AccountDetails: ObservableObject {
     final public func setMajorName(majorName: String) { self.major = majorName }
     final public func setAccountID(accountID: String) { self.accountID = accountID }
     final public func setClientSubID(subID: String) { self.subID = subID }
-    final public func setAIChatID(chatID: String) { self.aiChatID = chatID }
+    final public func setAIChatID(chatID: UUID) { self.aiChatID = chatID }
     
     final public func setProfilePicture(pfp: UIImage) { self.profilePicture = Image(uiImage: pfp) }
     final public func setProfilePicture(pfp: Image) { self.profilePicture = pfp }

@@ -9,7 +9,7 @@ import SwiftUI
 
 /* MARK: URLs used for requests. */
 //let server = "https://www.eznotes.space"
-let server = "http://192.168.1.114:8088"
+let server = "http://192.168.0.9:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
@@ -41,6 +41,7 @@ struct StartAIChatData {
 }
 
 struct SendAIChatMessageData {
+    let ChatID: UUID
     let AccountId: String
     let Message: String
 }
@@ -128,6 +129,12 @@ struct GetCustomTopicsData {
 
 struct GetCustomCollegeFieldsData {
     let College: String
+}
+
+struct SaveChatHistoryData {
+    let AccountID: String
+    let ChatTitle: String
+    let ChatHistory: Array<MessageDetails>
 }
 
 /* MARK: All request actions. */
@@ -243,4 +250,10 @@ let get_custom_topics_req: CSIARequest = CSIARequest(
     url: "\(server)/generate_topics",
     method: "get",
     reqData: GetCustomTopicsData.self
+)
+
+let save_chat_req: CSIARequest = CSIARequest(
+    url: "\(server)/save_chat_history",
+    method: "post",
+    reqData: SaveChatHistoryData.self
 )
