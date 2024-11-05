@@ -349,7 +349,10 @@ struct RequestAction<T> {
             case is SendAIChatMessageData.Type:
                 guard let params: SendAIChatMessageData = (parameters as? SendAIChatMessageData) else { return }
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
-                request.addValue(params.Message, forHTTPHeaderField: "Message")
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                let jsonData: [String: String] = ["Message": params.Message]
+                request.httpBody = try? JSONSerialization.data(withJSONObject: jsonData)
+                //request.addValue(params.Message, forHTTPHeaderField: "Message")
                 break
             case is GenerateDescRequestData.Type:
                 guard let params: GenerateDescRequestData = (parameters as? GenerateDescRequestData) else { return }

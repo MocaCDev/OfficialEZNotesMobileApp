@@ -142,9 +142,13 @@ struct HomeScreen: View {
                 .frame(maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width - 40 : prop.size.width - 60, maxHeight: 260, alignment: .center)//(maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width - 40 : prop.size.width - 20, maxHeight: 320)
                 .background(
                     Image("Test-Bg-3")
+                        .resizable()
+                        //.frame(maxWidth: prop.size.height / 2.5 > 300 ? .infinity : 100, maxHeight: prop.size.height / 2.5 > 300 ? .infinity : 100)
+                        .aspectRatio(1, contentMode: .fill)
                         .overlay(Color.EZNotesBlack.opacity(0.6))
                         .blur(radius: 2.5)
                 )
+                .padding(.top, prop.size.height / 2.5 > 300 ? 0 : 20)
                 
                 if prop.size.height / 2.5 > 300 { Spacer() }
             }

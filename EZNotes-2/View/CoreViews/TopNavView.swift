@@ -1016,11 +1016,13 @@ struct TopNavHome: View {
         }
         .onChange(of: self.aiChatPopover) {
             if !self.aiChatPopover {
-                /*var topicNumber = 0
                 
-                for (topic, _) in self.tempChatHistory {
-                    if topic.contains(self.topicPicked) { topicNumber += 1 }
-                }*/
+                /* MARK: Don't do anything if there was no topic picked. */
+                if self.topicPicked == "" {
+                    /* MARK: Remove generated topics if none were picked (that way when the popover is initiated again, the user has to click "New Chat". */
+                    self.generatedTopics.removeAll()
+                    return
+                }
                 
                 self.tempChatHistory[self.topicPicked] = self.messages
                 writeTemporaryChatHistory(chatHistory: self.tempChatHistory)
@@ -1049,7 +1051,7 @@ struct TopNavHome: View {
                     .padding()
                 } else {
                     HStack {
-                        if self.topicPicked != "" {
+                        if self.topicPicked != "" || self.chatIsLive {
                             Button(action: {
                                 /* MARK: First, save the message history. */
                                 self.tempChatHistory[self.topicPicked] = self.messages
@@ -1073,15 +1075,19 @@ struct TopNavHome: View {
                         }
                         
                         Text(self.topicPicked == ""
-                             ? self.generatedTopics.count == 0 ? "EZNotes AI Chat" : "Select Topic"
+                             ? self.chatIsLive
+                                ? "Unknown Topic"
+                                : self.generatedTopics.count == 0
+                                    ? "EZNotes AI Chat"
+                                    : "Select Topic"
                              : self.topicPicked)
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                             .foregroundStyle(.white)
-                            .font(.system(size: 30, design: .rounded))
-                            .fontWeight(.heavy)
+                            .font(.system(size: prop.size.height / 2.5 > 300 ? 30 : 26, design: .rounded))
+                            .fontWeight(.bold)
                             .minimumScaleFactor(0.5)
                         
-                        if self.topicPicked != "" { ZStack{ }.frame(maxWidth: 30, alignment: .trailing) }
+                        if self.topicPicked != "" || self.chatIsLive { ZStack{ }.frame(maxWidth: 30, alignment: .trailing) }
                     }
                     .frame(maxWidth: prop.size.width - 40, maxHeight: 50, alignment: .top)
                     .border(width: 0.5, edges: [.bottom], color: .gray)
@@ -1119,8 +1125,8 @@ struct TopNavHome: View {
                                             .minimumScaleFactor(0.5)
                                             .fontWeight(.medium)
                                     }
-                                    .padding([.top, .bottom], 8)
-                                    .padding(.leading, 10)
+                                    .padding([.top, .bottom], 4)
+                                    .padding([.leading, .trailing], 8)
                                     .background(Color.EZNotesLightBlack.shadow(color: .black, radius: 2.5))
                                     .cornerRadius(15)
                                 }
@@ -1136,8 +1142,8 @@ struct TopNavHome: View {
                                             .minimumScaleFactor(0.5)
                                             .fontWeight(.medium)
                                     }
-                                    .padding([.top, .bottom], 8)
-                                    .padding([.leading, .trailing], 10)
+                                    .padding([.top, .bottom], 4)
+                                    .padding([.leading, .trailing], 8)
                                     .background(Color.EZNotesRed.shadow(color: .black, radius: 2.5))
                                     .cornerRadius(15)
                                 }
@@ -1441,6 +1447,7 @@ struct TopNavHome: View {
                                     .foregroundStyle(.white)
                                     .padding(.leading, 10)
                                     .cornerRadius(15)
+                                    .keyboardType(.alphabet)
                                     .background(
                                         self.hideLeftsideContent
                                         ? AnyView(RoundedRectangle(cornerRadius: 15)
@@ -1563,7 +1570,7 @@ struct TopNavHome: View {
                                     Text("Chat History:")
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .foregroundStyle(.white)
-                                        .font(.system(size: 25))
+                                        .font(Font.custom("Poppins-Regular", size: 25))//.font(.system(size: 25))
                                         .minimumScaleFactor(0.5)
                                         .fontWeight(.bold)
                                     
@@ -1572,7 +1579,7 @@ struct TopNavHome: View {
                                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                                             .padding(.top)
                                             .foregroundStyle(.white)
-                                            .font(.system(size: 15, design: .rounded))
+                                            .font(Font.custom("Poppins-ExtraLight", size: 15))//.font(.system(size: 15, design: .rounded))
                                             .minimumScaleFactor(0.5)
                                             .fontWeight(.light)
                                     } else {
@@ -1814,7 +1821,20 @@ struct TopNavHome: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.EZNotesBlack)
+            .background(
+                /*LinearGradient(
+                    gradient: Gradient(
+                        colors: [
+                            .white,
+                            .black,
+                            .black,
+                            .black
+                        ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )*/
+                .black.gradient
+            )
             .onAppear {
                 guard self.messages.last?.dateSent != nil else { return }
                 

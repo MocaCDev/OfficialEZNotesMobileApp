@@ -779,7 +779,8 @@ struct SignUpScreen : View, KeyboardReadable {
                             VStack {
                                 Text("Registering your account...")
                                     .frame(maxWidth: .infinity, alignment: .center)
-                                    .setFontSizeAndWeight(weight: .medium, size: 26)
+                                    .foregroundStyle(.white)
+                                    .font(Font.custom("Poppins-Regular", size: 26))//.setFontSizeAndWeight(weight: .medium, size: 26)
                                     .minimumScaleFactor(0.5)
                                 ProgressView()
                             }

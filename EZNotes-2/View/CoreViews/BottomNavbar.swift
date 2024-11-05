@@ -32,6 +32,7 @@ struct ButtomNavbar: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding([.leading], 15)
+            .padding(.top, prop.size.height / 2.5 > 300 ? 0 : 5)
             
             Spacer()
             //Spacer()
@@ -59,6 +60,7 @@ struct ButtomNavbar: View {
                     .frame(maxWidth: .infinity, alignment: .center)
             }
             .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.top, prop.size.height / 2.5 > 300 ? 0 : 5)
             
             Spacer()
             //Spacer()
@@ -79,10 +81,11 @@ struct ButtomNavbar: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
             .padding([.trailing], 20)
+            .padding(.top, prop.size.height / 2.5 > 300 ? 0 : 5)
             
             Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: 40)
+        .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 40 : 60)
         .background(Rectangle()
             .fill(self.section == "upload" ? backgroundColor : .clear)
             .edgesIgnoringSafeArea(.bottom)
