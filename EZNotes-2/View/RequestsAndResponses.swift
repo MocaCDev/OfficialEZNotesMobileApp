@@ -46,8 +46,8 @@ struct SendAIChatMessageData {
     let Message: String
 }
 
-struct SavePFPData {
-    
+struct DeleteSignupProcessData {
+    let AccountID: String
 }
 
 struct SignUpRequestData {
@@ -116,6 +116,7 @@ struct GetCollegesRequestData {
 }
 
 struct GetMajorsRequestData {
+    let College: String
     let MajorField: String
 }
 
@@ -256,4 +257,10 @@ let save_chat_req: CSIARequest = CSIARequest(
     url: "\(server)/save_chat_history",
     method: "post",
     reqData: SaveChatHistoryData.self
+)
+
+let delete_signup_process_req: CSIARequest = CSIARequest(
+    url: "\(server)/delete_signup_process",
+    method: "post",
+    reqData: DeleteSignupProcessData.self
 )

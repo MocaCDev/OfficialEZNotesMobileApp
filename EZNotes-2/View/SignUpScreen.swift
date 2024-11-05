@@ -44,6 +44,8 @@ struct SignUpScreen : View, KeyboardReadable {
     @State public var accountID: String = ""
     @State public var userInputedCode: String = ""
     @State public var wrongCode: Bool = false
+    @State public var wrongCodeAttempts: Int = 0
+    @State public var wrongCodeAttemptsMet: Bool = false
     @State public var userExists: Bool = false
     @State public var emailExists: Bool = false
     @State public var username: String = ""
@@ -228,21 +230,21 @@ struct SignUpScreen : View, KeyboardReadable {
                     
                     Text(
                         self.wrongCode
-                            ? "Wrong code. Try again"
+                            ? "Wrong code. \(3 - self.wrongCodeAttempts) attempts left. Try again"
                             : self.userExists
-                                ? "A user with the username you provided already exists"
-                                : self.emailExists
-                                    ? "A user with the email you provided already exists"
-                                    : self.section == "main"
-                                        ? "Sign up with a unique username, your email and a unique password"
-                                        : self.section == "select_state_and_college"
-                                            ? "Tell us about your college and your degree :)"
-                                            : self.section == "code_input"
-                                                ? "A code has been sent to your email. Input the code below"
-                                                : "Select a plan that best suits you"
+                                    ? "A user with the username you provided already exists"
+                                    : self.emailExists
+                                        ? "A user with the email you provided already exists"
+                                        : self.section == "main"
+                                            ? "Sign up with a unique username, your email and a unique password"
+                                            : self.section == "select_state_and_college"
+                                                ? "Tell us about your college and your degree :)"
+                                                : self.section == "code_input"
+                                                    ? "A code has been sent to your email. Input the code below"
+                                                    : "Select a plan that best suits you"
                     )
-                    .frame(maxWidth: prop.size.width - 30, minHeight: 45, alignment: .center)
-                    .foregroundStyle(self.wrongCode || self.userExists || self.emailExists ? Color.red : Color.white)
+                    .frame(maxWidth: prop.size.width - 30, alignment: .center)
+                    .foregroundStyle(self.wrongCode || self.userExists || self.emailExists ? Color.EZNotesRed : Color.white)
                     .font(
                         .system(
                             size: prop.isIpad || self.isLargerScreen
@@ -251,6 +253,20 @@ struct SignUpScreen : View, KeyboardReadable {
                         )
                     )
                     .multilineTextAlignment(.center)
+                    
+                    if self.wrongCodeAttemptsMet {
+                        Text("You have put the wrong code in too many time.")
+                            .frame(maxWidth: prop.size.width - 30, alignment: .center)
+                            .foregroundStyle(Color.EZNotesRed)
+                            .font(
+                                .system(
+                                    size: prop.isIpad || self.isLargerScreen
+                                        ? 15
+                                        : 13
+                                )
+                            )
+                            .multilineTextAlignment(.center)
+                    }
                     
                     VStack {
                         if self.section == "main" {
@@ -495,25 +511,28 @@ struct SignUpScreen : View, KeyboardReadable {
                                         else {
                                             if self.collegeIsOther { self.collegeIsOther = false }
                                             //if self.majorFields.count == 0 {
-                                                RequestAction<ReqPlaceholder>(parameters: ReqPlaceholder())
-                                                    .perform(action: get_major_fields_req) { statusCode, resp in
-                                                        self.loadingCollegeInfoSection = false
-                                                        
-                                                        guard resp != nil && statusCode == 200 else {
-                                                            self.serverError = true
-                                                            return
-                                                        }
-                                                        
-                                                        let respMajorFields = resp!["Categories"] as! [String]
-                                                        
-                                                        for mf in respMajorFields {
-                                                            if !self.majorFields.contains(mf) { self.majorFields.append(mf) }
-                                                        }
-                                                        
-                                                        self.majorFields.append("Other")
-                                                        self.majorField = self.majorFields[0]
-                                                    }
-                                            //}
+                                            RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+                                                College: self.college
+                                            ))
+                                            .perform(action: get_custom_college_fields_req) { statusCode, resp in
+                                                if let resp = resp { print(resp) }
+                                                guard
+                                                    resp != nil,
+                                                    statusCode == 200
+                                                else {
+                                                    self.serverError = true
+                                                    return
+                                                }
+                                                
+                                                guard resp!.keys.contains("Fields") else {
+                                                    self.serverError = true
+                                                    return
+                                                }
+                                                
+                                                self.majorFields = resp!["Fields"] as! [String]
+                                                self.majorFields.append("Other")
+                                                self.majorField = self.majorFields[0]
+                                            }
                                         }
                                     }
                                 }
@@ -573,7 +592,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     return
                                                 }
                                                 
-                                                guard resp!.keys.contains("Majors") else {
+                                                guard resp!.keys.contains("Fields") else {
                                                     self.serverError = true
                                                     return
                                                 }
@@ -620,7 +639,11 @@ struct SignUpScreen : View, KeyboardReadable {
                                         else {
                                             if self.majorFieldIsOther { self.majorFieldIsOther = false }
                                             //if self.majors.count == 0 {
-                                                RequestAction<GetMajorsRequestData>(parameters: GetMajorsRequestData(MajorField: self.majorField))
+                                                RequestAction<GetMajorsRequestData>(
+                                                    parameters: GetMajorsRequestData(
+                                                        College: self.college,
+                                                        MajorField: self.majorField
+                                                    ))
                                                     .perform(action: get_majors_req) { statusCode, resp in
                                                         self.loadingCollegeInfoSection = false
                                                         
@@ -780,11 +803,11 @@ struct SignUpScreen : View, KeyboardReadable {
                                 Text("Registering your account...")
                                     .frame(maxWidth: .infinity, alignment: .center)
                                     .foregroundStyle(.white)
-                                    .font(Font.custom("Poppins-Regular", size: 26))//.setFontSizeAndWeight(weight: .medium, size: 26)
+                                    .font(Font.custom("Poppins-Regular", size: 22))//.setFontSizeAndWeight(weight: .medium, size: 26)
                                     .minimumScaleFactor(0.5)
                                 ProgressView()
                             }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .center)
                         } else if self.section == "code_input" {
                             Text("Code")
                                 .frame(
@@ -1729,6 +1752,34 @@ struct SignUpScreen : View, KeyboardReadable {
                                             }
                                             
                                             guard resp != nil && statusCode == 200 else {
+                                                self.wrongCodeAttempts += 1
+                                                
+                                                if self.wrongCodeAttempts >= 3 {
+                                                    /* MARK: Delete the signup process in the backend. */
+                                                    RequestAction<DeleteSignupProcessData>(
+                                                        parameters: DeleteSignupProcessData(
+                                                            AccountID: self.accountID
+                                                        )
+                                                    )
+                                                    .perform(action: delete_signup_process_req) { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            /* MARK: There should never be an error when deleting the process in the backend. */
+                                                            if let resp = resp { print(resp) }
+                                                            return
+                                                        }
+                                                    }
+                                                    
+                                                    /* MARK: Go back to the "main" section. Reset the "last_signup_section" key. */
+                                                    self.section = "main"
+                                                    UserDefaults.standard.set("main", forKey: "last_signup_section")
+                                                    
+                                                    /* MARK: Reset code attemp information. */
+                                                    self.wrongCodeAttempts = 0
+                                                    self.wrongCodeAttemptsMet = true
+                                                    self.wrongCode = false
+                                                    return
+                                                }
+                                                
                                                 self.wrongCode = true
                                                 return
                                             }
@@ -1861,7 +1912,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                 if !self.colleges.contains(c) { self.colleges.append(c) }
                             }
                             
-                            self.colleges.append("Other")
+                            if !self.colleges.contains("Other") { self.colleges.append("Other") }
                             self.college = self.colleges[0]
                         }
                 }
@@ -1883,14 +1934,18 @@ struct SignUpScreen : View, KeyboardReadable {
                                 if !self.majorFields.contains(mf) { self.majorFields.append(mf) }
                             }
                             
-                            self.majorFields.append("Other")
+                            //if !self.majorFields.contains("Other") { self.majorFields.append("Other") }
                             self.majorField = self.majorFields[0]
                         }
                 }
                 if UserDefaults.standard.object(forKey: "temp_field") != nil {
                     self.majorField = UserDefaults.standard.string(forKey: "temp_field")!
                     
-                    RequestAction<GetMajorsRequestData>(parameters: GetMajorsRequestData(MajorField: self.majorField))
+                    RequestAction<GetMajorsRequestData>(
+                        parameters: GetMajorsRequestData(
+                            College: self.college,
+                            MajorField: self.majorField
+                        ))
                         .perform(action: get_majors_req) { statusCode, resp in
                             self.loadingCollegeInfoSection = false
                             
@@ -1900,7 +1955,9 @@ struct SignUpScreen : View, KeyboardReadable {
                             }
                             
                             self.majors = resp!["Majors"] as! [String]
+                            
                             self.majors.append("Other")
+                            
                             self.major = self.majors[0]
                         }
                 }

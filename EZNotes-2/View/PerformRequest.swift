@@ -365,6 +365,7 @@ struct RequestAction<T> {
                 break
             case is GetMajorsRequestData.Type:
                 guard let params: GetMajorsRequestData = (parameters as? GetMajorsRequestData) else { return }
+                request.addValue(params.College, forHTTPHeaderField: "College")
                 request.addValue(params.MajorField, forHTTPHeaderField: "Major-Field")
                 break
             case is GetCustomMajorsRequestData.Type:
@@ -397,6 +398,10 @@ struct RequestAction<T> {
                 print(jsonData)
             
                 request.httpBody = try? JSONSerialization.data(withJSONObject: jsonData)
+                break
+            case is DeleteSignupProcessData.Type:
+                guard let params: DeleteSignupProcessData = (parameters as? DeleteSignupProcessData) else { return }
+                request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
                 break
             default: break
         }
