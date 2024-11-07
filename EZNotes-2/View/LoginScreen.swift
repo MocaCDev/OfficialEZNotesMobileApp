@@ -196,7 +196,7 @@ struct LoginScreen: View, KeyboardReadable {
             .padding()
             .frame(maxWidth: .infinity, alignment: .top) // Keep VStack aligned to the top
             .ignoresSafeArea(.keyboard, edges: .bottom) // Ignore keyboard safe area
-            .onChange(of: prop.size.height) { _ in
+            .onChange(of: prop.size.height) {
                 if prop.size.height < self.lastHeight { self.isLargerScreen = prop.size.height / 2.5 > 200 }
                 else { self.isLargerScreen = prop.size.height / 2.5 > 300 }
                 

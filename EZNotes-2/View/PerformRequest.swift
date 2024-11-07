@@ -403,6 +403,10 @@ struct RequestAction<T> {
                 guard let params: DeleteSignupProcessData = (parameters as? DeleteSignupProcessData) else { return }
                 request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
                 break
+            case is GetSubscriptionInfoData.Type:
+                guard let params: GetSubscriptionInfoData = (parameters as? GetSubscriptionInfoData) else { return }
+                request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
+                break
             default: break
         }
         

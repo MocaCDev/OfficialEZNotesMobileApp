@@ -126,29 +126,42 @@ struct CategoryInternalsView: View {
                                         writeCategoryDescriptions(categoryDescriptions: self.categoryDescriptions)
                                     }
                                 }) {
-                                    Text("Generate Description")
-                                        .frame(maxWidth: 200, alignment: .center)
-                                        .padding([.top, .bottom], 5)
-                                        .foregroundStyle(
-                                            MeshGradient(width: 3, height: 3, points: [
-                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                            ], colors: [
-                                                .indigo, .indigo, Color.EZNotesBlue,
-                                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                            ])
-                                        )
-                                        .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 16 : 13)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(.white)
-                                                .strokeBorder(.white, lineWidth: 1)
-                                        )
+                                    if #available(iOS 18.0, *) {
+                                        Text("Generate Description")
+                                            .frame(maxWidth: 200, alignment: .center)
+                                            .padding([.top, .bottom], 5)
+                                            .foregroundStyle(
+                                                MeshGradient(width: 3, height: 3, points: [
+                                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                ], colors: [
+                                                    .indigo, .indigo, Color.EZNotesBlue,
+                                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                ])
+                                            )
+                                            .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 16 : 13)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.white)
+                                                    .strokeBorder(.white, lineWidth: 1)
+                                            )
+                                    } else {
+                                        Text("Generate Description")
+                                            .frame(maxWidth: 200, alignment: .center)
+                                            .padding([.top, .bottom], 5)
+                                            .foregroundStyle(.black)
+                                            .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 16 : 13)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.white)
+                                                    .strokeBorder(.white, lineWidth: 1)
+                                            )
+                                    }
                                 }
                                 .padding(.top, 15)
                                 

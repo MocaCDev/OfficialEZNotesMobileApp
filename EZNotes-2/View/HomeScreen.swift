@@ -67,7 +67,7 @@ struct HomeScreen: View {
     
     public var startupScreen: StartupScreen
     
-    @available(iOS 18.0, *)
+    @available(iOS 17.0, *)
     var body: some View {
         VStack {
             if self.userNotFound {
@@ -93,7 +93,7 @@ struct HomeScreen: View {
                 Image("Logo")
                     .logoImageModifier(prop: prop)
                 
-                if prop.size.height / 2.5 > 300 { Spacer() }
+                Spacer()
                 
                 ZStack {
                     MeshGradient(width: 3, height: 3, points: [
@@ -108,7 +108,11 @@ struct HomeScreen: View {
                          Color.EZNotesOrange, .mint, Color.EZNotesBlue,
                          Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
                     ])
-                    .frame(maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width - 40 : prop.size.width - 20, maxHeight: 350, alignment: .top)
+                    .frame(
+                        maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width - 40 : prop.size.width - 20,
+                        maxHeight: prop.isIpad ? 500 : 350,
+                        alignment: .top
+                    )
                     .mask(
                         VStack {
                             Text("No Pen, No Pencil")
@@ -117,7 +121,7 @@ struct HomeScreen: View {
                                 .shadow(color: .white, radius: 2.5)
                                 .fontWeight(.heavy)
                                 .font(Font.custom("Poppins-Regular", size: prop.isIpad
-                                                  ? 105
+                                                  ? 65
                                                   : prop.size.height / 2.5 > 300
                                                   ? 40
                                                   : 30)
@@ -130,7 +134,7 @@ struct HomeScreen: View {
                                 .shadow(color: .white, radius: 2.5)
                                 .fontWeight(.heavy)
                                 .font(Font.custom("Poppins-ExtraLight", size: prop.isIpad
-                                                  ? 105
+                                                  ? 28
                                                   : prop.size.height / 2.5 > 300
                                                   ? 18
                                                   : 14)
@@ -150,14 +154,15 @@ struct HomeScreen: View {
                 )
                 .padding(.top, prop.size.height / 2.5 > 300 ? 0 : 20)
                 
-                if prop.size.height / 2.5 > 300 { Spacer() }
+                Spacer()
             }
             .frame(maxWidth: .infinity, alignment: .top)
             .padding(
                 .top,
-                prop.size.height / 2.5 > 300
-                    ? self.userNotFound ? -15 : 50
-                    : self.userNotFound ? -45 : -30
+                prop.isIpad ? -60 :
+                    prop.size.height / 2.5 > 300
+                        ? self.userNotFound ? -15 : 50
+                        : self.userNotFound ? -45 : -30
             )
             
             Spacer()
@@ -180,7 +185,12 @@ struct HomeScreen: View {
                 .frame(maxWidth: .infinity, alignment: .center)
             }
             .frame(maxWidth: .infinity, maxHeight: 100, alignment: .bottom)
-            .padding(.bottom, prop.size.height / 2.5 > 300 ? 40 : 10)
+            .padding(
+                .bottom,
+                prop.size.height / 2.5 > 300
+                    ? 40
+                    : prop.size.height / 2.5 > 290 ? 30 : 10
+            )
 
         }
         .background(
@@ -188,7 +198,7 @@ struct HomeScreen: View {
         )
         .edgesIgnoringSafeArea([.top, .bottom])
         .onAppear {
-            print(UIDevice.current.localizedModel)
+            print(prop.size.height / 2.5)
         }
     }
 }

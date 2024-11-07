@@ -44,27 +44,52 @@ struct AccountPopup: View {
     @State private var newUsername: String = ""
     @State private var updateUsername: Bool = false
     @State private var pfpUploadStatus: String = "none"
+    @State private var pfpBgUploadStatus: String = "none"
     @State private var errorUploadingPFP: Bool = false
+    @State private var errorUploadingPFPBg: Bool = false
     @State private var showPrivacyAndPolicy: Bool = false
     @State private var showTermsAndConditions: Bool = false
     @State private var changingProfilePic: Bool = false
+    @State private var subscriptionInfo: SubscriptionInfo = .init(
+        TimeCreated: nil,
+        DateCreated: nil,
+        CurrentPeriodStart: nil,
+        CurrentPeriodEnd: nil,
+        Lifetime: nil,
+        ProductName: nil,
+        Price: nil,
+        Interval: nil,
+        PlanID: nil,
+        PriceID: nil,
+        ProductID: nil
+    )
+    @State private var accountPopupSection: String = "main"
     
     var body: some View {
         VStack {
             VStack {
-                if self.pfpUploadStatus == "failed" {
+                if self.pfpUploadStatus == "failed" || self.pfpBgUploadStatus == "failed" {
                     HStack {
                         ZStack {
                             
                         }
                         .frame(maxWidth: 25, alignment: .leading)
                         
-                        Text("Error saving PFP. Try Again.")
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .foregroundStyle(.white)
-                            .fontWeight(.medium)
-                            .font(.system(size: 12))
-                            .minimumScaleFactor(0.5)
+                        if self.errorUploadingPFP {
+                            Text("Error saving PFP. Try Again.")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .foregroundStyle(.white)
+                                .fontWeight(.medium)
+                                .font(.system(size: 12))
+                                .minimumScaleFactor(0.5)
+                        } else {
+                            Text("Error saving PFP Background. Try Again.")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .foregroundStyle(.black)
+                                .fontWeight(.medium)
+                                .font(.system(size: 12))
+                                .minimumScaleFactor(0.5)
+                        }
                         
                         ZStack {
                             Button(action: { self.pfpUploadStatus = "none" }) {
@@ -81,15 +106,23 @@ struct AccountPopup: View {
                     .frame(maxWidth: .infinity, maxHeight: 25)
                     .background(Color.EZNotesRed)
                 } else {
-                    if self.pfpUploadStatus != "none" { /* MARK: We will assume if it isn't `none` and it isn't `failed` it is `good`. */
+                    if self.pfpUploadStatus != "none" || self.pfpBgUploadStatus != "none" { /* MARK: We will assume if it isn't `none` and it isn't `failed` it is `good`. */
                         HStack {
                             ZStack { }.frame(maxWidth: 25, alignment: .leading)
                             
-                            Text("Updated PFP")
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .foregroundStyle(.white)
-                                .setFontSizeAndWeight(weight: .medium)
-                                .minimumScaleFactor(0.5)
+                            if self.pfpUploadStatus == "good" {
+                                Text("Updated PFP")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .foregroundStyle(.black)
+                                    .setFontSizeAndWeight(weight: .medium)
+                                    .minimumScaleFactor(0.5)
+                            } else {
+                                Text("Updated PFP Background")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .foregroundStyle(.black)
+                                    .setFontSizeAndWeight(weight: .medium)
+                                    .minimumScaleFactor(0.5)
+                            }
                             
                             ZStack {
                                 Button(action: { self.pfpUploadStatus = "none" }) {
@@ -116,7 +149,7 @@ struct AccountPopup: View {
                                 ZStack {
                                     PhotosPicker(selection: $pfpPhotoPicked, matching: .images) {
                                         accountInfo.profilePicture
-                                            //.resizableImageFill(width: prop.size.height / 2.5 > 300 ? 90 : 80, height: prop.size.height / 2.5 > 300 ? 90 : 80)
+                                        //.resizableImageFill(width: prop.size.height / 2.5 > 300 ? 90 : 80, height: prop.size.height / 2.5 > 300 ? 90 : 80)
                                             .resizable()
                                             .aspectRatio(contentMode: .fill)
                                             .frame(width: prop.size.height / 2.5 > 300 ? 90 : 80, height: prop.size.height / 2.5 > 300 ? 90 : 80, alignment: .center)
@@ -137,8 +170,8 @@ struct AccountPopup: View {
                                                             .tint(Color.EZNotesBlue)
                                                     }
                                                 }
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                                .background(self.changingProfilePic ? Color.EZNotesBlack.opacity(0.6) : .clear)
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                                    .background(self.changingProfilePic ? Color.EZNotesBlack.opacity(0.6) : .clear)
                                             )
                                     }
                                     .onChange(of: self.pfpPhotoPicked) {
@@ -151,6 +184,7 @@ struct AccountPopup: View {
                                                         self.changingProfilePic = false
                                                         guard resp != nil && statusCode == 200 else {
                                                             self.pfpUploadStatus = "failed"
+                                                            self.errorUploadingPFP = true
                                                             return
                                                         }
                                                         
@@ -169,7 +203,7 @@ struct AccountPopup: View {
                                 VStack {
                                     HStack {
                                         Text("\(self.accountInfo.username)")
-                                            //.frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                        //.frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
                                             .foregroundStyle(.white)
                                             .setFontSizeAndWeight(weight: .semibold, size: 20, design: .rounded)
                                         
@@ -261,13 +295,18 @@ struct AccountPopup: View {
                                     .onChange(of: self.pfpBackgroundPhotoPicked) {
                                         Task {
                                             if let image = try? await pfpBackgroundPhotoPicked!.loadTransferable(type: Image.self) {
-                                                self.accountInfo.profileBackgroundPicture = image
-                                                
                                                 PFP(pfpBg: image, accountID: self.accountInfo.accountID)
                                                     .requestSavePFPBg() { statusCode, resp in
-                                                        guard resp != nil && statusCode == 200 else { return }
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            self.pfpBgUploadStatus = "failed"
+                                                            self.errorUploadingPFPBg = true
+                                                            return
+                                                        }
                                                         
-                                                        print(resp!)
+                                                        if self.errorUploadingPFPBg { self.errorUploadingPFPBg = false }
+                                                        self.pfpBgUploadStatus = "good"
+                                                        
+                                                        self.accountInfo.profileBackgroundPicture = image
                                                     }
                                             }
                                         }
@@ -302,501 +341,895 @@ struct AccountPopup: View {
             
             VStack {
                 VStack {
-                    Text("Account Details")
+                    HStack {
+                        if self.accountPopupSection != "main" {
+                            Button(action: { self.accountPopupSection = "main" }) {
+                                ZStack {
+                                    Image(systemName: "arrow.backward")
+                                        .resizable()
+                                        .frame(width: 15, height: 15)
+                                        .foregroundStyle(.white)
+                                }
+                                .frame(maxWidth: 20, alignment: .leading)
+                                .padding(.leading, 10)
+                            }
+                        } else { ZStack { }.frame(maxWidth: 20, alignment: .leading).padding(.leading, 10) }
+                        
+                        Text(self.accountPopupSection == "main"
+                             ? "Account Details"
+                             : self.accountPopupSection == "planDetails"
+                             ? "Plan Details"
+                             : "Account Details")
                         .frame(maxWidth: .infinity, maxHeight: 25)
                         .foregroundStyle(.white)
                         .padding([.top], 15)
                         .setFontSizeAndWeight(weight: .semibold, size: 20)
+                        
+                        ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 10)
+                    }
                     
                     Divider()
+                        .background(.white)
                         .frame(width: prop.size.width - 50)
+                        .padding([.top, .bottom])
                     
-                    VStack {
-                        VStack { }.frame(maxWidth: .infinity, maxHeight: 5)
-                        
-                        ScrollView(.vertical, showsIndicators: false) {
-                            Text("Account, Plans & Management")
-                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .setFontSizeAndWeight(weight: .bold, size: 20)
-                                .minimumScaleFactor(0.5)
+                    if self.accountPopupSection == "main" {
+                        VStack {
+                            VStack { }.frame(maxWidth: .infinity, maxHeight: 5)
                             
-                            VStack {
-                                Button(action: { print("Show Plan Detail") }) {
-                                    HStack {
-                                        Text("Plan Details")
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                            .padding(.leading, 15)
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 18, design: .rounded))
-                                        
-                                        ZStack {
-                                            Image(systemName: "chevron.right")
-                                                .resizableImage(width: 10, height: 15)
-                                                .foregroundStyle(.gray)
-                                        }
-                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                        .padding(.trailing, 25)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 40)
-                                    .padding(.bottom, 5)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
+                            ScrollView(.vertical, showsIndicators: false) {
+                                Text("Account, Plans & Management")
+                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .setFontSizeAndWeight(weight: .bold, size: 20)
+                                    .minimumScaleFactor(0.5)
                                 
-                                Divider()
-                                    //.frame(width: prop.size.width - 80)
-                                    .overlay(.black)
-                                
-                                Button(action: { print("Change Username") }) {
-                                    HStack {
-                                        Text("Change Username")
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                            .padding(.leading, 15)
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 18, design: .rounded))
-                                        
-                                        ZStack {
-                                            Image(systemName: "chevron.right")
-                                                .resizableImage(width: 10, height: 15)
-                                                .foregroundStyle(.gray)
-                                        }
-                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                        .padding(.trailing, 25)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 40)
-                                    .padding([.top, .bottom], 5)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                
-                                Divider()
-                                    //.frame(width: prop.size.width - 80)
-                                    .overlay(.black)
-                                
-                                Button(action: { print("Update Password") }) {
-                                    HStack {
-                                        Text("Update Password")
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                            .padding(.leading, 15)
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 18, design: .rounded))
-                                        
-                                        ZStack {
-                                            Image(systemName: "chevron.right")
-                                                .resizableImage(width: 10, height: 15)
-                                                .foregroundStyle(.gray)
-                                        }
-                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                        .padding(.trailing, 25)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 40)
-                                    .padding([.top, .bottom], 5)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                
-                                Divider()
-                                    //.frame(width: prop.size.width - 80)
-                                    .overlay(.black)
-                                
-                                Button(action: { print("Change Schools") }) {
-                                    HStack {
-                                        Text("Change Schools")
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                            .padding(.leading, 15)
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 18, design: .rounded))
-                                        
-                                        ZStack {
-                                            Image(systemName: "chevron.right")
-                                                .resizableImage(width: 10, height: 15)
-                                                .foregroundStyle(.gray)
-                                        }
-                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                        .padding(.trailing, 25)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 40)
-                                    .padding([.top, .bottom], 5)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                
-                                Divider()
-                                    //.frame(width: prop.size.width - 80)
-                                    .overlay(.black)
-                                
-                                Button(action: { print("Change Field/Major") }) {
-                                    HStack {
-                                        Text("Change Field/Major")
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                            .padding(.leading, 15)
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: 18, design: .rounded))
-                                        
-                                        ZStack {
-                                            Image(systemName: "chevron.right")
-                                                .resizableImage(width: 10, height: 15)
-                                                .foregroundStyle(.gray)
-                                        }
-                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                        .padding(.trailing, 25)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 40)
-                                    .padding(.top, 5)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                            }
-                            .frame(maxWidth: prop.size.width - 50)
-                            .padding([.top, .bottom], 14)
-                            //.padding([.leading, .trailing], 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(Color.EZNotesBlack)
-                                    .shadow(color: Color.black, radius: 1.5)
-                                    /*.stroke(LinearGradient(gradient: Gradient(
-                                        colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
-                                    ), startPoint: .leading, endPoint: .trailing), lineWidth: 1)*/
-                            )
-                            //.cornerRadius(15)
-                            
-                            /* MARK: Custom `spacer`. Scrollview makes all the views within it kind of funky. */
-                            VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
-                            
-                            Text("Core Actions")
-                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 20))
-                                .minimumScaleFactor(0.5)
-                                .fontWeight(.bold)
-                            
-                            VStack {
-                                HStack {
-                                    Button(action: { print("Show Additional Settings") }) {
-                                        VStack {
-                                            ZStack {
-                                                Image(systemName: "gearshape.fill")
-                                                    .resizable()
-                                                    .frame(width: 35, height: 35, alignment: .topTrailing)
-                                                    .foregroundStyle(.black)
+                                VStack {
+                                    Button(action: {
+                                        RequestAction<GetSubscriptionInfoData>(parameters: GetSubscriptionInfoData(AccountID: self.accountInfo.accountID))
+                                            .perform(action: get_subscription_info_req) { statusCode, resp in
+                                                guard resp != nil && statusCode == 200 else {
+                                                    if let resp = resp { print(resp) }
+                                                    return
+                                                }
+                                                
+                                                if let resp = resp {
+                                                    let d: TimeInterval = resp["PlanCreated"] as! TimeInterval
+                                                    let date = Date(timeIntervalSince1970: d)
+                                                    
+                                                    /* MARK: Assign the according fields to be refereneced in the "Plan Details" section. */
+                                                    self.subscriptionInfo.TimeCreated = "\(date.formatted(date: .omitted, time: .shortened))"
+                                                    self.subscriptionInfo.DateCreated = Date(timeIntervalSince1970: resp["PlanCreated"] as! TimeInterval)
+                                                    self.subscriptionInfo.CurrentPeriodStart = Date(timeIntervalSince1970: resp["PeriodStart"] as! TimeInterval)
+                                                    self.subscriptionInfo.CurrentPeriodEnd = Date(timeIntervalSince1970: resp["PeriodEnd"] as! TimeInterval)
+                                                    self.subscriptionInfo.Lifetime = (resp["Lifetime"] as! Int)
+                                                    self.subscriptionInfo.ProductName = (resp["ProductName"] as! String)
+                                                    self.subscriptionInfo.Price = (resp["Price"] as! String)
+                                                    self.subscriptionInfo.Interval = (resp["Interval"] as! String)
+                                                    self.subscriptionInfo.PlanID = (resp["UserSubID"] as! String)
+                                                    self.subscriptionInfo.PriceID = (resp["PriceID"] as! String)
+                                                    self.subscriptionInfo.ProductID = (resp["ProductID"] as! String)
+                                                    self.subscriptionInfo.Last4 = (resp["LastFour"] as! String)
+                                                    self.subscriptionInfo.CardBrand = (resp["CardBrand"] as! String)
+                                                    self.subscriptionInfo.CardExpMonth = (resp["CardExpMonth"] as! String)
+                                                    self.subscriptionInfo.CardExpYear = (resp["CardExpYear"] as! String)
+                                                    self.subscriptionInfo.PaymentMethodCreatedOn = Date(timeIntervalSince1970: resp["PaymentMethodCreatedOn"] as! TimeInterval)
+                                                    
+                                                    // Get the index two characters before the end of the string
+                                                    let splitIndex = self.subscriptionInfo.Price!.index(self.subscriptionInfo.Price!.endIndex, offsetBy: -2)
+                                                    
+                                                    // Split into prefix and suffix
+                                                    let prefix = String(self.subscriptionInfo.Price![..<splitIndex])
+                                                    let suffix = String(self.subscriptionInfo.Price![splitIndex...])
+                                                    
+                                                    self.subscriptionInfo.Price = "$\(prefix).\(suffix)"
+                                                    
+                                                    self.accountPopupSection = "planDetails"
+                                                }
                                             }
-                                            .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
+                                    }) {
+                                        HStack {
+                                            Text("Plan Details")
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: 18, design: .rounded))
                                             
-                                            Text("Settings")
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                                                .foregroundStyle(.black)
-                                                .font(.system(size: 20, design: .rounded))
-                                                .fontWeight(.heavy)
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizableImage(width: 10, height: 15)
+                                                    .foregroundStyle(.gray)
+                                            }
+                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                            .padding(.trailing, 25)
                                         }
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                        .padding()
-                                        .background(Color.EZNotesOrange.gradient)
-                                        .cornerRadius(15)
+                                        .frame(maxWidth: .infinity, maxHeight: 40)
+                                        .padding(.bottom, 5)
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                     
-                                    Button(action: { print("Show Billing") }) {
+                                    Divider()
+                                        .overlay(.black)
+                                    
+                                    Button(action: { print("Change Username") }) {
+                                        HStack {
+                                            Text("Change Username")
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: 18, design: .rounded))
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizableImage(width: 10, height: 15)
+                                                    .foregroundStyle(.gray)
+                                            }
+                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                            .padding(.trailing, 25)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 40)
+                                        .padding([.top, .bottom], 5)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Divider()
+                                        .overlay(.black)
+                                    
+                                    Button(action: { print("Update Password") }) {
+                                        HStack {
+                                            Text("Update Password")
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: 18, design: .rounded))
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizableImage(width: 10, height: 15)
+                                                    .foregroundStyle(.gray)
+                                            }
+                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                            .padding(.trailing, 25)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 40)
+                                        .padding([.top, .bottom], 5)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Divider()
+                                        .overlay(.black)
+                                    
+                                    Button(action: { print("Change Schools") }) {
+                                        HStack {
+                                            Text("Change Schools")
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: 18, design: .rounded))
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizableImage(width: 10, height: 15)
+                                                    .foregroundStyle(.gray)
+                                            }
+                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                            .padding(.trailing, 25)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 40)
+                                        .padding([.top, .bottom], 5)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Divider()
+                                        .overlay(.black)
+                                    
+                                    Button(action: { print("Change States") }) {
+                                        HStack {
+                                            Text("Change States")
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: 18, design: .rounded))
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizableImage(width: 10, height: 15)
+                                                    .foregroundStyle(.gray)
+                                            }
+                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                            .padding(.trailing, 25)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 40)
+                                        .padding([.top, .bottom], 5)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Divider()
+                                        .overlay(.black)
+                                    
+                                    Button(action: { print("Change Field/Major") }) {
+                                        HStack {
+                                            Text("Change Field/Major")
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: 18, design: .rounded))
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizableImage(width: 10, height: 15)
+                                                    .foregroundStyle(.gray)
+                                            }
+                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                            .padding(.trailing, 25)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 40)
+                                        .padding(.top, 5)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                }
+                                .frame(maxWidth: prop.size.width - 50)
+                                .padding([.top, .bottom], 14)
+                                //.padding([.leading, .trailing], 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(Color.EZNotesBlack)
+                                        .shadow(color: Color.black, radius: 1.5)
+                                    /*.stroke(LinearGradient(gradient: Gradient(
+                                     colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
+                                     ), startPoint: .leading, endPoint: .trailing), lineWidth: 1)*/
+                                )
+                                //.cornerRadius(15)
+                                
+                                /* MARK: Custom `spacer`. Scrollview makes all the views within it kind of funky. */
+                                VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
+                                
+                                Text("Core Actions")
+                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 20))
+                                    .minimumScaleFactor(0.5)
+                                    .fontWeight(.bold)
+                                
+                                VStack {
+                                    HStack {
+                                        Button(action: { print("Show Additional Settings") }) {
+                                            VStack {
+                                                ZStack {
+                                                    Image(systemName: "gearshape.fill")
+                                                        .resizable()
+                                                        .frame(width: 35, height: 35, alignment: .topTrailing)
+                                                        .foregroundStyle(.black)
+                                                }
+                                                .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
+                                                
+                                                Text("Settings")
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                                                    .foregroundStyle(.black)
+                                                    .font(.system(size: 20, design: .rounded))
+                                                    .fontWeight(.heavy)
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                            .padding()
+                                            .background(Color.EZNotesOrange.gradient)
+                                            .cornerRadius(15)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                        
+                                        Button(action: { print("Show Billing") }) {
+                                            VStack {
+                                                ZStack {
+                                                    Image(systemName: "dollarsign.bank.building")
+                                                        .resizable()
+                                                        .frame(width: 35, height: 35, alignment: .topTrailing)
+                                                        .foregroundStyle(.black)
+                                                }
+                                                .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
+                                                
+                                                Text("Billing")
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                                                    .foregroundStyle(.black)
+                                                    .font(.system(size: 20, design: .rounded))
+                                                    .fontWeight(.heavy)
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                                            .padding()
+                                            .background(Color.EZNotesGreen.gradient)
+                                            .cornerRadius(15)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 140)
+                                    
+                                    Button(action: { print("Show Themes") }) {
                                         VStack {
                                             ZStack {
-                                                Image(systemName: "dollarsign.bank.building")
+                                                Image(systemName: "macwindow.on.rectangle")
                                                     .resizable()
                                                     .frame(width: 35, height: 35, alignment: .topTrailing)
                                                     .foregroundStyle(.black)
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
                                             
-                                            Text("Billing")
+                                            Text("Themes")
                                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                                                 .foregroundStyle(.black)
                                                 .font(.system(size: 20, design: .rounded))
                                                 .fontWeight(.heavy)
                                         }
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                                        .frame(maxWidth: .infinity, maxHeight: 140)
                                         .padding()
-                                        .background(Color.EZNotesGreen.gradient)
+                                        .background(
+                                            Color.EZNotesBlue.gradient
+                                        )
                                         .cornerRadius(15)
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                 }
-                                .frame(maxWidth: .infinity, maxHeight: 140)
-                                
-                                Button(action: { print("Show Themes") }) {
-                                    VStack {
-                                        ZStack {
-                                            Image(systemName: "macwindow.on.rectangle")
-                                                .resizable()
-                                                .frame(width: 35, height: 35, alignment: .topTrailing)
-                                                .foregroundStyle(.black)
-                                        }
-                                        .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
-                                        
-                                        Text("Themes")
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                                            .foregroundStyle(.black)
-                                            .font(.system(size: 20, design: .rounded))
-                                            .fontWeight(.heavy)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 140)
-                                    .padding()
-                                    .background(
-                                        Color.EZNotesBlue.gradient
-                                    )
-                                    .cornerRadius(15)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                            }
-                            .frame(maxWidth: prop.size.width - 50, maxHeight: .infinity)
-                            
-                            Divider()
-                                .background(Color.black)
-                                .padding([.top, .bottom], 10)
-                            
-                            Text("Privacy & Terms")
-                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                .padding(.bottom, 10)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 20))
-                                .minimumScaleFactor(0.5)
-                                .fontWeight(.bold)
-                            
-                            VStack {
-                                Button(action: { self.showPrivacyAndPolicy = true }) {
-                                    HStack {
-                                        Text("Privacy & Policy")
-                                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                            .padding(.leading, 15)
-                                            .padding([.top, .bottom])
-                                            .foregroundStyle(.white)
-                                            .setFontSizeAndWeight(weight: .semibold, size: 15)
-                                        
-                                        ZStack {
-                                            Image(systemName: "chevron.right")
-                                                .resizableImage(width: 10, height: 15)
-                                                .foregroundStyle(.white)
-                                        }
-                                        .frame(maxWidth: .infinity, alignment: .trailing)
-                                        .padding(.trailing, 25)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 40)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                .popover(isPresented: $showPrivacyAndPolicy) {
-                                    WebView(url: URL(string: "https://www.eznotes.space/privacy_policy")!)
-                                        .navigationBarTitle("Privacy Policy", displayMode: .inline)
-                                }
+                                .frame(maxWidth: prop.size.width - 50, maxHeight: .infinity)
                                 
                                 Divider()
-                                    .frame(width: prop.size.width - 80)
-                                    .overlay(.black)
+                                    .background(Color.black)
+                                    .padding([.top, .bottom], 10)
                                 
-                                Button(action: { self.showTermsAndConditions = true }) {
-                                    HStack {
-                                        Text("Terms & Conditions")
-                                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                            .padding(.leading, 15)
-                                            .padding([.top, .bottom])
-                                            .foregroundStyle(.white)
-                                            .setFontSizeAndWeight(weight: .semibold, size: 15)
-                                        
-                                        ZStack {
-                                            Image(systemName: "chevron.right")
-                                                .resizableImage(width: 10, height: 15)
-                                                .foregroundStyle(.white)
-                                        }
-                                        .frame(maxWidth: .infinity, alignment: .trailing)
-                                        .padding(.trailing, 25)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 40)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                .popover(isPresented: $showTermsAndConditions) {
-                                    WebView(url: URL(string: "https://www.eznotes.space/terms_and_conditions")!)
-                                        .navigationBarTitle("Terms & Conditions", displayMode: .inline)
-                                }
-                            }
-                            .frame(maxWidth: prop.size.width - 50)
-                            .padding([.top, .bottom], 8)
-                            .padding([.leading, .trailing], 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(Color.EZNotesLightBlack)
-                            )
-                            .cornerRadius(15)
-                            
-                            /* MARK: More details will show the user their account ID, session ID etc. */
-                            Text("Additional")
-                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                .padding([.top, .bottom], 10)
-                                .foregroundStyle(.white)
-                                .setFontSizeAndWeight(weight: .bold, size: 20)
-                                .minimumScaleFactor(0.5)
-                            
-                            VStack {
-                                Button(action: { print("View More Account Details") }) {
-                                    HStack {
-                                        Text("More Account Details")
-                                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                            .padding(.leading, 15)
-                                            .padding([.top, .bottom])
-                                            .foregroundStyle(.white)
-                                            .setFontSizeAndWeight(weight: .semibold, size: 15)
-                                        
-                                        ZStack {
-                                            Image(systemName: "chevron.right")
-                                                .resizableImage(width: 10, height: 15)
-                                                .foregroundStyle(.white)
-                                        }
-                                        .frame(maxWidth: 20, alignment: .trailing)
-                                        .padding(.trailing, 15)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 40)
-                                    .onTapGesture {
-                                        print("Show more account details")
-                                    }
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                
-                                Divider()
-                                    .frame(width: prop.size.width - 80)
-                                    .overlay(.black)
-                                
-                                Button(action: { print("Report An Issue") }) {
-                                    HStack {
-                                        Text("Report An Issue")
-                                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                            .padding(.leading, 15)
-                                            .padding([.top, .bottom])
-                                            .foregroundStyle(.white)
-                                            .setFontSizeAndWeight(weight: .semibold, size: 15)
-                                        
-                                        ZStack {
-                                            Image(systemName: "chevron.right")
-                                                .resizableImage(width: 10, height: 15)
-                                                .foregroundStyle(.white)
-                                        }
-                                        .frame(maxWidth: .infinity, alignment: .trailing)
-                                        .padding(.trailing, 15)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 40)
-                                    .onTapGesture {
-                                        print("Report An Issue")
-                                    }
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                            }
-                            .frame(maxWidth: prop.size.width - 50)
-                            .padding([.top, .bottom], 8)
-                            .padding([.leading, .trailing], 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(Color.EZNotesLightBlack)
-                            )
-                            .cornerRadius(15)
-                            
-                            Text("Account Actions")
-                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                .padding([.top, .bottom], 10)
-                                .foregroundStyle(.white)
-                                .setFontSizeAndWeight(weight: .bold, size: 20)
-                                .minimumScaleFactor(0.5)
-                            
-                            VStack {
-                                Button(action: { print("Delete Account") }) {
-                                    HStack {
-                                        Text("Delete Account")
-                                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                            .padding(.leading, 15)
-                                            .padding([.top, .bottom])
-                                            .foregroundStyle(.white)
-                                            .setFontSizeAndWeight(weight: .semibold, size: 15)
-                                        
-                                        ZStack {
-                                            Image(systemName: "chevron.right")
-                                                .resizableImage(width: 10, height: 15)
-                                                .foregroundStyle(.white)
-                                        }
-                                        .frame(maxWidth: .infinity, alignment: .trailing)
-                                        .padding(.trailing, 25)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 40)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                
-                                Divider()
-                                    .frame(width: prop.size.width - 80)
-                                    .overlay(.black)
-                                
-                                Button(action: {
-                                    UserDefaults.standard.set(false, forKey: "logged_in")
-                                    self.userHasSignedIn = false
-                                    self.accountInfo.reset()
-                                }) {
-                                    HStack {
-                                        Text("Logout")
-                                            .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                            .padding(.leading, 15)
-                                            .padding([.top, .bottom])
-                                            .foregroundStyle(.white)
-                                            .setFontSizeAndWeight(weight: .semibold, size: 15)
-                                        
-                                        ZStack {
-                                            Image(systemName: "chevron.right")
-                                                .resizableImage(width: 10, height: 15)
-                                                .foregroundStyle(.white)
-                                        }
-                                        .frame(maxWidth: .infinity, alignment: .trailing)
-                                        .padding(.trailing, 25)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 40)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                            }
-                            .frame(maxWidth: prop.size.width - 50)
-                            .padding([.top, .bottom], 8)
-                            .padding([.leading, .trailing], 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(Color.EZNotesLightBlack)
-                            )
-                            .cornerRadius(15)
-                            /*HStack {
-                                Text("Logout")
-                                    .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                    .padding(.leading, 15)
-                                    .padding([.top, .bottom])
+                                Text("Privacy & Terms")
+                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                    .padding(.bottom, 10)
                                     .foregroundStyle(.white)
-                                    .font(.system(size: 18))
-                                    .fontWeight(.semibold)
+                                    .font(.system(size: 20))
+                                    .minimumScaleFactor(0.5)
+                                    .fontWeight(.bold)
                                 
-                                ZStack {
-                                    Button(action: {
-                                        UserDefaults.standard.set(false, forKey: "logged_in")
-                                    }) {
-                                        Image(systemName: "door.left.hand.open")
-                                            .resizable()
-                                            .frame(width: 15, height: 15)
-                                            .foregroundStyle(.white)
+                                VStack {
+                                    Button(action: { self.showPrivacyAndPolicy = true }) {
+                                        HStack {
+                                            Text("Privacy & Policy")
+                                                .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                .padding([.top, .bottom])
+                                                .foregroundStyle(.white)
+                                                .setFontSizeAndWeight(weight: .semibold, size: 15)
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizableImage(width: 10, height: 15)
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                            .padding(.trailing, 25)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 40)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .popover(isPresented: $showPrivacyAndPolicy) {
+                                        WebView(url: URL(string: "https://www.eznotes.space/privacy_policy")!)
+                                            .navigationBarTitle("Privacy Policy", displayMode: .inline)
+                                    }
+                                    
+                                    Divider()
+                                        .frame(width: prop.size.width - 80)
+                                        .overlay(.black)
+                                    
+                                    Button(action: { self.showTermsAndConditions = true }) {
+                                        HStack {
+                                            Text("Terms & Conditions")
+                                                .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                .padding([.top, .bottom])
+                                                .foregroundStyle(.white)
+                                                .setFontSizeAndWeight(weight: .semibold, size: 15)
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizableImage(width: 10, height: 15)
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                            .padding(.trailing, 25)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 40)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .popover(isPresented: $showTermsAndConditions) {
+                                        WebView(url: URL(string: "https://www.eznotes.space/terms_and_conditions")!)
+                                            .navigationBarTitle("Terms & Conditions", displayMode: .inline)
+                                    }
+                                }
+                                .frame(maxWidth: prop.size.width - 50)
+                                .padding([.top, .bottom], 8)
+                                .padding([.leading, .trailing], 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(Color.EZNotesLightBlack)
+                                )
+                                .cornerRadius(15)
+                                
+                                /* MARK: More details will show the user their account ID, session ID etc. */
+                                Text("Additional")
+                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                    .padding([.top, .bottom], 10)
+                                    .foregroundStyle(.white)
+                                    .setFontSizeAndWeight(weight: .bold, size: 20)
+                                    .minimumScaleFactor(0.5)
+                                
+                                VStack {
+                                    Button(action: { print("View More Account Details") }) {
+                                        HStack {
+                                            Text("More Account Details")
+                                                .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                .padding([.top, .bottom])
+                                                .foregroundStyle(.white)
+                                                .setFontSizeAndWeight(weight: .semibold, size: 15)
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizableImage(width: 10, height: 15)
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: 20, alignment: .trailing)
+                                            .padding(.trailing, 15)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 40)
+                                        .onTapGesture {
+                                            print("Show more account details")
+                                        }
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Divider()
+                                        .frame(width: prop.size.width - 80)
+                                        .overlay(.black)
+                                    
+                                    Button(action: { print("Report An Issue") }) {
+                                        HStack {
+                                            Text("Report An Issue")
+                                                .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                .padding([.top, .bottom])
+                                                .foregroundStyle(.white)
+                                                .setFontSizeAndWeight(weight: .semibold, size: 15)
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizableImage(width: 10, height: 15)
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                            .padding(.trailing, 15)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 40)
+                                        .onTapGesture {
+                                            print("Report An Issue")
+                                        }
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                 }
-                                .frame(maxWidth: .infinity, alignment: .trailing)
-                                .padding(.trailing, 15)
+                                .frame(maxWidth: prop.size.width - 50)
+                                .padding([.top, .bottom], 8)
+                                .padding([.leading, .trailing], 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(Color.EZNotesLightBlack)
+                                )
+                                .cornerRadius(15)
+                                
+                                Text("Account Actions")
+                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                    .padding([.top, .bottom], 10)
+                                    .foregroundStyle(.white)
+                                    .setFontSizeAndWeight(weight: .bold, size: 20)
+                                    .minimumScaleFactor(0.5)
+                                
+                                VStack {
+                                    Button(action: { print("Delete Account") }) {
+                                        HStack {
+                                            Text("Delete Account")
+                                                .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                .padding([.top, .bottom])
+                                                .foregroundStyle(.white)
+                                                .setFontSizeAndWeight(weight: .semibold, size: 15)
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizableImage(width: 10, height: 15)
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                            .padding(.trailing, 25)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 40)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Divider()
+                                        .frame(width: prop.size.width - 80)
+                                        .overlay(.black)
+                                    
+                                    Button(action: {
+                                        UserDefaults.standard.set(false, forKey: "logged_in")
+                                        self.userHasSignedIn = false
+                                        self.accountInfo.reset()
+                                    }) {
+                                        HStack {
+                                            Text("Logout")
+                                                .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                .padding([.top, .bottom])
+                                                .foregroundStyle(.white)
+                                                .setFontSizeAndWeight(weight: .semibold, size: 15)
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizableImage(width: 10, height: 15)
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                            .padding(.trailing, 25)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 40)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                }
+                                .frame(maxWidth: prop.size.width - 50)
+                                .padding([.top, .bottom], 8)
+                                .padding([.leading, .trailing], 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(Color.EZNotesLightBlack)
+                                )
+                                .cornerRadius(15)
+                                /*HStack {
+                                 Text("Logout")
+                                 .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                 .padding(.leading, 15)
+                                 .padding([.top, .bottom])
+                                 .foregroundStyle(.white)
+                                 .font(.system(size: 18))
+                                 .fontWeight(.semibold)
+                                 
+                                 ZStack {
+                                 Button(action: {
+                                 UserDefaults.standard.set(false, forKey: "logged_in")
+                                 }) {
+                                 Image(systemName: "door.left.hand.open")
+                                 .resizable()
+                                 .frame(width: 15, height: 15)
+                                 .foregroundStyle(.white)
+                                 }
+                                 .buttonStyle(NoLongPressButtonStyle())
+                                 }
+                                 .frame(maxWidth: .infinity, alignment: .trailing)
+                                 .padding(.trailing, 15)
+                                 }
+                                 .frame(maxWidth: prop.size.width - 40, maxHeight: prop.size.height / 2.5 > 300 ? 55 : 45)
+                                 .background(
+                                 RoundedRectangle(cornerRadius: 15)
+                                 .fill(Color.EZNotesLightBlack)
+                                 .stroke(.red, lineWidth: 1)
+                                 )
+                                 .cornerRadius(15)
+                                 .onTapGesture {
+                                 print("Report An Issue")
+                                 }*/
+                                
+                                Text("Joined 10/10/2024")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding([.top, .bottom], 40)
+                                    .foregroundStyle(.white)
+                                    .setFontSizeAndWeight(weight: .medium)
                             }
-                            .frame(maxWidth: prop.size.width - 40, maxHeight: prop.size.height / 2.5 > 300 ? 55 : 45)
-                            .background(
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(Color.EZNotesLightBlack)
-                                    .stroke(.red, lineWidth: 1)
-                            )
-                            .cornerRadius(15)
-                            .onTapGesture {
-                                print("Report An Issue")
-                            }*/
-                            
-                            Text("Joined 10/10/2024")
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .padding([.top, .bottom], 40)
-                                .foregroundStyle(.white)
-                                .setFontSizeAndWeight(weight: .medium)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        switch(self.accountPopupSection) {
+                        case "planDetails":
+                            VStack {
+                                ScrollView(.vertical, showsIndicators: false) {
+                                    Text("Overview")
+                                        .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                        .foregroundStyle(.white)
+                                        .setFontSizeAndWeight(weight: .bold, size: 24)
+                                        .minimumScaleFactor(0.5)
+                                    
+                                    VStack {
+                                        VStack {
+                                            HStack {
+                                                Text("Plan:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 30)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-Regular", size: 16))
+                                                    .fontWeight(.bold)
+                                                
+                                                Text(self.subscriptionInfo.ProductName!)
+                                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                                    .padding(.trailing, 30)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                    .fontWeight(.semibold)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            
+                                            Divider()
+                                                .background(.white)
+                                                .frame(maxWidth: prop.size.width - 80)
+                                            
+                                            HStack {
+                                                Text("Next Payment:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 30)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-Regular", size: 16))
+                                                    .fontWeight(.bold)
+                                                
+                                                Text("\(self.subscriptionInfo.CurrentPeriodEnd!)")
+                                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                                    .padding(.trailing, 30)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                    .fontWeight(.semibold)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.top, 15)
+                                            
+                                            HStack {
+                                                Text("Period Started:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 30)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-Regular", size: 16))
+                                                    .fontWeight(.bold)
+                                                
+                                                Text("\(self.subscriptionInfo.CurrentPeriodStart!)")
+                                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                                    .padding(.trailing, 30)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                    .fontWeight(.semibold)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.top, 15)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding([.top, .bottom], 14)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesBlack)
+                                                .shadow(color: Color.black, radius: 1.5)
+                                        )
+                                        
+                                        Text("Payment")
+                                            .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                            .padding(.top, 20)
+                                            .foregroundStyle(.white)
+                                            .setFontSizeAndWeight(weight: .bold, size: 24)
+                                            .minimumScaleFactor(0.5)
+                                        
+                                        VStack {
+                                            HStack {
+                                                Text("Monthly Payment:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 30)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-Regular", size: 16))
+                                                    .fontWeight(.bold)
+                                                
+                                                Text(self.subscriptionInfo.Price!)
+                                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                                    .padding(.trailing, 30)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                    .fontWeight(.semibold)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding([.top, .bottom])
+                                            
+                                            HStack {
+                                                Text("Frequency:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 30)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-Regular", size: 16))
+                                                    .fontWeight(.bold)
+                                                
+                                                Text(self.subscriptionInfo.Interval!)
+                                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                                    .padding(.trailing, 30)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                    .fontWeight(.semibold)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            
+                                            HStack {
+                                                Text("Total Payments:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 30)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-Regular", size: 16))
+                                                    .fontWeight(.bold)
+                                                
+                                                Text("\(self.subscriptionInfo.Lifetime!)")
+                                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                                    .padding(.trailing, 30)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                    .fontWeight(.semibold)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding([.top, .bottom])
+                                            
+                                            Divider()
+                                                .background(.white)
+                                                .frame(maxWidth: prop.size.width - 80)
+                                            
+                                            HStack {
+                                                VStack {
+                                                    Text("Card Type")
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .padding(.leading, 30)
+                                                        .foregroundStyle(.white)
+                                                        .font(Font.custom("Poppins-Regular", size: 16))
+                                                        .fontWeight(.bold)
+                                                    
+                                                    Text(self.subscriptionInfo.CardBrand!.uppercased())
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .padding(.leading, 30)
+                                                        .foregroundStyle(.white)
+                                                        .font(.system(size: 16))
+                                                        .fontWeight(.semibold)
+                                                }
+                                                .frame(alignment: .leading)
+                                                
+                                                VStack {
+                                                    Text("Card Number")
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .padding(.leading, 30)
+                                                        .foregroundStyle(.white)
+                                                        .font(Font.custom("Poppins-Regular", size: 16))
+                                                        .fontWeight(.bold)
+                                                    
+                                                    Text("XXXX XXXX XXXX \(self.subscriptionInfo.Last4!)")
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .padding(.leading, 30)
+                                                        .foregroundStyle(.white)
+                                                        .font(.system(size: 16))
+                                                        .fontWeight(.semibold)
+                                                }
+                                                .frame(alignment: .trailing)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            
+                                            HStack {
+                                                HStack {
+                                                    VStack {
+                                                        Text("Exp. Month")
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .padding(.leading, 30)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                                            .fontWeight(.bold)
+                                                        
+                                                        Text(self.subscriptionInfo.CardExpMonth!)
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .padding(.leading, 30)
+                                                            .foregroundStyle(.white)
+                                                            .font(.system(size: 16))
+                                                            .fontWeight(.semibold)
+                                                    }
+                                                    .frame(alignment: .leading)
+                                                    
+                                                    VStack {
+                                                        Text("Exp. Year")
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .padding(.leading, 30)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                                            .fontWeight(.bold)
+                                                        
+                                                        Text(self.subscriptionInfo.CardExpYear!)
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .padding(.leading, 30)
+                                                            .foregroundStyle(.white)
+                                                            .font(.system(size: 16))
+                                                            .fontWeight(.semibold)
+                                                    }
+                                                }
+                                                .frame(alignment: .leading)
+                                                
+                                                
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.top, 8)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding([.top, .bottom], 14)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesBlack)
+                                                .shadow(color: Color.black, radius: 1.5)
+                                        )
+                                        
+                                        Text("Specifics")
+                                            .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                            .padding(.top, 20)
+                                            .foregroundStyle(.white)
+                                            .setFontSizeAndWeight(weight: .bold, size: 24)
+                                            .minimumScaleFactor(0.5)
+                                        
+                                        VStack {
+                                            HStack {
+                                                Text("Your Subscription ID:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 20)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-Regular", size: 16))
+                                                    .fontWeight(.bold)
+                                                
+                                                Text(self.subscriptionInfo.PlanID!)
+                                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                                    .padding(.trailing, 20)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                    .fontWeight(.semibold)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding([.top, .bottom])
+                                            
+                                            HStack {
+                                                Text("Subscription Price ID:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 20)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-Regular", size: 16))
+                                                    .fontWeight(.bold)
+                                                
+                                                Text(self.subscriptionInfo.PriceID!)
+                                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                                    .padding(.trailing, 20)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                    .fontWeight(.semibold)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding([.top, .bottom])
+                                            
+                                            HStack {
+                                                Text("Subscription Service ID:")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 20)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-Regular", size: 16))
+                                                    .fontWeight(.bold)
+                                                
+                                                Text(self.subscriptionInfo.ProductID!)
+                                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                                    .padding(.trailing, 20)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                    .fontWeight(.semibold)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding([.top, .bottom])
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding([.top, .bottom], 14)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesBlack)
+                                                .shadow(color: Color.black, radius: 1.5)
+                                        )
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        default:
+                            ZStack { }.onAppear(perform: { self.accountPopupSection = "main" })
                         }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
