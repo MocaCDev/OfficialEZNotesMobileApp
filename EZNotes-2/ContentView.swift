@@ -205,6 +205,10 @@ struct ContentView: View {
                     accountInfo.setMajorName(majorName: UserDefaults.standard.string(forKey: "major_name")!)
                 }
                 
+                if UserDefaults.standard.object(forKey: "college_state") != nil {
+                    accountInfo.setCollegeState(collegeState: UserDefaults.standard.string(forKey: "college_state")!)
+                }
+                
                 if UserDefaults.standard.object(forKey: "account_id") != nil {
                     accountInfo.setAccountID(accountID: UserDefaults.standard.string(forKey: "account_id")!)
                     

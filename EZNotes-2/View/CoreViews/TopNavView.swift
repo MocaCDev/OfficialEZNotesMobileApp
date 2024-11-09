@@ -61,9 +61,44 @@ struct AccountPopup: View {
         Interval: nil,
         PlanID: nil,
         PriceID: nil,
-        ProductID: nil
+        ProductID: nil,
+        CardHolderName: nil
     )
     @State private var accountPopupSection: String = "main"
+    @State private var switchFieldAndMajorSection: String = "choose_field" /* MARK: Values will be "choose_field" or "choose_major". This variable is adherent strictly to the "switch_field_and_major" section. */
+    
+    @State public var isLargerScreen: Bool = false
+    @State public var lastHeight: CGFloat = 0
+    
+    /* MARK: This is for the binding `makeContentRed` for `Plans` view. */
+    @State public var p: Bool = false
+    
+    func doSomething() { print("YES") }
+    
+    var borderBottomColor: LinearGradient = LinearGradient(
+        gradient: Gradient(
+            colors: [Color.EZNotesBlue, Color.EZNotesOrange]
+        ),
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+    var borderBottomColorError: LinearGradient = LinearGradient(
+        gradient: Gradient(
+            colors: [Color.EZNotesRed, Color.EZNotesRed]
+        ),
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+    
+    /* MARK: For time being, until I am able (have time) to move the code into a separate file, the below variables are used when buttons such as "Switch Schools" or "Switch States" are clicked. */
+    @State private var colleges: Array<String> = []
+    @State private var temporaryCollegeValue: String = ""
+    @State private var majorFields: Array<String> = []
+    @State private var temporaryMajorFieldValue: String = ""
+    @State private var majors: Array<String> = []
+    @State private var temporaryMajorValue: String = ""
+    @State private var updateCollegeAlert: Bool = false
+    @State private var updateMajorFieldAndMajorAlert: Bool = false
     
     var body: some View {
         VStack {
@@ -152,7 +187,7 @@ struct AccountPopup: View {
                                         //.resizableImageFill(width: prop.size.height / 2.5 > 300 ? 90 : 80, height: prop.size.height / 2.5 > 300 ? 90 : 80)
                                             .resizable()
                                             .aspectRatio(contentMode: .fill)
-                                            .frame(width: prop.size.height / 2.5 > 300 ? 90 : 80, height: prop.size.height / 2.5 > 300 ? 90 : 80, alignment: .center)
+                                            .frame(width: self.isLargerScreen ? 90 : 80, height: self.isLargerScreen ? 90 : 80, alignment: .center)
                                             .minimumScaleFactor(0.8)
                                             .foregroundStyle(.white)
                                             .clipShape(.rect)
@@ -351,20 +386,26 @@ struct AccountPopup: View {
                                         .foregroundStyle(.white)
                                 }
                                 .frame(maxWidth: 20, alignment: .leading)
-                                .padding(.leading, 10)
+                                .padding(.top, 15)
+                                .padding(.leading, 25)
                             }
-                        } else { ZStack { }.frame(maxWidth: 20, alignment: .leading).padding(.leading, 10) }
+                        } else { ZStack { }.frame(maxWidth: 20, alignment: .leading).padding(.leading, 25) }
                         
                         Text(self.accountPopupSection == "main"
                              ? "Account Details"
                              : self.accountPopupSection == "planDetails"
-                             ? "Plan Details"
-                             : "Account Details")
+                                ? self.subscriptionInfo.ProductName != nil ? self.subscriptionInfo.ProductName! : "Select Plan"
+                                : self.accountPopupSection == "switch_college"
+                                    ? "Switch College"
+                                    : self.accountPopupSection == "switch_field_and_major"
+                                        ? "Switch Field/Major"
+                                        : "Account Details" /* MARK: Default value if all else checks fail (which should never happen). */)
                         .frame(maxWidth: .infinity, maxHeight: 25)
                         .foregroundStyle(.white)
                         .padding([.top], 15)
-                        .setFontSizeAndWeight(weight: .semibold, size: 20)
+                        .setFontSizeAndWeight(weight: .bold, size: 20)
                         
+                        /* MARK: "spacing" to ensure above Text stays in the middle. */
                         ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 10)
                     }
                     
@@ -389,7 +430,11 @@ struct AccountPopup: View {
                                         RequestAction<GetSubscriptionInfoData>(parameters: GetSubscriptionInfoData(AccountID: self.accountInfo.accountID))
                                             .perform(action: get_subscription_info_req) { statusCode, resp in
                                                 guard resp != nil && statusCode == 200 else {
-                                                    if let resp = resp { print(resp) }
+                                                    if let resp = resp {
+                                                        if resp["Message"] as! String == "plan_id_not_found_for_user" {
+                                                            self.accountPopupSection = "setup_plan"
+                                                        }
+                                                    }
                                                     return
                                                 }
                                                 
@@ -413,6 +458,7 @@ struct AccountPopup: View {
                                                     self.subscriptionInfo.CardBrand = (resp["CardBrand"] as! String)
                                                     self.subscriptionInfo.CardExpMonth = (resp["CardExpMonth"] as! String)
                                                     self.subscriptionInfo.CardExpYear = (resp["CardExpYear"] as! String)
+                                                    self.subscriptionInfo.CardHolderName = (resp["CustomerName"] as! String)
                                                     self.subscriptionInfo.PaymentMethodCreatedOn = Date(timeIntervalSince1970: resp["PaymentMethodCreatedOn"] as! TimeInterval)
                                                     
                                                     // Get the index two characters before the end of the string
@@ -499,7 +545,37 @@ struct AccountPopup: View {
                                     Divider()
                                         .overlay(.black)
                                     
-                                    Button(action: { print("Change Schools") }) {
+                                    Button(action: {
+                                        RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(State: self.accountInfo.state))
+                                            .perform(action: get_colleges) { statusCode, resp in
+                                                /* TODO: Add loading screen while college names load. */
+                                                guard
+                                                    resp != nil,
+                                                    resp!.keys.contains("Colleges"),
+                                                    statusCode == 200
+                                                else {
+                                                    /* TODO: Add some sort of error checking. We can use the banner-thing that is used to signify a success or failure when updating PFP/PFP BG image. */
+                                                    /* TODO: As has been aforementioned - lets go ahead and ensure the banner message can be used across the board, not just with update success/failures of PFP/PFP BG image. */
+                                                    //self.serverError = true
+                                                    if let resp = resp { print(resp) }
+                                                    return
+                                                }
+                                                
+                                                let respColleges = resp!["Colleges"] as! [String]
+                                                
+                                                /* MARK: Ensure the `colleges` array is empty. */
+                                                self.colleges.removeAll()
+                                                
+                                                for c in respColleges {
+                                                    if !self.colleges.contains(c) { self.colleges.append(c) }
+                                                }
+                                                
+                                                self.colleges.append("Other")
+                                                //self.college = self.colleges[0]
+                                            }
+                                        
+                                        self.accountPopupSection = "switch_college"
+                                    }) {
                                         HStack {
                                             Text("Change Schools")
                                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -924,82 +1000,267 @@ struct AccountPopup: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         switch(self.accountPopupSection) {
+                        case "setup_plan":
+                            Plans(
+                                prop: prop,
+                                email: self.accountInfo.email,
+                                accountID: self.accountInfo.accountID,
+                                borderBottomColor: borderBottomColor,
+                                borderBottomColorError: borderBottomColorError,
+                                isLargerScreen: isLargerScreen,
+                                action: doSomething,
+                                makeContentRed: $p
+                            )
+                        case "switch_college":
+                            VStack {
+                                ScrollView(.vertical, showsIndicators: false) {
+                                    VStack {
+                                        ForEach(self.colleges, id: \.self) { college in
+                                            Button(action: {
+                                                self.temporaryCollegeValue = college
+                                                self.updateCollegeAlert = true
+                                            }) {
+                                                HStack {
+                                                    Text(college)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .padding([.leading, .top, .bottom], 10)
+                                                        .foregroundStyle(.white)
+                                                        .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                        .fontWeight(.bold)
+                                                        .minimumScaleFactor(0.5)
+                                                        .multilineTextAlignment(.leading)
+                                                    
+                                                    ZStack {
+                                                        Image(systemName: "chevron.right")
+                                                            .resizable()
+                                                            .frame(width: 10, height: 15)
+                                                    }
+                                                    .frame(maxWidth: 20, alignment: .trailing)
+                                                    .foregroundStyle(.gray)
+                                                    .padding(.trailing, 10)
+                                                }
+                                                .frame(maxWidth: .infinity)
+                                                .padding(10)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                            .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                            .shadow(color: Color.black, radius: 1.5)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                Spacer()
+                            }
+                            .frame(maxWidth: prop.size.width - 40 , maxHeight: .infinity)
+                            .alert("Are you sure?", isPresented: $updateCollegeAlert) {
+                                Button(action: {
+                                    RequestAction<UpdateCollegeNameData>(parameters: UpdateCollegeNameData(
+                                        NewCollegeName: self.temporaryCollegeValue, AccountID: self.accountInfo.accountID
+                                    ))
+                                    .perform(action: update_college_name_req) { statusCode, resp in
+                                        guard resp != nil && statusCode == 200 else {
+                                            self.temporaryCollegeValue.removeAll()
+                                            if let resp = resp { print(resp) }
+                                            
+                                            /* TODO: Display an error message. */
+                                            
+                                            return
+                                        }
+                                        
+                                        UserDefaults.standard.set(self.temporaryCollegeValue, forKey: "college_name")
+                                        self.accountInfo.setCollegeName(collegeName: self.temporaryCollegeValue)
+                                        
+                                        /* MARK: Get new major fields for the school. */
+                                        RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+                                            College: self.temporaryCollegeValue
+                                        ))
+                                        .perform(action: get_custom_college_fields_req) { statusCode, resp in
+                                            guard
+                                                resp != nil,
+                                                statusCode == 200
+                                            else {
+                                                /* TODO: Handle errors. For now, the below works. */
+                                                self.accountPopupSection = "main"
+                                                return
+                                            }
+                                            
+                                            guard resp!.keys.contains("Fields") else {
+                                                /* TODO: Handle errors. For now the below works. */
+                                                self.accountPopupSection = "main"
+                                                return
+                                            }
+                                            
+                                            self.majorFields = resp!["Fields"] as! [String]
+                                            self.majorFields.append("Other")
+                                            self.accountPopupSection = "switch_field_and_major"
+                                            //self.majorField = self.majorFields[0]
+                                        }
+                                        
+                                        /* MARK: Remove the data from the variable when we're done using it to perform the above actions. */
+                                        self.temporaryCollegeValue.removeAll()
+                                    }
+                                }) { Text("Yes") }
+                                
+                                Button("No", role: .cancel) { }
+                            } message: {
+                                Text("Proceeding with this course of action will change your school and you will have to update your major field and major. Do you want to continue?")
+                            }
+                        case "switch_field_and_major":
+                            VStack {
+                                ScrollView(.vertical, showsIndicators: false) {
+                                    VStack {
+                                        ForEach(self.switchFieldAndMajorSection == "choose_field"
+                                                ? self.majorFields
+                                                : self.majors, id: \.self) { value in
+                                            Button(action: {
+                                                if self.switchFieldAndMajorSection == "choose_field" {
+                                                    self.temporaryMajorFieldValue = value
+                                                    
+                                                    RequestAction<GetMajorsRequestData>(
+                                                        parameters: GetMajorsRequestData(
+                                                            College: self.accountInfo.college,
+                                                            MajorField: value
+                                                        ))
+                                                    .perform(action: get_majors_req) { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            self.temporaryMajorFieldValue.removeAll()
+                                                            
+                                                            /* TODO: Handle errors. For now this is okay. */
+                                                            self.accountPopupSection = "main"
+                                                            return
+                                                        }
+                                                        
+                                                        self.majors = resp!["Majors"] as! [String]
+                                                        self.majors.append("Other")
+                                                        self.switchFieldAndMajorSection = "choose_major"
+                                                        //self.major = self.majors[0]
+                                                    }
+                                                } else {
+                                                    self.temporaryMajorValue = value
+                                                    self.updateMajorFieldAndMajorAlert = true
+                                                }
+                                            }) {
+                                                HStack {
+                                                    Text(value)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .padding([.leading, .top, .bottom], 10)
+                                                        .foregroundStyle(.white)
+                                                        .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                        .fontWeight(.bold)
+                                                        .minimumScaleFactor(0.5)
+                                                        .multilineTextAlignment(.leading)
+                                                    
+                                                    ZStack {
+                                                        Image(systemName: "chevron.right")
+                                                            .resizable()
+                                                            .frame(width: 10, height: 15)
+                                                    }
+                                                    .frame(maxWidth: 20, alignment: .trailing)
+                                                    .foregroundStyle(.gray)
+                                                    .padding(.trailing, 10)
+                                                }
+                                                .frame(maxWidth: .infinity)
+                                                .padding(10)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                            .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                            .shadow(color: Color.black, radius: 1.5)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+                            .alert("Are you sure?", isPresented: $updateMajorFieldAndMajorAlert) {
+                                Button(action: {
+                                    RequestAction<UpdateMajorFieldData>(parameters: UpdateMajorFieldData(
+                                        NewMajorField: self.temporaryMajorFieldValue,
+                                        AccountID: self.accountInfo.accountID
+                                    ))
+                                    .perform(action: update_major_field_req) { statusCode, resp in
+                                        guard resp != nil && statusCode == 200 else {
+                                            /* TODO: Handle errors. For now this is okay. */
+                                            self.accountPopupSection = "main"
+                                            return
+                                        }
+                                        
+                                        /* MARK: Upon the initial request being good, attempt to also update the major. */
+                                        RequestAction<UpdateMajorData>(parameters: UpdateMajorData(
+                                            NewMajor: self.temporaryMajorValue,
+                                            AccountID: self.accountInfo.accountID
+                                        ))
+                                        .perform(action: update_major_req) { statusCode, resp in
+                                            guard resp != nil && statusCode == 200 else {
+                                                /* TODO: Handl errors. For now this is okay. */
+                                                self.accountPopupSection = "main"
+                                                return
+                                            }
+                                            
+                                            /* MARK: If updating the major is good, then update the UserDefault values. */
+                                            UserDefaults.standard.set(self.temporaryMajorFieldValue, forKey: "major_field")
+                                            UserDefaults.standard.set(self.temporaryMajorValue, forKey: "major_name")
+                                            self.accountInfo.setMajorName(majorName: self.temporaryMajorValue)
+                                            
+                                            self.temporaryMajorFieldValue.removeAll()
+                                            self.temporaryMajorValue.removeAll()
+                                            
+                                            /* MARK: Once updating all the information after switching schools, go back to the main section. */
+                                            self.accountPopupSection = "main"
+                                        }
+                                    }
+                                }) { Text("Yes") }
+                                
+                                Button("No", role: .cancel) { }
+                            } message: {
+                                Text("Proceeding with this course of action will change your major field and major. Do you want to continue?")
+                            }
                         case "planDetails":
                             VStack {
                                 ScrollView(.vertical, showsIndicators: false) {
-                                    Text("Overview")
+                                    /*Text("Overview")
                                         .frame(maxWidth: prop.size.width - 50, alignment: .leading)
                                         .foregroundStyle(.white)
                                         .setFontSizeAndWeight(weight: .bold, size: 24)
-                                        .minimumScaleFactor(0.5)
+                                        .minimumScaleFactor(0.5)*/
+                                    
+                                    HStack {
+                                        Text("Next Payment:")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 30)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                            .fontWeight(.bold)
+                                        
+                                        Text("\(self.subscriptionInfo.CurrentPeriodEnd!.formatted(date: .numeric, time: .shortened))")
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                            .padding(.trailing, 30)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                            .fontWeight(.semibold)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    
+                                    HStack {
+                                        Text("Period Started:")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 30)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                            .fontWeight(.bold)
+                                        
+                                        Text("\(self.subscriptionInfo.CurrentPeriodStart!.formatted(date: .numeric, time: .shortened))")
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                            .padding(.trailing, 30)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                            .fontWeight(.semibold)
+                                    }
+                                    .frame(maxWidth: .infinity)
                                     
                                     VStack {
-                                        VStack {
-                                            HStack {
-                                                Text("Plan:")
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .padding(.leading, 30)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-Regular", size: 16))
-                                                    .fontWeight(.bold)
-                                                
-                                                Text(self.subscriptionInfo.ProductName!)
-                                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                                    .padding(.trailing, 30)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
-                                                    .fontWeight(.semibold)
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            
-                                            Divider()
-                                                .background(.white)
-                                                .frame(maxWidth: prop.size.width - 80)
-                                            
-                                            HStack {
-                                                Text("Next Payment:")
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .padding(.leading, 30)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-Regular", size: 16))
-                                                    .fontWeight(.bold)
-                                                
-                                                Text("\(self.subscriptionInfo.CurrentPeriodEnd!)")
-                                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                                    .padding(.trailing, 30)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
-                                                    .fontWeight(.semibold)
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.top, 15)
-                                            
-                                            HStack {
-                                                Text("Period Started:")
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .padding(.leading, 30)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-Regular", size: 16))
-                                                    .fontWeight(.bold)
-                                                
-                                                Text("\(self.subscriptionInfo.CurrentPeriodStart!)")
-                                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                                    .padding(.trailing, 30)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
-                                                    .fontWeight(.semibold)
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.top, 15)
-                                        }
-                                        .frame(maxWidth: prop.size.width - 40)
-                                        .padding([.top, .bottom], 14)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(Color.EZNotesBlack)
-                                                .shadow(color: Color.black, radius: 1.5)
-                                        )
-                                        
                                         Text("Payment")
                                             .frame(maxWidth: prop.size.width - 50, alignment: .leading)
                                             .padding(.top, 20)
@@ -1064,85 +1325,126 @@ struct AccountPopup: View {
                                             Divider()
                                                 .background(.white)
                                                 .frame(maxWidth: prop.size.width - 80)
+                                                .padding(.bottom)
                                             
-                                            HStack {
-                                                VStack {
-                                                    Text("Card Type")
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .padding(.leading, 30)
-                                                        .foregroundStyle(.white)
-                                                        .font(Font.custom("Poppins-Regular", size: 16))
-                                                        .fontWeight(.bold)
-                                                    
-                                                    Text(self.subscriptionInfo.CardBrand!.uppercased())
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .padding(.leading, 30)
-                                                        .foregroundStyle(.white)
-                                                        .font(.system(size: 16))
-                                                        .fontWeight(.semibold)
-                                                }
-                                                .frame(alignment: .leading)
-                                                
-                                                VStack {
-                                                    Text("Card Number")
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .padding(.leading, 30)
-                                                        .foregroundStyle(.white)
-                                                        .font(Font.custom("Poppins-Regular", size: 16))
-                                                        .fontWeight(.bold)
-                                                    
-                                                    Text("XXXX XXXX XXXX \(self.subscriptionInfo.Last4!)")
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .padding(.leading, 30)
-                                                        .foregroundStyle(.white)
-                                                        .font(.system(size: 16))
-                                                        .fontWeight(.semibold)
-                                                }
-                                                .frame(alignment: .trailing)
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            
-                                            HStack {
+                                            VStack {
                                                 HStack {
                                                     VStack {
-                                                        Text("Exp. Month")
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .padding(.leading, 30)
-                                                            .foregroundStyle(.white)
-                                                            .font(Font.custom("Poppins-Regular", size: 16))
-                                                            .fontWeight(.bold)
+                                                        ZStack {
+                                                            Text(self.subscriptionInfo.CardBrand!.uppercased())
+                                                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                                                .padding([.top, .leading], 20)
+                                                                .foregroundStyle(.white)
+                                                                .setFontSizeAndWeight(weight: .bold, size: 50)
+                                                                .minimumScaleFactor(0.5)
+                                                        }
+                                                        .frame(maxWidth: .infinity, maxHeight: 30, alignment: .top)
                                                         
-                                                        Text(self.subscriptionInfo.CardExpMonth!)
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .padding(.leading, 30)
-                                                            .foregroundStyle(.white)
-                                                            .font(.system(size: 16))
-                                                            .fontWeight(.semibold)
+                                                        Spacer()
+                                                        
+                                                        VStack {
+                                                            VStack {
+                                                                ZStack {
+                                                                    Image("Debit-Card-Chip")
+                                                                        .resizable()
+                                                                        .frame(width: 30, height: 30)
+                                                                }
+                                                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                                                .padding(.leading, 20)
+                                                                
+                                                                Text("XXXX XXXX XXXX \(self.subscriptionInfo.Last4!)")
+                                                                    .frame(maxWidth: prop.size.width - 50, minHeight: 22, alignment: .leading)
+                                                                    .padding(.leading, 20)
+                                                                    .foregroundStyle(
+                                                                        MeshGradient(width: 3, height: 3, points: [
+                                                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                                        ], colors: [
+                                                                            Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                                                            .white, Color.EZNotesBlue, Color.EZNotesOrange,
+                                                                            Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                             Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                             Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                                        ])
+                                                                    )
+                                                                    .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                                    .minimumScaleFactor(0.5)
+                                                            }
+                                                            .frame(alignment: .leading)
+                                                            .padding(.top, 8)
+                                                            
+                                                            VStack {
+                                                                HStack {
+                                                                    HStack {
+                                                                        Text("Valid Thru")
+                                                                            .frame(maxWidth: 25, alignment: .leading)//(maxWidth: prop.size.width - 50, alignment: .leading)
+                                                                            .padding(.leading, 20)
+                                                                            .foregroundStyle(.white)
+                                                                            .setFontSizeAndWeight(weight: .light, size: 10)
+                                                                            .minimumScaleFactor(0.5)
+                                                                            .multilineTextAlignment(.center)
+                                                                        
+                                                                        Text("\(self.subscriptionInfo.CardExpMonth!)/\(self.subscriptionInfo.CardExpYear!)")
+                                                                            .frame(maxWidth: .infinity, alignment: .leading)//(maxWidth: prop.size.width - 50, alignment: .leading)
+                                                                            .padding(.leading, 5)
+                                                                            .foregroundStyle(.white)
+                                                                            .setFontSizeAndWeight(weight: .light, size: 15)
+                                                                            .minimumScaleFactor(0.5)
+                                                                    }
+                                                                    .frame(alignment: .leading)
+                                                                }
+                                                                .frame(maxWidth: .infinity)
+                                                                
+                                                                Text("\(self.subscriptionInfo.CardHolderName!)")
+                                                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                                                    .padding(.leading, 20)
+                                                                    .foregroundStyle(.white)
+                                                                    .setFontSizeAndWeight(weight: .light, size: 15)
+                                                                    .minimumScaleFactor(0.5)
+                                                            }
+                                                            .frame(maxWidth: .infinity)
+                                                        }
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .padding(.top, 20)
+                                                        
+                                                        Spacer()
+                                                        
+                                                        
                                                     }
-                                                    .frame(alignment: .leading)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
                                                     
                                                     VStack {
-                                                        Text("Exp. Year")
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .padding(.leading, 30)
-                                                            .foregroundStyle(.white)
-                                                            .font(Font.custom("Poppins-Regular", size: 16))
-                                                            .fontWeight(.bold)
+                                                        Spacer() /* MARK: Shove the "logo" to the bottom. */
                                                         
-                                                        Text(self.subscriptionInfo.CardExpYear!)
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .padding(.leading, 30)
-                                                            .foregroundStyle(.white)
-                                                            .font(.system(size: 16))
-                                                            .fontWeight(.semibold)
+                                                        ZStack {
+                                                            Image("Logo")
+                                                                .resizable()
+                                                                .frame(width: 60, height: 60)
+                                                        }
+                                                        .frame(maxWidth: .infinity, alignment: .trailing)
+                                                        .padding(.trailing, 10)
+                                                        .padding(.bottom, 5)
                                                     }
+                                                    .frame(maxWidth: 60, alignment: .trailing)
                                                 }
-                                                .frame(alignment: .leading)
-                                                
-                                                
                                             }
-                                            .frame(maxWidth: .infinity)
-                                            .padding(.top, 8)
+                                            .frame(maxWidth: prop.size.width - 70, minHeight: 200)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.black)
+                                                    .shadow(color: Color.black, radius: 1.5)
+                                            )
+                                            .cornerRadius(15)
+                                            
+                                            Text("This is not a real debit card, this is for visual purposes only.")
+                                                .frame(maxWidth: prop.size.width - 70, alignment: .leading)
+                                                .padding(.leading, 5)
+                                                .foregroundStyle(.secondary)
+                                                .setFontSizeAndWeight(weight: .light, size: 12)
+                                                .minimumScaleFactor(0.5)
+                                                .multilineTextAlignment(.leading)
                                         }
                                         .frame(maxWidth: prop.size.width - 40)
                                         .padding([.top, .bottom], 14)
@@ -1172,8 +1474,8 @@ struct AccountPopup: View {
                                                     .frame(maxWidth: .infinity, alignment: .trailing)
                                                     .padding(.trailing, 20)
                                                     .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
-                                                    .fontWeight(.semibold)
+                                                    .setFontSizeAndWeight(weight: .heavy, size: 16)//(Font.custom("Poppins-ExtraLight", size: 16))
+                                                   // .fontWeight(.heavy)
                                             }
                                             .frame(maxWidth: .infinity)
                                             .padding([.top, .bottom])
@@ -1190,8 +1492,7 @@ struct AccountPopup: View {
                                                     .frame(maxWidth: .infinity, alignment: .trailing)
                                                     .padding(.trailing, 20)
                                                     .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
-                                                    .fontWeight(.semibold)
+                                                    .setFontSizeAndWeight(weight: .heavy, size: 16)
                                             }
                                             .frame(maxWidth: .infinity)
                                             .padding([.top, .bottom])
@@ -1208,8 +1509,7 @@ struct AccountPopup: View {
                                                     .frame(maxWidth: .infinity, alignment: .trailing)
                                                     .padding(.trailing, 20)
                                                     .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
-                                                    .fontWeight(.semibold)
+                                                    .setFontSizeAndWeight(weight: .heavy, size: 16)
                                             }
                                             .frame(maxWidth: .infinity)
                                             .padding([.top, .bottom])
@@ -1221,6 +1521,62 @@ struct AccountPopup: View {
                                                 .fill(Color.EZNotesBlack)
                                                 .shadow(color: Color.black, radius: 1.5)
                                         )
+                                        
+                                        Text("Actions")
+                                            .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                            .padding(.top, 20)
+                                            .foregroundStyle(.white)
+                                            .setFontSizeAndWeight(weight: .bold, size: 24)
+                                            .minimumScaleFactor(0.5)
+                                        
+                                        VStack {
+                                            Button(action: {
+                                                /* TODO: Add endpoint in backend the will remove the users subscription from stripe. */
+                                                
+                                                self.accountPopupSection = "setup_plan"
+                                            }) {
+                                                HStack {
+                                                    Text("Switch Plans")
+                                                        .frame(maxWidth: .infinity, alignment: .center)
+                                                        .padding([.top, .bottom], 8)
+                                                        .foregroundStyle(.black)
+                                                        .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                        .minimumScaleFactor(0.5)
+                                                }
+                                                .frame(maxWidth: .infinity)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(.white)
+                                                )
+                                                .cornerRadius(15)
+                                            }
+                                            .buttonStyle(NoLongPressButtonStyle())
+                                            
+                                            Button(action: {
+                                                print("Deactivate Plan")
+                                                
+                                                /* TODO: Add endpoint that removes the users plan. Upon deactivating the plan, the account will be deleted. */
+                                            }) {
+                                                HStack {
+                                                    Text("Deactivate Plan")
+                                                        .frame(maxWidth: .infinity, alignment: .center)
+                                                        .padding([.top, .bottom], 8)
+                                                        .foregroundStyle(.black)
+                                                        .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                        .minimumScaleFactor(0.5)
+                                                }
+                                                .frame(maxWidth: .infinity)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(Color.EZNotesRed)
+                                                )
+                                                .cornerRadius(15)
+                                            }
+                                            .buttonStyle(NoLongPressButtonStyle())
+                                            .padding(.top, 5)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding(.bottom, 30)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 }
@@ -1235,7 +1591,7 @@ struct AccountPopup: View {
                 .background(
                     Rectangle()
                         .fill(Color.EZNotesBlack)
-                        .cornerRadius(15, corners: prop.size.height / 2.5 > 300 ? [.topLeft, .topRight, .bottomLeft, .bottomRight] : [.topLeft, .topRight])
+                        .cornerRadius(15, corners: self.isLargerScreen ? [.topLeft, .topRight, .bottomLeft, .bottomRight] : [.topLeft, .topRight])
                         .shadow(color: .black, radius: 6.5)
                 )
                 .edgesIgnoringSafeArea(.bottom)
@@ -1243,6 +1599,10 @@ struct AccountPopup: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear {
+            self.isLargerScreen = prop.size.height / 2.5 > 300
+            self.lastHeight = prop.size.height
+        }
     }
 }
 

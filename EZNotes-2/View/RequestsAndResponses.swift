@@ -9,13 +9,28 @@ import SwiftUI
 
 /* MARK: URLs used for requests. */
 //let server = "https://www.eznotes.space"
-let server = "http://192.168.1.109:8088"
+let server = "http://192.168.1.114:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
  * to be sent to the endpoint.
  * */
 struct ReqPlaceholder {}
+
+struct UpdateCollegeNameData {
+    let NewCollegeName: String
+    let AccountID: String
+}
+
+struct UpdateMajorFieldData {
+    let NewMajorField: String
+    let AccountID: String
+}
+
+struct UpdateMajorData {
+    let NewMajor: String
+    let AccountID: String
+}
 
 struct CheckUsernameRequestData {
     let Username: String
@@ -273,4 +288,22 @@ let get_subscription_info_req: CSIARequest = CSIARequest(
     url: "\(server)/get_subscription_information",
     method: "get",
     reqData: GetSubscriptionInfoData.self
+)
+
+let update_college_name_req: CSIARequest = CSIARequest(
+    url: "\(server)/update_users_college_name",
+    method: "post",
+    reqData: UpdateCollegeNameData.self
+)
+
+let update_major_field_req: CSIARequest = CSIARequest(
+    url: "\(server)/update_users_major_field",
+    method: "post",
+    reqData: UpdateMajorFieldData.self
+)
+
+let update_major_req: CSIARequest = CSIARequest(
+    url: "\(server)/update_users_major",
+    method: "post",
+    reqData: UpdateMajorData.self
 )

@@ -11,6 +11,7 @@ class AccountDetails: ObservableObject {
     @Published var email: String
     @Published var college: String
     @Published var major: String
+    @Published var state: String
     @Published var accountID: String
     @Published var subID: String
     @Published var aiChatID: UUID
@@ -26,6 +27,7 @@ class AccountDetails: ObservableObject {
         email = ""
         college = ""
         major = ""
+        state = ""
         accountID = ""
         subID = ""
         aiChatID = UUID()
@@ -38,6 +40,7 @@ class AccountDetails: ObservableObject {
         email = ""
         college = ""
         major = ""
+        state = ""
         accountID = ""
         subID = ""
         aiChatID = UUID()
@@ -52,6 +55,7 @@ class AccountDetails: ObservableObject {
     final public func setAccountID(accountID: String) { self.accountID = accountID }
     final public func setClientSubID(subID: String) { self.subID = subID }
     final public func setAIChatID(chatID: UUID) { self.aiChatID = chatID }
+    final public func setCollegeState(collegeState: String) { self.state = collegeState }
     
     final public func setProfilePicture(pfp: UIImage) { self.profilePicture = Image(uiImage: pfp) }
     final public func setProfilePicture(pfp: Image) { self.profilePicture = pfp }

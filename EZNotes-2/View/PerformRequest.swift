@@ -407,6 +407,21 @@ struct RequestAction<T> {
                 guard let params: GetSubscriptionInfoData = (parameters as? GetSubscriptionInfoData) else { return }
                 request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
                 break
+            case is UpdateCollegeNameData.Type:
+                guard let params: UpdateCollegeNameData = (parameters as? UpdateCollegeNameData) else { return }
+                request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.NewCollegeName, forHTTPHeaderField: "New-College-Name")
+                break
+            case is UpdateMajorFieldData.Type:
+                guard let params: UpdateMajorFieldData = (parameters as? UpdateMajorFieldData) else { return }
+                request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.NewMajorField, forHTTPHeaderField: "New-Major-Field")
+                break
+            case is UpdateMajorData.Type:
+                guard let params: UpdateMajorData = (parameters as? UpdateMajorData) else { return }
+                request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.NewMajor, forHTTPHeaderField: "New-Major")
+                break
             default: break
         }
         

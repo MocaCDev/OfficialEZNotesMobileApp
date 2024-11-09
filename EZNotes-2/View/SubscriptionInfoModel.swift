@@ -26,4 +26,5 @@ struct SubscriptionInfo {
     var CardBrand: String?
     var CardExpMonth: String?
     var CardExpYear: String?
+    var CardHolderName: String?
 }
