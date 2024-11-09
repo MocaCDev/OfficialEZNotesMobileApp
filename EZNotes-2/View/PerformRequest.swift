@@ -422,6 +422,11 @@ struct RequestAction<T> {
                 request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
                 request.addValue(params.NewMajor, forHTTPHeaderField: "New-Major")
                 break
+            case is UpdateStateData.Type:
+                guard let params: UpdateStateData = (parameters as? UpdateStateData) else { return }
+                request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.NewState, forHTTPHeaderField: "New-State")
+                break
             default: break
         }
         

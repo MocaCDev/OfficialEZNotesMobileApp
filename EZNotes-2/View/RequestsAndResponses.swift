@@ -9,7 +9,7 @@ import SwiftUI
 
 /* MARK: URLs used for requests. */
 //let server = "https://www.eznotes.space"
-let server = "http://192.168.0.12:8088"
+let server = "http://10.180.119.35:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
@@ -29,6 +29,11 @@ struct UpdateMajorFieldData {
 
 struct UpdateMajorData {
     let NewMajor: String
+    let AccountID: String
+}
+
+struct UpdateStateData {
+    let NewState: String
     let AccountID: String
 }
 
@@ -306,4 +311,10 @@ let update_major_req: CSIARequest = CSIARequest(
     url: "\(server)/update_users_major",
     method: "post",
     reqData: UpdateMajorData.self
+)
+
+let update_state_req: CSIARequest = CSIARequest(
+    url: "\(server)/update_users_state",
+    method: "post",
+    reqData: UpdateStateData.self
 )

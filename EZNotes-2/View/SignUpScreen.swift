@@ -53,6 +53,7 @@ struct SignUpScreen : View, KeyboardReadable {
     @State public var major: String = ""
     @State public var section: String = "main"
     @State public var makeContentRed: Bool = false
+    @State public var alreadySignedUp: Bool = false
     
     @State public var imageOpacity: Double = 1
     @FocusState public var passwordFieldInFocus: Bool
@@ -220,81 +221,26 @@ struct SignUpScreen : View, KeyboardReadable {
     
     var body: some View {
         GeometryReader { geometry in
-            VStack {
-                // VStack with TextFields
+            if !self.alreadySignedUp {
                 VStack {
-                    if self.section != "select_state_and_college" {
-                        HStack {
-                            if self.section != "loading_code" {
-                                ZStack {
-                                    Button(action: {
-                                        switch(self.section) {
-                                        case "main":
-                                            self.screen = "home"
-                                            UserDefaults.standard.set("main", forKey: "last_signup_section")
-                                            break
-                                        case "select_state_and_college":
-                                            self.section = "main"
-                                            UserDefaults.standard.set(self.section, forKey: "last_signup_section")
-                                            break
-                                        case "select_plan":
-                                            /* MARK: Delete the signup process in the backend. */
-                                            RequestAction<DeleteSignupProcessData>(
-                                                parameters: DeleteSignupProcessData(
-                                                    AccountID: self.accountID
-                                                )
-                                            )
-                                            .perform(action: delete_signup_process_req) { statusCode, resp in
-                                                guard resp != nil && statusCode == 200 else {
-                                                    /* MARK: There should never be an error when deleting the process in the backend. */
-                                                    if let resp = resp { print(resp) }
-                                                    return
-                                                }
-                                            }
-                                            self.section = "select_state_and_college"
-                                            UserDefaults.standard.set(self.section, forKey: "last_signup_section")
-                                        default: break
-                                        }
-                                    }) {
-                                        Image(systemName: "arrow.backward")
-                                            .resizable()
-                                            .frame(width: 15, height: 15)
-                                            .foregroundStyle(.white)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                }
-                                .frame(maxWidth: 20, alignment: .leading)
-                                
-                                Text(self.section == "main"
-                                     ? "Sign Up"
-                                     : self.section == "code_input"
-                                        ? "Input Code"
-                                        : "Select Plan"
-                                )//(self.section != "select_plan" ? "Sign Up" : "Plans")
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .padding(.bottom, 5)
-                                .foregroundStyle(.white)
-                                .font(
-                                    .system(
-                                        size: prop.isIpad
-                                        ? 90
-                                        : self.isLargerScreen
-                                        ? 35
-                                        : 25
-                                    )
-                                )
-                                .fontWeight(.bold)
-                                
-                                ZStack {
-                                    Menu {
-                                        if self.section == "code_input" {
-                                            Button(action: {
-                                                self.state.removeAll()
-                                                self.college.removeAll()
-                                                self.majorFields.removeAll()
-                                                self.major.removeAll()
-                                                
-                                                /* MARK: Remove the sign up process in the backend. */
+                    // VStack with TextFields
+                    VStack {
+                        if self.section != "select_state_and_college" {
+                            HStack {
+                                if self.section != "loading_code" {
+                                    ZStack {
+                                        Button(action: {
+                                            switch(self.section) {
+                                            case "main":
+                                                self.screen = "home"
+                                                UserDefaults.standard.set("main", forKey: "last_signup_section")
+                                                break
+                                            case "select_state_and_college":
+                                                self.section = "main"
+                                                UserDefaults.standard.set(self.section, forKey: "last_signup_section")
+                                                break
+                                            case "select_plan":
+                                                /* MARK: Delete the signup process in the backend. */
                                                 RequestAction<DeleteSignupProcessData>(
                                                     parameters: DeleteSignupProcessData(
                                                         AccountID: self.accountID
@@ -307,51 +253,161 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         return
                                                     }
                                                 }
-                                                
-                                                self.section = "main"
-                                            }) {
-                                                Label("Restart Signup", systemImage: "arrow.trianglehead.counterclockwise")
+                                                self.section = "select_state_and_college"
+                                                UserDefaults.standard.set(self.section, forKey: "last_signup_section")
+                                            default: break
                                             }
-                                            .buttonStyle(NoLongPressButtonStyle())
-                                        }
-                                        
-                                        Button(action: { print("Get Help") }) {
-                                            Label("I need help", systemImage: "questionmark")
+                                        }) {
+                                            Image(systemName: "arrow.backward")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
-                                        //Button(action: { print("Restart") }) { Text("Restart Signup") }
-                                        //Button(action: { print("Get help") }) { Text("I need help") }
-                                    } label: {
-                                        Label("", systemImage: "ellipsis.circle")
-                                            .font(.title3)
-                                            .foregroundColor(.white)
                                     }
+                                    .frame(maxWidth: 20, alignment: .leading)
+                                    
+                                    Text(self.section == "main"
+                                         ? "Sign Up"
+                                         : self.section == "code_input"
+                                         ? "Input Code"
+                                         : "Select Plan"
+                                    )//(self.section != "select_plan" ? "Sign Up" : "Plans")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding(.bottom, 5)
+                                    .foregroundStyle(.white)
+                                    .font(
+                                        .system(
+                                            size: prop.isIpad
+                                            ? 90
+                                            : self.isLargerScreen
+                                            ? 35
+                                            : 25
+                                        )
+                                    )
+                                    .fontWeight(.bold)
+                                    
+                                    ZStack {
+                                        Menu {
+                                            if self.section == "code_input" {
+                                                Button(action: {
+                                                    self.state.removeAll()
+                                                    self.college.removeAll()
+                                                    self.majorFields.removeAll()
+                                                    self.major.removeAll()
+                                                    
+                                                    /* MARK: Remove the sign up process in the backend. */
+                                                    RequestAction<DeleteSignupProcessData>(
+                                                        parameters: DeleteSignupProcessData(
+                                                            AccountID: self.accountID
+                                                        )
+                                                    )
+                                                    .perform(action: delete_signup_process_req) { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            /* MARK: There should never be an error when deleting the process in the backend. */
+                                                            if let resp = resp { print(resp) }
+                                                            return
+                                                        }
+                                                    }
+                                                    
+                                                    self.section = "main"
+                                                }) {
+                                                    Label("Restart Signup", systemImage: "arrow.trianglehead.counterclockwise")
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                            }
+                                            
+                                            Button(action: { print("Get Help") }) {
+                                                Label("I need help", systemImage: "questionmark")
+                                            }
+                                            .buttonStyle(NoLongPressButtonStyle())
+                                            //Button(action: { print("Restart") }) { Text("Restart Signup") }
+                                            //Button(action: { print("Get help") }) { Text("I need help") }
+                                        } label: {
+                                            Label("", systemImage: "ellipsis.circle")
+                                                .font(.title3)
+                                                .foregroundColor(.white)
+                                        }
+                                    }
+                                    .frame(maxWidth: 20, alignment: .trailing)
                                 }
-                                .frame(maxWidth: 20, alignment: .trailing)
+                            }
+                            .frame(maxWidth: .infinity)
+                            
+                            /* TODO: Perhaps restructure the code? I feel like this is bad design. */
+                            if !self.tooShortUsername && !self.invalidEmail && !self.tooShortPassword {
+                                if self.section != "loading_code" {
+                                    Text(
+                                        self.wrongCode
+                                        ? "Wrong code. \(3 - self.wrongCodeAttempts) attempts left. Try again"
+                                        : self.userExists
+                                        ? "A user with the username you provided already exists"
+                                        : self.emailExists
+                                        ? "A user with the email you provided already exists"
+                                        : self.section == "main"
+                                        ? "Sign up with a unique username, your email and a unique password"
+                                        : self.section == "select_state_and_college"
+                                        ? "Tell us about your college and your degree :)"
+                                        : self.section == "code_input"
+                                        ? "A code has been sent to your email. Input the code below"
+                                        : "Select a plan that best suits you"
+                                    )
+                                    .frame(maxWidth: prop.size.width - 50, alignment: .center)
+                                    .foregroundStyle(self.wrongCode || self.userExists || self.emailExists ? Color.EZNotesRed : Color.white)
+                                    .font(
+                                        .system(
+                                            size: prop.isIpad || self.isLargerScreen
+                                            ? 15
+                                            : 13
+                                        )
+                                    )
+                                    .multilineTextAlignment(.center)
+                                }
+                            } else {
+                                if self.tooShortUsername {
+                                    Text("The username provided is too short. It must be 4 or more characters long.")
+                                        .frame(maxWidth: prop.size.width - 30, alignment: .center)
+                                        .foregroundStyle(Color.EZNotesRed)
+                                        .font(
+                                            .system(
+                                                size: prop.isIpad || self.isLargerScreen
+                                                ? 15
+                                                : 13
+                                            )
+                                        )
+                                        .multilineTextAlignment(.center)
+                                } else if self.invalidEmail {
+                                    Text("The email provided is missing the domain, or has an invalid domain.")
+                                        .frame(maxWidth: prop.size.width - 30, alignment: .center)
+                                        .foregroundStyle(Color.EZNotesRed)
+                                        .font(
+                                            .system(
+                                                size: prop.isIpad || self.isLargerScreen
+                                                ? 15
+                                                : 13
+                                            )
+                                        )
+                                        .multilineTextAlignment(.center)
+                                } else {
+                                    Text("The password provided is too short. It must be 8 or more characters long.")
+                                        .frame(maxWidth: prop.size.width - 30, alignment: .center)
+                                        .foregroundStyle(Color.EZNotesRed)
+                                        .font(
+                                            .system(
+                                                size: prop.isIpad || self.isLargerScreen
+                                                ? 15
+                                                : 13
+                                            )
+                                        )
+                                        .multilineTextAlignment(.center)
+                                }
                             }
                         }
-                        .frame(maxWidth: .infinity)
                         
-                        /* TODO: Perhaps restructure the code? I feel like this is bad design. */
-                        if !self.tooShortUsername && !self.invalidEmail && !self.tooShortPassword {
-                            if self.section != "loading_code" {
-                                Text(
-                                    self.wrongCode
-                                    ? "Wrong code. \(3 - self.wrongCodeAttempts) attempts left. Try again"
-                                    : self.userExists
-                                    ? "A user with the username you provided already exists"
-                                    : self.emailExists
-                                    ? "A user with the email you provided already exists"
-                                    : self.section == "main"
-                                    ? "Sign up with a unique username, your email and a unique password"
-                                    : self.section == "select_state_and_college"
-                                    ? "Tell us about your college and your degree :)"
-                                    : self.section == "code_input"
-                                    ? "A code has been sent to your email. Input the code below"
-                                    : "Select a plan that best suits you"
-                                )
-                                .frame(maxWidth: prop.size.width - 50, alignment: .center)
-                                .foregroundStyle(self.wrongCode || self.userExists || self.emailExists ? Color.EZNotesRed : Color.white)
+                        if self.wrongCodeAttemptsMet {
+                            Text("You have put the wrong code in too many time.")
+                                .frame(maxWidth: prop.size.width - 30, alignment: .center)
+                                .foregroundStyle(Color.EZNotesRed)
                                 .font(
                                     .system(
                                         size: prop.isIpad || self.isLargerScreen
@@ -360,182 +416,509 @@ struct SignUpScreen : View, KeyboardReadable {
                                     )
                                 )
                                 .multilineTextAlignment(.center)
-                            }
-                        } else {
-                            if self.tooShortUsername {
-                                Text("The username provided is too short. It must be 4 or more characters long.")
-                                    .frame(maxWidth: prop.size.width - 30, alignment: .center)
-                                    .foregroundStyle(Color.EZNotesRed)
-                                    .font(
-                                        .system(
-                                            size: prop.isIpad || self.isLargerScreen
-                                            ? 15
-                                            : 13
-                                        )
-                                    )
-                                    .multilineTextAlignment(.center)
-                            } else if self.invalidEmail {
-                                Text("The email provided is missing the domain, or has an invalid domain.")
-                                    .frame(maxWidth: prop.size.width - 30, alignment: .center)
-                                    .foregroundStyle(Color.EZNotesRed)
-                                    .font(
-                                        .system(
-                                            size: prop.isIpad || self.isLargerScreen
-                                            ? 15
-                                            : 13
-                                        )
-                                    )
-                                    .multilineTextAlignment(.center)
-                            } else {
-                                Text("The password provided is too short. It must be 8 or more characters long.")
-                                    .frame(maxWidth: prop.size.width - 30, alignment: .center)
-                                    .foregroundStyle(Color.EZNotesRed)
-                                    .font(
-                                        .system(
-                                            size: prop.isIpad || self.isLargerScreen
-                                            ? 15
-                                            : 13
-                                        )
-                                    )
-                                    .multilineTextAlignment(.center)
-                            }
                         }
-                    }
-                    
-                    if self.wrongCodeAttemptsMet {
-                        Text("You have put the wrong code in too many time.")
-                            .frame(maxWidth: prop.size.width - 30, alignment: .center)
-                            .foregroundStyle(Color.EZNotesRed)
-                            .font(
-                                .system(
-                                    size: prop.isIpad || self.isLargerScreen
-                                        ? 15
-                                        : 13
-                                )
-                            )
-                            .multilineTextAlignment(.center)
-                    }
-                    
-                    VStack {
-                        if self.section == "main" {
-                            Text("Username")
-                                .frame(
-                                    width: prop.isIpad
-                                    ? UIDevice.current.orientation.isLandscape
-                                    ? prop.size.width - 800
-                                    : prop.size.width - 450
-                                    : prop.size.width - 100,
-                                    height: 5,
-                                    alignment: .leading
-                                )
-                                .padding(.top, 10)
-                                .font(
-                                    .system(
-                                        size: self.isLargerScreen ? 25 : 20
+                        
+                        VStack {
+                            if self.section == "main" {
+                                Text("Username")
+                                    .frame(
+                                        width: prop.isIpad
+                                        ? UIDevice.current.orientation.isLandscape
+                                        ? prop.size.width - 800
+                                        : prop.size.width - 450
+                                        : prop.size.width - 100,
+                                        height: 5,
+                                        alignment: .leading
                                     )
-                                )
-                                .foregroundStyle(.white)
-                                .fontWeight(.medium)
-                            
-                            TextField("Username...", text: $username)
-                                .frame(
-                                    width: prop.isIpad
-                                    ? UIDevice.current.orientation.isLandscape
-                                    ? prop.size.width - 800
-                                    : prop.size.width - 450
-                                    : prop.size.width - 100,
-                                    height: self.isLargerScreen ? 40 : 30
-                                )
-                                .padding([.leading], 15)
-                                .background(
-                                    Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                        .fill(.clear)
-                                        .border(
-                                            width: 1,
-                                            edges: [.bottom],
-                                            lcolor: !self.makeContentRed
+                                    .padding(.top, 10)
+                                    .font(
+                                        .system(
+                                            size: self.isLargerScreen ? 25 : 20
+                                        )
+                                    )
+                                    .foregroundStyle(.white)
+                                    .fontWeight(.medium)
+                                
+                                TextField("Username...", text: $username)
+                                    .frame(
+                                        width: prop.isIpad
+                                        ? UIDevice.current.orientation.isLandscape
+                                        ? prop.size.width - 800
+                                        : prop.size.width - 450
+                                        : prop.size.width - 100,
+                                        height: self.isLargerScreen ? 40 : 30
+                                    )
+                                    .padding([.leading], 15)
+                                    .background(
+                                        Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                            .fill(.clear)
+                                            .border(
+                                                width: 1,
+                                                edges: [.bottom],
+                                                lcolor: !self.makeContentRed
                                                 ? self.userExists || self.makeUsernameFieldRed ? self.borderBottomColorError : self.borderBottomColor
                                                 : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
-                                        )
-                                )
-                                .foregroundStyle(Color.EZNotesBlue)
-                                .padding(self.isLargerScreen ? 10 : 8)
-                                .tint(Color.EZNotesBlue)
-                                .font(.system(size: 18))
-                                .fontWeight(.medium)
-                                .autocapitalization(.none)
-                                .disableAutocorrection(true)
-                                .keyboardType(.alphabet)
-                            
-                            Text("Email")
-                                .frame(
-                                    width: prop.isIpad
-                                    ? UIDevice.current.orientation.isLandscape
-                                    ? prop.size.width - 800
-                                    : prop.size.width - 450
-                                    : prop.size.width - 100,
-                                    height: 5,
-                                    alignment: .leading
-                                )
-                                .padding(.top, 15)
-                                .font(
-                                    .system(
-                                        size: self.isLargerScreen ? 25 : 20
+                                            )
                                     )
-                                )
-                                .foregroundStyle(.white)
-                                .fontWeight(.medium)
-                            
-                            TextField("Email...", text: $email)
-                                .frame(
-                                    width: prop.isIpad
-                                    ? UIDevice.current.orientation.isLandscape
-                                    ? prop.size.width - 800
-                                    : prop.size.width - 450
-                                    : prop.size.width - 100,
-                                    height: self.isLargerScreen ? 40 : 30
-                                )
-                                .padding([.leading], 15)
-                                .background(
-                                    Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                        .fill(.clear)
-                                        .border(
-                                            width: 1,
-                                            edges: [.bottom],
-                                            lcolor: !self.makeContentRed
+                                    .foregroundStyle(Color.EZNotesBlue)
+                                    .padding(self.isLargerScreen ? 10 : 8)
+                                    .tint(Color.EZNotesBlue)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.medium)
+                                    .autocapitalization(.none)
+                                    .disableAutocorrection(true)
+                                    .keyboardType(.alphabet)
+                                
+                                Text("Email")
+                                    .frame(
+                                        width: prop.isIpad
+                                        ? UIDevice.current.orientation.isLandscape
+                                        ? prop.size.width - 800
+                                        : prop.size.width - 450
+                                        : prop.size.width - 100,
+                                        height: 5,
+                                        alignment: .leading
+                                    )
+                                    .padding(.top, 15)
+                                    .font(
+                                        .system(
+                                            size: self.isLargerScreen ? 25 : 20
+                                        )
+                                    )
+                                    .foregroundStyle(.white)
+                                    .fontWeight(.medium)
+                                
+                                TextField("Email...", text: $email)
+                                    .frame(
+                                        width: prop.isIpad
+                                        ? UIDevice.current.orientation.isLandscape
+                                        ? prop.size.width - 800
+                                        : prop.size.width - 450
+                                        : prop.size.width - 100,
+                                        height: self.isLargerScreen ? 40 : 30
+                                    )
+                                    .padding([.leading], 15)
+                                    .background(
+                                        Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                            .fill(.clear)
+                                            .border(
+                                                width: 1,
+                                                edges: [.bottom],
+                                                lcolor: !self.makeContentRed
                                                 ? self.userExists || self.makeEmailFieldRed ? self.borderBottomColorError : self.borderBottomColor
                                                 : self.email == "" ? self.borderBottomColorError : self.borderBottomColor
-                                        )
-                                )
-                                .foregroundStyle(Color.EZNotesBlue)
-                                .padding(self.isLargerScreen ? 10 : 8)
-                                .tint(Color.EZNotesBlue)
-                                .font(.system(size: 18))
-                                .fontWeight(.medium)
-                                .autocapitalization(.none)
-                                .disableAutocorrection(true)
-                                .keyboardType(.emailAddress)
-                            
-                            Text("Password")
-                                .frame(
-                                    width: prop.isIpad
-                                    ? UIDevice.current.orientation.isLandscape
-                                    ? prop.size.width - 800
-                                    : prop.size.width - 450
-                                    : prop.size.width - 100,
-                                    height: 5,
-                                    alignment: .leading
-                                )
-                                .padding(.top, 15)
-                                .font(
-                                    .system(
-                                        size: self.isLargerScreen ? 25 : 20
+                                            )
                                     )
+                                    .foregroundStyle(Color.EZNotesBlue)
+                                    .padding(self.isLargerScreen ? 10 : 8)
+                                    .tint(Color.EZNotesBlue)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.medium)
+                                    .autocapitalization(.none)
+                                    .disableAutocorrection(true)
+                                    .keyboardType(.emailAddress)
+                                
+                                Text("Password")
+                                    .frame(
+                                        width: prop.isIpad
+                                        ? UIDevice.current.orientation.isLandscape
+                                        ? prop.size.width - 800
+                                        : prop.size.width - 450
+                                        : prop.size.width - 100,
+                                        height: 5,
+                                        alignment: .leading
+                                    )
+                                    .padding(.top, 15)
+                                    .font(
+                                        .system(
+                                            size: self.isLargerScreen ? 25 : 20
+                                        )
+                                    )
+                                    .foregroundStyle(.white)
+                                    .fontWeight(.medium)
+                                
+                                SecureField("Password...", text: $password)
+                                    .frame(
+                                        width: prop.isIpad
+                                        ? UIDevice.current.orientation.isLandscape
+                                        ? prop.size.width - 800
+                                        : prop.size.width - 450
+                                        : prop.size.width - 100,
+                                        height: self.isLargerScreen ? 40 : 30
+                                    )
+                                    .padding([.leading], 15)
+                                    .background(
+                                        Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                            .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
+                                            .border(
+                                                width: 1,
+                                                edges: [.bottom],
+                                                lcolor: !self.makeContentRed
+                                                ? self.makePasswordFieldRed ? self.borderBottomColorError : self.borderBottomColor
+                                                : self.password == "" ? self.borderBottomColorError : self.borderBottomColor
+                                            )
+                                    )
+                                    .foregroundStyle(Color.EZNotesBlue)
+                                    .padding(self.isLargerScreen ? 10 : 8)
+                                    .tint(Color.EZNotesBlue)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.medium)
+                                    .focused($passwordFieldInFocus)
+                                    .autocapitalization(.none)
+                                    .disableAutocorrection(true)
+                            } else if self.section == "select_state_and_college" {
+                                /* TODO: This code is going to need a lot of refactoring. It is very repetitive.. just want it to work for now lol. */
+                                HStack {
+                                    Button(action: {
+                                        if self.collegeIsOther { self.collegeIsOther = false; return }
+                                        if self.majorIsOther { self.majorIsOther = false; return }
+                                        if self.majorFieldIsOther { self.majorFieldIsOther = false; return }
+                                        
+                                        if self.state == "" { self.section = "main" }
+                                        else {
+                                            /* MARK: The below operations will automatically cause the "section" of "select_state_and_college" to go back. */
+                                            if self.college == "" { self.state.removeAll(); return }
+                                            if self.majorField == "" { self.college.removeAll(); return }
+                                            self.majorField.removeAll()
+                                        }
+                                    }) {
+                                        ZStack {
+                                            Image(systemName: "arrow.backward")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(.white)
+                                        }.frame(maxWidth: 20, alignment: .leading)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    ZStack {
+                                        Text(self.state == ""
+                                             ? "Select State"
+                                             : self.college == ""
+                                             ? "Select College"
+                                             : self.majorField == ""
+                                             ? "Select Field"
+                                             : "Select Major")//(self.section != "select_plan" ? "Sign Up" : "Plans")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .padding(.bottom, 5)
+                                        .foregroundStyle(.white)
+                                        .font(
+                                            .system(
+                                                size: prop.isIpad
+                                                ? 80
+                                                : self.isLargerScreen
+                                                ? 30
+                                                : 20
+                                            )
+                                        )
+                                        .fontWeight(.semibold)
+                                    }.frame(maxWidth: .infinity, alignment: .center)
+                                    
+                                    Menu {
+                                        Button(action: { print("Get Help") }) {
+                                            Label("I need help", systemImage: "questionmark")
+                                        }
+                                        .foregroundStyle(.white)
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    } label: {
+                                        Label("", systemImage: "ellipsis.circle")
+                                            .font(.title2)
+                                            .foregroundColor(.white)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .top)
+                                .padding(.top, self.isLargerScreen ? -25 : -20)
+                                
+                                VStack {
+                                    /*Text(self.state == ""
+                                     ? "Select your state"
+                                     : self.college == ""
+                                     ? "Select your college"
+                                     : self.majorField == ""
+                                     ? "Select your field"
+                                     : "Select your major"
+                                     )
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .foregroundStyle(.white)
+                                     .setFontSizeAndWeight(weight: .heavy, size: 28)
+                                     .minimumScaleFactor(0.5)*/
+                                    
+                                    if self.state != "" {
+                                        Text("*\(self.state)* > *\(self.college)* \(self.majorField != "" ? ">" : "") *\(self.majorField)* \(self.major != "" ? ">" : "") *\(self.major)*")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.bottom)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-ExtraLight", size: 15))//.setFontSizeAndWeight(weight: .medium, size: 16)
+                                            .fontWeight(.semibold)
+                                            .minimumScaleFactor(0.5)
+                                            .multilineTextAlignment(.leading)
+                                    }
+                                    
+                                    if self.loadingColleges || self.loadingMajorFields || self.loadingMajors {
+                                        VStack {
+                                            Text(self.loadingColleges
+                                                 ? "Loading Colleges"
+                                                 : self.loadingMajorFields
+                                                 ? "Loading Fields"
+                                                 : "Loading Majors")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 18))
+                                            .fontWeight(.bold)
+                                            .minimumScaleFactor(0.5)
+                                            
+                                            ProgressView()
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                    } else {
+                                        if !self.collegeIsOther && !self.majorIsOther && !self.majorFieldIsOther {
+                                            ScrollView(.vertical, showsIndicators: false) {
+                                                VStack {
+                                                    LazyVGrid(columns: self.state == "" ? stateColumns : collegeColumns) {
+                                                        ForEach(self.state == ""
+                                                                ? self.states
+                                                                : self.college == ""
+                                                                ? self.colleges
+                                                                : self.majorField == ""
+                                                                ? self.majorFields
+                                                                : self.majors, id: \.self) { value in
+                                                            Button(action: {
+                                                                if self.state == "" {
+                                                                    self.state = value
+                                                                    
+                                                                    if self.colleges.count > 0 {
+                                                                        self.colleges.removeAll()
+                                                                        self.college = ""
+                                                                    }
+                                                                    if self.majorFields.count > 0 {
+                                                                        self.majorFields.removeAll()
+                                                                        self.majorField = ""
+                                                                    }
+                                                                    if self.majors.count > 0 {
+                                                                        self.majors.removeAll()
+                                                                        self.major = ""
+                                                                    }
+                                                                    
+                                                                    self.get_custom_colleges()
+                                                                } else if self.college == "" {
+                                                                    if value == "Other" {
+                                                                        self.collegeIsOther = true
+                                                                        return
+                                                                    }
+                                                                    
+                                                                    self.college = value
+                                                                    self.get_custom_major_fields()
+                                                                } else if self.majorField == "" {
+                                                                    if value == "Other" {
+                                                                        self.majorFieldIsOther = true
+                                                                        return
+                                                                    }
+                                                                    
+                                                                    self.majorField = value
+                                                                    self.get_majors()
+                                                                } else {
+                                                                    /* MARK: We can safely assume that, here, we will be assigning the major. */
+                                                                    if value == "Other" {
+                                                                        self.majorIsOther = true
+                                                                        return
+                                                                    }
+                                                                    
+                                                                    self.major = value
+                                                                    self.checkInfoAlert = true
+                                                                }
+                                                            }) {
+                                                                HStack {
+                                                                    Text(value)
+                                                                        .frame(maxWidth: .infinity, alignment: self.state == "" ? .center : .leading)
+                                                                        .padding([.leading, .top, .bottom], self.state != "" ? 10 : 0)
+                                                                        .foregroundStyle(.white)
+                                                                        .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                                        .fontWeight(.bold)
+                                                                        .minimumScaleFactor(0.5)
+                                                                        .multilineTextAlignment(.leading)
+                                                                    
+                                                                    if self.state != "" {
+                                                                        ZStack {
+                                                                            Image(systemName: "chevron.right")
+                                                                                .resizable()
+                                                                                .frame(width: 10, height: 15)
+                                                                        }
+                                                                        .frame(maxWidth: 20, alignment: .trailing)
+                                                                        .foregroundStyle(.gray)
+                                                                        .padding(.trailing, 10)
+                                                                    }
+                                                                }
+                                                                .frame(maxWidth: .infinity)
+                                                                .padding(10)
+                                                                .background(
+                                                                    self.state == ""
+                                                                    ? AnyView(
+                                                                        RoundedRectangle(cornerRadius: 15)
+                                                                            .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                                            .shadow(color: Color.black, radius: 1.5)
+                                                                    )
+                                                                    : AnyView(Rectangle().fill(Color.EZNotesLightBlack.opacity(0.75)))
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            .alert("Before continuing", isPresented: $checkInfoAlert) {
+                                                Button(action: {
+                                                    /* MARK: The only way we can get here is if the sate, college, majorField and major variables are not empty. No checks needed. */
+                                                    UserDefaults.standard.set(self.state, forKey: "temp_state")
+                                                    UserDefaults.standard.set(self.college, forKey: "temp_college")
+                                                    UserDefaults.standard.set(self.majorField, forKey: "temp_field")
+                                                    UserDefaults.standard.set(self.major, forKey: "temp_major")
+                                                    
+                                                    self.section = "loading_code"
+                                                    
+                                                    RequestAction<SignUpRequestData>(
+                                                        parameters: SignUpRequestData(
+                                                            Username: username,
+                                                            Email: email,
+                                                            Password: password,
+                                                            College: college,
+                                                            State: state,
+                                                            Field: majorField,
+                                                            Major: major
+                                                        )
+                                                    ).perform(action: complete_signup1_req) { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            if let resp = resp {
+                                                                if resp["ErrorCode"] as! Int == 0x6970 {
+                                                                    self.section = "main"
+                                                                    self.userExists = true
+                                                                    return
+                                                                }
+                                                            }
+                                                            
+                                                            self.section = "main"
+                                                            self.serverError = true
+                                                            return
+                                                        }
+                                                        
+                                                        if self.userExists { self.userExists = false }
+                                                        if self.makeContentRed { self.makeContentRed = false }
+                                                        
+                                                        self.accountID = resp!["Message"] as! String
+                                                        self.section = "code_input"
+                                                        
+                                                        UserDefaults.standard.set("code_input", forKey: "last_signup_section")
+                                                    }
+                                                }) { Text("Looks Good") }
+                                                
+                                                Button(action: {
+                                                    /* MARK: If `cancel` is tapped, then we will just default back to the beginning of the "select_state_and_college" section. */
+                                                    self.major.removeAll()
+                                                    self.majorField.removeAll()
+                                                    self.college.removeAll()
+                                                    self.state.removeAll()
+                                                }) { Text("Cancel") }
+                                            } message: {
+                                                Text("Before continuing, check to make sure the following information is correct:\nState: \(self.state)\nCollege: \(self.college)\nMajor Field: \(self.majorField)\nMajor: \(self.major)\n\nIf all above information is correct, continue. Else, click \"cancel\".")
+                                            }
+                                        } else {
+                                            TextField(self.collegeIsOther ? "College Name..." : "Field Name...", text: self.collegeIsOther ? $otherCollege : $otherMajorField)
+                                                .frame(
+                                                    width: prop.isIpad
+                                                    ? UIDevice.current.orientation.isLandscape
+                                                    ? prop.size.width - 800
+                                                    : prop.size.width - 450
+                                                    : prop.size.width - 100,
+                                                    height: self.isLargerScreen ? 40 : 30
+                                                )
+                                                .padding([.leading], 15)
+                                                .background(
+                                                    Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                        .fill(.clear)
+                                                        .border(
+                                                            width: 1,
+                                                            edges: [.bottom],
+                                                            lcolor: !self.makeContentRed
+                                                            ? self.userExists ? self.borderBottomColorError : self.borderBottomColor
+                                                            : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                        )
+                                                )
+                                                .foregroundStyle(Color.EZNotesBlue)
+                                                .padding(self.isLargerScreen ? 10 : 8)
+                                                .tint(Color.EZNotesBlue)
+                                                .font(.system(size: 18))
+                                                .fontWeight(.medium)
+                                                .autocapitalization(.none)
+                                                .disableAutocorrection(true)
+                                                .keyboardType(.alphabet)
+                                                .focused($otherCollegeFocus)
+                                                .onChange(of: self.otherCollegeFocus) {
+                                                    if !self.otherCollegeFocus {
+                                                        /* MARK: We will assume editing is done. */
+                                                        self.showCheckCollegeAlert = true
+                                                    }
+                                                }
+                                                .alert(self.collegeIsOther ? "Do we have the college right?" : "Do we have the Major Field correct?", isPresented: $showCheckCollegeAlert) {
+                                                    Button(action: {
+                                                        if self.collegeIsOther {
+                                                            self.college = self.otherCollege
+                                                            self.otherCollege.removeAll()
+                                                            self.get_custom_major_fields()
+                                                            self.collegeIsOther = false
+                                                            
+                                                            return
+                                                        }
+                                                        
+                                                        if self.majorFieldIsOther {
+                                                            self.majorField = self.otherMajorField
+                                                            self.otherMajorField.removeAll()
+                                                            self.get_majors()
+                                                            self.majorFieldIsOther = false
+                                                            
+                                                            return
+                                                        }
+                                                    }) {
+                                                        Text("Yes")
+                                                    }
+                                                    .buttonStyle(NoLongPressButtonStyle())
+                                                    
+                                                    Button("Not correct", role: .cancel) {}.buttonStyle(NoLongPressButtonStyle())
+                                                } message: {
+                                                    Text(self.collegeIsOther ? "Is \(self.otherCollege) the correct college?" : "Is \(self.otherMajorField) the correct field?")
+                                                }
+                                            
+                                        }
+                                    }
+                                }
+                                .frame(maxWidth: prop.size.width - 40)
+                                .padding(.top)
+                            } else if self.section == "loading_code" {
+                                VStack {
+                                    Text("Registering your account...")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .medium, size: 26)
+                                        .fontWeight(.semibold)
+                                        .minimumScaleFactor(0.5)
+                                    ProgressView()
+                                }
+                                .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .center)
+                            } else if self.section == "code_input" {
+                                Text("Code")
+                                    .frame(
+                                        width: prop.isIpad
+                                        ? prop.size.width - 450
+                                        : prop.size.width - 100,
+                                        height: 5,
+                                        alignment: .leading
+                                    )
+                                    .padding(.top, 15)
+                                    .font(.system(size: 25))
+                                    .foregroundStyle(.white)
+                                
+                                TextField(
+                                    "Code...",
+                                    text: $userInputedCode,
+                                    onEditingChanged: set_image_opacity
                                 )
-                                .foregroundStyle(.white)
-                                .fontWeight(.medium)
-                            
-                            SecureField("Password...", text: $password)
                                 .frame(
                                     width: prop.isIpad
                                     ? UIDevice.current.orientation.isLandscape
@@ -552,587 +935,269 @@ struct SignUpScreen : View, KeyboardReadable {
                                             width: 1,
                                             edges: [.bottom],
                                             lcolor: !self.makeContentRed
-                                                ? self.makePasswordFieldRed ? self.borderBottomColorError : self.borderBottomColor
-                                                : self.password == "" ? self.borderBottomColorError : self.borderBottomColor
+                                            ? self.borderBottomColor
+                                            : self.password == "" ? self.borderBottomColorError : self.borderBottomColor
                                         )
                                 )
                                 .foregroundStyle(Color.EZNotesBlue)
-                                .padding(self.isLargerScreen ? 10 : 8)
+                                .padding()
                                 .tint(Color.EZNotesBlue)
                                 .font(.system(size: 18))
                                 .fontWeight(.medium)
-                                .focused($passwordFieldInFocus)
                                 .autocapitalization(.none)
                                 .disableAutocorrection(true)
-                        } else if self.section == "select_state_and_college" {
-                            /* TODO: This code is going to need a lot of refactoring. It is very repetitive.. just want it to work for now lol. */
-                            HStack {
-                                Button(action: {
-                                    if self.collegeIsOther { self.collegeIsOther = false; return }
-                                    if self.majorIsOther { self.majorIsOther = false; return }
-                                    if self.majorFieldIsOther { self.majorFieldIsOther = false; return }
-                                    
-                                    if self.state == "" { self.section = "main" }
-                                    else {
-                                        /* MARK: The below operations will automatically cause the "section" of "select_state_and_college" to go back. */
-                                        if self.college == "" { self.state.removeAll(); return }
-                                        if self.majorField == "" { self.college.removeAll(); return }
-                                        self.majorField.removeAll()
-                                    }
-                                }) {
-                                    ZStack {
-                                        Image(systemName: "arrow.backward")
-                                            .resizable()
-                                            .frame(width: 15, height: 15)
-                                            .foregroundStyle(.white)
-                                    }.frame(maxWidth: 20, alignment: .leading)
+                                .keyboardType(.numberPad)
+                                .onChange(of: self.userInputedCode) {
+                                    /* Codes are 6-digits. */
+                                    if self.userInputedCode.count > 6 { self.userInputedCode = String(self.userInputedCode.prefix(6)) }
                                 }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                
-                                ZStack {
-                                    Text(self.state == ""
-                                         ? "Select State"
-                                         : self.college == ""
-                                             ? "Select College"
-                                             : self.majorField == ""
-                                                 ? "Select Field"
-                                                 : "Select Major")//(self.section != "select_plan" ? "Sign Up" : "Plans")
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .padding(.bottom, 5)
-                                    .foregroundStyle(.white)
-                                    .font(
-                                        .system(
-                                            size: prop.isIpad
-                                            ? 80
-                                            : self.isLargerScreen
-                                            ? 30
-                                            : 20
-                                        )
-                                    )
-                                    .fontWeight(.semibold)
-                                }.frame(maxWidth: .infinity, alignment: .center)
-                                
-                                Menu {
-                                    Button(action: { print("Get Help") }) {
-                                        Label("I need help", systemImage: "questionmark")
-                                    }
-                                    .foregroundStyle(.white)
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                } label: {
-                                    Label("", systemImage: "ellipsis.circle")
-                                        .font(.title2)
-                                        .foregroundColor(.white)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .top)
-                            .padding(.top, self.isLargerScreen ? -25 : -20)
-                            
-                            VStack {
-                                /*Text(self.state == ""
-                                    ? "Select your state"
-                                    : self.college == ""
-                                        ? "Select your college"
-                                        : self.majorField == ""
-                                            ? "Select your field"
-                                            : "Select your major"
+                            } else {
+                                Plans(
+                                    prop: prop,
+                                    email: self.email,
+                                    accountID: self.accountID,
+                                    borderBottomColor: self.borderBottomColor,
+                                    borderBottomColorError: self.borderBottomColorError,
+                                    isLargerScreen: self.isLargerScreen,
+                                    action: setLoginStatus,
+                                    makeContentRed: $makeContentRed
                                 )
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .setFontSizeAndWeight(weight: .heavy, size: 28)
-                                .minimumScaleFactor(0.5)*/
-                                
-                                if self.state != "" {
-                                    Text("*\(self.state)* > *\(self.college)* \(self.majorField != "" ? ">" : "") *\(self.majorField)* \(self.major != "" ? ">" : "") *\(self.major)*")
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding(.bottom)
-                                        .foregroundStyle(.white)
-                                        .font(Font.custom("Poppins-ExtraLight", size: 15))//.setFontSizeAndWeight(weight: .medium, size: 16)
-                                        .fontWeight(.semibold)
-                                        .minimumScaleFactor(0.5)
-                                        .multilineTextAlignment(.leading)
-                                }
-                                
-                                if self.loadingColleges || self.loadingMajorFields || self.loadingMajors {
-                                    VStack {
-                                        Text(self.loadingColleges
-                                             ? "Loading Colleges"
-                                             : self.loadingMajorFields
-                                                ? "Loading Fields"
-                                                : "Loading Majors")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .foregroundStyle(.white)
-                                        .font(Font.custom("Poppins-Regular", size: 18))
-                                        .fontWeight(.bold)
-                                        .minimumScaleFactor(0.5)
-                                        
-                                        ProgressView()
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                } else {
-                                    if !self.collegeIsOther && !self.majorIsOther && !self.majorFieldIsOther {
-                                        ScrollView(.vertical, showsIndicators: false) {
-                                            VStack {
-                                                LazyVGrid(columns: self.state == "" ? stateColumns : collegeColumns) {
-                                                    ForEach(self.state == ""
-                                                            ? self.states
-                                                            : self.college == ""
-                                                                ? self.colleges
-                                                                : self.majorField == ""
-                                                                    ? self.majorFields
-                                                                    : self.majors, id: \.self) { value in
-                                                        Button(action: {
-                                                            if self.state == "" {
-                                                                self.state = value
-                                                                
-                                                                if self.colleges.count > 0 {
-                                                                    self.colleges.removeAll()
-                                                                    self.college = ""
-                                                                }
-                                                                if self.majorFields.count > 0 {
-                                                                    self.majorFields.removeAll()
-                                                                    self.majorField = ""
-                                                                }
-                                                                if self.majors.count > 0 {
-                                                                    self.majors.removeAll()
-                                                                    self.major = ""
-                                                                }
-                                                                
-                                                                self.get_custom_colleges()
-                                                            } else if self.college == "" {
-                                                                if value == "Other" {
-                                                                    self.collegeIsOther = true
-                                                                    return
-                                                                }
-                                                                
-                                                                self.college = value
-                                                                self.get_custom_major_fields()
-                                                            } else if self.majorField == "" {
-                                                                if value == "Other" {
-                                                                    self.majorFieldIsOther = true
-                                                                    return
-                                                                }
-                                                                
-                                                                self.majorField = value
-                                                                self.get_majors()
-                                                            } else {
-                                                                /* MARK: We can safely assume that, here, we will be assigning the major. */
-                                                                if value == "Other" {
-                                                                    self.majorIsOther = true
-                                                                    return
-                                                                }
-                                                                
-                                                                self.major = value
-                                                                self.checkInfoAlert = true
-                                                            }
-                                                        }) {
-                                                            HStack {
-                                                                Text(value)
-                                                                    .frame(maxWidth: .infinity, alignment: self.state == "" ? .center : .leading)
-                                                                    .padding([.leading, .top, .bottom], self.state != "" ? 10 : 0)
-                                                                    .foregroundStyle(.white)
-                                                                    .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
-                                                                    .fontWeight(.bold)
-                                                                    .minimumScaleFactor(0.5)
-                                                                    .multilineTextAlignment(.leading)
-                                                                
-                                                                if self.state != "" {
-                                                                    ZStack {
-                                                                        Image(systemName: "chevron.right")
-                                                                            .resizable()
-                                                                            .frame(width: 10, height: 15)
-                                                                    }
-                                                                    .frame(maxWidth: 20, alignment: .trailing)
-                                                                    .foregroundStyle(.gray)
-                                                                    .padding(.trailing, 10)
-                                                                }
-                                                            }
-                                                            .frame(maxWidth: .infinity)
-                                                            .padding(10)
-                                                            .background(
-                                                                self.state == ""
-                                                                ? AnyView(
-                                                                    RoundedRectangle(cornerRadius: 15)
-                                                                        .fill(Color.EZNotesLightBlack.opacity(0.65))
-                                                                        .shadow(color: Color.black, radius: 1.5)
-                                                                )
-                                                                : AnyView(Rectangle().fill(Color.EZNotesLightBlack.opacity(0.75)))
-                                                            )
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        .alert("Before continuing", isPresented: $checkInfoAlert) {
-                                            Button(action: {
-                                                /* MARK: The only way we can get here is if the sate, college, majorField and major variables are not empty. No checks needed. */
-                                                UserDefaults.standard.set(self.state, forKey: "temp_state")
-                                                UserDefaults.standard.set(self.college, forKey: "temp_college")
-                                                UserDefaults.standard.set(self.majorField, forKey: "temp_field")
-                                                UserDefaults.standard.set(self.major, forKey: "temp_major")
-                                                
-                                                self.section = "loading_code"
-                                                
-                                                RequestAction<SignUpRequestData>(
-                                                    parameters: SignUpRequestData(
-                                                        Username: username,
-                                                        Email: email,
-                                                        Password: password,
-                                                        College: college,
-                                                        State: state,
-                                                        Field: majorField,
-                                                        Major: major
-                                                    )
-                                                ).perform(action: complete_signup1_req) { statusCode, resp in
-                                                    guard resp != nil && statusCode == 200 else {
-                                                        if let resp = resp {
-                                                            if resp["ErrorCode"] as! Int == 0x6970 {
-                                                                self.section = "main"
-                                                                self.userExists = true
-                                                                return
-                                                            }
-                                                        }
-                                                        
-                                                        self.section = "main"
-                                                        self.serverError = true
-                                                        return
-                                                    }
-                                                    
-                                                    if self.userExists { self.userExists = false }
-                                                    if self.makeContentRed { self.makeContentRed = false }
-                                                    
-                                                    self.accountID = resp!["Message"] as! String
-                                                    self.section = "code_input"
-                                                    
-                                                    UserDefaults.standard.set("code_input", forKey: "last_signup_section")
-                                                }
-                                            }) { Text("Looks Good") }
-                                            
-                                            Button(action: {
-                                                /* MARK: If `cancel` is tapped, then we will just default back to the beginning of the "select_state_and_college" section. */
-                                                self.major.removeAll()
-                                                self.majorField.removeAll()
-                                                self.college.removeAll()
-                                                self.state.removeAll()
-                                            }) { Text("Cancel") }
-                                        } message: {
-                                            Text("Before continuing, check to make sure the following information is correct:\nState: \(self.state)\nCollege: \(self.college)\nMajor Field: \(self.majorField)\nMajor: \(self.major)\n\nIf all above information is correct, continue. Else, click \"cancel\".")
-                                        }
-                                    } else {
-                                        TextField(self.collegeIsOther ? "College Name..." : "Field Name...", text: self.collegeIsOther ? $otherCollege : $otherMajorField)
-                                            .frame(
-                                                width: prop.isIpad
-                                                ? UIDevice.current.orientation.isLandscape
-                                                ? prop.size.width - 800
-                                                : prop.size.width - 450
-                                                : prop.size.width - 100,
-                                                height: self.isLargerScreen ? 40 : 30
-                                            )
-                                            .padding([.leading], 15)
-                                            .background(
-                                                Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                                    .fill(.clear)
-                                                    .border(
-                                                        width: 1,
-                                                        edges: [.bottom],
-                                                        lcolor: !self.makeContentRed
-                                                        ? self.userExists ? self.borderBottomColorError : self.borderBottomColor
-                                                        : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
-                                                    )
-                                            )
-                                            .foregroundStyle(Color.EZNotesBlue)
-                                            .padding(self.isLargerScreen ? 10 : 8)
-                                            .tint(Color.EZNotesBlue)
-                                            .font(.system(size: 18))
-                                            .fontWeight(.medium)
-                                            .autocapitalization(.none)
-                                            .disableAutocorrection(true)
-                                            .keyboardType(.alphabet)
-                                            .focused($otherCollegeFocus)
-                                            .onChange(of: self.otherCollegeFocus) {
-                                                if !self.otherCollegeFocus {
-                                                    /* MARK: We will assume editing is done. */
-                                                    self.showCheckCollegeAlert = true
-                                                }
-                                            }
-                                            .alert(self.collegeIsOther ? "Do we have the college right?" : "Do we have the Major Field correct?", isPresented: $showCheckCollegeAlert) {
-                                                Button(action: {
-                                                    if self.collegeIsOther {
-                                                        self.college = self.otherCollege
-                                                        self.otherCollege.removeAll()
-                                                        self.get_custom_major_fields()
-                                                        self.collegeIsOther = false
-                                                        
-                                                        return
-                                                    }
-                                                    
-                                                    if self.majorFieldIsOther {
-                                                        self.majorField = self.otherMajorField
-                                                        self.otherMajorField.removeAll()
-                                                        self.get_majors()
-                                                        self.majorFieldIsOther = false
-                                                        
-                                                        return
-                                                    }
-                                                }) {
-                                                    Text("Yes")
-                                                }
-                                                .buttonStyle(NoLongPressButtonStyle())
-                                                
-                                                Button("Not correct", role: .cancel) {}.buttonStyle(NoLongPressButtonStyle())
-                                            } message: {
-                                                Text(self.collegeIsOther ? "Is \(self.otherCollege) the correct college?" : "Is \(self.otherMajorField) the correct field?")
-                                            }
-                                        
-                                    }
-                                }
                             }
-                            .frame(maxWidth: prop.size.width - 40)
-                            .padding(.top)
-                        } else if self.section == "loading_code" {
-                            VStack {
-                                Text("Registering your account...")
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .foregroundStyle(.white)
-                                    .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .medium, size: 26)
-                                    .fontWeight(.semibold)
-                                    .minimumScaleFactor(0.5)
-                                ProgressView()
-                            }
-                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .center)
-                        } else if self.section == "code_input" {
-                            Text("Code")
-                                .frame(
-                                    width: prop.isIpad
-                                        ? prop.size.width - 450
-                                        : prop.size.width - 100,
-                                    height: 5,
-                                    alignment: .leading
-                                )
-                                .padding(.top, 15)
-                                .font(.system(size: 25))
-                                .foregroundStyle(.white)
-                            
-                            TextField(
-                                "Code...",
-                                text: $userInputedCode,
-                                onEditingChanged: set_image_opacity
-                            )
-                            .frame(
-                                width: prop.isIpad
-                                    ? UIDevice.current.orientation.isLandscape
-                                        ? prop.size.width - 800
-                                        : prop.size.width - 450
-                                    : prop.size.width - 100,
-                                height: self.isLargerScreen ? 40 : 30
-                            )
-                            .padding([.leading], 15)
-                            .background(
-                                Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                    .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                    .border(
-                                        width: 1,
-                                        edges: [.bottom],
-                                        lcolor: !self.makeContentRed
-                                        ? self.borderBottomColor
-                                        : self.password == "" ? self.borderBottomColorError : self.borderBottomColor
-                                    )
-                            )
-                            .foregroundStyle(Color.EZNotesBlue)
-                            .padding()
-                            .tint(Color.EZNotesBlue)
-                            .font(.system(size: 18))
-                            .fontWeight(.medium)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                            .keyboardType(.numberPad)
-                            .onChange(of: self.userInputedCode) {
-                                /* Codes are 6-digits. */
-                                if self.userInputedCode.count > 6 { self.userInputedCode = String(self.userInputedCode.prefix(6)) }
-                            }
-                        } else {
-                            Plans(
-                                prop: prop,
-                                email: self.email,
-                                accountID: self.accountID,
-                                borderBottomColor: self.borderBottomColor,
-                                borderBottomColorError: self.borderBottomColorError,
-                                isLargerScreen: self.isLargerScreen,
-                                action: setLoginStatus,
-                                makeContentRed: $makeContentRed
-                            )
                         }
+                        .padding(.top, self.isLargerScreen ? 25 : 20)
                     }
-                    .padding(.top, self.isLargerScreen ? 25 : 20)
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .top) // Keep VStack aligned to the top
-                .ignoresSafeArea(.keyboard, edges: .bottom) // Ignore keyboard safe area
-                .onChange(of: prop.size.height) {
-                    if prop.size.height < self.lastHeight { self.isLargerScreen = prop.size.height / 2.5 > 200 }
-                    else { self.isLargerScreen = prop.size.height / 2.5 > 300 }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .top) // Keep VStack aligned to the top
+                    .ignoresSafeArea(.keyboard, edges: .bottom) // Ignore keyboard safe area
+                    .onChange(of: prop.size.height) {
+                        if prop.size.height < self.lastHeight { self.isLargerScreen = prop.size.height / 2.5 > 200 }
+                        else { self.isLargerScreen = prop.size.height / 2.5 > 300 }
+                        
+                        self.lastHeight = prop.size.height
+                    }
                     
-                    self.lastHeight = prop.size.height
-                }
-                
-                Spacer()
-                
-                if self.section != "select_plan" && self.section != "select_state_and_college" && self.section != "loading_code" {
-                    VStack {
-                        Button(action: {
-                            if section == "main" {
-                                if self.username == "" || self.email == "" || self.password == "" {
-                                    self.makeContentRed = true
-                                    return
-                                }
-                                
-                                if self.username.count < 4 {
-                                    self.tooShortUsername = true
-                                    self.makeUsernameFieldRed = true
-                                    return
-                                } else {
-                                    /* MARK: Ensure both above variables are false. */
-                                    self.tooShortUsername = false
-                                    self.makeUsernameFieldRed = false
-                                }
-                                
-                                if self.password.count < 8 {
-                                    self.tooShortPassword = true
-                                    self.makePasswordFieldRed = true
-                                    return
-                                } else {
-                                    /* MARK: Ensure both above variables are false. */
-                                    self.tooShortPassword = false
-                                    self.makePasswordFieldRed = false
-                                }
-                                
-                                if !self.email.contains("@") {
-                                    self.invalidEmail = true
-                                    self.makeEmailFieldRed = true
-                                    return
-                                } else {
-                                    self.invalidEmail = false
-                                    self.makeEmailFieldRed = false
-                                }
-                                
-                                let emailDomain = self.email.split(separator: ".").map { String($0) }
-                                
-                                if !emailDomains.contains(".\(emailDomain[emailDomain.count - 1])") {
-                                    self.invalidEmail = true
-                                    self.makeEmailFieldRed = true
-                                    return
-                                } else {
-                                    self.invalidEmail = false
-                                    self.makeEmailFieldRed = false
-                                }
-                                
-                                RequestAction<CheckUsernameRequestData>(parameters: CheckUsernameRequestData(
-                                    Username: self.username
-                                ))
-                                .perform(action: check_username_req) { statusCode, resp in
-                                    guard resp != nil && statusCode == 200 else {
-                                        /* MARK: Stay in the "main" section. Just set `userExists` error to true and make content red. */
-                                        self.userExists = true
+                    Spacer()
+                    
+                    if self.section != "select_plan" && self.section != "select_state_and_college" && self.section != "loading_code" {
+                        VStack {
+                            Button(action: {
+                                if section == "main" {
+                                    if self.username == "" || self.email == "" || self.password == "" {
                                         self.makeContentRed = true
                                         return
                                     }
                                     
-                                    if self.userExists { self.userExists = false }
-                                    if self.makeContentRed { self.makeContentRed = false }
+                                    if self.username.count < 4 {
+                                        self.tooShortUsername = true
+                                        self.makeUsernameFieldRed = true
+                                        return
+                                    } else {
+                                        /* MARK: Ensure both above variables are false. */
+                                        self.tooShortUsername = false
+                                        self.makeUsernameFieldRed = false
+                                    }
                                     
-                                    RequestAction<CheckEmailRequestData>(parameters: CheckEmailRequestData(
-                                        Email: self.email
+                                    if self.password.count < 8 {
+                                        self.tooShortPassword = true
+                                        self.makePasswordFieldRed = true
+                                        return
+                                    } else {
+                                        /* MARK: Ensure both above variables are false. */
+                                        self.tooShortPassword = false
+                                        self.makePasswordFieldRed = false
+                                    }
+                                    
+                                    if !self.email.contains("@") {
+                                        self.invalidEmail = true
+                                        self.makeEmailFieldRed = true
+                                        return
+                                    } else {
+                                        self.invalidEmail = false
+                                        self.makeEmailFieldRed = false
+                                    }
+                                    
+                                    let emailDomain = self.email.split(separator: ".").map { String($0) }
+                                    
+                                    if !emailDomains.contains(".\(emailDomain[emailDomain.count - 1])") {
+                                        self.invalidEmail = true
+                                        self.makeEmailFieldRed = true
+                                        return
+                                    } else {
+                                        self.invalidEmail = false
+                                        self.makeEmailFieldRed = false
+                                    }
+                                    
+                                    RequestAction<CheckUsernameRequestData>(parameters: CheckUsernameRequestData(
+                                        Username: self.username
                                     ))
-                                    .perform(action: check_email_req) { statusCode, resp in
+                                    .perform(action: check_username_req) { statusCode, resp in
                                         guard resp != nil && statusCode == 200 else {
                                             /* MARK: Stay in the "main" section. Just set `userExists` error to true and make content red. */
-                                            self.emailExists = true
+                                            self.userExists = true
                                             self.makeContentRed = true
                                             return
                                         }
                                         
-                                        if self.emailExists { self.emailExists = false }
+                                        if self.userExists { self.userExists = false }
                                         if self.makeContentRed { self.makeContentRed = false }
                                         
-                                        /* MARK: If this request is good (status returned is 200), proceed with the sign up process. */
-                                        self.section = "select_state_and_college"
-                                        
-                                        /* MARK: Set the last section. */
-                                        UserDefaults.standard.set("select_state_and_college", forKey: "last_signup_section")
-                                        
-                                        /* MARK: Ensure to (temporarily) store username, email and password (just in case they leave the app and come back). */
-                                        UserDefaults.standard.set(self.username, forKey: "temp_username")
-                                        UserDefaults.standard.set(self.email, forKey: "temp_email")
-                                        UserDefaults.standard.set(self.password, forKey: "temp_password")
-                                    }
-                                }
-                            } else {
-                                /* TODO: Is the below if statement needed? */
-                                if self.section == "code_input" {
-                                    RequestAction<SignUp2RequestData>(
-                                        parameters: SignUp2RequestData(
-                                            AccountID: accountID,
-                                            UserInputtedCode: userInputedCode
-                                        )
-                                    ).perform(action: complete_signup2_req) { statusCode, resp in
-                                        if resp != nil {
-                                            print(resp!)
-                                        }
-                                        
-                                        guard resp != nil && statusCode == 200 else {
-                                            self.wrongCodeAttempts += 1
-                                            
-                                            if self.wrongCodeAttempts >= 3 {
-                                                /* MARK: Delete the signup process in the backend. */
-                                                RequestAction<DeleteSignupProcessData>(
-                                                    parameters: DeleteSignupProcessData(
-                                                        AccountID: self.accountID
-                                                    )
-                                                )
-                                                .perform(action: delete_signup_process_req) { statusCode, resp in
-                                                    guard resp != nil && statusCode == 200 else {
-                                                        /* MARK: There should never be an error when deleting the process in the backend. */
-                                                        if let resp = resp { print(resp) }
-                                                        return
-                                                    }
-                                                }
-                                                
-                                                /* MARK: Go back to the "main" section. Reset the "last_signup_section" key. */
-                                                self.section = "main"
-                                                UserDefaults.standard.set("main", forKey: "last_signup_section")
-                                                
-                                                /* MARK: Reset code attemp information. */
-                                                self.wrongCodeAttempts = 0
-                                                self.wrongCodeAttemptsMet = true
-                                                self.wrongCode = false
+                                        RequestAction<CheckEmailRequestData>(parameters: CheckEmailRequestData(
+                                            Email: self.email
+                                        ))
+                                        .perform(action: check_email_req) { statusCode, resp in
+                                            guard resp != nil && statusCode == 200 else {
+                                                /* MARK: Stay in the "main" section. Just set `userExists` error to true and make content red. */
+                                                self.emailExists = true
+                                                self.makeContentRed = true
                                                 return
                                             }
                                             
-                                            self.wrongCode = true
-                                            return
+                                            if self.emailExists { self.emailExists = false }
+                                            if self.makeContentRed { self.makeContentRed = false }
+                                            
+                                            /* MARK: If this request is good (status returned is 200), proceed with the sign up process. */
+                                            self.section = "select_state_and_college"
+                                            
+                                            /* MARK: Set the last section. */
+                                            UserDefaults.standard.set("select_state_and_college", forKey: "last_signup_section")
+                                            
+                                            /* MARK: Ensure to (temporarily) store username, email and password (just in case they leave the app and come back). */
+                                            UserDefaults.standard.set(self.username, forKey: "temp_username")
+                                            UserDefaults.standard.set(self.email, forKey: "temp_email")
+                                            UserDefaults.standard.set(self.password, forKey: "temp_password")
+                                        }
+                                    }
+                                } else {
+                                    /* TODO: Is the below if statement needed? */
+                                    if self.section == "code_input" {
+                                        RequestAction<SignUp2RequestData>(
+                                            parameters: SignUp2RequestData(
+                                                AccountID: accountID,
+                                                UserInputtedCode: userInputedCode
+                                            )
+                                        ).perform(action: complete_signup2_req) { statusCode, resp in
+                                            if resp != nil {
+                                                print(resp!)
+                                            }
+                                            
+                                            guard resp != nil && statusCode == 200 else {
+                                                self.wrongCodeAttempts += 1
+                                                
+                                                if self.wrongCodeAttempts >= 3 {
+                                                    /* MARK: Delete the signup process in the backend. */
+                                                    RequestAction<DeleteSignupProcessData>(
+                                                        parameters: DeleteSignupProcessData(
+                                                            AccountID: self.accountID
+                                                        )
+                                                    )
+                                                    .perform(action: delete_signup_process_req) { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            /* MARK: There should never be an error when deleting the process in the backend. */
+                                                            if let resp = resp { print(resp) }
+                                                            return
+                                                        }
+                                                    }
+                                                    
+                                                    /* MARK: Go back to the "main" section. Reset the "last_signup_section" key. */
+                                                    self.section = "main"
+                                                    UserDefaults.standard.set("main", forKey: "last_signup_section")
+                                                    
+                                                    /* MARK: Reset code attemp information. */
+                                                    self.wrongCodeAttempts = 0
+                                                    self.wrongCodeAttemptsMet = true
+                                                    self.wrongCode = false
+                                                    return
+                                                }
+                                                
+                                                self.wrongCode = true
+                                                return
+                                            }
+                                            
+                                            UserDefaults.standard.set(self.username, forKey: "username")
+                                            UserDefaults.standard.set(self.email, forKey: "email")
+                                            UserDefaults.standard.set(self.majorField, forKey: "major_field")
+                                            UserDefaults.standard.set(self.major, forKey: "major_name")
+                                            UserDefaults.standard.set(self.state, forKey: "college_state")
+                                            UserDefaults.standard.set(self.college, forKey: "college_name")
+                                            
+                                            if self.makeContentRed { self.makeContentRed = false }
+                                            if self.wrongCode { self.wrongCode = false }
+                                            
+                                            UserDefaults.standard.set("select_plan", forKey: "last_signup_section")
+                                            self.section = "select_plan"
                                         }
                                         
-                                        UserDefaults.standard.set(self.username, forKey: "username")
-                                        UserDefaults.standard.set(self.email, forKey: "email")
-                                        UserDefaults.standard.set(self.majorField, forKey: "major_field")
-                                        UserDefaults.standard.set(self.major, forKey: "major_name")
-                                        UserDefaults.standard.set(self.state, forKey: "college_state")
-                                        UserDefaults.standard.set(self.college, forKey: "college_name")
-                                        
-                                        if self.makeContentRed { self.makeContentRed = false }
-                                        if self.wrongCode { self.wrongCode = false }
-                                        
-                                        UserDefaults.standard.set("select_plan", forKey: "last_signup_section")
-                                        self.section = "select_plan"
                                     }
-                                    
                                 }
+                            }) {
+                                Text(section == "main"
+                                     ? "Continue"
+                                     : section == "select_state_and_college"
+                                     ? "Submit"
+                                     : "Complete")
+                                .frame(
+                                    width: prop.isIpad
+                                    ? UIDevice.current.orientation.isLandscape
+                                    ? prop.size.width - 800
+                                    : prop.size.width - 450
+                                    : prop.size.width - 90,
+                                    height: 10
+                                )
+                                .padding([.top, .bottom])
+                                .font(.system(size: 25, design: .rounded))
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.black)
+                                .contentShape(Rectangle())
                             }
-                        }) {
-                            Text(section == "main"
-                                 ? "Continue"
-                                 : section == "select_state_and_college"
-                                 ? "Submit"
-                                 : "Complete")
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .padding(.leading, 5)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(.white)
+                            )
+                        }
+                        .padding(.bottom, 30)
+                    }
+                }
+            } else {
+                VStack {
+                    Spacer()
+                    
+                    Image(systemName: "exclamationmark.warninglight.fill")
+                        .resizable()
+                        .frame(width: 45, height: 40)
+                        .padding([.top, .bottom], 15)
+                        .foregroundStyle(Color.EZNotesRed)
+                    
+                    Text("Hey There👋")//(self.section != "select_plan" ? "Sign Up" : "Plans")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.bottom, 5)
+                        .foregroundStyle(.white)
+                        .font(
+                            .system(
+                                size: prop.isIpad
+                                ? 90
+                                : self.isLargerScreen
+                                ? 35
+                                : 25
+                            )
+                        )
+                        .fontWeight(.bold)
+                    
+                    Text("You have already signed up. Go to the login screen to login.")
+                        .frame(maxWidth: prop.size.width - 50, alignment: .center)
+                        .foregroundStyle(self.wrongCode || self.userExists || self.emailExists ? Color.EZNotesRed : Color.white)
+                        .font(
+                            .system(
+                                size: prop.isIpad || self.isLargerScreen
+                                ? 15
+                                : 13
+                            )
+                        )
+                        .multilineTextAlignment(.center)
+                    
+                    Button(action: { self.screen = "login" }) {
+                        Text("Go to login")
                             .frame(
                                 width: prop.isIpad
                                 ? UIDevice.current.orientation.isLandscape
@@ -1146,16 +1211,18 @@ struct SignUpScreen : View, KeyboardReadable {
                             .fontWeight(.semibold)
                             .foregroundStyle(.black)
                             .contentShape(Rectangle())
-                        }
-                        .buttonStyle(NoLongPressButtonStyle())
-                        .padding(.leading, 5)
-                        .background(
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(.white)
-                        )
                     }
-                    .padding(.bottom, 30)
+                    .buttonStyle(NoLongPressButtonStyle())
+                    .padding(.leading, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(.white)
+                    )
+                    .padding(.top, 20)
+                    
+                    Spacer()
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -1164,6 +1231,15 @@ struct SignUpScreen : View, KeyboardReadable {
         .onAppear {
             self.isLargerScreen = prop.size.height / 2.5 > 300
             self.lastHeight = prop.size.height
+            
+            /* MARK: If the key "username" exists in `UserDefaults`, then there has been an account created on the device. */
+            /* MARK: This will not work if users wipe data from the app. */
+            if UserDefaults.standard.object(forKey: "username") != nil {
+                self.alreadySignedUp = true
+                return
+            }
+            
+            self.alreadySignedUp = false
             
             guard UserDefaults.standard.object(forKey: "last_signup_section") != nil else {
                 UserDefaults.standard.set("main", forKey: "last_signup_section")

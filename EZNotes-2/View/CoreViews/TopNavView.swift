@@ -97,8 +97,31 @@ struct AccountPopup: View {
     @State private var temporaryMajorFieldValue: String = ""
     @State private var majors: Array<String> = []
     @State private var temporaryMajorValue: String = ""
+    @State private var temporaryStateValue: String = ""
     @State private var updateCollegeAlert: Bool = false
     @State private var updateMajorFieldAndMajorAlert: Bool = false
+    @State private var updateStateAlert: Bool = false
+    @State private var loadingPlanDetailsSection: Bool = false
+    @State private var errorLoadingPlanDetailsSection: Bool = false
+    @State private var loadingChangeSchoolsSection: Bool = false
+    @State private var errorLoadingChangeSchoolsSection: Bool = false
+    @State private var loadingMajors: Bool = false
+    @State private var errorLoadingMajors: Bool = false
+    @State private var loadingMajorFields: Bool = false
+    @State private var errorLoadingMajorFields: Bool = false
+    @State private var errorUpdatingStateName: Bool = false
+    
+    /* TODO: The exact same variable is in `SignUpScreen.swift`. We need to create a class that will hold these variables to be used anywhere. */
+    let states = [
+        "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+        "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
+        "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
+        "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
+        "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+        "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
+        "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
+        "Wisconsin", "Wyoming"
+    ]
     
     var body: some View {
         VStack {
@@ -394,12 +417,16 @@ struct AccountPopup: View {
                         Text(self.accountPopupSection == "main"
                              ? "Account Details"
                              : self.accountPopupSection == "planDetails"
-                                ? self.subscriptionInfo.ProductName != nil ? self.subscriptionInfo.ProductName! : "Select Plan"
+                                ? self.subscriptionInfo.ProductName != nil
+                                    ? self.subscriptionInfo.ProductName!
+                                    : self.errorLoadingPlanDetailsSection ? "Plan Details" : "Select Plan"
                                 : self.accountPopupSection == "switch_college"
                                     ? "Switch College"
                                     : self.accountPopupSection == "switch_field_and_major"
                                         ? "Switch Field/Major"
-                                        : "Account Details" /* MARK: Default value if all else checks fail (which should never happen). */)
+                                        : self.accountPopupSection == "switch_state"
+                                            ? "Change States"
+                                            : "Account Details" /* MARK: Default value if all else checks fail (which should never happen). */)
                         .frame(maxWidth: .infinity, maxHeight: 25)
                         .foregroundStyle(.white)
                         .padding([.top], 15)
@@ -427,14 +454,21 @@ struct AccountPopup: View {
                                 
                                 VStack {
                                     Button(action: {
+                                        self.accountPopupSection = "planDetails"
+                                        self.loadingPlanDetailsSection = true
+                                        
                                         RequestAction<GetSubscriptionInfoData>(parameters: GetSubscriptionInfoData(AccountID: self.accountInfo.accountID))
                                             .perform(action: get_subscription_info_req) { statusCode, resp in
+                                                self.loadingPlanDetailsSection = false
+                                                
                                                 guard resp != nil && statusCode == 200 else {
                                                     if let resp = resp {
                                                         if resp["Message"] as! String == "plan_id_not_found_for_user" {
                                                             self.accountPopupSection = "setup_plan"
+                                                            return
                                                         }
                                                     }
+                                                    self.errorLoadingPlanDetailsSection = true
                                                     return
                                                 }
                                                 
@@ -469,9 +503,12 @@ struct AccountPopup: View {
                                                     let suffix = String(self.subscriptionInfo.Price![splitIndex...])
                                                     
                                                     self.subscriptionInfo.Price = "$\(prefix).\(suffix)"
-                                                    
-                                                    self.accountPopupSection = "planDetails"
+                                                    self.errorLoadingPlanDetailsSection = false
+                                                    return
                                                 }
+                                                
+                                                /* MARK: If the above if statement fails, there was an error obtaining the response. */
+                                                self.errorLoadingPlanDetailsSection = true
                                             }
                                     }) {
                                         HStack {
@@ -546,14 +583,26 @@ struct AccountPopup: View {
                                         .overlay(.black)
                                     
                                     Button(action: {
+                                        if self.accountInfo.state == "" {
+                                            self.accountPopupSection = "swich_state"
+                                            return
+                                        }
+                                        
+                                        self.accountPopupSection = "switch_college"
+                                        self.loadingChangeSchoolsSection = true
+                                        
                                         RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(State: self.accountInfo.state))
                                             .perform(action: get_colleges) { statusCode, resp in
+                                                self.loadingChangeSchoolsSection = false
+                                                
                                                 /* TODO: Add loading screen while college names load. */
                                                 guard
                                                     resp != nil,
                                                     resp!.keys.contains("Colleges"),
                                                     statusCode == 200
                                                 else {
+                                                    self.errorLoadingChangeSchoolsSection = true
+                                                    
                                                     /* TODO: Add some sort of error checking. We can use the banner-thing that is used to signify a success or failure when updating PFP/PFP BG image. */
                                                     /* TODO: As has been aforementioned - lets go ahead and ensure the banner message can be used across the board, not just with update success/failures of PFP/PFP BG image. */
                                                     //self.serverError = true
@@ -571,10 +620,9 @@ struct AccountPopup: View {
                                                 }
                                                 
                                                 self.colleges.append("Other")
+                                                self.errorLoadingChangeSchoolsSection = false
                                                 //self.college = self.colleges[0]
                                             }
-                                        
-                                        self.accountPopupSection = "switch_college"
                                     }) {
                                         HStack {
                                             Text("Change Schools")
@@ -599,7 +647,7 @@ struct AccountPopup: View {
                                     Divider()
                                         .overlay(.black)
                                     
-                                    Button(action: { print("Change States") }) {
+                                    Button(action: { self.accountPopupSection = "switch_state" }) {
                                         HStack {
                                             Text("Change States")
                                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -624,31 +672,38 @@ struct AccountPopup: View {
                                         .overlay(.black)
                                     
                                     Button(action: {
+                                        self.accountPopupSection = "switch_field_and_major"
+                                        self.loadingMajorFields = true
+                                        
                                         RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
                                             College: self.accountInfo.college
                                         ))
                                         .perform(action: get_custom_college_fields_req) { statusCode, resp in
+                                            self.loadingMajorFields = false
+                                            
                                             guard
                                                 resp != nil,
                                                 statusCode == 200
                                             else {
                                                 /* TODO: Handle errors. For now, the below works. */
-                                                self.accountPopupSection = "main"
+                                                self.errorLoadingMajorFields = true
                                                 return
                                             }
                                             
                                             guard resp!.keys.contains("Fields") else {
                                                 /* TODO: Handle errors. For now the below works. */
-                                                self.accountPopupSection = "main"
+                                                //self.accountPopupSection = "main"
+                                                self.errorLoadingMajorFields = true
                                                 return
                                             }
+                                            
+                                            self.errorLoadingMajorFields = false
                                             
                                             /* MARK: Ensure the array is empty before populating it. */
                                             self.majorFields.removeAll()
                                             
                                             self.majorFields = resp!["Fields"] as! [String]
                                             self.majorFields.append("Other")
-                                            self.accountPopupSection = "switch_field_and_major"
                                         }
                                     }) {
                                         HStack {
@@ -1038,41 +1093,240 @@ struct AccountPopup: View {
                                 action: doSomething,
                                 makeContentRed: $p
                             )
+                        case "switch_state":
+                            VStack {
+                                if self.errorUpdatingStateName {
+                                    Image(systemName: "exclamationmark.warninglight.fill")
+                                        .resizable()
+                                        .frame(width: 45, height: 40)
+                                        .padding([.top, .bottom], 15)
+                                        .foregroundStyle(Color.EZNotesRed)
+                                    
+                                    Text("Error updating state")
+                                        .frame(maxWidth: prop.size.width - 60, alignment: .center)
+                                        .foregroundColor(.white)
+                                        .setFontSizeAndWeight(weight: .medium, size: 20)
+                                        .minimumScaleFactor(0.5)
+                                        .multilineTextAlignment(.center)
+                                    
+                                    Button(action: { print("Report Problem") }) {
+                                        HStack {
+                                            Text("Report a Problem")
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                .padding([.top, .bottom], 8)
+                                                .foregroundStyle(.black)
+                                                .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                .minimumScaleFactor(0.5)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 80)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(.white)
+                                        )
+                                        .cornerRadius(15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .padding(.top, 15)
+                                    
+                                    Spacer()
+                                } else {
+                                    ScrollView(.vertical, showsIndicators: false) {
+                                        VStack {
+                                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
+                                                ForEach(self.states, id: \.self) { state in
+                                                    Button(action: {
+                                                        self.temporaryStateValue = state
+                                                        self.updateStateAlert = true
+                                                    }) {
+                                                        HStack {
+                                                            Text(state)
+                                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                                .padding([.leading, .top, .bottom], 10)
+                                                                .foregroundStyle(.white)
+                                                                .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                                .fontWeight(.bold)
+                                                                .minimumScaleFactor(0.5)
+                                                                .multilineTextAlignment(.leading)
+                                                        }
+                                                        .frame(maxWidth: .infinity)
+                                                        .padding(10)
+                                                        .background(
+                                                            RoundedRectangle(cornerRadius: 15)
+                                                                .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                                .shadow(color: Color.black, radius: 1.5)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+                            .alert("Did you switch colleges?", isPresented: $updateStateAlert) {
+                                Button(action: {
+                                    RequestAction<UpdateStateData>(parameters: UpdateStateData(
+                                        NewState: self.temporaryStateValue,
+                                        AccountID: self.accountInfo.accountID
+                                    ))
+                                    .perform(action: update_state_req) { statusCode, resp in
+                                        guard resp != nil && statusCode == 200 else {
+                                            /* TODO: Add error checking. */
+                                            self.errorUpdatingStateName = true
+                                            return
+                                        }
+                                        
+                                        self.errorUpdatingStateName = false
+                                        
+                                        self.accountInfo.setCollegeState(collegeState: self.temporaryStateValue)
+                                        UserDefaults.standard.set(self.temporaryStateValue, forKey: "college_state")
+                                        self.temporaryStateValue.removeAll()
+                                        
+                                        self.accountPopupSection = "switch_college"
+                                        self.loadingChangeSchoolsSection = true
+                                        
+                                        /* MARK: Get all the colleges for the state. */
+                                        RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(State: self.accountInfo.state))
+                                            .perform(action: get_colleges) { statusCode, resp in
+                                                self.loadingChangeSchoolsSection = false
+                                                /* TODO: Add loading screen while college names load. */
+                                                guard
+                                                    resp != nil,
+                                                    resp!.keys.contains("Colleges"),
+                                                    statusCode == 200
+                                                else {
+                                                    /* TODO: Add some sort of error checking. We can use the banner-thing that is used to signify a success or failure when updating PFP/PFP BG image. */
+                                                    /* TODO: As has been aforementioned - lets go ahead and ensure the banner message can be used across the board, not just with update success/failures of PFP/PFP BG image. */
+                                                    //self.serverError = true
+                                                    if let resp = resp { print(resp) }
+                                                    self.errorLoadingChangeSchoolsSection = true
+                                                    return
+                                                }
+                                                
+                                                self.errorLoadingChangeSchoolsSection = false
+                                                
+                                                let respColleges = resp!["Colleges"] as! [String]
+                                                
+                                                /* MARK: Ensure the `colleges` array is empty. */
+                                                self.colleges.removeAll()
+                                                
+                                                for c in respColleges {
+                                                    if !self.colleges.contains(c) { self.colleges.append(c) }
+                                                }
+                                                
+                                                self.colleges.append("Other")
+                                                //self.college = self.colleges[0]
+                                            }
+                                    }
+                                }) { Text("Yes") }
+                                
+                                Button(action: {
+                                    RequestAction<UpdateStateData>(parameters: UpdateStateData(
+                                        NewState: self.temporaryStateValue,
+                                        AccountID: self.accountInfo.accountID
+                                    ))
+                                    .perform(action: update_state_req) { statusCode, resp in
+                                        guard resp != nil && statusCode == 200 else {
+                                            self.temporaryStateValue.removeAll()
+                                            
+                                            /* TODO: Error handling. For now this is okay. */
+                                            self.accountPopupSection = "main"
+                                            return
+                                        }
+                                        
+                                        self.accountInfo.setCollegeState(collegeState: self.temporaryStateValue)
+                                        UserDefaults.standard.set(self.temporaryStateValue, forKey: "college_state")
+                                        self.temporaryStateValue.removeAll()
+                                        
+                                        /* MARK: Since "no" is tapped, redirect back to the main section. */
+                                        self.accountPopupSection = "main"
+                                    }
+                                }) { Text("No") }
+                            } message: {
+                                Text("If you switched colleges it would be of your best interest to update that information to ensure EZNotes AI can assist you accordingly.")
+                            }
                         case "switch_college":
                             VStack {
-                                ScrollView(.vertical, showsIndicators: false) {
-                                    VStack {
-                                        ForEach(self.colleges, id: \.self) { college in
-                                            Button(action: {
-                                                self.temporaryCollegeValue = college
-                                                self.updateCollegeAlert = true
-                                            }) {
-                                                HStack {
-                                                    Text(college)
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .padding([.leading, .top, .bottom], 10)
-                                                        .foregroundStyle(.white)
-                                                        .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
-                                                        .fontWeight(.bold)
-                                                        .minimumScaleFactor(0.5)
-                                                        .multilineTextAlignment(.leading)
-                                                    
-                                                    ZStack {
-                                                        Image(systemName: "chevron.right")
-                                                            .resizable()
-                                                            .frame(width: 10, height: 15)
+                                if self.loadingChangeSchoolsSection {
+                                    Text("Loading colleges for \(self.accountInfo.state)")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .setFontSizeAndWeight(weight: .medium, size: 14)
+                                        .minimumScaleFactor(0.5)
+                                    
+                                    ProgressView()
+                                        .tint(Color.EZNotesBlue)
+                                } else {
+                                    if self.errorLoadingChangeSchoolsSection {
+                                        Image(systemName: "exclamationmark.warninglight.fill")
+                                            .resizable()
+                                            .frame(width: 45, height: 40)
+                                            .padding([.top, .bottom], 15)
+                                            .foregroundStyle(Color.EZNotesRed)
+                                        
+                                        Text("Error obtaining colleges from \(self.accountInfo.state)")
+                                            .frame(maxWidth: prop.size.width - 60, alignment: .center)
+                                            .foregroundColor(.white)
+                                            .setFontSizeAndWeight(weight: .medium, size: 20)
+                                            .minimumScaleFactor(0.5)
+                                            .multilineTextAlignment(.center)
+                                        
+                                        Button(action: { print("Report Problem") }) {
+                                            HStack {
+                                                Text("Report a Problem")
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                    .padding([.top, .bottom], 8)
+                                                    .foregroundStyle(.black)
+                                                    .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                    .minimumScaleFactor(0.5)
+                                            }
+                                            .frame(maxWidth: prop.size.width - 80)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.white)
+                                            )
+                                            .cornerRadius(15)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                        .padding(.top, 15)
+                                        
+                                        Spacer()
+                                    } else {
+                                        ScrollView(.vertical, showsIndicators: false) {
+                                            VStack {
+                                                ForEach(self.colleges, id: \.self) { college in
+                                                    Button(action: {
+                                                        self.temporaryCollegeValue = college
+                                                        self.updateCollegeAlert = true
+                                                    }) {
+                                                        HStack {
+                                                            Text(college)
+                                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                                .padding([.leading, .top, .bottom], 10)
+                                                                .foregroundStyle(.white)
+                                                                .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                                .fontWeight(.bold)
+                                                                .minimumScaleFactor(0.5)
+                                                                .multilineTextAlignment(.leading)
+                                                            
+                                                            ZStack {
+                                                                Image(systemName: "chevron.right")
+                                                                    .resizable()
+                                                                    .frame(width: 10, height: 15)
+                                                            }
+                                                            .frame(maxWidth: 20, alignment: .trailing)
+                                                            .foregroundStyle(.gray)
+                                                            .padding(.trailing, 10)
+                                                        }
+                                                        .frame(maxWidth: .infinity)
+                                                        .padding(10)
+                                                        .background(
+                                                            RoundedRectangle(cornerRadius: 15)
+                                                                .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                                .shadow(color: Color.black, radius: 1.5)
+                                                        )
                                                     }
-                                                    .frame(maxWidth: 20, alignment: .trailing)
-                                                    .foregroundStyle(.gray)
-                                                    .padding(.trailing, 10)
                                                 }
-                                                .frame(maxWidth: .infinity)
-                                                .padding(10)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 15)
-                                                            .fill(Color.EZNotesLightBlack.opacity(0.65))
-                                                            .shadow(color: Color.black, radius: 1.5)
-                                                )
                                             }
                                         }
                                     }
@@ -1099,29 +1353,36 @@ struct AccountPopup: View {
                                         UserDefaults.standard.set(self.temporaryCollegeValue, forKey: "college_name")
                                         self.accountInfo.setCollegeName(collegeName: self.temporaryCollegeValue)
                                         
+                                        self.accountPopupSection = "switch_field_and_major"
+                                        self.loadingMajorFields = true
+                                        
                                         /* MARK: Get new major fields for the school. */
                                         RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
                                             College: self.temporaryCollegeValue
                                         ))
                                         .perform(action: get_custom_college_fields_req) { statusCode, resp in
+                                            self.loadingMajorFields = false
+                                            
                                             guard
                                                 resp != nil,
                                                 statusCode == 200
                                             else {
                                                 /* TODO: Handle errors. For now, the below works. */
-                                                self.accountPopupSection = "main"
+                                                //self.accountPopupSection = "main"
+                                                self.errorLoadingMajorFields = true
                                                 return
                                             }
                                             
                                             guard resp!.keys.contains("Fields") else {
                                                 /* TODO: Handle errors. For now the below works. */
-                                                self.accountPopupSection = "main"
+                                                //self.accountPopupSection = "main"
+                                                self.errorLoadingMajorFields = true
                                                 return
                                             }
                                             
+                                            self.errorLoadingMajorFields = false
                                             self.majorFields = resp!["Fields"] as! [String]
                                             self.majorFields.append("Other")
-                                            self.accountPopupSection = "switch_field_and_major"
                                             //self.majorField = self.majorFields[0]
                                         }
                                         
@@ -1136,65 +1397,113 @@ struct AccountPopup: View {
                             }
                         case "switch_field_and_major":
                             VStack {
-                                ScrollView(.vertical, showsIndicators: false) {
-                                    VStack {
-                                        ForEach(self.switchFieldAndMajorSection == "choose_field"
-                                                ? self.majorFields
-                                                : self.majors, id: \.self) { value in
-                                            Button(action: {
-                                                if self.switchFieldAndMajorSection == "choose_field" {
-                                                    self.temporaryMajorFieldValue = value
-                                                    
-                                                    RequestAction<GetMajorsRequestData>(
-                                                        parameters: GetMajorsRequestData(
-                                                            College: self.accountInfo.college,
-                                                            MajorField: value
-                                                        ))
-                                                    .perform(action: get_majors_req) { statusCode, resp in
-                                                        guard resp != nil && statusCode == 200 else {
-                                                            self.temporaryMajorFieldValue.removeAll()
+                                if self.loadingMajorFields || self.loadingMajors {
+                                    Text(self.loadingMajorFields ? "Loading Major Fields" : "Loading Majors")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .setFontSizeAndWeight(weight: .medium, size: 14)
+                                        .minimumScaleFactor(0.5)
+                                    
+                                    ProgressView()
+                                        .tint(Color.EZNotesBlue)
+                                } else {
+                                    if self.errorLoadingMajorFields || self.errorLoadingMajors {
+                                        Image(systemName: "exclamationmark.warninglight.fill")
+                                            .resizable()
+                                            .frame(width: 45, height: 40)
+                                            .padding([.top, .bottom], 15)
+                                            .foregroundStyle(Color.EZNotesRed)
+                                        
+                                        Text(self.errorLoadingMajorFields ? "Failed to obtain major fields from \(self.accountInfo.college)" : "Failed to obtain majors for \(self.temporaryMajorFieldValue)")
+                                            .frame(maxWidth: prop.size.width - 60, alignment: .center)
+                                            .foregroundColor(.white)
+                                            .setFontSizeAndWeight(weight: .medium, size: 20)
+                                            .minimumScaleFactor(0.5)
+                                            .multilineTextAlignment(.center)
+                                        
+                                        Button(action: { print("Report Problem") }) {
+                                            HStack {
+                                                Text("Report a Problem")
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                    .padding([.top, .bottom], 8)
+                                                    .foregroundStyle(.black)
+                                                    .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                    .minimumScaleFactor(0.5)
+                                            }
+                                            .frame(maxWidth: prop.size.width - 80)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.white)
+                                            )
+                                            .cornerRadius(15)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                        .padding(.top, 15)
+                                        
+                                        Spacer()
+                                    } else {
+                                        ScrollView(.vertical, showsIndicators: false) {
+                                            VStack {
+                                                ForEach(self.switchFieldAndMajorSection == "choose_field"
+                                                        ? self.majorFields
+                                                        : self.majors, id: \.self) { value in
+                                                    Button(action: {
+                                                        if self.switchFieldAndMajorSection == "choose_field" {
+                                                            self.loadingMajors = true
+                                                            self.switchFieldAndMajorSection = "choose_major"
+                                                            self.temporaryMajorFieldValue = value
                                                             
-                                                            /* TODO: Handle errors. For now this is okay. */
-                                                            self.accountPopupSection = "main"
-                                                            return
+                                                            RequestAction<GetMajorsRequestData>(
+                                                                parameters: GetMajorsRequestData(
+                                                                    College: self.accountInfo.college,
+                                                                    MajorField: value
+                                                                ))
+                                                            .perform(action: get_majors_req) { statusCode, resp in
+                                                                self.loadingMajors = false
+                                                                
+                                                                guard resp != nil && statusCode == 200 else {
+                                                                    self.errorLoadingMajors
+                                                                    return
+                                                                }
+                                                                
+                                                                self.majors = resp!["Majors"] as! [String]
+                                                                self.majors.append("Other")
+                                                                self.switchFieldAndMajorSection = "choose_major"
+                                                                //self.major = self.majors[0]
+                                                            }
+                                                        } else {
+                                                            self.temporaryMajorValue = value
+                                                            self.updateMajorFieldAndMajorAlert = true
                                                         }
-                                                        
-                                                        self.majors = resp!["Majors"] as! [String]
-                                                        self.majors.append("Other")
-                                                        self.switchFieldAndMajorSection = "choose_major"
-                                                        //self.major = self.majors[0]
+                                                    }) {
+                                                        HStack {
+                                                            Text(value)
+                                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                                .padding([.leading, .top, .bottom], 10)
+                                                                .foregroundStyle(.white)
+                                                                .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                                .fontWeight(.bold)
+                                                                .minimumScaleFactor(0.5)
+                                                                .multilineTextAlignment(.leading)
+                                                            
+                                                            ZStack {
+                                                                Image(systemName: "chevron.right")
+                                                                    .resizable()
+                                                                    .frame(width: 10, height: 15)
+                                                            }
+                                                            .frame(maxWidth: 20, alignment: .trailing)
+                                                            .foregroundStyle(.gray)
+                                                            .padding(.trailing, 10)
+                                                        }
+                                                        .frame(maxWidth: .infinity)
+                                                        .padding(10)
+                                                        .background(
+                                                            RoundedRectangle(cornerRadius: 15)
+                                                                .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                                .shadow(color: Color.black, radius: 1.5)
+                                                        )
                                                     }
-                                                } else {
-                                                    self.temporaryMajorValue = value
-                                                    self.updateMajorFieldAndMajorAlert = true
                                                 }
-                                            }) {
-                                                HStack {
-                                                    Text(value)
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .padding([.leading, .top, .bottom], 10)
-                                                        .foregroundStyle(.white)
-                                                        .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
-                                                        .fontWeight(.bold)
-                                                        .minimumScaleFactor(0.5)
-                                                        .multilineTextAlignment(.leading)
-                                                    
-                                                    ZStack {
-                                                        Image(systemName: "chevron.right")
-                                                            .resizable()
-                                                            .frame(width: 10, height: 15)
-                                                    }
-                                                    .frame(maxWidth: 20, alignment: .trailing)
-                                                    .foregroundStyle(.gray)
-                                                    .padding(.trailing, 10)
-                                                }
-                                                .frame(maxWidth: .infinity)
-                                                .padding(10)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 15)
-                                                            .fill(Color.EZNotesLightBlack.opacity(0.65))
-                                                            .shadow(color: Color.black, radius: 1.5)
-                                                )
                                             }
                                         }
                                     }
@@ -1246,65 +1555,67 @@ struct AccountPopup: View {
                             }
                         case "planDetails":
                             VStack {
-                                ScrollView(.vertical, showsIndicators: false) {
-                                    /*Text("Overview")
-                                        .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                if self.loadingPlanDetailsSection {
+                                    Text("Loading Plan Details")
+                                        .frame(maxWidth: .infinity, alignment: .center)
                                         .foregroundStyle(.white)
-                                        .setFontSizeAndWeight(weight: .bold, size: 24)
-                                        .minimumScaleFactor(0.5)*/
+                                        .setFontSizeAndWeight(weight: .medium, size: 14)
+                                        .minimumScaleFactor(0.5)
                                     
-                                    HStack {
-                                        Text("Next Payment:")
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .padding(.leading, 30)
-                                            .foregroundStyle(.white)
-                                            .font(Font.custom("Poppins-Regular", size: 16))
-                                            .fontWeight(.bold)
+                                    ProgressView()
+                                        .tint(Color.EZNotesBlue)
+                                } else {
+                                    if self.errorLoadingPlanDetailsSection {
+                                        Image(systemName: "exclamationmark.warninglight.fill")
+                                            .resizable()
+                                            .frame(width: 45, height: 40)
+                                            .padding([.top, .bottom], 15)
+                                            .foregroundStyle(Color.EZNotesRed)
                                         
-                                        Text("\(self.subscriptionInfo.CurrentPeriodEnd!.formatted(date: .numeric, time: .shortened))")
-                                            .frame(maxWidth: .infinity, alignment: .trailing)
-                                            .padding(.trailing, 30)
-                                            .foregroundStyle(.white)
-                                            .font(Font.custom("Poppins-ExtraLight", size: 16))
-                                            .fontWeight(.semibold)
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    
-                                    HStack {
-                                        Text("Period Started:")
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .padding(.leading, 30)
-                                            .foregroundStyle(.white)
-                                            .font(Font.custom("Poppins-Regular", size: 16))
-                                            .fontWeight(.bold)
-                                        
-                                        Text("\(self.subscriptionInfo.CurrentPeriodStart!.formatted(date: .numeric, time: .shortened))")
-                                            .frame(maxWidth: .infinity, alignment: .trailing)
-                                            .padding(.trailing, 30)
-                                            .foregroundStyle(.white)
-                                            .font(Font.custom("Poppins-ExtraLight", size: 16))
-                                            .fontWeight(.semibold)
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    
-                                    VStack {
-                                        Text("Payment")
-                                            .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                            .padding(.top, 20)
-                                            .foregroundStyle(.white)
-                                            .setFontSizeAndWeight(weight: .bold, size: 24)
+                                        Text("Error loading plan details")
+                                            .frame(maxWidth: prop.size.width - 60, alignment: .center)
+                                            .foregroundColor(.white)
+                                            .setFontSizeAndWeight(weight: .medium, size: 20)
                                             .minimumScaleFactor(0.5)
+                                            .multilineTextAlignment(.center)
                                         
-                                        VStack {
+                                        Button(action: { print("Report Problem") }) {
                                             HStack {
-                                                Text("Monthly Payment:")
+                                                Text("Report a Problem")
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                    .padding([.top, .bottom], 8)
+                                                    .foregroundStyle(.black)
+                                                    .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                    .minimumScaleFactor(0.5)
+                                            }
+                                            .frame(maxWidth: prop.size.width - 80)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.white)
+                                            )
+                                            .cornerRadius(15)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                        .padding(.top, 15)
+                                        
+                                        Spacer() /* MARK: Shove the content to the top. */
+                                    } else {
+                                        ScrollView(.vertical, showsIndicators: false) {
+                                            /*Text("Overview")
+                                             .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                             .foregroundStyle(.white)
+                                             .setFontSizeAndWeight(weight: .bold, size: 24)
+                                             .minimumScaleFactor(0.5)*/
+                                            
+                                            HStack {
+                                                Text("Next Payment:")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .padding(.leading, 30)
                                                     .foregroundStyle(.white)
                                                     .font(Font.custom("Poppins-Regular", size: 16))
                                                     .fontWeight(.bold)
                                                 
-                                                Text(self.subscriptionInfo.Price!)
+                                                Text("\(self.subscriptionInfo.CurrentPeriodEnd!.formatted(date: .numeric, time: .shortened))")
                                                     .frame(maxWidth: .infinity, alignment: .trailing)
                                                     .padding(.trailing, 30)
                                                     .foregroundStyle(.white)
@@ -1312,17 +1623,16 @@ struct AccountPopup: View {
                                                     .fontWeight(.semibold)
                                             }
                                             .frame(maxWidth: .infinity)
-                                            .padding([.top, .bottom])
                                             
                                             HStack {
-                                                Text("Frequency:")
+                                                Text("Period Started:")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .padding(.leading, 30)
                                                     .foregroundStyle(.white)
                                                     .font(Font.custom("Poppins-Regular", size: 16))
                                                     .fontWeight(.bold)
                                                 
-                                                Text(self.subscriptionInfo.Interval!)
+                                                Text("\(self.subscriptionInfo.CurrentPeriodStart!.formatted(date: .numeric, time: .shortened))")
                                                     .frame(maxWidth: .infinity, alignment: .trailing)
                                                     .padding(.trailing, 30)
                                                     .foregroundStyle(.white)
@@ -1330,282 +1640,328 @@ struct AccountPopup: View {
                                                     .fontWeight(.semibold)
                                             }
                                             .frame(maxWidth: .infinity)
-                                            
-                                            HStack {
-                                                Text("Total Payments:")
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .padding(.leading, 30)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-Regular", size: 16))
-                                                    .fontWeight(.bold)
-                                                
-                                                Text("\(self.subscriptionInfo.Lifetime!)")
-                                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                                    .padding(.trailing, 30)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
-                                                    .fontWeight(.semibold)
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            .padding([.top, .bottom])
-                                            
-                                            Divider()
-                                                .background(.white)
-                                                .frame(maxWidth: prop.size.width - 80)
-                                                .padding(.bottom)
                                             
                                             VStack {
-                                                HStack {
+                                                Text("Payment")
+                                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                                    .padding(.top, 20)
+                                                    .foregroundStyle(.white)
+                                                    .setFontSizeAndWeight(weight: .bold, size: 24)
+                                                    .minimumScaleFactor(0.5)
+                                                
+                                                VStack {
+                                                    HStack {
+                                                        Text("Monthly Payment:")
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .padding(.leading, 30)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                                            .fontWeight(.bold)
+                                                        
+                                                        Text(self.subscriptionInfo.Price!)
+                                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                                            .padding(.trailing, 30)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                            .fontWeight(.semibold)
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding([.top, .bottom])
+                                                    
+                                                    HStack {
+                                                        Text("Frequency:")
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .padding(.leading, 30)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                                            .fontWeight(.bold)
+                                                        
+                                                        Text(self.subscriptionInfo.Interval!)
+                                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                                            .padding(.trailing, 30)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                            .fontWeight(.semibold)
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                    
+                                                    HStack {
+                                                        Text("Total Payments:")
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .padding(.leading, 30)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                                            .fontWeight(.bold)
+                                                        
+                                                        Text("\(self.subscriptionInfo.Lifetime!)")
+                                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                                            .padding(.trailing, 30)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                            .fontWeight(.semibold)
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding([.top, .bottom])
+                                                    
+                                                    Divider()
+                                                        .background(.white)
+                                                        .frame(maxWidth: prop.size.width - 80)
+                                                        .padding(.bottom)
+                                                    
                                                     VStack {
-                                                        ZStack {
-                                                            Text(self.subscriptionInfo.CardBrand!.uppercased())
-                                                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                                                .padding([.top, .leading], 20)
-                                                                .foregroundStyle(.white)
-                                                                .setFontSizeAndWeight(weight: .bold, size: 50)
-                                                                .minimumScaleFactor(0.5)
-                                                        }
-                                                        .frame(maxWidth: .infinity, maxHeight: 30, alignment: .top)
-                                                        
-                                                        Spacer()
-                                                        
-                                                        VStack {
+                                                        HStack {
                                                             VStack {
                                                                 ZStack {
-                                                                    Image("Debit-Card-Chip")
-                                                                        .resizable()
-                                                                        .frame(width: 30, height: 30)
+                                                                    Text(self.subscriptionInfo.CardBrand!.uppercased())
+                                                                        .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                                                        .padding([.top, .leading], 20)
+                                                                        .foregroundStyle(.white)
+                                                                        .setFontSizeAndWeight(weight: .bold, size: 50)
+                                                                        .minimumScaleFactor(0.5)
                                                                 }
-                                                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                                                .padding(.leading, 20)
+                                                                .frame(maxWidth: .infinity, maxHeight: 30, alignment: .top)
                                                                 
-                                                                Text("XXXX XXXX XXXX \(self.subscriptionInfo.Last4!)")
-                                                                    .frame(maxWidth: prop.size.width - 50, minHeight: 22, alignment: .leading)
-                                                                    .padding(.leading, 20)
-                                                                    .foregroundStyle(
-                                                                        MeshGradient(width: 3, height: 3, points: [
-                                                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                                        ], colors: [
-                                                                            Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                                                                            .white, Color.EZNotesBlue, Color.EZNotesOrange,
-                                                                            Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                             Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                             Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                                        ])
-                                                                    )
-                                                                    .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                                    .minimumScaleFactor(0.5)
-                                                            }
-                                                            .frame(alignment: .leading)
-                                                            .padding(.top, 8)
-                                                            
-                                                            VStack {
-                                                                HStack {
-                                                                    HStack {
-                                                                        Text("Valid Thru")
-                                                                            .frame(maxWidth: 25, alignment: .leading)//(maxWidth: prop.size.width - 50, alignment: .leading)
-                                                                            .padding(.leading, 20)
-                                                                            .foregroundStyle(.white)
-                                                                            .setFontSizeAndWeight(weight: .light, size: 10)
-                                                                            .minimumScaleFactor(0.5)
-                                                                            .multilineTextAlignment(.center)
+                                                                Spacer()
+                                                                
+                                                                VStack {
+                                                                    VStack {
+                                                                        ZStack {
+                                                                            Image("Debit-Card-Chip")
+                                                                                .resizable()
+                                                                                .frame(width: 30, height: 30)
+                                                                        }
+                                                                        .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                                                        .padding(.leading, 20)
                                                                         
-                                                                        Text("\(self.subscriptionInfo.CardExpMonth!)/\(self.subscriptionInfo.CardExpYear!)")
-                                                                            .frame(maxWidth: .infinity, alignment: .leading)//(maxWidth: prop.size.width - 50, alignment: .leading)
-                                                                            .padding(.leading, 5)
+                                                                        Text("XXXX XXXX XXXX \(self.subscriptionInfo.Last4!)")
+                                                                            .frame(maxWidth: prop.size.width - 50, minHeight: 22, alignment: .leading)
+                                                                            .padding(.leading, 20)
+                                                                            .foregroundStyle(
+                                                                                MeshGradient(width: 3, height: 3, points: [
+                                                                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                                                ], colors: [
+                                                                                    Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                                                                    .white, Color.EZNotesBlue, Color.EZNotesOrange,
+                                                                                    Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                                                ])
+                                                                            )
+                                                                            .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                                            .minimumScaleFactor(0.5)
+                                                                    }
+                                                                    .frame(alignment: .leading)
+                                                                    .padding(.top, 8)
+                                                                    
+                                                                    VStack {
+                                                                        HStack {
+                                                                            HStack {
+                                                                                Text("Valid Thru")
+                                                                                    .frame(maxWidth: 25, alignment: .leading)//(maxWidth: prop.size.width - 50, alignment: .leading)
+                                                                                    .padding(.leading, 20)
+                                                                                    .foregroundStyle(.white)
+                                                                                    .setFontSizeAndWeight(weight: .light, size: 10)
+                                                                                    .minimumScaleFactor(0.5)
+                                                                                    .multilineTextAlignment(.center)
+                                                                                
+                                                                                Text("\(self.subscriptionInfo.CardExpMonth!)/\(self.subscriptionInfo.CardExpYear!)")
+                                                                                    .frame(maxWidth: .infinity, alignment: .leading)//(maxWidth: prop.size.width - 50, alignment: .leading)
+                                                                                    .padding(.leading, 5)
+                                                                                    .foregroundStyle(.white)
+                                                                                    .setFontSizeAndWeight(weight: .light, size: 15)
+                                                                                    .minimumScaleFactor(0.5)
+                                                                            }
+                                                                            .frame(alignment: .leading)
+                                                                        }
+                                                                        .frame(maxWidth: .infinity)
+                                                                        
+                                                                        Text("\(self.subscriptionInfo.CardHolderName!)")
+                                                                            .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                                                            .padding(.leading, 20)
                                                                             .foregroundStyle(.white)
                                                                             .setFontSizeAndWeight(weight: .light, size: 15)
                                                                             .minimumScaleFactor(0.5)
                                                                     }
-                                                                    .frame(alignment: .leading)
+                                                                    .frame(maxWidth: .infinity)
                                                                 }
-                                                                .frame(maxWidth: .infinity)
+                                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                                .padding(.top, 20)
                                                                 
-                                                                Text("\(self.subscriptionInfo.CardHolderName!)")
-                                                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                                                    .padding(.leading, 20)
-                                                                    .foregroundStyle(.white)
-                                                                    .setFontSizeAndWeight(weight: .light, size: 15)
-                                                                    .minimumScaleFactor(0.5)
+                                                                Spacer()
+                                                                
+                                                                
                                                             }
-                                                            .frame(maxWidth: .infinity)
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            
+                                                            VStack {
+                                                                Spacer() /* MARK: Shove the "logo" to the bottom. */
+                                                                
+                                                                ZStack {
+                                                                    Image("Logo")
+                                                                        .resizable()
+                                                                        .frame(width: 60, height: 60)
+                                                                }
+                                                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                                                .padding(.trailing, 10)
+                                                                .padding(.bottom, 5)
+                                                            }
+                                                            .frame(maxWidth: 60, alignment: .trailing)
                                                         }
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .padding(.top, 20)
-                                                        
-                                                        Spacer()
-                                                        
-                                                        
                                                     }
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .frame(maxWidth: prop.size.width - 70, minHeight: 200)
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 15)
+                                                            .fill(.black)
+                                                            .shadow(color: Color.black, radius: 1.5)
+                                                    )
+                                                    .cornerRadius(15)
                                                     
-                                                    VStack {
-                                                        Spacer() /* MARK: Shove the "logo" to the bottom. */
+                                                    Text("This is not a real debit card, this is for visual purposes only.")
+                                                        .frame(maxWidth: prop.size.width - 70, alignment: .leading)
+                                                        .padding(.leading, 5)
+                                                        .foregroundStyle(.secondary)
+                                                        .setFontSizeAndWeight(weight: .light, size: 12)
+                                                        .minimumScaleFactor(0.5)
+                                                        .multilineTextAlignment(.leading)
+                                                }
+                                                .frame(maxWidth: prop.size.width - 40)
+                                                .padding([.top, .bottom], 14)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(Color.EZNotesBlack)
+                                                        .shadow(color: Color.black, radius: 1.5)
+                                                )
+                                                
+                                                Text("Specifics")
+                                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                                    .padding(.top, 20)
+                                                    .foregroundStyle(.white)
+                                                    .setFontSizeAndWeight(weight: .bold, size: 24)
+                                                    .minimumScaleFactor(0.5)
+                                                
+                                                VStack {
+                                                    HStack {
+                                                        Text("Your Subscription ID:")
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .padding(.leading, 20)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                                            .fontWeight(.bold)
                                                         
-                                                        ZStack {
-                                                            Image("Logo")
-                                                                .resizable()
-                                                                .frame(width: 60, height: 60)
-                                                        }
-                                                        .frame(maxWidth: .infinity, alignment: .trailing)
-                                                        .padding(.trailing, 10)
-                                                        .padding(.bottom, 5)
+                                                        Text(self.subscriptionInfo.PlanID!)
+                                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                                            .padding(.trailing, 20)
+                                                            .foregroundStyle(.white)
+                                                            .setFontSizeAndWeight(weight: .heavy, size: 16)//(Font.custom("Poppins-ExtraLight", size: 16))
+                                                        // .fontWeight(.heavy)
                                                     }
-                                                    .frame(maxWidth: 60, alignment: .trailing)
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding([.top, .bottom])
+                                                    
+                                                    HStack {
+                                                        Text("Subscription Price ID:")
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .padding(.leading, 20)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                                            .fontWeight(.bold)
+                                                        
+                                                        Text(self.subscriptionInfo.PriceID!)
+                                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                                            .padding(.trailing, 20)
+                                                            .foregroundStyle(.white)
+                                                            .setFontSizeAndWeight(weight: .heavy, size: 16)
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding([.top, .bottom])
+                                                    
+                                                    HStack {
+                                                        Text("Subscription Service ID:")
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .padding(.leading, 20)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                                            .fontWeight(.bold)
+                                                        
+                                                        Text(self.subscriptionInfo.ProductID!)
+                                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                                            .padding(.trailing, 20)
+                                                            .foregroundStyle(.white)
+                                                            .setFontSizeAndWeight(weight: .heavy, size: 16)
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding([.top, .bottom])
                                                 }
-                                            }
-                                            .frame(maxWidth: prop.size.width - 70, minHeight: 200)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 15)
-                                                    .fill(.black)
-                                                    .shadow(color: Color.black, radius: 1.5)
-                                            )
-                                            .cornerRadius(15)
-                                            
-                                            Text("This is not a real debit card, this is for visual purposes only.")
-                                                .frame(maxWidth: prop.size.width - 70, alignment: .leading)
-                                                .padding(.leading, 5)
-                                                .foregroundStyle(.secondary)
-                                                .setFontSizeAndWeight(weight: .light, size: 12)
-                                                .minimumScaleFactor(0.5)
-                                                .multilineTextAlignment(.leading)
-                                        }
-                                        .frame(maxWidth: prop.size.width - 40)
-                                        .padding([.top, .bottom], 14)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(Color.EZNotesBlack)
-                                                .shadow(color: Color.black, radius: 1.5)
-                                        )
-                                        
-                                        Text("Specifics")
-                                            .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                            .padding(.top, 20)
-                                            .foregroundStyle(.white)
-                                            .setFontSizeAndWeight(weight: .bold, size: 24)
-                                            .minimumScaleFactor(0.5)
-                                        
-                                        VStack {
-                                            HStack {
-                                                Text("Your Subscription ID:")
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .padding(.leading, 20)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-Regular", size: 16))
-                                                    .fontWeight(.bold)
-                                                
-                                                Text(self.subscriptionInfo.PlanID!)
-                                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                                    .padding(.trailing, 20)
-                                                    .foregroundStyle(.white)
-                                                    .setFontSizeAndWeight(weight: .heavy, size: 16)//(Font.custom("Poppins-ExtraLight", size: 16))
-                                                   // .fontWeight(.heavy)
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            .padding([.top, .bottom])
-                                            
-                                            HStack {
-                                                Text("Subscription Price ID:")
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .padding(.leading, 20)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-Regular", size: 16))
-                                                    .fontWeight(.bold)
-                                                
-                                                Text(self.subscriptionInfo.PriceID!)
-                                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                                    .padding(.trailing, 20)
-                                                    .foregroundStyle(.white)
-                                                    .setFontSizeAndWeight(weight: .heavy, size: 16)
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            .padding([.top, .bottom])
-                                            
-                                            HStack {
-                                                Text("Subscription Service ID:")
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .padding(.leading, 20)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-Regular", size: 16))
-                                                    .fontWeight(.bold)
-                                                
-                                                Text(self.subscriptionInfo.ProductID!)
-                                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                                    .padding(.trailing, 20)
-                                                    .foregroundStyle(.white)
-                                                    .setFontSizeAndWeight(weight: .heavy, size: 16)
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            .padding([.top, .bottom])
-                                        }
-                                        .frame(maxWidth: prop.size.width - 40)
-                                        .padding([.top, .bottom], 14)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(Color.EZNotesBlack)
-                                                .shadow(color: Color.black, radius: 1.5)
-                                        )
-                                        
-                                        Text("Actions")
-                                            .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                            .padding(.top, 20)
-                                            .foregroundStyle(.white)
-                                            .setFontSizeAndWeight(weight: .bold, size: 24)
-                                            .minimumScaleFactor(0.5)
-                                        
-                                        VStack {
-                                            Button(action: {
-                                                /* TODO: Add endpoint in backend the will remove the users subscription from stripe. */
-                                                
-                                                self.accountPopupSection = "setup_plan"
-                                            }) {
-                                                HStack {
-                                                    Text("Switch Plans")
-                                                        .frame(maxWidth: .infinity, alignment: .center)
-                                                        .padding([.top, .bottom], 8)
-                                                        .foregroundStyle(.black)
-                                                        .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                        .minimumScaleFactor(0.5)
-                                                }
-                                                .frame(maxWidth: .infinity)
+                                                .frame(maxWidth: prop.size.width - 40)
+                                                .padding([.top, .bottom], 14)
                                                 .background(
                                                     RoundedRectangle(cornerRadius: 15)
-                                                        .fill(.white)
+                                                        .fill(Color.EZNotesBlack)
+                                                        .shadow(color: Color.black, radius: 1.5)
                                                 )
-                                                .cornerRadius(15)
-                                            }
-                                            .buttonStyle(NoLongPressButtonStyle())
-                                            
-                                            Button(action: {
-                                                print("Deactivate Plan")
                                                 
-                                                /* TODO: Add endpoint that removes the users plan. Upon deactivating the plan, the account will be deleted. */
-                                            }) {
-                                                HStack {
-                                                    Text("Deactivate Plan")
-                                                        .frame(maxWidth: .infinity, alignment: .center)
-                                                        .padding([.top, .bottom], 8)
-                                                        .foregroundStyle(.black)
-                                                        .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                        .minimumScaleFactor(0.5)
+                                                Text("Actions")
+                                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                                    .padding(.top, 20)
+                                                    .foregroundStyle(.white)
+                                                    .setFontSizeAndWeight(weight: .bold, size: 24)
+                                                    .minimumScaleFactor(0.5)
+                                                
+                                                VStack {
+                                                    Button(action: {
+                                                        /* TODO: Add endpoint in backend the will remove the users subscription from stripe. */
+                                                        
+                                                        self.accountPopupSection = "setup_plan"
+                                                    }) {
+                                                        HStack {
+                                                            Text("Switch Plans")
+                                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                                .padding([.top, .bottom], 8)
+                                                                .foregroundStyle(.black)
+                                                                .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                                .minimumScaleFactor(0.5)
+                                                        }
+                                                        .frame(maxWidth: .infinity)
+                                                        .background(
+                                                            RoundedRectangle(cornerRadius: 15)
+                                                                .fill(.white)
+                                                        )
+                                                        .cornerRadius(15)
+                                                    }
+                                                    .buttonStyle(NoLongPressButtonStyle())
+                                                    
+                                                    Button(action: {
+                                                        print("Deactivate Plan")
+                                                        
+                                                        /* TODO: Add endpoint that removes the users plan. Upon deactivating the plan, the account will be deleted. */
+                                                    }) {
+                                                        HStack {
+                                                            Text("Deactivate Plan")
+                                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                                .padding([.top, .bottom], 8)
+                                                                .foregroundStyle(.black)
+                                                                .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                                .minimumScaleFactor(0.5)
+                                                        }
+                                                        .frame(maxWidth: .infinity)
+                                                        .background(
+                                                            RoundedRectangle(cornerRadius: 15)
+                                                                .fill(Color.EZNotesRed)
+                                                        )
+                                                        .cornerRadius(15)
+                                                    }
+                                                    .buttonStyle(NoLongPressButtonStyle())
+                                                    .padding(.top, 5)
                                                 }
-                                                .frame(maxWidth: .infinity)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 15)
-                                                        .fill(Color.EZNotesRed)
-                                                )
-                                                .cornerRadius(15)
+                                                .frame(maxWidth: prop.size.width - 40)
+                                                .padding(.bottom, 30)
                                             }
-                                            .buttonStyle(NoLongPressButtonStyle())
-                                            .padding(.top, 5)
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         }
-                                        .frame(maxWidth: prop.size.width - 40)
-                                        .padding(.bottom, 30)
                                     }
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 }
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
