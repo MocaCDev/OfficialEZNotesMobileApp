@@ -623,7 +623,34 @@ struct AccountPopup: View {
                                     Divider()
                                         .overlay(.black)
                                     
-                                    Button(action: { print("Change Field/Major") }) {
+                                    Button(action: {
+                                        RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+                                            College: self.accountInfo.college
+                                        ))
+                                        .perform(action: get_custom_college_fields_req) { statusCode, resp in
+                                            guard
+                                                resp != nil,
+                                                statusCode == 200
+                                            else {
+                                                /* TODO: Handle errors. For now, the below works. */
+                                                self.accountPopupSection = "main"
+                                                return
+                                            }
+                                            
+                                            guard resp!.keys.contains("Fields") else {
+                                                /* TODO: Handle errors. For now the below works. */
+                                                self.accountPopupSection = "main"
+                                                return
+                                            }
+                                            
+                                            /* MARK: Ensure the array is empty before populating it. */
+                                            self.majorFields.removeAll()
+                                            
+                                            self.majorFields = resp!["Fields"] as! [String]
+                                            self.majorFields.append("Other")
+                                            self.accountPopupSection = "switch_field_and_major"
+                                        }
+                                    }) {
                                         HStack {
                                             Text("Change Field/Major")
                                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
