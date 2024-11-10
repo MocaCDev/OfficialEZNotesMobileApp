@@ -8,8 +8,8 @@ import Foundation
 import SwiftUI
 
 /* MARK: URLs used for requests. */
-//let server = "https://www.eznotes.space"
-let server = "http://10.180.119.35:8088"
+let server = "https://www.eznotes.space"
+//let server = "http://192.168.0.4:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
@@ -284,7 +284,7 @@ let save_chat_req: CSIARequest = CSIARequest(
 )
 
 let delete_signup_process_req: CSIARequest = CSIARequest(
-    url: "\(server)/delete_signup_process",
+    url: "\(server)/delete_temp_account_data",
     method: "post",
     reqData: DeleteSignupProcessData.self
 )

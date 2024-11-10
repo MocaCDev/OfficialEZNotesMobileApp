@@ -71,7 +71,7 @@ struct SignUpScreen : View, KeyboardReadable {
         "Wisconsin", "Wyoming"
     ]
     
-    @State public var state: String = "Ohio"
+    @State public var state: String = ""
     @State private var loadingCollegeInfoSection: Bool = false
     @State private var colleges: Array<String> = []
     @State private var majorFields: Array<String> = []
@@ -126,6 +126,7 @@ struct SignUpScreen : View, KeyboardReadable {
             self.accountID,
             forKey: "account_id"
         )
+        UserDefaults.standard.set("main", forKey: "last_signup_section")
         self.userHasSignedIn = true
     }
     
@@ -239,6 +240,23 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 self.section = "main"
                                                 UserDefaults.standard.set(self.section, forKey: "last_signup_section")
                                                 break
+                                            case "code_input":
+                                                RequestAction<DeleteSignupProcessData>(
+                                                    parameters: DeleteSignupProcessData(
+                                                        AccountID: self.accountID
+                                                    )
+                                                )
+                                                .perform(action: delete_signup_process_req) { statusCode, resp in
+                                                    guard resp != nil && statusCode == 200 else {
+                                                        /* MARK: There should never be an error when deleting the process in the backend. */
+                                                        if let resp = resp { print(resp) }
+                                                        self.serverError = true
+                                                        return
+                                                    }
+                                                    
+                                                    self.section = "select_state_and_college"
+                                                    UserDefaults.standard.set(self.section, forKey: "last_signup_section")
+                                                }
                                             case "select_plan":
                                                 /* MARK: Delete the signup process in the backend. */
                                                 RequestAction<DeleteSignupProcessData>(
@@ -250,11 +268,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     guard resp != nil && statusCode == 200 else {
                                                         /* MARK: There should never be an error when deleting the process in the backend. */
                                                         if let resp = resp { print(resp) }
+                                                        self.serverError = true
                                                         return
                                                     }
+                                                    
+                                                    self.section = "select_state_and_college"
+                                                    UserDefaults.standard.set(self.section, forKey: "last_signup_section")
                                                 }
-                                                self.section = "select_state_and_college"
-                                                UserDefaults.standard.set(self.section, forKey: "last_signup_section")
                                             default: break
                                             }
                                         }) {
@@ -574,7 +594,16 @@ struct SignUpScreen : View, KeyboardReadable {
                                         if self.majorIsOther { self.majorIsOther = false; return }
                                         if self.majorFieldIsOther { self.majorFieldIsOther = false; return }
                                         
-                                        if self.state == "" { self.section = "main" }
+                                        if self.state == "" {
+                                            /* MARK: Ensure the keys in UserDefaults are deleted to avoid bugs. */
+                                            UserDefaults.standard.removeObject(forKey: "temp_state")
+                                            UserDefaults.standard.removeObject(forKey: "temp_college")
+                                            UserDefaults.standard.removeObject(forKey: "temp_field")
+                                            UserDefaults.standard.removeObject(forKey: "temp_major")
+                                            
+                                            self.section = "main"
+                                            UserDefaults.standard.set("main", forKey: "last_signup_section")
+                                        }
                                         else {
                                             /* MARK: The below operations will automatically cause the "section" of "select_state_and_college" to go back. */
                                             if self.college == "" { self.state.removeAll(); return }
@@ -643,7 +672,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                      .setFontSizeAndWeight(weight: .heavy, size: 28)
                                      .minimumScaleFactor(0.5)*/
                                     
-                                    if self.state != "" {
+                                    if self.state != "" && (!self.loadingColleges && !self.loadingMajorFields && !self.loadingMajors) {
                                         Text("*\(self.state)* > *\(self.college)* \(self.majorField != "" ? ">" : "") *\(self.majorField)* \(self.major != "" ? ">" : "") *\(self.major)*")
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .padding(.bottom)
@@ -685,6 +714,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                             Button(action: {
                                                                 if self.state == "" {
                                                                     self.state = value
+                                                                    UserDefaults.standard.set(value, forKey: "temp_state")
                                                                     
                                                                     if self.colleges.count > 0 {
                                                                         self.colleges.removeAll()
@@ -706,6 +736,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                         return
                                                                     }
                                                                     
+                                                                    UserDefaults.standard.set(value, forKey: "temp_college")
+                                                                    
                                                                     self.college = value
                                                                     self.get_custom_major_fields()
                                                                 } else if self.majorField == "" {
@@ -713,6 +745,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                         self.majorFieldIsOther = true
                                                                         return
                                                                     }
+                                                                    
+                                                                    UserDefaults.standard.set(value, forKey: "temp_field")
                                                                     
                                                                     self.majorField = value
                                                                     self.get_majors()
@@ -722,6 +756,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                         self.majorIsOther = true
                                                                         return
                                                                     }
+                                                                    
+                                                                    UserDefaults.standard.set(value, forKey: "temp_major")
                                                                     
                                                                     self.major = value
                                                                     self.checkInfoAlert = true
@@ -767,10 +803,10 @@ struct SignUpScreen : View, KeyboardReadable {
                                             .alert("Before continuing", isPresented: $checkInfoAlert) {
                                                 Button(action: {
                                                     /* MARK: The only way we can get here is if the sate, college, majorField and major variables are not empty. No checks needed. */
-                                                    UserDefaults.standard.set(self.state, forKey: "temp_state")
+                                                    /*UserDefaults.standard.set(self.state, forKey: "temp_state")
                                                     UserDefaults.standard.set(self.college, forKey: "temp_college")
                                                     UserDefaults.standard.set(self.majorField, forKey: "temp_field")
-                                                    UserDefaults.standard.set(self.major, forKey: "temp_major")
+                                                    UserDefaults.standard.set(self.major, forKey: "temp_major")*/
                                                     
                                                     self.section = "loading_code"
                                                     
@@ -794,7 +830,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                 }
                                                             }
                                                             
-                                                            self.section = "main"
+                                                            self.section = "code_input"
                                                             self.serverError = true
                                                             return
                                                         }
@@ -859,6 +895,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 .alert(self.collegeIsOther ? "Do we have the college right?" : "Do we have the Major Field correct?", isPresented: $showCheckCollegeAlert) {
                                                     Button(action: {
                                                         if self.collegeIsOther {
+                                                            UserDefaults.standard.set(self.otherCollege, forKey: "temp_college")
+                                                            
                                                             self.college = self.otherCollege
                                                             self.otherCollege.removeAll()
                                                             self.get_custom_major_fields()
@@ -868,6 +906,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         }
                                                         
                                                         if self.majorFieldIsOther {
+                                                            UserDefaults.standard.set(self.otherMajorField, forKey: "temp_field")
                                                             self.majorField = self.otherMajorField
                                                             self.otherMajorField.removeAll()
                                                             self.get_majors()
@@ -949,7 +988,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                 .keyboardType(.numberPad)
                                 .onChange(of: self.userInputedCode) {
                                     /* Codes are 6-digits. */
-                                    if self.userInputedCode.count > 6 { self.userInputedCode = String(self.userInputedCode.prefix(6)) }
+                                    if self.userInputedCode.count == 6 {
+                                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                                    }
+                                    
+                                    /*if self.userInputedCode.count > 6 {
+                                        self.userInputedCode = String(self.userInputedCode.prefix(6))
+                                    }*/
                                 }
                             } else {
                                 Plans(
@@ -1242,6 +1287,7 @@ struct SignUpScreen : View, KeyboardReadable {
             self.alreadySignedUp = false
             
             guard UserDefaults.standard.object(forKey: "last_signup_section") != nil else {
+                self.section = "main"
                 UserDefaults.standard.set("main", forKey: "last_signup_section")
                 return
             }
@@ -1259,76 +1305,34 @@ struct SignUpScreen : View, KeyboardReadable {
             //self.majorField = ""
             
             if self.section == "select_state_and_college" {
-                if UserDefaults.standard.object(forKey: "temp_state") != nil {
-                    self.state = UserDefaults.standard.string(forKey: "temp_state")!
-                    
-                    RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(State: self.state))
-                        .perform(action: get_colleges) { statusCode, resp in
-                            guard
-                                resp != nil,
-                                resp!.keys.contains("Colleges"),
-                                statusCode == 200
-                            else {
-                                self.serverError = true
-                                return
-                            }
-                            
-                            let respColleges = resp!["Colleges"] as! [String]
-                            
-                            for c in respColleges {
-                                if !self.colleges.contains(c) { self.colleges.append(c) }
-                            }
-                            
-                            if !self.colleges.contains("Other") { self.colleges.append("Other") }
-                            self.college = self.colleges[0]
-                        }
+                guard UserDefaults.standard.object(forKey: "temp_state") != nil else { return }
+                
+                self.state = UserDefaults.standard.string(forKey: "temp_state")!
+                //self.loadingColleges = true
+                
+                guard UserDefaults.standard.object(forKey: "temp_college") != nil else {
+                    self.get_custom_colleges()
+                    return
                 }
-                if UserDefaults.standard.object(forKey: "temp_college") != nil {
-                    self.college = UserDefaults.standard.string(forKey: "temp_college")!
-                    
-                    RequestAction<ReqPlaceholder>(parameters: ReqPlaceholder())
-                        .perform(action: get_major_fields_req) { statusCode, resp in
-                            self.loadingCollegeInfoSection = false
-                            
-                            guard resp != nil && statusCode == 200 else {
-                                self.serverError = true
-                                return
-                            }
-                            
-                            let respMajorFields = resp!["Categories"] as! [String]
-                            
-                            for mf in respMajorFields {
-                                if !self.majorFields.contains(mf) { self.majorFields.append(mf) }
-                            }
-                            
-                            //if !self.majorFields.contains("Other") { self.majorFields.append("Other") }
-                            self.majorField = self.majorFields[0]
-                        }
+                
+                self.college = UserDefaults.standard.string(forKey: "temp_college")!
+                //self.loadingMajorFields = true
+                
+                guard UserDefaults.standard.object(forKey: "temp_field") != nil else {
+                    self.get_custom_major_fields()
+                    return
                 }
-                if UserDefaults.standard.object(forKey: "temp_field") != nil {
-                    self.majorField = UserDefaults.standard.string(forKey: "temp_field")!
-                    
-                    RequestAction<GetMajorsRequestData>(
-                        parameters: GetMajorsRequestData(
-                            College: self.college,
-                            MajorField: self.majorField
-                        ))
-                        .perform(action: get_majors_req) { statusCode, resp in
-                            self.loadingCollegeInfoSection = false
-                            
-                            guard resp != nil && statusCode == 200 else {
-                                self.serverError = true
-                                return
-                            }
-                            
-                            self.majors = resp!["Majors"] as! [String]
-                            
-                            self.majors.append("Other")
-                            
-                            self.major = self.majors[0]
-                        }
+                
+                self.majorField = UserDefaults.standard.string(forKey: "temp_field")!
+                //self.loadingMajors = true
+                
+                guard UserDefaults.standard.object(forKey: "temp_major") != nil else {
+                    self.get_majors()
+                    return
                 }
-                if UserDefaults.standard.object(forKey: "temp_major") != nil { self.major = UserDefaults.standard.string(forKey: "temp_major")! }
+                self.major = UserDefaults.standard.string(forKey: "temp_major")!
+                
+                //if UserDefaults.standard.object(forKey: "temp_major") != nil { self.major = UserDefaults.standard.string(forKey: "temp_major")! }*/
             }
         }
     }
