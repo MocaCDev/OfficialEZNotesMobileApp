@@ -428,6 +428,17 @@ struct RequestAction<T> {
                 request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
                 request.addValue(params.NewState, forHTTPHeaderField: "New-State")
                 break
+            case is UpdateUsernameData.Type:
+                guard let params: UpdateUsernameData = (parameters as? UpdateUsernameData) else { return }
+                request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.NewUsername, forHTTPHeaderField: "New-Username")
+                break
+            case is UpdatePasswordData.Type:
+                guard let params: UpdatePasswordData = (parameters as? UpdatePasswordData) else { return }
+                request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.OldPassword, forHTTPHeaderField: "Old-Password")
+                request.addValue(params.NewPassword, forHTTPHeaderField: "New-Password")
+            break
             default: break
         }
         

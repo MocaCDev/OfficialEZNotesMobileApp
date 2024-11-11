@@ -41,8 +41,6 @@ struct AccountPopup: View {
     @State private var pfpPhotoPicked: PhotosPickerItem?
     @State private var pfpBackgroundPhotoPicked: PhotosPickerItem?
     @State private var photoGalleryLaunchedFor: String = "pfp" /* MARK: Value can be `pfp` or `pfp_bg`. */
-    @State private var newUsername: String = ""
-    @State private var updateUsername: Bool = false
     @State private var pfpUploadStatus: String = "none"
     @State private var pfpBgUploadStatus: String = "none"
     @State private var errorUploadingPFP: Bool = false
@@ -123,6 +121,8 @@ struct AccountPopup: View {
         "Wisconsin", "Wyoming"
     ]
     
+    
+    /* MARK: Animation for the status bar the prompts whether or not the change of display or PFP was a success. */
     @State private var statusBarYOffset: CGFloat = 0
     
     /* MARK: Variable for y offset of the body (under the "Change PFP" and "Change Display" buttons). */
@@ -130,6 +130,18 @@ struct AccountPopup: View {
     
     /* MARK: Variable for y offset of top of the body (part that shows PFP, display background, username etc). */
     @State private var topBodyYOffset: CGFloat = 0
+    
+    /* MARK: Variables for `change_password` section. */
+    /* TODO: Should we add a state for changing the bottom border of the password textfields to red? */
+    @State private var newPassword: String = ""
+    @State private var newPasswordTooShort: Bool = false
+    @State private var oldPassword: String = ""
+    @State private var oldPasswordTooShort: Bool = false
+    @State private var changePasswordAlert: Bool = false
+    @State private var wrongOldPassword: Bool = false
+    @State private var errorUpdatingPassword: Bool = false
+    @State private var passwordUpdated: Bool = false
+    @State private var oldAndNewPasswordsAreTheSame: Bool = false
     
     var body: some View {
         VStack {
@@ -473,14 +485,18 @@ struct AccountPopup: View {
                                         ? "Switch Field/Major"
                                         : self.accountPopupSection == "switch_state"
                                             ? "Change States"
-                                            : "Account Details" /* MARK: Default value if all else checks fail (which should never happen). */)
+                                            : self.accountPopupSection == "change_username"
+                                                ? "Change Username"
+                                                : self.accountPopupSection == "update_password"
+                                                    ? "Update Password"
+                                                    : "Account Details" /* MARK: Default value if all else checks fail (which should never happen). */)
                         .frame(maxWidth: .infinity, maxHeight: 25)
                         .foregroundStyle(.white)
                         .padding([.top], 15)
                         .setFontSizeAndWeight(weight: .bold, size: 20)
                         
                         /* MARK: "spacing" to ensure above Text stays in the middle. */
-                        ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 10)
+                        ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                     }
                     
                     Divider()
@@ -493,7 +509,7 @@ struct AccountPopup: View {
                             VStack { }.frame(maxWidth: .infinity, maxHeight: 5)
                             
                             ScrollView(.vertical, showsIndicators: false) {
-                                Text("Account, Plans & Management")
+                                Text("Account & Management")
                                     .frame(maxWidth: prop.size.width - 50, alignment: .leading)
                                     .foregroundStyle(.white)
                                     .setFontSizeAndWeight(weight: .bold, size: 20)
@@ -501,65 +517,10 @@ struct AccountPopup: View {
                                 
                                 VStack {
                                     Button(action: {
-                                        self.accountPopupSection = "planDetails"
-                                        self.loadingPlanDetailsSection = true
-                                        
-                                        RequestAction<GetSubscriptionInfoData>(parameters: GetSubscriptionInfoData(AccountID: self.accountInfo.accountID))
-                                            .perform(action: get_subscription_info_req) { statusCode, resp in
-                                                self.loadingPlanDetailsSection = false
-                                                
-                                                guard resp != nil && statusCode == 200 else {
-                                                    if let resp = resp {
-                                                        if resp["Message"] as! String == "plan_id_not_found_for_user" {
-                                                            self.accountPopupSection = "setup_plan"
-                                                            return
-                                                        }
-                                                    }
-                                                    self.errorLoadingPlanDetailsSection = true
-                                                    return
-                                                }
-                                                
-                                                if let resp = resp {
-                                                    let d: TimeInterval = resp["PlanCreated"] as! TimeInterval
-                                                    let date = Date(timeIntervalSince1970: d)
-                                                    
-                                                    /* MARK: Assign the according fields to be refereneced in the "Plan Details" section. */
-                                                    self.subscriptionInfo.TimeCreated = "\(date.formatted(date: .omitted, time: .shortened))"
-                                                    self.subscriptionInfo.DateCreated = Date(timeIntervalSince1970: resp["PlanCreated"] as! TimeInterval)
-                                                    self.subscriptionInfo.CurrentPeriodStart = Date(timeIntervalSince1970: resp["PeriodStart"] as! TimeInterval)
-                                                    self.subscriptionInfo.CurrentPeriodEnd = Date(timeIntervalSince1970: resp["PeriodEnd"] as! TimeInterval)
-                                                    self.subscriptionInfo.Lifetime = (resp["Lifetime"] as! Int)
-                                                    self.subscriptionInfo.ProductName = (resp["ProductName"] as! String)
-                                                    self.subscriptionInfo.Price = (resp["Price"] as! String)
-                                                    self.subscriptionInfo.Interval = (resp["Interval"] as! String)
-                                                    self.subscriptionInfo.PlanID = (resp["UserSubID"] as! String)
-                                                    self.subscriptionInfo.PriceID = (resp["PriceID"] as! String)
-                                                    self.subscriptionInfo.ProductID = (resp["ProductID"] as! String)
-                                                    self.subscriptionInfo.Last4 = (resp["LastFour"] as! String)
-                                                    self.subscriptionInfo.CardBrand = (resp["CardBrand"] as! String)
-                                                    self.subscriptionInfo.CardExpMonth = (resp["CardExpMonth"] as! String)
-                                                    self.subscriptionInfo.CardExpYear = (resp["CardExpYear"] as! String)
-                                                    self.subscriptionInfo.CardHolderName = (resp["CustomerName"] as! String)
-                                                    self.subscriptionInfo.PaymentMethodCreatedOn = Date(timeIntervalSince1970: resp["PaymentMethodCreatedOn"] as! TimeInterval)
-                                                    
-                                                    // Get the index two characters before the end of the string
-                                                    let splitIndex = self.subscriptionInfo.Price!.index(self.subscriptionInfo.Price!.endIndex, offsetBy: -2)
-                                                    
-                                                    // Split into prefix and suffix
-                                                    let prefix = String(self.subscriptionInfo.Price![..<splitIndex])
-                                                    let suffix = String(self.subscriptionInfo.Price![splitIndex...])
-                                                    
-                                                    self.subscriptionInfo.Price = "$\(prefix).\(suffix)"
-                                                    self.errorLoadingPlanDetailsSection = false
-                                                    return
-                                                }
-                                                
-                                                /* MARK: If the above if statement fails, there was an error obtaining the response. */
-                                                self.errorLoadingPlanDetailsSection = true
-                                            }
+                                        self.accountPopupSection = "change_username"
                                     }) {
                                         HStack {
-                                            Text("Plan Details")
+                                            Text("Change Username")
                                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                                                 .padding(.leading, 15)
                                                 .foregroundStyle(.white)
@@ -581,31 +542,9 @@ struct AccountPopup: View {
                                     Divider()
                                         .overlay(.black)
                                     
-                                    Button(action: { print("Change Username") }) {
-                                        HStack {
-                                            Text("Change Username")
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding(.leading, 15)
-                                                .foregroundStyle(.white)
-                                                .font(.system(size: 18, design: .rounded))
-                                            
-                                            ZStack {
-                                                Image(systemName: "chevron.right")
-                                                    .resizableImage(width: 10, height: 15)
-                                                    .foregroundStyle(.gray)
-                                            }
-                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                            .padding(.trailing, 25)
-                                        }
-                                        .frame(maxWidth: .infinity, maxHeight: 40)
-                                        .padding([.top, .bottom], 5)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    
-                                    Divider()
-                                        .overlay(.black)
-                                    
-                                    Button(action: { print("Update Password") }) {
+                                    Button(action: {
+                                        self.accountPopupSection = "update_password"
+                                    }) {
                                         HStack {
                                             Text("Update Password")
                                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -822,7 +761,64 @@ struct AccountPopup: View {
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                         
-                                        Button(action: { print("Show Billing") }) {
+                                        Button(action: {
+                                            self.accountPopupSection = "planDetails"
+                                            self.loadingPlanDetailsSection = true
+                                            
+                                            RequestAction<GetSubscriptionInfoData>(parameters: GetSubscriptionInfoData(AccountID: self.accountInfo.accountID))
+                                                .perform(action: get_subscription_info_req) { statusCode, resp in
+                                                    self.loadingPlanDetailsSection = false
+                                                    
+                                                    guard resp != nil && statusCode == 200 else {
+                                                        if let resp = resp {
+                                                            if resp["Message"] as! String == "plan_id_not_found_for_user" {
+                                                                self.accountPopupSection = "setup_plan"
+                                                                return
+                                                            }
+                                                        }
+                                                        self.errorLoadingPlanDetailsSection = true
+                                                        return
+                                                    }
+                                                    
+                                                    if let resp = resp {
+                                                        let d: TimeInterval = resp["PlanCreated"] as! TimeInterval
+                                                        let date = Date(timeIntervalSince1970: d)
+                                                        
+                                                        /* MARK: Assign the according fields to be refereneced in the "Plan Details" section. */
+                                                        self.subscriptionInfo.TimeCreated = "\(date.formatted(date: .omitted, time: .shortened))"
+                                                        self.subscriptionInfo.DateCreated = Date(timeIntervalSince1970: resp["PlanCreated"] as! TimeInterval)
+                                                        self.subscriptionInfo.CurrentPeriodStart = Date(timeIntervalSince1970: resp["PeriodStart"] as! TimeInterval)
+                                                        self.subscriptionInfo.CurrentPeriodEnd = Date(timeIntervalSince1970: resp["PeriodEnd"] as! TimeInterval)
+                                                        self.subscriptionInfo.Lifetime = (resp["Lifetime"] as! Int)
+                                                        self.subscriptionInfo.ProductName = (resp["ProductName"] as! String)
+                                                        self.subscriptionInfo.Price = (resp["Price"] as! String)
+                                                        self.subscriptionInfo.Interval = (resp["Interval"] as! String)
+                                                        self.subscriptionInfo.PlanID = (resp["UserSubID"] as! String)
+                                                        self.subscriptionInfo.PriceID = (resp["PriceID"] as! String)
+                                                        self.subscriptionInfo.ProductID = (resp["ProductID"] as! String)
+                                                        self.subscriptionInfo.Last4 = (resp["LastFour"] as! String)
+                                                        self.subscriptionInfo.CardBrand = (resp["CardBrand"] as! String)
+                                                        self.subscriptionInfo.CardExpMonth = (resp["CardExpMonth"] as! String)
+                                                        self.subscriptionInfo.CardExpYear = (resp["CardExpYear"] as! String)
+                                                        self.subscriptionInfo.CardHolderName = (resp["CustomerName"] as! String)
+                                                        self.subscriptionInfo.PaymentMethodCreatedOn = Date(timeIntervalSince1970: resp["PaymentMethodCreatedOn"] as! TimeInterval)
+                                                        
+                                                        // Get the index two characters before the end of the string
+                                                        let splitIndex = self.subscriptionInfo.Price!.index(self.subscriptionInfo.Price!.endIndex, offsetBy: -2)
+                                                        
+                                                        // Split into prefix and suffix
+                                                        let prefix = String(self.subscriptionInfo.Price![..<splitIndex])
+                                                        let suffix = String(self.subscriptionInfo.Price![splitIndex...])
+                                                        
+                                                        self.subscriptionInfo.Price = "$\(prefix).\(suffix)"
+                                                        self.errorLoadingPlanDetailsSection = false
+                                                        return
+                                                    }
+                                                    
+                                                    /* MARK: If the above if statement fails, there was an error obtaining the response. */
+                                                    self.errorLoadingPlanDetailsSection = true
+                                                }
+                                        }) {
                                             VStack {
                                                 ZStack {
                                                     Image(systemName: "dollarsign.bank.building")
@@ -1142,10 +1138,243 @@ struct AccountPopup: View {
                                 action: doSomething,
                                 makeContentRed: $p
                             )
+                        case "change_username":
+                            /* TODO: `isLargerScreen` should be moved into a class where it becomes a published variable. */
+                            ChangeUsername(
+                                prop: prop,
+                                borderBottomColor: self.borderBottomColor,
+                                accountInfo: self.accountInfo,
+                                accountPopupSection: $accountPopupSection,
+                                isLargerScreen: $isLargerScreen
+                            )
+                        case "update_password":
+                            UpdatePassword(
+                                prop: prop,
+                                borderBottomColor: self.borderBottomColor,
+                                accountInfo: self.accountInfo,
+                                isLargerScreen: $isLargerScreen,
+                                accountPopupSection: $accountPopupSection
+                            )
+                            /*VStack {
+                                if self.newPasswordTooShort || self.oldPasswordTooShort || self.errorUpdatingPassword || self.wrongOldPassword || self.oldAndNewPasswordsAreTheSame {
+                                    Text(self.newPasswordTooShort
+                                         ? "New password too short. Password must be 8 characters or more."
+                                         : self.oldPasswordTooShort
+                                            ? "Current password is too short. Passwords require 8 or more characters."
+                                            : self.errorUpdatingPassword
+                                                ? "Error updating password. Try again."
+                                                : self.wrongOldPassword
+                                                    ? "The current password you provided is incorrect. Please try again."
+                                                    : "Current password cannot be the same as the new password.")
+                                    .frame(maxWidth: prop.size.width - 30, alignment: .center)
+                                    .foregroundStyle(Color.EZNotesRed)
+                                    .font(
+                                        .system(
+                                            size: prop.isIpad || self.isLargerScreen
+                                            ? 15
+                                            : 13
+                                        )
+                                    )
+                                    .multilineTextAlignment(.center)
+                                }
+
+                                
+                                if !self.passwordUpdated {
+                                    Text("Current Password")
+                                        .frame(
+                                            width: prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                            ? prop.size.width - 800
+                                            : prop.size.width - 450
+                                            : prop.size.width - 80,
+                                            height: 5,
+                                            alignment: .leading
+                                        )
+                                        .padding(.top, 10)
+                                        .font(
+                                            .system(
+                                                size: self.isLargerScreen ? 18 : 13
+                                            )
+                                        )
+                                        .foregroundStyle(.white)
+                                        .fontWeight(.medium)
+                                    
+                                    TextField("Old Password...", text: $oldPassword)
+                                        .frame(
+                                            width: prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                            ? prop.size.width - 800
+                                            : prop.size.width - 450
+                                            : prop.size.width - 100,
+                                            height: self.isLargerScreen ? 40 : 30
+                                        )
+                                        .padding([.leading], 15)
+                                        .background(
+                                            Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                .fill(.clear)
+                                                .border(
+                                                    width: 1,
+                                                    edges: [.bottom],
+                                                    lcolor: self.borderBottomColor
+                                                )
+                                        )
+                                        .foregroundStyle(Color.EZNotesBlue)
+                                        .padding(self.isLargerScreen ? 10 : 8)
+                                        .tint(Color.EZNotesBlue)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.medium)
+                                        .autocapitalization(.none)
+                                        .disableAutocorrection(true)
+                                        .keyboardType(.alphabet)
+                                    
+                                    Text("New Password")
+                                        .frame(
+                                            width: prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                            ? prop.size.width - 800
+                                            : prop.size.width - 450
+                                            : prop.size.width - 80,
+                                            height: 5,
+                                            alignment: .leading
+                                        )
+                                        .padding(.top, 10)
+                                        .font(
+                                            .system(
+                                                size: self.isLargerScreen ? 18 : 13
+                                            )
+                                        )
+                                        .foregroundStyle(.white)
+                                        .fontWeight(.medium)
+                                    
+                                    TextField("New Password...", text: $newPassword)
+                                        .frame(
+                                            width: prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                            ? prop.size.width - 800
+                                            : prop.size.width - 450
+                                            : prop.size.width - 100,
+                                            height: self.isLargerScreen ? 40 : 30
+                                        )
+                                        .padding([.leading], 15)
+                                        .background(
+                                            Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                .fill(.clear)
+                                                .border(
+                                                    width: 1,
+                                                    edges: [.bottom],
+                                                    lcolor: self.borderBottomColor
+                                                )
+                                        )
+                                        .foregroundStyle(Color.EZNotesBlue)
+                                        .padding(self.isLargerScreen ? 10 : 8)
+                                        .tint(Color.EZNotesBlue)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.medium)
+                                        .autocapitalization(.none)
+                                        .disableAutocorrection(true)
+                                        .keyboardType(.alphabet)
+                                    
+                                    Button(action: {
+                                        if self.oldPassword.count < 8 { self.oldPasswordTooShort = true; return }
+                                        if self.oldPasswordTooShort { self.oldPasswordTooShort = false }
+                                        
+                                        if self.newPassword.count < 8 { self.newPasswordTooShort = true; return }
+                                        if self.newPasswordTooShort { self.newPasswordTooShort = false }
+                                        
+                                        self.errorUpdatingPassword = false
+                                        
+                                        if self.oldPassword == self.newPassword { self.oldAndNewPasswordsAreTheSame = true; return }
+                                        if self.oldAndNewPasswordsAreTheSame { self.oldAndNewPasswordsAreTheSame = false }
+                                        
+                                        self.changePasswordAlert = true
+                                    }) {
+                                        HStack {
+                                            Text("Update")
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                .padding([.top, .bottom], 8)
+                                                .foregroundStyle(.black)
+                                                .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                .minimumScaleFactor(0.5)
+                                        }
+                                        .frame(maxWidth: prop.isIpad
+                                               ? UIDevice.current.orientation.isLandscape
+                                               ? prop.size.width - 800
+                                               : prop.size.width - 450
+                                               : prop.size.width - 80)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(.white)
+                                        )
+                                        .cornerRadius(15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Spacer()
+                                } else {
+                                    VStack {
+                                        Image(systemName: "checkmark")
+                                            .resizable()
+                                            .frame(width: 40, height: 40)
+                                            .foregroundStyle(Color.EZNotesGreen)
+                                        
+                                        Text("Password Updated")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-SemiBold", size: 18))
+                                            .minimumScaleFactor(0.5)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .onAppear {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                            self.accountPopupSection = "main"
+                                            
+                                            self.passwordUpdated = false
+                                            
+                                            /* MARK: Just to ensure no sort of error message shows. */
+                                            self.oldPasswordTooShort = false
+                                            self.newPasswordTooShort = false
+                                            self.errorUpdatingPassword = false
+                                            
+                                            /* MARK: Ensure the old/new textfields will have no text in them if the user comes back. */
+                                            self.oldPassword.removeAll()
+                                            self.newPassword.removeAll()
+                                        }
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+                            .alert("Are you sure?", isPresented: $changePasswordAlert) {
+                                Button(action: {
+                                    RequestAction<UpdatePasswordData>(parameters: UpdatePasswordData(
+                                        OldPassword: self.oldPassword, NewPassword: self.newPassword, AccountID: self.accountInfo.accountID
+                                    ))
+                                    .perform(action: update_password_req) { statusCode, resp in
+                                        guard resp != nil && statusCode == 200 else {
+                                            if let resp = resp {
+                                                if !resp.keys.contains("Message") { self.errorUpdatingPassword = true }
+                                                else {
+                                                    if resp["Message"] as! String == "wrong_old_password" {
+                                                        self.wrongOldPassword = true
+                                                        return
+                                                    }
+                                                }
+                                            }
+                                            
+                                            self.errorUpdatingPassword = true
+                                            return
+                                        }
+                                        
+                                        self.passwordUpdated = true
+                                    }
+                                }) { Text("Yes") }
+                                Button("No", role: .cancel) { }
+                            } message: {
+                                Text("If you change your password, your old one will no longer be eligible to be used to login. Are you sure?")
+                            }*/
                         case "switch_state":
                             SwitchState(
                                 prop: prop,
-                                accountInfo: accountInfo,
+                                accountInfo: self.accountInfo,
                                 accountPopupSection: $accountPopupSection,
                                 loadingChangeSchoolsSection: $loadingChangeSchoolsSection,
                                 errorLoadingChangeSchoolsSection: $errorLoadingChangeSchoolsSection,
@@ -1834,16 +2063,18 @@ struct AccountPopup: View {
                                                                                     .frame(maxWidth: .infinity, alignment: .leading)//(maxWidth: prop.size.width - 50, alignment: .leading)
                                                                                     .padding(.leading, 5)
                                                                                     .foregroundStyle(.white)
-                                                                                    .setFontSizeAndWeight(weight: .light, size: 15)
+                                                                                    .setFontSizeAndWeight(weight: .medium, size: 13)
                                                                                     .minimumScaleFactor(0.5)
                                                                             }
                                                                             .frame(alignment: .leading)
                                                                         }
                                                                         .frame(maxWidth: .infinity)
+                                                                        .padding([.top, .bottom], 8)
                                                                         
                                                                         Text("\(self.subscriptionInfo.CardHolderName!)")
                                                                             .frame(maxWidth: prop.size.width - 50, alignment: .leading)
                                                                             .padding(.leading, 20)
+                                                                            .padding(.bottom, 8)
                                                                             .foregroundStyle(.white)
                                                                             .setFontSizeAndWeight(weight: .light, size: 15)
                                                                             .minimumScaleFactor(0.5)
@@ -1882,13 +2113,36 @@ struct AccountPopup: View {
                                                     )
                                                     .cornerRadius(15)
                                                     
-                                                    Text("This is not a real debit card, this is for visual purposes only.")
-                                                        .frame(maxWidth: prop.size.width - 70, alignment: .leading)
-                                                        .padding(.leading, 5)
-                                                        .foregroundStyle(.secondary)
-                                                        .setFontSizeAndWeight(weight: .light, size: 12)
-                                                        .minimumScaleFactor(0.5)
-                                                        .multilineTextAlignment(.leading)
+                                                    VStack {
+                                                        Button(action: { print("Update card") }) {
+                                                            HStack {
+                                                                Text("Update Card Details")
+                                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                                    .padding([.top, .bottom], 8)
+                                                                    .foregroundStyle(.black)
+                                                                    .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                                    .minimumScaleFactor(0.5)
+                                                            }
+                                                            .frame(maxWidth: prop.size.width - 80)
+                                                            .background(
+                                                                RoundedRectangle(cornerRadius: 15)
+                                                                    .fill(.white)
+                                                            )
+                                                            .cornerRadius(15)
+                                                        }
+                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                        
+                                                        Text("This is not a real debit card, this is for visual purposes only.")
+                                                            .frame(maxWidth: prop.size.width - 70, alignment: .leading)
+                                                            .padding(.leading, 10)
+                                                            .padding([.top, .bottom], 5)
+                                                            .foregroundStyle(.gray)
+                                                            .setFontSizeAndWeight(weight: .light, size: 12)
+                                                            .minimumScaleFactor(0.5)
+                                                            .multilineTextAlignment(.leading)
+                                                    }
+                                                    .frame(maxWidth: prop.size.width - 60)
+                                                    .padding(.top, 8)
                                                 }
                                                 .frame(maxWidth: prop.size.width - 40)
                                                 .padding([.top, .bottom], 14)
@@ -1907,7 +2161,7 @@ struct AccountPopup: View {
                                                 
                                                 VStack {
                                                     HStack {
-                                                        Text("Your Subscription ID:")
+                                                        Text("Subscription ID:")
                                                             .frame(maxWidth: .infinity, alignment: .leading)
                                                             .padding(.leading, 20)
                                                             .foregroundStyle(.white)
@@ -1959,12 +2213,20 @@ struct AccountPopup: View {
                                                     .padding([.top, .bottom])
                                                 }
                                                 .frame(maxWidth: prop.size.width - 40)
-                                                .padding([.top, .bottom], 14)
+                                                .padding(.top, 14)
                                                 .background(
                                                     RoundedRectangle(cornerRadius: 15)
                                                         .fill(Color.EZNotesBlack)
                                                         .shadow(color: Color.black, radius: 1.5)
                                                 )
+                                                
+                                                Text("These IDs enable you to have a more feasible experience with our team when problems arise with payments, plan conversions or cancellations. **Do not share this data with anyone.**")
+                                                    .frame(maxWidth: prop.size.width - 70, alignment: .leading)
+                                                    .padding(.leading, 5)
+                                                    .foregroundStyle(.gray)
+                                                    .setFontSizeAndWeight(weight: .light, size: 12)
+                                                    .minimumScaleFactor(0.5)
+                                                    .multilineTextAlignment(.leading)
                                                 
                                                 Text("Actions")
                                                     .frame(maxWidth: prop.size.width - 50, alignment: .leading)
