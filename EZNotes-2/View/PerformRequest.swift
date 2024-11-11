@@ -374,6 +374,7 @@ struct RequestAction<T> {
                 break
             case is GetCustomCollegeFieldsData.Type:
                 guard let params: GetCustomCollegeFieldsData = (parameters as? GetCustomCollegeFieldsData) else { return }
+                request.addValue(params.State, forHTTPHeaderField: "State")
                 request.addValue(params.College, forHTTPHeaderField: "CCollege")
                 break
             case is GetCustomTopicsData.Type:

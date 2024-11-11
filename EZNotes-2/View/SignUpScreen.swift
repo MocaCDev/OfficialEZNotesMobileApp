@@ -161,20 +161,37 @@ struct SignUpScreen : View, KeyboardReadable {
     }
     
     @State private var loadingMajorFields: Bool = false
+    @State private var noSuchCollege: Bool = false
     private func get_custom_major_fields() {
         self.loadingMajorFields = true
         
         RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+            State: self.state,
             College: self.college
         ))
         .perform(action: get_custom_college_fields_req) { statusCode, resp in
             self.loadingMajorFields = false
             
-            if let resp = resp { print(resp) }
+            //if let resp = resp { print(resp) }
             guard
                 resp != nil,
                 statusCode == 200
             else {
+                guard let resp = resp else {
+                    self.serverError = true
+                    return
+                }
+                
+                guard resp.keys.contains("Message") else {
+                    self.serverError = true
+                    return
+                }
+                
+                if resp["Message"] as! String == "no_such_college_in_state" {
+                    self.noSuchCollege = true
+                    return
+                }
+                
                 self.serverError = true
                 return
             }
@@ -607,8 +624,18 @@ struct SignUpScreen : View, KeyboardReadable {
                                         else {
                                             /* MARK: The below operations will automatically cause the "section" of "select_state_and_college" to go back. */
                                             if self.college == "" { self.state.removeAll(); return }
-                                            if self.majorField == "" { self.college.removeAll(); return }
+                                            if self.majorField == "" {
+                                                self.college.removeAll();
+                                                
+                                                /* MARK: Ensure that, when going back, there is content to show. If not, load the content. */
+                                                if self.colleges.count == 0 { self.get_custom_colleges() }
+                                                return
+                                            }
+                                            
                                             self.majorField.removeAll()
+                                            
+                                            /* MARK: Ensure that, when going back, there is content to show. If not, load the content. */
+                                            if self.majorFields.count == 0 { self.get_custom_major_fields() }
                                         }
                                     }) {
                                         ZStack {
@@ -634,13 +661,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                         .font(
                                             .system(
                                                 size: prop.isIpad
-                                                ? 80
+                                                ? 90
                                                 : self.isLargerScreen
-                                                ? 30
-                                                : 20
+                                                ? 35
+                                                : 25
                                             )
                                         )
-                                        .fontWeight(.semibold)
+                                        .fontWeight(.bold)
                                     }.frame(maxWidth: .infinity, alignment: .center)
                                     
                                     Menu {
@@ -651,7 +678,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                         .buttonStyle(NoLongPressButtonStyle())
                                     } label: {
                                         Label("", systemImage: "ellipsis.circle")
-                                            .font(.title2)
+                                            .font(.title3)
                                             .foregroundColor(.white)
                                     }
                                 }
@@ -766,11 +793,11 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                 HStack {
                                                                     Text(value)
                                                                         .frame(maxWidth: .infinity, alignment: self.state == "" ? .center : .leading)
-                                                                        .padding([.leading, .top, .bottom], self.state != "" ? 10 : 0)
+                                                                        .padding([.leading, .top, .bottom], self.state == "" ? 5 :  10)
                                                                         .foregroundStyle(.white)
-                                                                        .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                                        .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
                                                                         .fontWeight(.bold)
-                                                                        .minimumScaleFactor(0.5)
+                                                                        .minimumScaleFactor(0.8)
                                                                         .multilineTextAlignment(.leading)
                                                                     
                                                                     if self.state != "" {
@@ -779,7 +806,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                                 .resizable()
                                                                                 .frame(width: 10, height: 15)
                                                                         }
-                                                                        .frame(maxWidth: 20, alignment: .trailing)
+                                                                        .frame(maxWidth: 35, alignment: .trailing)
                                                                         .foregroundStyle(.gray)
                                                                         .padding(.trailing, 10)
                                                                     }
@@ -799,6 +826,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         }
                                                     }
                                                 }
+                                                .padding(.bottom, 20)
                                             }
                                             .alert("Before continuing", isPresented: $checkInfoAlert) {
                                                 Button(action: {
@@ -856,6 +884,20 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 Text("Before continuing, check to make sure the following information is correct:\nState: \(self.state)\nCollege: \(self.college)\nMajor Field: \(self.majorField)\nMajor: \(self.major)\n\nIf all above information is correct, continue. Else, click \"cancel\".")
                                             }
                                         } else {
+                                            if self.noSuchCollege {
+                                                Text("The college you provided does not reside in \(self.state)")
+                                                    .frame(maxWidth: prop.size.width - 50, alignment: .center)
+                                                    .foregroundStyle(Color.EZNotesRed)
+                                                    .font(
+                                                        .system(
+                                                            size: prop.isIpad || self.isLargerScreen
+                                                            ? 15
+                                                            : 13
+                                                        )
+                                                    )
+                                                    .multilineTextAlignment(.center)
+                                            }
+                                            
                                             TextField(self.collegeIsOther ? "College Name..." : "Field Name...", text: self.collegeIsOther ? $otherCollege : $otherMajorField)
                                                 .frame(
                                                     width: prop.isIpad
@@ -895,12 +937,16 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 .alert(self.collegeIsOther ? "Do we have the college right?" : "Do we have the Major Field correct?", isPresented: $showCheckCollegeAlert) {
                                                     Button(action: {
                                                         if self.collegeIsOther {
-                                                            UserDefaults.standard.set(self.otherCollege, forKey: "temp_college")
-                                                            
-                                                            self.college = self.otherCollege
-                                                            self.otherCollege.removeAll()
                                                             self.get_custom_major_fields()
-                                                            self.collegeIsOther = false
+                                                            
+                                                            /* MARK: First, ensure that there is actually a college with the name given in the state. */
+                                                            if !self.noSuchCollege {
+                                                                self.collegeIsOther = false
+                                                                
+                                                                UserDefaults.standard.set(self.otherCollege, forKey: "temp_college")
+                                                                self.college = self.otherCollege
+                                                                self.otherCollege.removeAll()
+                                                            }
                                                             
                                                             return
                                                         }
@@ -1013,7 +1059,7 @@ struct SignUpScreen : View, KeyboardReadable {
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .top) // Keep VStack aligned to the top
-                    .ignoresSafeArea(.keyboard, edges: .bottom) // Ignore keyboard safe area
+                    .ignoresSafeArea(edges: .bottom) // Ignore keyboard safe area
                     .onChange(of: prop.size.height) {
                         if prop.size.height < self.lastHeight { self.isLargerScreen = prop.size.height / 2.5 > 200 }
                         else { self.isLargerScreen = prop.size.height / 2.5 > 300 }
@@ -1195,13 +1241,12 @@ struct SignUpScreen : View, KeyboardReadable {
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(NoLongPressButtonStyle())
-                            .padding(.leading, 5)
                             .background(
                                 RoundedRectangle(cornerRadius: 15)
                                     .fill(.white)
                             )
                         }
-                        .padding(.bottom, 30)
+                        .padding(.bottom, self.section == "main" ? 0 : 30)
                     }
                 }
             } else {
@@ -1271,7 +1316,7 @@ struct SignUpScreen : View, KeyboardReadable {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .edgesIgnoringSafeArea(.bottom)
+        .edgesIgnoringSafeArea(self.section == "main" ? .init() : .bottom)
         .background(Color.EZNotesBlack)
         .onAppear {
             self.isLargerScreen = prop.size.height / 2.5 > 300

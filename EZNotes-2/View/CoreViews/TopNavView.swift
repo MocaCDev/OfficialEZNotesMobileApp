@@ -97,10 +97,10 @@ struct AccountPopup: View {
     @State private var temporaryMajorFieldValue: String = ""
     @State private var majors: Array<String> = []
     @State private var temporaryMajorValue: String = ""
-    @State private var temporaryStateValue: String = ""
+    //@State private var temporaryStateValue: String = ""
     @State private var updateCollegeAlert: Bool = false
     @State private var updateMajorFieldAndMajorAlert: Bool = false
-    @State private var updateStateAlert: Bool = false
+    //@State private var updateStateAlert: Bool = false
     @State private var loadingPlanDetailsSection: Bool = false
     @State private var errorLoadingPlanDetailsSection: Bool = false
     @State private var loadingChangeSchoolsSection: Bool = false
@@ -109,7 +109,7 @@ struct AccountPopup: View {
     @State private var errorLoadingMajors: Bool = false
     @State private var loadingMajorFields: Bool = false
     @State private var errorLoadingMajorFields: Bool = false
-    @State private var errorUpdatingStateName: Bool = false
+    //@State private var errorUpdatingStateName: Bool = false
     
     /* TODO: The exact same variable is in `SignUpScreen.swift`. We need to create a class that will hold these variables to be used anywhere. */
     let states = [
@@ -136,6 +136,7 @@ struct AccountPopup: View {
                         if self.errorUploadingPFP {
                             Text("Error saving PFP. Try Again.")
                                 .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.top, 8)
                                 .foregroundStyle(.white)
                                 .fontWeight(.medium)
                                 .font(.system(size: 12))
@@ -143,6 +144,7 @@ struct AccountPopup: View {
                         } else {
                             Text("Error saving PFP Background. Try Again.")
                                 .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.top, 8)
                                 .foregroundStyle(.black)
                                 .fontWeight(.medium)
                                 .font(.system(size: 12))
@@ -153,13 +155,15 @@ struct AccountPopup: View {
                             Button(action: { self.pfpUploadStatus = "none" }) {
                                 Image(systemName: "multiply")
                                     .resizable()
-                                    .frame(width: 12, height: 12)
+                                    .frame(width: 8, height: 8)
                                     .minimumScaleFactor(0.5)
                                     .foregroundStyle(.white)
                             }
                             .buttonStyle(NoLongPressButtonStyle())
                         }
-                        .frameAndPadding(maxWidth: 25, padEdges: .trailing, pad: 15)
+                        .frame(maxWidth: 25, maxHeight: .infinity, alignment: .trailing)
+                        .padding(.trailing, 10)
+                        .padding(.top, 8)
                     }
                     .frame(maxWidth: .infinity, maxHeight: 25)
                     .background(Color.EZNotesRed)
@@ -170,29 +174,37 @@ struct AccountPopup: View {
                             
                             if self.pfpUploadStatus == "good" {
                                 Text("Updated PFP")
-                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                    .padding(.top, 8)
                                     .foregroundStyle(.black)
-                                    .setFontSizeAndWeight(weight: .medium)
+                                    .font(Font.custom("Poppins-Regular", size: 12))
                                     .minimumScaleFactor(0.5)
                             } else {
                                 Text("Updated PFP Background")
-                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                    .padding(.top, 8)
                                     .foregroundStyle(.black)
-                                    .setFontSizeAndWeight(weight: .medium)
+                                    .font(Font.custom("Poppins-Regular", size: 12))//.setFontSizeAndWeight(weight: .medium)
                                     .minimumScaleFactor(0.5)
                             }
                             
                             ZStack {
-                                Button(action: { self.pfpUploadStatus = "none" }) {
+                                Button(action: {
+                                    if self.pfpUploadStatus != "none" { self.pfpUploadStatus = "none" }
+                                    else {
+                                        self.pfpBgUploadStatus = "none"
+                                    }
+                                }) {
                                     Image(systemName: "multiply")
-                                        .resizableImage(width: 12, height: 12)
+                                        .resizableImage(width: 8, height: 8)
                                         .minimumScaleFactor(0.5)
                                         .foregroundStyle(.white)
                                 }
                                 .buttonStyle(NoLongPressButtonStyle())
                             }
-                            .frame(maxWidth: 25, alignment: .trailing)
+                            .frame(maxWidth: 25, maxHeight: .infinity, alignment: .trailing)
                             .padding(.trailing, 10)
+                            .padding(.top, 8)
                         }
                         .frame(maxWidth: .infinity, maxHeight: 25)
                         .background(Color.EZNotesGreen)
@@ -383,19 +395,20 @@ struct AccountPopup: View {
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: 180, alignment: .bottomLeading)
-                    .padding(.leading, 10)
+                    .padding(.leading, 5)
                     .padding(.bottom, 15)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                .padding([.bottom], self.pfpUploadStatus != "none" || self.pfpBgUploadStatus != "none" ? 0 : -10)
+                .padding(.top, self.pfpUploadStatus != "none" || self.pfpBgUploadStatus != "none" ? 12 : 0)
             }
-            .frame(maxWidth: .infinity, maxHeight: 235)
+            .frame(maxWidth: .infinity, maxHeight: 200)
             .background(
                 accountInfo.profileBackgroundPicture
                     .resizableImageFill()
                     .overlay(Color.EZNotesBlack.opacity(0.35))
                     .blur(radius: 2.5)
             )
-            .padding([.bottom], -10)
             
             VStack {
                 VStack {
@@ -676,6 +689,7 @@ struct AccountPopup: View {
                                         self.loadingMajorFields = true
                                         
                                         RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+                                            State: self.accountInfo.state,
                                             College: self.accountInfo.college
                                         ))
                                         .perform(action: get_custom_college_fields_req) { statusCode, resp in
@@ -1080,6 +1094,7 @@ struct AccountPopup: View {
                             }
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(.top, -20)
                     } else {
                         switch(self.accountPopupSection) {
                         case "setup_plan":
@@ -1094,7 +1109,15 @@ struct AccountPopup: View {
                                 makeContentRed: $p
                             )
                         case "switch_state":
-                            VStack {
+                            SwitchState(
+                                prop: prop,
+                                accountInfo: accountInfo,
+                                accountPopupSection: $accountPopupSection,
+                                loadingChangeSchoolsSection: $loadingChangeSchoolsSection,
+                                errorLoadingChangeSchoolsSection: $errorLoadingChangeSchoolsSection,
+                                colleges: $colleges
+                            )
+                            /*VStack {
                                 if self.errorUpdatingStateName {
                                     Image(systemName: "exclamationmark.warninglight.fill")
                                         .resizable()
@@ -1244,7 +1267,7 @@ struct AccountPopup: View {
                                 }) { Text("No") }
                             } message: {
                                 Text("If you switched colleges it would be of your best interest to update that information to ensure EZNotes AI can assist you accordingly.")
-                            }
+                            }*/
                         case "switch_college":
                             VStack {
                                 if self.loadingChangeSchoolsSection {
@@ -1358,6 +1381,7 @@ struct AccountPopup: View {
                                         
                                         /* MARK: Get new major fields for the school. */
                                         RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+                                            State: self.accountInfo.state,
                                             College: self.temporaryCollegeValue
                                         ))
                                         .perform(action: get_custom_college_fields_req) { statusCode, resp in
@@ -1543,13 +1567,18 @@ struct AccountPopup: View {
                                             self.temporaryMajorFieldValue.removeAll()
                                             self.temporaryMajorValue.removeAll()
                                             
+                                            /* MARK: Reset the "section" of the "Switch Field/Major" view. */
+                                            self.switchFieldAndMajorSection = "choose_field"
+                                            
                                             /* MARK: Once updating all the information after switching schools, go back to the main section. */
                                             self.accountPopupSection = "main"
                                         }
                                     }
                                 }) { Text("Yes") }
                                 
-                                Button("No", role: .cancel) { }
+                                Button(action: {
+                                    self.switchFieldAndMajorSection = "choose_field"
+                                }) { Text("no") }
                             } message: {
                                 Text("Proceeding with this course of action will change your major field and major. Do you want to continue?")
                             }
@@ -3377,4 +3406,8 @@ struct TopNavChat: View {
         .topNavSettings(prop: prop, backgroundColor: .clear)
         .padding([.top], 5)
     }
+}
+
+#Preview {
+    ContentView()
 }
