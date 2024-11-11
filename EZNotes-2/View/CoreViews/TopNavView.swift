@@ -123,6 +123,14 @@ struct AccountPopup: View {
         "Wisconsin", "Wyoming"
     ]
     
+    @State private var statusBarYOffset: CGFloat = 0
+    
+    /* MARK: Variable for y offset of the body (under the "Change PFP" and "Change Display" buttons). */
+    @State private var bodyYOffset: CGFloat = 0
+    
+    /* MARK: Variable for y offset of top of the body (part that shows PFP, display background, username etc). */
+    @State private var topBodyYOffset: CGFloat = 0
+    
     var body: some View {
         VStack {
             VStack {
@@ -138,16 +146,14 @@ struct AccountPopup: View {
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding(.top, 8)
                                 .foregroundStyle(.white)
-                                .fontWeight(.medium)
-                                .font(.system(size: 12))
+                                .font(Font.custom("Poppins-Regular", size: 12))
                                 .minimumScaleFactor(0.5)
                         } else {
                             Text("Error saving PFP Background. Try Again.")
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding(.top, 8)
                                 .foregroundStyle(.black)
-                                .fontWeight(.medium)
-                                .font(.system(size: 12))
+                                .font(Font.custom("Poppins-Regular", size: 12))
                                 .minimumScaleFactor(0.5)
                         }
                         
@@ -155,7 +161,7 @@ struct AccountPopup: View {
                             Button(action: { self.pfpUploadStatus = "none" }) {
                                 Image(systemName: "multiply")
                                     .resizable()
-                                    .frame(width: 8, height: 8)
+                                    .frame(width: 12, height: 12)
                                     .minimumScaleFactor(0.5)
                                     .foregroundStyle(.white)
                             }
@@ -167,6 +173,19 @@ struct AccountPopup: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: 25)
                     .background(Color.EZNotesRed)
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            withAnimation(.easeOut(duration: 3)) {
+                                self.statusBarYOffset = -prop.size.height //-UIScreen.main.bounds.height
+                            }
+                            
+                            /* MARK: Wait another second and ensure the status bar view is invisible. */
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                if self.pfpUploadStatus != "none" { self.pfpUploadStatus = "none"; return }
+                                self.pfpBgUploadStatus = "none"
+                            }
+                        }
+                    }
                 } else {
                     if self.pfpUploadStatus != "none" || self.pfpBgUploadStatus != "none" { /* MARK: We will assume if it isn't `none` and it isn't `failed` it is `good`. */
                         HStack {
@@ -196,7 +215,7 @@ struct AccountPopup: View {
                                     }
                                 }) {
                                     Image(systemName: "multiply")
-                                        .resizableImage(width: 8, height: 8)
+                                        .resizableImage(width: 12, height: 12)
                                         .minimumScaleFactor(0.5)
                                         .foregroundStyle(.white)
                                 }
@@ -206,8 +225,22 @@ struct AccountPopup: View {
                             .padding(.trailing, 10)
                             .padding(.top, 8)
                         }
-                        .frame(maxWidth: .infinity, maxHeight: 25)
+                        .frame(maxWidth: .infinity, maxHeight: 35)
                         .background(Color.EZNotesGreen)
+                        .offset(y: self.statusBarYOffset)
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                withAnimation(.easeOut(duration: 3)) {
+                                    self.statusBarYOffset = -prop.size.height //-UIScreen.main.bounds.height
+                                }
+                                
+                                /* MARK: Wait another second and ensure the status bar view is invisible. */
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                    if self.pfpUploadStatus != "none" { self.pfpUploadStatus = "none"; return }
+                                    self.pfpBgUploadStatus = "none"
+                                }
+                            }
+                        }
                     }
                 }
                 //Spacer()
@@ -240,8 +273,8 @@ struct AccountPopup: View {
                                                             .tint(Color.EZNotesBlue)
                                                     }
                                                 }
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                                    .background(self.changingProfilePic ? Color.EZNotesBlack.opacity(0.6) : .clear)
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                                .background(self.changingProfilePic ? Color.EZNotesBlack.opacity(0.6) : .clear)
                                             )
                                     }
                                     .onChange(of: self.pfpPhotoPicked) {
@@ -400,7 +433,7 @@ struct AccountPopup: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                 .padding([.bottom], self.pfpUploadStatus != "none" || self.pfpBgUploadStatus != "none" ? 0 : -10)
-                .padding(.top, self.pfpUploadStatus != "none" || self.pfpBgUploadStatus != "none" ? 12 : 0)
+                .padding(.top, self.pfpUploadStatus != "none" || self.pfpBgUploadStatus != "none" ? 2 : 0)
             }
             .frame(maxWidth: .infinity, maxHeight: 200)
             .background(
@@ -409,6 +442,7 @@ struct AccountPopup: View {
                     .overlay(Color.EZNotesBlack.opacity(0.35))
                     .blur(radius: 2.5)
             )
+            .offset(y: self.topBodyYOffset)
             
             VStack {
                 VStack {
@@ -2009,11 +2043,23 @@ struct AccountPopup: View {
                 .edgesIgnoringSafeArea(.bottom)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .offset(y: self.bodyYOffset)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.EZNotesBlack)
         .onAppear {
             self.isLargerScreen = prop.size.height / 2.5 > 300
             self.lastHeight = prop.size.height
+            
+            /* MARK: Initiation for animations of the parts of the popup. */
+            self.bodyYOffset = prop.size.height - 100
+            self.topBodyYOffset = -prop.size.height
+            
+            /* MARK: 0.4 second duration seems to align well with the rate in which the popup comes into focus. */
+            withAnimation(.easeOut(duration: 0.4)) {
+                self.bodyYOffset = 0 //-UIScreen.main.bounds.height
+                self.topBodyYOffset = 0
+            }
         }
     }
 }
