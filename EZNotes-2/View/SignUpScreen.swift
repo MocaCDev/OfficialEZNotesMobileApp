@@ -129,13 +129,8 @@ struct SignUpScreen : View, KeyboardReadable {
         UserDefaults.standard.set("main", forKey: "last_signup_section")
         
         /* MARK: Ensure that none of the temporary keys in `UserDefaults` carry over after signing up. */
-        UserDefaults.standard.removeObject(forKey: "temp_college")
-        UserDefaults.standard.removeObject(forKey: "temp_field")
-        UserDefaults.standard.removeObject(forKey: "temp_major")
-        UserDefaults.standard.removeObject(forKey: "temp_state")
-        UserDefaults.standard.removeObject(forKey: "temp_username")
-        UserDefaults.standard.removeObject(forKey: "temp_email")
-        UserDefaults.standard.removeObject(forKey: "temp_password")
+        removeAllSignUpTempKeys()
+        
         self.userHasSignedIn = true
     }
     
@@ -246,6 +241,8 @@ struct SignUpScreen : View, KeyboardReadable {
     @State private var lastHeight: CGFloat = 0.0
     @State private var hideAgreementDetails: Bool = false
     
+    @State private var screenHeight: CGFloat = 0
+    
     var body: some View {
         GeometryReader { geometry in
             if !self.alreadySignedUp {
@@ -260,11 +257,11 @@ struct SignUpScreen : View, KeyboardReadable {
                                             switch(self.section) {
                                             case "main":
                                                 self.screen = "home"
-                                                UserDefaults.standard.set("main", forKey: "last_signup_section")
+                                                assignUDKey(key: "last_signup_section", value: "main")
                                                 break
                                             case "select_state_and_college":
                                                 self.section = "main"
-                                                UserDefaults.standard.set(self.section, forKey: "last_signup_section")
+                                                assignUDKey(key: "last_signup_section", value: "main")
                                                 break
                                             case "code_input":
                                                 RequestAction<DeleteSignupProcessData>(
@@ -281,7 +278,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     }
                                                     
                                                     self.section = "select_state_and_college"
-                                                    UserDefaults.standard.set(self.section, forKey: "last_signup_section")
+                                                    assignUDKey(key: "last_signup_section", value: self.section)
                                                 }
                                             case "select_plan":
                                                 /* MARK: Delete the signup process in the backend. */
@@ -299,16 +296,10 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     }
                                                     
                                                     self.section = "select_state_and_college"
-                                                    UserDefaults.standard.set(self.section, forKey: "last_signup_section")
+                                                    assignUDKey(key: "last_signup_section", value: self.section)
                                                     
                                                     /* MARK: Remove all of the temporary information. */
-                                                    UserDefaults.standard.removeObject(forKey: "temp_college")
-                                                    UserDefaults.standard.removeObject(forKey: "temp_field")
-                                                    UserDefaults.standard.removeObject(forKey: "temp_major")
-                                                    UserDefaults.standard.removeObject(forKey: "temp_state")
-                                                    UserDefaults.standard.removeObject(forKey: "temp_username")
-                                                    UserDefaults.standard.removeObject(forKey: "temp_email")
-                                                    UserDefaults.standard.removeObject(forKey: "temp_password")
+                                                    removeAllSignUpTempKeys()
                                                     
                                                     /* MARK: Ensure that the whole "select_state_and_college" section will restart. */
                                                     self.state.removeAll()
@@ -340,7 +331,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                         .system(
                                             size: prop.isIpad
                                             ? 90
-                                            : self.isLargerScreen
+                                            : prop.isLargerScreen
                                             ? 35
                                             : 25
                                         )
@@ -416,7 +407,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                     .foregroundStyle(self.wrongCode || self.userExists || self.emailExists ? Color.EZNotesRed : Color.white)
                                     .font(
                                         .system(
-                                            size: prop.isIpad || self.isLargerScreen
+                                            size: prop.isIpad || prop.isLargerScreen
                                             ? 15
                                             : 13
                                         )
@@ -430,7 +421,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                         .foregroundStyle(Color.EZNotesRed)
                                         .font(
                                             .system(
-                                                size: prop.isIpad || self.isLargerScreen
+                                                size: prop.isIpad || prop.isLargerScreen
                                                 ? 15
                                                 : 13
                                             )
@@ -442,7 +433,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                         .foregroundStyle(Color.EZNotesRed)
                                         .font(
                                             .system(
-                                                size: prop.isIpad || self.isLargerScreen
+                                                size: prop.isIpad || prop.isLargerScreen
                                                 ? 15
                                                 : 13
                                             )
@@ -454,7 +445,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                         .foregroundStyle(Color.EZNotesRed)
                                         .font(
                                             .system(
-                                                size: prop.isIpad || self.isLargerScreen
+                                                size: prop.isIpad || prop.isLargerScreen
                                                 ? 15
                                                 : 13
                                             )
@@ -470,7 +461,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                 .foregroundStyle(Color.EZNotesRed)
                                 .font(
                                     .system(
-                                        size: prop.isIpad || self.isLargerScreen
+                                        size: prop.isIpad || prop.isLargerScreen
                                         ? 15
                                         : 13
                                     )
@@ -486,14 +477,14 @@ struct SignUpScreen : View, KeyboardReadable {
                                         ? UIDevice.current.orientation.isLandscape
                                         ? prop.size.width - 800
                                         : prop.size.width - 450
-                                        : prop.size.width - 100,
+                                        : prop.size.width - 80,
                                         height: 5,
                                         alignment: .leading
                                     )
                                     .padding(.top, 10)
                                     .font(
                                         .system(
-                                            size: self.isLargerScreen ? 25 : 20
+                                            size: prop.isLargerScreen ? 18 : 13
                                         )
                                     )
                                     .foregroundStyle(.white)
@@ -506,9 +497,9 @@ struct SignUpScreen : View, KeyboardReadable {
                                         ? prop.size.width - 800
                                         : prop.size.width - 450
                                         : prop.size.width - 100,
-                                        height: self.isLargerScreen ? 40 : 30
+                                        height: prop.isLargerScreen ? 40 : 30
                                     )
-                                    .padding([.leading], 15)
+                                    .padding([.leading], prop.isLargerScreen ? 15 : 5)
                                     .background(
                                         Rectangle()//RoundedRectangle(cornerRadius: 15)
                                             .fill(.clear)
@@ -521,13 +512,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                             )
                                     )
                                     .foregroundStyle(Color.EZNotesBlue)
-                                    .padding(self.isLargerScreen ? 10 : 8)
+                                    .padding(prop.isLargerScreen ? 10 : 4)
                                     .tint(Color.EZNotesBlue)
                                     .font(.system(size: 18))
                                     .fontWeight(.medium)
                                     .autocapitalization(.none)
                                     .disableAutocorrection(true)
-                                    .keyboardType(.alphabet)
+                                    .onSubmit { assignUDKey(key: "temp_username", value: self.username) }
                                 
                                 Text("Email")
                                     .frame(
@@ -535,14 +526,14 @@ struct SignUpScreen : View, KeyboardReadable {
                                         ? UIDevice.current.orientation.isLandscape
                                         ? prop.size.width - 800
                                         : prop.size.width - 450
-                                        : prop.size.width - 100,
+                                        : prop.size.width - 80,
                                         height: 5,
                                         alignment: .leading
                                     )
-                                    .padding(.top, 15)
+                                    .padding(.top, 10)
                                     .font(
                                         .system(
-                                            size: self.isLargerScreen ? 25 : 20
+                                            size: prop.isLargerScreen ? 18 : 13
                                         )
                                     )
                                     .foregroundStyle(.white)
@@ -555,9 +546,9 @@ struct SignUpScreen : View, KeyboardReadable {
                                         ? prop.size.width - 800
                                         : prop.size.width - 450
                                         : prop.size.width - 100,
-                                        height: self.isLargerScreen ? 40 : 30
+                                        height: prop.isLargerScreen ? 40 : 30
                                     )
-                                    .padding([.leading], 15)
+                                    .padding([.leading], prop.isLargerScreen ? 15 : 5)
                                     .background(
                                         Rectangle()//RoundedRectangle(cornerRadius: 15)
                                             .fill(.clear)
@@ -570,13 +561,14 @@ struct SignUpScreen : View, KeyboardReadable {
                                             )
                                     )
                                     .foregroundStyle(Color.EZNotesBlue)
-                                    .padding(self.isLargerScreen ? 10 : 8)
+                                    .padding(prop.isLargerScreen ? 10 : 4)
                                     .tint(Color.EZNotesBlue)
                                     .font(.system(size: 18))
                                     .fontWeight(.medium)
                                     .autocapitalization(.none)
                                     .disableAutocorrection(true)
-                                    .keyboardType(.emailAddress)
+                                    //.keyboardType(.emailAddress)
+                                    .onSubmit { assignUDKey(key: "temp_email", value: self.email) }
                                 
                                 Text("Password")
                                     .frame(
@@ -584,14 +576,14 @@ struct SignUpScreen : View, KeyboardReadable {
                                         ? UIDevice.current.orientation.isLandscape
                                         ? prop.size.width - 800
                                         : prop.size.width - 450
-                                        : prop.size.width - 100,
+                                        : prop.size.width - 80,
                                         height: 5,
                                         alignment: .leading
                                     )
-                                    .padding(.top, 15)
+                                    .padding(.top, 10)
                                     .font(
                                         .system(
-                                            size: self.isLargerScreen ? 25 : 20
+                                            size: prop.isLargerScreen ? 18 : 13
                                         )
                                     )
                                     .foregroundStyle(.white)
@@ -604,9 +596,9 @@ struct SignUpScreen : View, KeyboardReadable {
                                         ? prop.size.width - 800
                                         : prop.size.width - 450
                                         : prop.size.width - 100,
-                                        height: self.isLargerScreen ? 40 : 30
+                                        height: prop.isLargerScreen ? 40 : 30
                                     )
-                                    .padding([.leading], 15)
+                                    .padding([.leading], prop.isLargerScreen ? 15 : 5)
                                     .background(
                                         Rectangle()//RoundedRectangle(cornerRadius: 15)
                                             .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
@@ -619,13 +611,14 @@ struct SignUpScreen : View, KeyboardReadable {
                                             )
                                     )
                                     .foregroundStyle(Color.EZNotesBlue)
-                                    .padding(self.isLargerScreen ? 10 : 8)
+                                    .padding(prop.isLargerScreen ? 10 : 4)
                                     .tint(Color.EZNotesBlue)
                                     .font(.system(size: 18))
                                     .fontWeight(.medium)
                                     .focused($passwordFieldInFocus)
                                     .autocapitalization(.none)
                                     .disableAutocorrection(true)
+                                    .onSubmit { assignUDKey(key: "temp_password", value: self.password) }
                             } else if self.section == "select_state_and_college" {
                                 /* TODO: This code is going to need a lot of refactoring. It is very repetitive.. just want it to work for now lol. */
                                 HStack {
@@ -649,13 +642,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                             if self.college == "" {
                                                 self.state.removeAll()
                                                 
-                                                UserDefaults.standard.removeObject(forKey: "temp_state")
+                                                removeUDKey(key: "temp_state")
                                                 return
                                             }
                                             if self.majorField == "" {
                                                 self.college.removeAll();
                                                 
-                                                UserDefaults.standard.removeObject(forKey: "temp_college")
+                                                removeUDKey(key: "temp_college")
                                                 
                                                 /* MARK: Ensure that, when going back, there is content to show. If not, load the content. */
                                                 if self.colleges.count == 0 { self.get_custom_colleges() }
@@ -664,7 +657,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             
                                             self.majorField.removeAll()
                                             
-                                            UserDefaults.standard.removeObject(forKey: "temp_field")
+                                            removeUDKey(key: "temp_field")
                                             
                                             /* MARK: Ensure that, when going back, there is content to show. If not, load the content. */
                                             if self.majorFields.count == 0 { self.get_custom_major_fields(collegeName: self.college) }
@@ -694,7 +687,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             .system(
                                                 size: prop.isIpad
                                                 ? 90
-                                                : self.isLargerScreen
+                                                : prop.isLargerScreen
                                                 ? 35
                                                 : 25
                                             )
@@ -715,7 +708,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                     }
                                 }
                                 .frame(maxWidth: .infinity, alignment: .top)
-                                .padding(.top, self.isLargerScreen ? -25 : -20)
+                                .padding(.top, prop.isLargerScreen ? -25 : -20)
                                 
                                 VStack {
                                     /*Text(self.state == ""
@@ -773,7 +766,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                             Button(action: {
                                                                 if self.state == "" {
                                                                     self.state = value
-                                                                    UserDefaults.standard.set(value, forKey: "temp_state")
+                                                                    assignUDKey(key: "temp_state", value: value)
                                                                     
                                                                     if self.colleges.count > 0 {
                                                                         self.colleges.removeAll()
@@ -795,7 +788,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                         return
                                                                     }
                                                                     
-                                                                    UserDefaults.standard.set(value, forKey: "temp_college")
+                                                                    assignUDKey(key: "temp_college", value: value)
                                                                     
                                                                     self.college = value
                                                                     self.get_custom_major_fields(collegeName: self.college)
@@ -805,8 +798,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                         return
                                                                     }
                                                                     
-                                                                    UserDefaults.standard.set(value, forKey: "temp_field")
-                                                                    print("HI")
+                                                                    assignUDKey(key: "temp_field", value: value)
                                                                     
                                                                     self.majorField = value
                                                                     self.get_majors()
@@ -817,7 +809,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                         return
                                                                     }
                                                                     
-                                                                    UserDefaults.standard.set(value, forKey: "temp_major")
+                                                                    assignUDKey(key: "temp_major", value: value)
                                                                     
                                                                     self.major = value
                                                                     self.checkInfoAlert = true
@@ -899,11 +891,11 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         if self.makeContentRed { self.makeContentRed = false }
                                                         
                                                         self.accountID = resp!["Message"] as! String
-                                                        UserDefaults.standard.set(self.accountID, forKey: "temp_account_id")
+                                                        assignUDKey(key: "temp_account_id", value: self.accountID)
                                                         
                                                         self.section = "code_input"
                                                         
-                                                        UserDefaults.standard.set("code_input", forKey: "last_signup_section")
+                                                        assignUDKey(key: "last_signup_section", value: "code_input")
                                                     }
                                                 }) { Text("Looks Good") }
                                                 
@@ -924,7 +916,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     .foregroundStyle(Color.EZNotesRed)
                                                     .font(
                                                         .system(
-                                                            size: prop.isIpad || self.isLargerScreen
+                                                            size: prop.isIpad || prop.isLargerScreen
                                                             ? 15
                                                             : 13
                                                         )
@@ -939,7 +931,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     ? prop.size.width - 800
                                                     : prop.size.width - 450
                                                     : prop.size.width - 100,
-                                                    height: self.isLargerScreen ? 40 : 30
+                                                    height: prop.isLargerScreen ? 40 : 30
                                                 )
                                                 .padding([.leading], 15)
                                                 .background(
@@ -954,7 +946,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         )
                                                 )
                                                 .foregroundStyle(Color.EZNotesBlue)
-                                                .padding(self.isLargerScreen ? 10 : 8)
+                                                .padding(prop.isLargerScreen ? 10 : 8)
                                                 .tint(Color.EZNotesBlue)
                                                 .font(.system(size: 18))
                                                 .fontWeight(.medium)
@@ -1001,7 +993,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                 if !self.noSuchCollege {
                                                                     self.collegeIsOther = false
                                                                     
-                                                                    UserDefaults.standard.set(self.otherCollege, forKey: "temp_college")
+                                                                    assignUDKey(key: "temp_college", value: self.otherCollege)
                                                                     self.college = self.otherCollege
                                                                     self.otherCollege.removeAll()
                                                                 }
@@ -1011,7 +1003,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         }
                                                         
                                                         if self.majorFieldIsOther {
-                                                            UserDefaults.standard.set(self.otherMajorField, forKey: "temp_field")
+                                                            assignUDKey(key: "temp_filed", value: self.otherMajorField)
                                                             self.majorField = self.otherMajorField
                                                             self.otherMajorField.removeAll()
                                                             self.get_majors()
@@ -1069,7 +1061,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                     ? prop.size.width - 800
                                     : prop.size.width - 450
                                     : prop.size.width - 100,
-                                    height: self.isLargerScreen ? 40 : 30
+                                    height: prop.isLargerScreen ? 40 : 30
                                 )
                                 .padding([.leading], 15)
                                 .background(
@@ -1108,25 +1100,33 @@ struct SignUpScreen : View, KeyboardReadable {
                                     accountID: self.accountID,
                                     borderBottomColor: self.borderBottomColor,
                                     borderBottomColorError: self.borderBottomColorError,
-                                    isLargerScreen: self.isLargerScreen,
+                                    isLargerScreen: prop.isLargerScreen,
                                     action: setLoginStatus,
                                     makeContentRed: $makeContentRed
                                 )
                             }
                         }
-                        .padding(.top, self.isLargerScreen ? 25 : 20)
+                        .padding(.top, prop.isLargerScreen ? 25 : 20)
                     }
                     .padding()
-                    .frame(maxWidth: .infinity, alignment: .top) // Keep VStack aligned to the top
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top) // Keep VStack aligned to the top
                     .ignoresSafeArea(edges: .bottom) // Ignore keyboard safe area
-                    .onChange(of: prop.size.height) {
-                        if prop.size.height < self.lastHeight { self.isLargerScreen = prop.size.height / 2.5 > 200 }
-                        else { self.isLargerScreen = prop.size.height / 2.5 > 300 }
+                    /*.onChange(of: prop.size.height) {
+                        if prop.size.height < self.lastHeight {
+                            self.isLargerScreen = prop.size.height / 2.5 > 200 || prop.size.height / 2.5 > 180
+                        }
+                        else {
+                            if prop.size.height == self.screenHeight {
+                                self.isLargerScreen = prop.size.height / 2.5 > 300
+                            } else {
+                                self.isLargerScreen = prop.size.height / 2.5 > 200
+                            }
+                        }
                         
                         self.lastHeight = prop.size.height
-                    }
+                    }*/
                     
-                    Spacer()
+                    //Spacer()
                     
                     if self.section != "select_plan" && self.section != "select_state_and_college" && self.section != "loading_code" {
                         VStack {
@@ -1340,7 +1340,7 @@ struct SignUpScreen : View, KeyboardReadable {
                             .system(
                                 size: prop.isIpad
                                 ? 90
-                                : self.isLargerScreen
+                                : prop.isLargerScreen
                                 ? 35
                                 : 25
                             )
@@ -1352,7 +1352,7 @@ struct SignUpScreen : View, KeyboardReadable {
                         .foregroundStyle(self.wrongCode || self.userExists || self.emailExists ? Color.EZNotesRed : Color.white)
                         .font(
                             .system(
-                                size: prop.isIpad || self.isLargerScreen
+                                size: prop.isIpad || prop.isLargerScreen
                                 ? 15
                                 : 13
                             )
@@ -1394,6 +1394,7 @@ struct SignUpScreen : View, KeyboardReadable {
         .onAppear {
             self.isLargerScreen = prop.size.height / 2.5 > 300
             self.lastHeight = prop.size.height
+            self.screenHeight = prop.size.height
             
             /* MARK: If the key "username" exists in `UserDefaults`, then there has been an account created on the device. */
             /* MARK: This will not work if users wipe data from the app. */
