@@ -86,6 +86,15 @@ struct HomeScreen: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 90 : 60)
                 .background(Color.EZNotesRed.opacity(0.85))
+                .onAppear {
+                    UserDefaults.standard.removeObject(forKey: "plan_selected")
+                    UserDefaults.standard.removeObject(forKey: "username")
+                    UserDefaults.standard.removeObject(forKey: "email")
+                    UserDefaults.standard.removeObject(forKey: "major_field")
+                    UserDefaults.standard.removeObject(forKey: "major_name")
+                    UserDefaults.standard.removeObject(forKey: "college_state")
+                    UserDefaults.standard.removeObject(forKey: "college_name")
+                }
             }
             
             /* "Header" */

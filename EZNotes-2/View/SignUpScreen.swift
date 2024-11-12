@@ -127,6 +127,15 @@ struct SignUpScreen : View, KeyboardReadable {
             forKey: "account_id"
         )
         UserDefaults.standard.set("main", forKey: "last_signup_section")
+        
+        /* MARK: Ensure that none of the temporary keys in `UserDefaults` carry over after signing up. */
+        UserDefaults.standard.removeObject(forKey: "temp_college")
+        UserDefaults.standard.removeObject(forKey: "temp_field")
+        UserDefaults.standard.removeObject(forKey: "temp_major")
+        UserDefaults.standard.removeObject(forKey: "temp_state")
+        UserDefaults.standard.removeObject(forKey: "temp_username")
+        UserDefaults.standard.removeObject(forKey: "temp_email")
+        UserDefaults.standard.removeObject(forKey: "temp_password")
         self.userHasSignedIn = true
     }
     
@@ -162,12 +171,12 @@ struct SignUpScreen : View, KeyboardReadable {
     
     @State private var loadingMajorFields: Bool = false
     @State private var noSuchCollege: Bool = false
-    private func get_custom_major_fields() {
+    private func get_custom_major_fields(collegeName: String) {
         self.loadingMajorFields = true
         
         RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
             State: self.state,
-            College: self.college
+            College: collegeName
         ))
         .perform(action: get_custom_college_fields_req) { statusCode, resp in
             self.loadingMajorFields = false
@@ -291,6 +300,20 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     
                                                     self.section = "select_state_and_college"
                                                     UserDefaults.standard.set(self.section, forKey: "last_signup_section")
+                                                    
+                                                    /* MARK: Remove all of the temporary information. */
+                                                    UserDefaults.standard.removeObject(forKey: "temp_college")
+                                                    UserDefaults.standard.removeObject(forKey: "temp_field")
+                                                    UserDefaults.standard.removeObject(forKey: "temp_major")
+                                                    UserDefaults.standard.removeObject(forKey: "temp_state")
+                                                    UserDefaults.standard.removeObject(forKey: "temp_username")
+                                                    UserDefaults.standard.removeObject(forKey: "temp_email")
+                                                    UserDefaults.standard.removeObject(forKey: "temp_password")
+                                                    
+                                                    /* MARK: Ensure that the whole "select_state_and_college" section will restart. */
+                                                    self.state.removeAll()
+                                                    self.majorField.removeAll()
+                                                    self.major.removeAll()
                                                 }
                                             default: break
                                             }
@@ -613,19 +636,26 @@ struct SignUpScreen : View, KeyboardReadable {
                                         
                                         if self.state == "" {
                                             /* MARK: Ensure the keys in UserDefaults are deleted to avoid bugs. */
-                                            UserDefaults.standard.removeObject(forKey: "temp_state")
-                                            UserDefaults.standard.removeObject(forKey: "temp_college")
-                                            UserDefaults.standard.removeObject(forKey: "temp_field")
-                                            UserDefaults.standard.removeObject(forKey: "temp_major")
+                                            //UserDefaults.standard.removeObject(forKey: "temp_state")
+                                            //UserDefaults.standard.removeObject(forKey: "temp_college")
+                                            //UserDefaults.standard.removeObject(forKey: "temp_field")
+                                            //UserDefaults.standard.removeObject(forKey: "temp_major")
                                             
                                             self.section = "main"
                                             UserDefaults.standard.set("main", forKey: "last_signup_section")
                                         }
                                         else {
                                             /* MARK: The below operations will automatically cause the "section" of "select_state_and_college" to go back. */
-                                            if self.college == "" { self.state.removeAll(); return }
+                                            if self.college == "" {
+                                                self.state.removeAll()
+                                                
+                                                UserDefaults.standard.removeObject(forKey: "temp_state")
+                                                return
+                                            }
                                             if self.majorField == "" {
                                                 self.college.removeAll();
+                                                
+                                                UserDefaults.standard.removeObject(forKey: "temp_college")
                                                 
                                                 /* MARK: Ensure that, when going back, there is content to show. If not, load the content. */
                                                 if self.colleges.count == 0 { self.get_custom_colleges() }
@@ -634,8 +664,10 @@ struct SignUpScreen : View, KeyboardReadable {
                                             
                                             self.majorField.removeAll()
                                             
+                                            UserDefaults.standard.removeObject(forKey: "temp_field")
+                                            
                                             /* MARK: Ensure that, when going back, there is content to show. If not, load the content. */
-                                            if self.majorFields.count == 0 { self.get_custom_major_fields() }
+                                            if self.majorFields.count == 0 { self.get_custom_major_fields(collegeName: self.college) }
                                         }
                                     }) {
                                         ZStack {
@@ -766,7 +798,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                     UserDefaults.standard.set(value, forKey: "temp_college")
                                                                     
                                                                     self.college = value
-                                                                    self.get_custom_major_fields()
+                                                                    self.get_custom_major_fields(collegeName: self.college)
                                                                 } else if self.majorField == "" {
                                                                     if value == "Other" {
                                                                         self.majorFieldIsOther = true
@@ -774,6 +806,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                     }
                                                                     
                                                                     UserDefaults.standard.set(value, forKey: "temp_field")
+                                                                    print("HI")
                                                                     
                                                                     self.majorField = value
                                                                     self.get_majors()
@@ -858,7 +891,6 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                 }
                                                             }
                                                             
-                                                            self.section = "code_input"
                                                             self.serverError = true
                                                             return
                                                         }
@@ -867,6 +899,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         if self.makeContentRed { self.makeContentRed = false }
                                                         
                                                         self.accountID = resp!["Message"] as! String
+                                                        UserDefaults.standard.set(self.accountID, forKey: "temp_account_id")
+                                                        
                                                         self.section = "code_input"
                                                         
                                                         UserDefaults.standard.set("code_input", forKey: "last_signup_section")
@@ -937,18 +971,43 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 .alert(self.collegeIsOther ? "Do we have the college right?" : "Do we have the Major Field correct?", isPresented: $showCheckCollegeAlert) {
                                                     Button(action: {
                                                         if self.collegeIsOther {
-                                                            self.get_custom_major_fields()
-                                                            
-                                                            /* MARK: First, ensure that there is actually a college with the name given in the state. */
-                                                            if !self.noSuchCollege {
-                                                                self.collegeIsOther = false
+                                                            /* MARK: First, ensure the state actually has the college being inputted. */
+                                                            RequestAction<CheckStateHasCollege>(parameters: CheckStateHasCollege(
+                                                                State: self.state, College: self.otherCollege
+                                                            ))
+                                                            .perform(action: check_college_exists_in_state_req) { statusCode, resp in
+                                                                guard resp != nil && statusCode == 200 else {
+                                                                    guard let resp = resp else {
+                                                                        self.serverError = true
+                                                                        return
+                                                                    }
+                                                                    
+                                                                    guard resp.keys.contains("Message") else {
+                                                                        self.serverError = true
+                                                                        return
+                                                                    }
+                                                                    
+                                                                    if resp["Message"] as! String == "no_such_college_in_state" {
+                                                                        self.noSuchCollege = true
+                                                                        return
+                                                                    }
+                                                                    self.serverError = true
+                                                                    return
+                                                                }
                                                                 
-                                                                UserDefaults.standard.set(self.otherCollege, forKey: "temp_college")
-                                                                self.college = self.otherCollege
-                                                                self.otherCollege.removeAll()
+                                                                self.get_custom_major_fields(collegeName: self.otherCollege)
+                                                                
+                                                                /* MARK: First, ensure that there is actually a college with the name given in the state. */
+                                                                if !self.noSuchCollege {
+                                                                    self.collegeIsOther = false
+                                                                    
+                                                                    UserDefaults.standard.set(self.otherCollege, forKey: "temp_college")
+                                                                    self.college = self.otherCollege
+                                                                    self.otherCollege.removeAll()
+                                                                }
+                                                                
+                                                                return
                                                             }
-                                                            
-                                                            return
                                                         }
                                                         
                                                         if self.majorFieldIsOther {
@@ -1073,6 +1132,8 @@ struct SignUpScreen : View, KeyboardReadable {
                         VStack {
                             Button(action: {
                                 if section == "main" {
+                                    if self.wrongCodeAttemptsMet { self.wrongCodeAttemptsMet = false }
+                                    
                                     if self.username == "" || self.email == "" || self.password == "" {
                                         self.makeContentRed = true
                                         return
@@ -1156,11 +1217,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                             UserDefaults.standard.set(self.username, forKey: "temp_username")
                                             UserDefaults.standard.set(self.email, forKey: "temp_email")
                                             UserDefaults.standard.set(self.password, forKey: "temp_password")
+                                            //UserDefaults.standard.set(self.accountID, forKey: "temp_account_id")
                                         }
                                     }
                                 } else {
                                     /* TODO: Is the below if statement needed? */
                                     if self.section == "code_input" {
+                                        print("\(accountID)!")
                                         RequestAction<SignUp2RequestData>(
                                             parameters: SignUp2RequestData(
                                                 AccountID: accountID,
@@ -1173,6 +1236,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                             
                                             guard resp != nil && statusCode == 200 else {
                                                 self.wrongCodeAttempts += 1
+                                                
+                                                if let resp = resp { print(resp) }
                                                 
                                                 if self.wrongCodeAttempts >= 3 {
                                                     /* MARK: Delete the signup process in the backend. */
@@ -1192,6 +1257,14 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     /* MARK: Go back to the "main" section. Reset the "last_signup_section" key. */
                                                     self.section = "main"
                                                     UserDefaults.standard.set("main", forKey: "last_signup_section")
+                                                    
+                                                    UserDefaults.standard.removeObject(forKey: "temp_college")
+                                                    UserDefaults.standard.removeObject(forKey: "temp_field")
+                                                    UserDefaults.standard.removeObject(forKey: "temp_major")
+                                                    UserDefaults.standard.removeObject(forKey: "temp_state")
+                                                    UserDefaults.standard.removeObject(forKey: "temp_username")
+                                                    UserDefaults.standard.removeObject(forKey: "temp_email")
+                                                    UserDefaults.standard.removeObject(forKey: "temp_password")
                                                     
                                                     /* MARK: Reset code attemp information. */
                                                     self.wrongCodeAttempts = 0
@@ -1325,8 +1398,10 @@ struct SignUpScreen : View, KeyboardReadable {
             /* MARK: If the key "username" exists in `UserDefaults`, then there has been an account created on the device. */
             /* MARK: This will not work if users wipe data from the app. */
             if UserDefaults.standard.object(forKey: "username") != nil {
-                self.alreadySignedUp = true
-                return
+                if UserDefaults.standard.object(forKey: "plan_selected") != nil {
+                    self.alreadySignedUp = true
+                    return
+                }
             }
             
             self.alreadySignedUp = false
@@ -1341,6 +1416,7 @@ struct SignUpScreen : View, KeyboardReadable {
             if UserDefaults.standard.object(forKey: "temp_username") != nil { self.username = UserDefaults.standard.string(forKey: "temp_username")! }
             if UserDefaults.standard.object(forKey: "temp_email") != nil { self.email = UserDefaults.standard.string(forKey: "temp_email")! }
             if UserDefaults.standard.object(forKey: "temp_password") != nil { self.password = UserDefaults.standard.string(forKey: "temp_password")! }
+            if UserDefaults.standard.object(forKey: "temp_account_id") != nil { self.accountID = UserDefaults.standard.string(forKey: "temp_account_id")! }
             
             /* MARK: FOR DEVELOPMENT PURPOSES ONLY. */
             //self.section = "main"
@@ -1364,7 +1440,7 @@ struct SignUpScreen : View, KeyboardReadable {
                 //self.loadingMajorFields = true
                 
                 guard UserDefaults.standard.object(forKey: "temp_field") != nil else {
-                    self.get_custom_major_fields()
+                    self.get_custom_major_fields(collegeName: self.college)
                     return
                 }
                 
@@ -1376,6 +1452,41 @@ struct SignUpScreen : View, KeyboardReadable {
                     return
                 }
                 self.major = UserDefaults.standard.string(forKey: "temp_major")!
+                
+                self.section = "loading_code"
+                
+                RequestAction<SignUpRequestData>(
+                    parameters: SignUpRequestData(
+                        Username: username,
+                        Email: email,
+                        Password: password,
+                        College: college,
+                        State: state,
+                        Field: majorField,
+                        Major: major
+                    )
+                ).perform(action: complete_signup1_req) { statusCode, resp in
+                    guard resp != nil && statusCode == 200 else {
+                        if let resp = resp {
+                            if resp["ErrorCode"] as! Int == 0x6970 {
+                                self.section = "main"
+                                self.userExists = true
+                                return
+                            }
+                        }
+                        
+                        self.serverError = true
+                        return
+                    }
+                    
+                    if self.userExists { self.userExists = false }
+                    if self.makeContentRed { self.makeContentRed = false }
+                    
+                    self.accountID = resp!["Message"] as! String
+                    self.section = "code_input"
+                    
+                    UserDefaults.standard.set("code_input", forKey: "last_signup_section")
+                }
                 
                 //if UserDefaults.standard.object(forKey: "temp_major") != nil { self.major = UserDefaults.standard.string(forKey: "temp_major")! }*/
             }

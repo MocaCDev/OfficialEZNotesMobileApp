@@ -755,14 +755,14 @@ public struct Plans: View {
                                             self.isPlanPicked = false
                                             self.paymentDone = true
                                             
+                                            UserDefaults.standard.set(true, forKey: "plan_selected")
+                                            
                                             /* Continue to account. */
                                             //UserDefaults.standard.set(self.username, forKey: "username")
                                             //UserDefaults.standard.set(self.email, forKey: "email")
                                             //UserDefaults.standard.set(customerId!, forKey: "client_id")
                                             
-                                            if action != nil {
-                                                DispatchQueue.main.async { action() }
-                                            }
+                                            DispatchQueue.main.async { action() }
                                         }
                                     }) {
                                         Text("Submit Payment")
@@ -813,6 +813,8 @@ public struct Plans: View {
                                         self.paymentGood = true
                                         self.isPlanPicked = false
                                         self.paymentDone = true
+                                        
+                                        UserDefaults.standard.set(true, forKey: "plan_selected")
                                         
                                         /* Continue to account. */
                                         //UserDefaults.standard.set(self.username, forKey: "username")

@@ -9,13 +9,18 @@ import SwiftUI
 
 /* MARK: URLs used for requests. */
 //let server = "https://www.eznotes.space"
-let server = "http://192.168.1.114:8088"
+let server = "http://192.168.0.10:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
  * to be sent to the endpoint.
  * */
 struct ReqPlaceholder {}
+
+struct CheckStateHasCollege {
+    let State: String
+    let College: String
+}
 
 struct UpdateCollegeNameData {
     let NewCollegeName: String
@@ -281,6 +286,12 @@ let get_custom_college_fields_req: CSIARequest = CSIARequest(
     url: "\(server)/generate_fields_for_custom_college",
     method: "get",
     reqData: GetCustomCollegeFieldsData.self
+)
+
+let check_college_exists_in_state_req: CSIARequest = CSIARequest(
+    url: "\(server)/check_college_exists_in_state",
+    method: "get",
+    reqData: CheckStateHasCollege.self
 )
 
 let get_custom_topics_req: CSIARequest = CSIARequest(

@@ -418,6 +418,11 @@ struct RequestAction<T> {
                 request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
                 request.addValue(params.NewMajorField, forHTTPHeaderField: "New-Major-Field")
                 break
+            case is CheckStateHasCollege.Type:
+                guard let params: CheckStateHasCollege = (parameters as? CheckStateHasCollege) else { return }
+                request.addValue(params.State, forHTTPHeaderField: "State")
+                request.addValue(params.College, forHTTPHeaderField: "College")
+                break
             case is UpdateMajorData.Type:
                 guard let params: UpdateMajorData = (parameters as? UpdateMajorData) else { return }
                 request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
