@@ -19,13 +19,21 @@ public struct Plans: View {
     private let planNames: [String: String] = [
         "basic_plan_monthly": "Monthly Basic Plan",
         "basic_plan_annually": "Annual Basic Plan",
-        "pro_monthly_plan": "Monthly Pro Plan",
-        "pro_annual_plan": "Annual Pro Plan"
+        "pro_plan_monthly": "Monthly Pro Plan",
+        "pro_plan_annually": "Annual Pro Plan"
+    ]
+    
+    private let planCosts: [String: String] = [
+        "Monthly Basic Plan": "12",
+        "Annual Basic Plan": "126",
+        "Monthly Pro Plan": "16",
+        "Annual Pro Plan": "170"
     ]
     
     @State private var isPlanPicked: Bool = false
     @State private var planPicked: String = ""
     @State private var planName: String = "" /* MARK: The name to display at the top of the payment popover. */
+    @State private var planPrice: String = ""
     @State private var cardHolderName: String = ""
     @State private var cardNumber: String = ""
     @State private var expMonth: String = ""
@@ -217,7 +225,7 @@ public struct Plans: View {
                                     .fill(Color.EZNotesBlue)
                             )
                             
-                            Text("From $10.50/month")
+                            Text("From $12/month")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .foregroundStyle(.white)
                                 .font(.system(size: 12))
@@ -693,9 +701,12 @@ public struct Plans: View {
                                                 }
                                             )
                                             .onChange(of: self.cvc) {
-                                                if self.cvc.count >= 3 {
-                                                    self.cvc = String(self.cvc.prefix(3))
+                                                if self.cvc.count == 3 {
+                                                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                                                 }
+                                                /*if self.cvc.count >= 3 {
+                                                    self.cvc = String(self.cvc.prefix(3))
+                                                }*/
                                             }
                                     }
                                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -703,14 +714,14 @@ public struct Plans: View {
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 
-                                Text("All purchases are handled securely by Stripe. Stripe is our partner for processing payments for subscriptions. If you have any questions, do not hesitate to contact us.\n\nBy clicking \"Submit Payment\" below, you agree to EZNotes Terms and Conditions and confirm you have read and understood our Privacy and Policy.")
+                                Text("By clicking \"Submit Payment\" you are **purchasing a recurring subscription**. Upon clicking \"Submit Payment\", you agree to the payment of **$\(self.planPrice)/\(self.planPicked.contains("monthly") ? "month" : "year")**.\n\nAll purchases are handled securely by Stripe. Stripe is our partner for processing payments for subscriptions. If you have any questions, do not hesitate to contact us.\n\nBy clicking \"Submit Payment\" below, you agree to EZNotes Terms and Conditions and confirm you have read and understood our Privacy and Policy.")
                                     .frame(maxWidth: .infinity, alignment: .center)
                                     .padding(.top)
                                     .padding(.bottom, 2)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(.gray)
                                     .font(.system(size: self.isLargerScreen ? 13 : 11))
                                     .minimumScaleFactor(0.5)
-                                    .fontWeight(.light)
+                                    .fontWeight(.medium)
                                 
                                 HStack {
                                     Button(action: { self.showPrivacyPolicy.toggle() }) {
@@ -724,6 +735,7 @@ public struct Plans: View {
                                     .buttonStyle(NoLongPressButtonStyle())
                                     
                                     Divider()
+                                        .background(.white)
                                         .frame(height: 15)
                                     
                                     Button(action: { self.showPrivacyPolicy.toggle() }) {
@@ -863,6 +875,8 @@ public struct Plans: View {
                 .onAppear(perform: {
                     /* MARK: This is so stupid, but it is needed to be able to correctly display the title. */
                     self.planName = self.planNames[self.planPicked]!
+                    
+                    self.planPrice = self.planCosts[self.planName]!
                 })
             }
         }

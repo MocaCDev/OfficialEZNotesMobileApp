@@ -76,8 +76,8 @@ struct LoginScreen: View, KeyboardReadable {
                                 size: prop.isIpad
                                 ? 90
                                 : prop.isLargerScreen
-                                ? 40
-                                : 30
+                                ? 35
+                                : 25
                             )
                         )
                         .fontWeight(.bold)
@@ -172,13 +172,30 @@ struct LoginScreen: View, KeyboardReadable {
                         .keyboardType(.alphabet)
                     
                     ZStack {
-                        Button(action: { print("Forgot Username") }) {
-                            Text("Forgot Username?")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(Color.EZNotesBlue)
-                                .font(Font.custom("Poppins-ExtraLight", size: 14))
+                        HStack {
+                            /* TODO: Implement "Forgot Username" section. It will require the user to have remembered the email address used for the account. */
+                            Button(action: { print("Forgot Username") }) {
+                                Text("Forgot Username?")
+                                    .frame(alignment: .leading)
+                                    .foregroundStyle(Color.EZNotesBlue)
+                                    .font(Font.custom("Poppins-Regular", size: 14))
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            
+                            Divider()
+                                .background(Color.white)
+                                .frame(maxHeight: 10)
+                            
+                            /* TODO: Implement "Forgot Email" section. It will require the user to have remembered the username used for the account. */
+                            Button(action: { print("Forgot Email") }) {
+                                Text("Forgot Email?")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(Color.EZNotesBlue)
+                                    .font(Font.custom("Poppins-Regular", size: 13))
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
                         }
-                        .buttonStyle(NoLongPressButtonStyle())
+                        .frame(maxWidth: .infinity)
                     }
                     .frame(maxWidth: prop.isIpad
                            ? UIDevice.current.orientation.isLandscape
@@ -242,7 +259,7 @@ struct LoginScreen: View, KeyboardReadable {
                             Text("Forgot Password?")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .foregroundStyle(Color.EZNotesBlue)
-                                .font(Font.custom("Poppins-ExtraLight", size: 14))
+                                .font(Font.custom("Poppins-Regular", size: 13))
                         }
                         .buttonStyle(NoLongPressButtonStyle())
                     }

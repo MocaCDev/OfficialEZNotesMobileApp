@@ -153,14 +153,12 @@ struct AccountPopup: View {
                         if self.errorUploadingPFP {
                             Text("Error saving PFP. Try Again.")
                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                .padding(.top, 8)
                                 .foregroundStyle(.black)
                                 .font(Font.custom("Poppins-Regular", size: 12))
                                 .minimumScaleFactor(0.5)
                         } else {
                             Text("Error saving PFP Background. Try Again.")
                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                .padding(.top, 8)
                                 .foregroundStyle(.black)
                                 .font(Font.custom("Poppins-Regular", size: 12))
                                 .minimumScaleFactor(0.5)
@@ -178,9 +176,8 @@ struct AccountPopup: View {
                         }
                         .frame(maxWidth: 25, maxHeight: .infinity, alignment: .trailing)
                         .padding(.trailing, 10)
-                        .padding(.top, 8)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: 35)
+                    .frame(maxWidth: .infinity, maxHeight: 30)
                     .background(Color.EZNotesRed)
                     .onAppear {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
@@ -203,14 +200,14 @@ struct AccountPopup: View {
                             if self.pfpUploadStatus == "good" {
                                 Text("Updated PFP")
                                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                    .padding(.top, 8)
+                                    //.padding(.top, 8)
                                     .foregroundStyle(.black)
                                     .font(Font.custom("Poppins-Regular", size: 12))
                                     .minimumScaleFactor(0.5)
                             } else {
                                 Text("Updated PFP Background")
                                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                    .padding(.top, 8)
+                                    ///.padding(.top, 8)
                                     .foregroundStyle(.black)
                                     .font(Font.custom("Poppins-Regular", size: 12))//.setFontSizeAndWeight(weight: .medium)
                                     .minimumScaleFactor(0.5)
@@ -232,9 +229,8 @@ struct AccountPopup: View {
                             }
                             .frame(maxWidth: 25, maxHeight: .infinity, alignment: .trailing)
                             .padding(.trailing, 10)
-                            .padding(.top, 8)
                         }
-                        .frame(maxWidth: .infinity, maxHeight: 35)
+                        .frame(maxWidth: .infinity, maxHeight: 25)
                         .background(Color.EZNotesGreen)
                         .offset(y: self.statusBarYOffset)
                         .onAppear {
@@ -324,6 +320,7 @@ struct AccountPopup: View {
                                             .setFontSizeAndWeight(weight: .semibold, size: 20, design: .rounded)
                                         
                                         Divider()
+                                            .background(.white)
                                             .frame(alignment: .leading)
                                         
                                         Text("0 Friends")
@@ -340,8 +337,14 @@ struct AccountPopup: View {
                                         .minimumScaleFactor(0.5)
                                     
                                     HStack {
-                                        Text(self.accountInfo.college != "" ? self.accountInfo.college : "No University")
-                                            .frame(minWidth: 60, maxHeight: 20, alignment: .leading)
+                                        Text("Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 12))
+                                            .minimumScaleFactor(0.5)
+                                            .multilineTextAlignment(.leading)
+                                        /*Text(self.accountInfo.college != "" ? self.accountInfo.college : "No University")
+                                            .frame(maxHeight: 20, alignment: .leading)
                                             .foregroundStyle(.white)
                                             .setFontSizeAndWeight(weight: .light, size: 14, design: .rounded)
                                             .minimumScaleFactor(0.5)
@@ -354,9 +357,8 @@ struct AccountPopup: View {
                                             .frame(maxHeight: 20, alignment: .leading)
                                             .foregroundStyle(.white)
                                             .setFontSizeAndWeight(weight: .light, size: 14, design: .rounded)
-                                            .minimumScaleFactor(0.5)
+                                            .minimumScaleFactor(0.5)*/
                                     }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                                 .padding(.leading, 5)
                             }
@@ -451,10 +453,10 @@ struct AccountPopup: View {
                     .padding(.bottom, 15)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                .padding([.bottom], self.pfpUploadStatus != "none" || self.pfpBgUploadStatus != "none" ? 0 : -10)
+                .padding([.bottom], self.pfpUploadStatus != "none" || self.pfpBgUploadStatus != "none" ? -10 : -10)
                 .padding(.top, self.pfpUploadStatus != "none" || self.pfpBgUploadStatus != "none" ? 2 : 0)
             }
-            .frame(maxWidth: .infinity, maxHeight: 200)
+            .frame(maxWidth: .infinity, maxHeight: 220)
             .background(
                 accountInfo.profileBackgroundPicture
                     .resizableImageFill()
@@ -496,7 +498,12 @@ struct AccountPopup: View {
                                                 ? "Change Username"
                                                 : self.accountPopupSection == "update_password"
                                                     ? "Update Password"
-                                                    : "Account Details" /* MARK: Default value if all else checks fail (which should never happen). */)
+                                                    : self.accountPopupSection == "themes"
+                                                        ? "Themes"
+                                                        : self.accountPopupSection == "settings"
+                                                            ? "Settings"
+                                                            /* MARK: Default value if all aforementioned checks fail (which should never happen). */
+                                                            : "Account Details")
                         .frame(maxWidth: .infinity, maxHeight: 25)
                         .foregroundStyle(.white)
                         .padding([.top], 15)
@@ -745,7 +752,9 @@ struct AccountPopup: View {
                                 
                                 VStack {
                                     HStack {
-                                        Button(action: { print("Show Additional Settings") }) {
+                                        Button(action: {
+                                            self.accountPopupSection = "settings"
+                                        }) {
                                             VStack {
                                                 ZStack {
                                                     Image(systemName: "gearshape.fill")
@@ -850,7 +859,9 @@ struct AccountPopup: View {
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 140)
                                     
-                                    Button(action: { print("Show Themes") }) {
+                                    Button(action: {
+                                        self.accountPopupSection = "themes"
+                                    }) {
                                         VStack {
                                             ZStack {
                                                 Image(systemName: "macwindow.on.rectangle")
@@ -1398,52 +1409,25 @@ struct AccountPopup: View {
                             } message: {
                                 Text("Proceeding with this course of action will change your major field and major. Do you want to continue?")
                             }
+                        case "themes":
+                            Themes(
+                                prop: self.prop
+                            )
+                        case "settings":
+                            Settings(
+                                prop: self.prop
+                            )
                         case "planDetails":
                             VStack {
                                 if self.loadingPlanDetailsSection {
-                                    Text("Loading Plan Details")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .foregroundStyle(.white)
-                                        .setFontSizeAndWeight(weight: .medium, size: 14)
-                                        .minimumScaleFactor(0.5)
-                                    
-                                    ProgressView()
-                                        .tint(Color.EZNotesBlue)
+                                    LoadingView(message: "Loading Plan Details")
                                 } else {
                                     if self.errorLoadingPlanDetailsSection {
-                                        Image(systemName: "exclamationmark.warninglight.fill")
-                                            .resizable()
-                                            .frame(width: 45, height: 40)
-                                            .padding([.top, .bottom], 15)
-                                            .foregroundStyle(Color.EZNotesRed)
-                                        
-                                        Text("Error loading plan details")
-                                            .frame(maxWidth: prop.size.width - 60, alignment: .center)
-                                            .foregroundColor(.white)
-                                            .setFontSizeAndWeight(weight: .medium, size: 20)
-                                            .minimumScaleFactor(0.5)
-                                            .multilineTextAlignment(.center)
-                                        
-                                        Button(action: { print("Report Problem") }) {
-                                            HStack {
-                                                Text("Report a Problem")
-                                                    .frame(maxWidth: .infinity, alignment: .center)
-                                                    .padding([.top, .bottom], 8)
-                                                    .foregroundStyle(.black)
-                                                    .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                    .minimumScaleFactor(0.5)
-                                            }
-                                            .frame(maxWidth: prop.size.width - 80)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 15)
-                                                    .fill(.white)
-                                            )
-                                            .cornerRadius(15)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        .padding(.top, 15)
-                                        
-                                        Spacer() /* MARK: Shove the content to the top. */
+                                        ErrorMessage(
+                                            prop: prop,
+                                            placement: .top,
+                                            message: "Error loading plan details"
+                                        )
                                     } else {
                                         ScrollView(.vertical, showsIndicators: false) {
                                             /*Text("Overview")

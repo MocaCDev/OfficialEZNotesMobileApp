@@ -243,78 +243,81 @@ struct SignUpScreen : View, KeyboardReadable {
                     VStack {
                         if self.section != "select_state_and_college" {
                             HStack {
+                                /* MARK: While the "loading_code" section is visible, no other content needs to be shown. */
                                 if self.section != "loading_code" {
-                                    ZStack {
-                                        Button(action: {
-                                            switch(self.section) {
-                                            case "main":
-                                                self.screen = "home"
-                                                assignUDKey(key: "last_signup_section", value: "main")
-                                                break
-                                            case "select_state_and_college":
-                                                self.section = "main"
-                                                assignUDKey(key: "last_signup_section", value: "main")
-                                                break
-                                            case "code_input":
-                                                RequestAction<DeleteSignupProcessData>(
-                                                    parameters: DeleteSignupProcessData(
-                                                        AccountID: self.accountID
+                                    if self.section != "select_plan" {
+                                        ZStack {
+                                            Button(action: {
+                                                switch(self.section) {
+                                                case "main":
+                                                    self.screen = "home"
+                                                    assignUDKey(key: "last_signup_section", value: "main")
+                                                    break
+                                                case "select_state_and_college":
+                                                    self.section = "main"
+                                                    assignUDKey(key: "last_signup_section", value: "main")
+                                                    break
+                                                case "code_input":
+                                                    RequestAction<DeleteSignupProcessData>(
+                                                        parameters: DeleteSignupProcessData(
+                                                            AccountID: self.accountID
+                                                        )
                                                     )
-                                                )
-                                                .perform(action: delete_signup_process_req) { statusCode, resp in
-                                                    guard resp != nil && statusCode == 200 else {
-                                                        /* MARK: There should never be an error when deleting the process in the backend. */
-                                                        if let resp = resp { print(resp) }
-                                                        self.serverError = true
-                                                        return
+                                                    .perform(action: delete_signup_process_req) { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            /* MARK: There should never be an error when deleting the process in the backend. */
+                                                            if let resp = resp { print(resp) }
+                                                            self.serverError = true
+                                                            return
+                                                        }
+                                                        
+                                                        self.section = "select_state_and_college"
+                                                        assignUDKey(key: "last_signup_section", value: self.section)
+                                                        
+                                                        /* MARK: When "going back" from the code input section, the app will redirect to the "select major" part of "select_state_and_college".. as that was the last screen shown before the "code_input" one. Since that is the case, we have to remove the "temp_major" key from `UserDefaults` as well as remove any sort of content from `major` and `majors`. */
+                                                        removeUDKey(key: "temp_major")
+                                                        self.major.removeAll()
+                                                        self.majors.removeAll()
+                                                        self.get_majors()
                                                     }
-                                                    
-                                                    self.section = "select_state_and_college"
-                                                    assignUDKey(key: "last_signup_section", value: self.section)
-                                                    
-                                                    /* MARK: When "going back" from the code input section, the app will redirect to the "select major" part of "select_state_and_college".. as that was the last screen shown before the "code_input" one. Since that is the case, we have to remove the "temp_major" key from `UserDefaults` as well as remove any sort of content from `major` and `majors`. */
-                                                    removeUDKey(key: "temp_major")
-                                                    self.major.removeAll()
-                                                    self.majors.removeAll()
-                                                    self.get_majors()
-                                                }
-                                            case "select_plan":
-                                                /* MARK: Delete the signup process in the backend. */
-                                                RequestAction<DeleteSignupProcessData>(
-                                                    parameters: DeleteSignupProcessData(
-                                                        AccountID: self.accountID
+                                                case "select_plan":
+                                                    /* MARK: Delete the signup process in the backend. */
+                                                    RequestAction<DeleteSignupProcessData>(
+                                                        parameters: DeleteSignupProcessData(
+                                                            AccountID: self.accountID
+                                                        )
                                                     )
-                                                )
-                                                .perform(action: delete_signup_process_req) { statusCode, resp in
-                                                    guard resp != nil && statusCode == 200 else {
-                                                        /* MARK: There should never be an error when deleting the process in the backend. */
-                                                        if let resp = resp { print(resp) }
-                                                        self.serverError = true
-                                                        return
+                                                    .perform(action: delete_signup_process_req) { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            /* MARK: There should never be an error when deleting the process in the backend. */
+                                                            if let resp = resp { print(resp) }
+                                                            self.serverError = true
+                                                            return
+                                                        }
+                                                        
+                                                        self.section = "select_state_and_college"
+                                                        assignUDKey(key: "last_signup_section", value: self.section)
+                                                        
+                                                        /* MARK: Remove all of the temporary information. */
+                                                        removeAllSignUpTempKeys()
+                                                        
+                                                        /* MARK: Ensure that the whole "select_state_and_college" section will restart. */
+                                                        self.state.removeAll()
+                                                        self.majorField.removeAll()
+                                                        self.major.removeAll()
                                                     }
-                                                    
-                                                    self.section = "select_state_and_college"
-                                                    assignUDKey(key: "last_signup_section", value: self.section)
-                                                    
-                                                    /* MARK: Remove all of the temporary information. */
-                                                    removeAllSignUpTempKeys()
-                                                    
-                                                    /* MARK: Ensure that the whole "select_state_and_college" section will restart. */
-                                                    self.state.removeAll()
-                                                    self.majorField.removeAll()
-                                                    self.major.removeAll()
+                                                default: break
                                                 }
-                                            default: break
+                                            }) {
+                                                Image(systemName: "arrow.backward")
+                                                    .resizable()
+                                                    .frame(width: 15, height: 15)
+                                                    .foregroundStyle(.white)
                                             }
-                                        }) {
-                                            Image(systemName: "arrow.backward")
-                                                .resizable()
-                                                .frame(width: 15, height: 15)
-                                                .foregroundStyle(.white)
+                                            .buttonStyle(NoLongPressButtonStyle())
                                         }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                    }
-                                    .frame(maxWidth: 20, alignment: .leading)
+                                        .frame(maxWidth: 20, alignment: .leading)
+                                    } else { ZStack { }.frame(maxWidth: 20, alignment: .leading) }
                                     
                                     Text(self.section == "main"
                                          ? "Sign Up"
@@ -889,7 +892,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     
                                                     self.section = "loading_code"
                                                     
-                                                    print(self.college, self.majorField, self.major)
+                                                    print(self.college, self.majorField, self.major, self.password)
                                                     
                                                     RequestAction<SignUpRequestData>(
                                                         parameters: SignUpRequestData(
