@@ -261,6 +261,7 @@ struct CoreApp: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea(.keyboard)
         .onAppear(perform: {
+            /* MARK: Continue asking for permission, as th*/
             if !self.model.permissionGranted { self.model.requestPermission() }
         })
         /*.onAppear(perform: {

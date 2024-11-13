@@ -9,6 +9,8 @@ import SwiftUI
 struct ResponsiveView<Content: View>: View {
     var content: (Properties)->Content
     
+    /* MARK: Needed to keep responsive sizes consistent with the devices geometry. */
+    /* MARK: For example, when the keyboard is active the geometry of the view (in height) shrinks to accomdate the keyboard. */
     @State public var isLargerScreen: Bool = false
     @State public var lastHeight: CGFloat = 0
     @State public var screenHeight: CGFloat = 0

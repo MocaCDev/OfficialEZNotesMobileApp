@@ -58,8 +58,6 @@ struct SignUpScreen : View, KeyboardReadable {
     @State public var imageOpacity: Double = 1
     @FocusState public var passwordFieldInFocus: Bool
     
-    @State private var isLargerScreen: Bool = false
-    
     let states = [
         "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
         "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
@@ -118,15 +116,10 @@ struct SignUpScreen : View, KeyboardReadable {
     }
     
     public func setLoginStatus() -> Void {
-        UserDefaults.standard.set(
-            true,
-            forKey: "logged_in"
-        )
-        UserDefaults.standard.set(
-            self.accountID,
-            forKey: "account_id"
-        )
-        UserDefaults.standard.set("main", forKey: "last_signup_section")
+        assignUDKey(key: "logged_in", value: true)
+        assignUDKey(key: "account_id", value: self.accountID)
+        
+        assignUDKey(key: "last_signup_section", value: "main")
         
         /* MARK: Ensure that none of the temporary keys in `UserDefaults` carry over after signing up. */
         removeAllSignUpTempKeys()
@@ -236,12 +229,11 @@ struct SignUpScreen : View, KeyboardReadable {
         }
     }
     
-    /* MARK: Needed to keep responsive sizes consistent with the devices geometry. */
-    /* MARK: For example, when the keyboard is active the geometry of the view (in height) shrinks to accomdate the keyboard. */
-    @State private var lastHeight: CGFloat = 0.0
     @State private var hideAgreementDetails: Bool = false
     
-    @State private var screenHeight: CGFloat = 0
+    @FocusState private var usernameTextfieldFocus: Bool
+    @FocusState private var emailTextfieldFocus: Bool
+    @FocusState private var passwordTextfieldFocus: Bool
     
     var body: some View {
         GeometryReader { geometry in
@@ -279,6 +271,12 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     
                                                     self.section = "select_state_and_college"
                                                     assignUDKey(key: "last_signup_section", value: self.section)
+                                                    
+                                                    /* MARK: When "going back" from the code input section, the app will redirect to the "select major" part of "select_state_and_college".. as that was the last screen shown before the "code_input" one. Since that is the case, we have to remove the "temp_major" key from `UserDefaults` as well as remove any sort of content from `major` and `majors`. */
+                                                    removeUDKey(key: "temp_major")
+                                                    self.major.removeAll()
+                                                    self.majors.removeAll()
+                                                    self.get_majors()
                                                 }
                                             case "select_plan":
                                                 /* MARK: Delete the signup process in the backend. */
@@ -364,6 +362,14 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     self.section = "main"
                                                 }) {
                                                     Label("Restart Signup", systemImage: "arrow.trianglehead.counterclockwise")
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                            }
+                                            
+                                            /* MARK: Once the user gets to `code_input` or `select_plan`, they will not be eligible to go to the login screen. */
+                                            if self.section != "select_plan" && self.section != "code_input" {
+                                                Button(action: { self.screen = "login" }) {
+                                                    Label("Go to login", systemImage: "chevron.forward")
                                                 }
                                                 .buttonStyle(NoLongPressButtonStyle())
                                             }
@@ -518,7 +524,10 @@ struct SignUpScreen : View, KeyboardReadable {
                                     .fontWeight(.medium)
                                     .autocapitalization(.none)
                                     .disableAutocorrection(true)
-                                    .onSubmit { assignUDKey(key: "temp_username", value: self.username) }
+                                    .focused($usernameTextfieldFocus)
+                                    .onChange(of: usernameTextfieldFocus) {
+                                        if !self.usernameTextfieldFocus { assignUDKey(key: "temp_username", value: self.username) }
+                                    }
                                 
                                 Text("Email")
                                     .frame(
@@ -568,7 +577,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                     .autocapitalization(.none)
                                     .disableAutocorrection(true)
                                     //.keyboardType(.emailAddress)
-                                    .onSubmit { assignUDKey(key: "temp_email", value: self.email) }
+                                    .focused($emailTextfieldFocus)
+                                    .onChange(of: emailTextfieldFocus) { if !self.emailTextfieldFocus { assignUDKey(key: "temp_email", value: self.email) } }
                                 
                                 Text("Password")
                                     .frame(
@@ -618,7 +628,9 @@ struct SignUpScreen : View, KeyboardReadable {
                                     .focused($passwordFieldInFocus)
                                     .autocapitalization(.none)
                                     .disableAutocorrection(true)
-                                    .onSubmit { assignUDKey(key: "temp_password", value: self.password) }
+                                    .focused($passwordTextfieldFocus)
+                                    .onChange(of: passwordTextfieldFocus) { if !self.passwordTextfieldFocus { assignUDKey(key: "temp_password", value: self.password) } }
+                                
                             } else if self.section == "select_state_and_college" {
                                 /* TODO: This code is going to need a lot of refactoring. It is very repetitive.. just want it to work for now lol. */
                                 HStack {
@@ -635,7 +647,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             //UserDefaults.standard.removeObject(forKey: "temp_major")
                                             
                                             self.section = "main"
-                                            UserDefaults.standard.set("main", forKey: "last_signup_section")
+                                            assignUDKey(key: "last_signup_section", value: "main")
                                         }
                                         else {
                                             /* MARK: The below operations will automatically cause the "section" of "select_state_and_college" to go back. */
@@ -655,12 +667,24 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 return
                                             }
                                             
-                                            self.majorField.removeAll()
+                                            if self.major == "" {
+                                                self.majorField.removeAll()
+                                                
+                                                removeUDKey(key: "temp_field")
+                                                
+                                                if self.majorFields.count == 0 { self.get_custom_major_fields(collegeName: self.college) }
+                                            }
                                             
-                                            removeUDKey(key: "temp_field")
+                                            self.major.removeAll()
+                                            removeUDKey(key: "temp_major")
+                                            
+                                            if self.majors.count == 0 { self.get_majors() }
+                                            //self.majorField.removeAll()
+                                            
+                                            //removeUDKey(key: "temp_field")
                                             
                                             /* MARK: Ensure that, when going back, there is content to show. If not, load the content. */
-                                            if self.majorFields.count == 0 { self.get_custom_major_fields(collegeName: self.college) }
+                                            //if self.majorFields.count == 0 { self.get_custom_major_fields(collegeName: self.college) }
                                         }
                                     }) {
                                         ZStack {
@@ -768,22 +792,22 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                     self.state = value
                                                                     assignUDKey(key: "temp_state", value: value)
                                                                     
-                                                                    if self.colleges.count > 0 {
-                                                                        self.colleges.removeAll()
-                                                                        self.college = ""
-                                                                    }
-                                                                    if self.majorFields.count > 0 {
-                                                                        self.majorFields.removeAll()
-                                                                        self.majorField = ""
-                                                                    }
-                                                                    if self.majors.count > 0 {
-                                                                        self.majors.removeAll()
-                                                                        self.major = ""
-                                                                    }
+                                                                    self.colleges.removeAll()
+                                                                    self.college.removeAll()
+                                                                    self.otherCollege.removeAll()
+                                                                    
+                                                                    self.majorFields.removeAll()
+                                                                    self.majorField.removeAll()
+                                                                    self.otherMajorField.removeAll()
+                                                                    
+                                                                    self.majors.removeAll()
+                                                                    self.major.removeAll()
+                                                                    self.otherMajor.removeAll()
                                                                     
                                                                     self.get_custom_colleges()
                                                                 } else if self.college == "" {
                                                                     if value == "Other" {
+                                                                        self.otherCollege.removeAll()
                                                                         self.collegeIsOther = true
                                                                         return
                                                                     }
@@ -794,6 +818,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                     self.get_custom_major_fields(collegeName: self.college)
                                                                 } else if self.majorField == "" {
                                                                     if value == "Other" {
+                                                                        self.otherMajorField.removeAll()
                                                                         self.majorFieldIsOther = true
                                                                         return
                                                                     }
@@ -805,6 +830,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                 } else {
                                                                     /* MARK: We can safely assume that, here, we will be assigning the major. */
                                                                     if value == "Other" {
+                                                                        self.otherMajor.removeAll()
                                                                         self.majorIsOther = true
                                                                         return
                                                                     }
@@ -862,6 +888,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     UserDefaults.standard.set(self.major, forKey: "temp_major")*/
                                                     
                                                     self.section = "loading_code"
+                                                    
+                                                    print(self.college, self.majorField, self.major)
                                                     
                                                     RequestAction<SignUpRequestData>(
                                                         parameters: SignUpRequestData(
@@ -924,7 +952,16 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     .multilineTextAlignment(.center)
                                             }
                                             
-                                            TextField(self.collegeIsOther ? "College Name..." : "Field Name...", text: self.collegeIsOther ? $otherCollege : $otherMajorField)
+                                            TextField(self.collegeIsOther
+                                                      ? "College Name..."
+                                                      : self.majorFieldIsOther
+                                                        ? "Field Name..."
+                                                        : "Major name...",
+                                                      text: self.collegeIsOther
+                                                        ? $otherCollege
+                                                        : self.majorFieldIsOther
+                                                            ? $otherMajorField
+                                                            : $otherMajor)
                                                 .frame(
                                                     width: prop.isIpad
                                                     ? UIDevice.current.orientation.isLandscape
@@ -960,7 +997,11 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         self.showCheckCollegeAlert = true
                                                     }
                                                 }
-                                                .alert(self.collegeIsOther ? "Do we have the college right?" : "Do we have the Major Field correct?", isPresented: $showCheckCollegeAlert) {
+                                                .alert(self.collegeIsOther
+                                                    ? "Do we have the college right?"
+                                                       : self.majorFieldIsOther
+                                                       ? "Do we have the major field correct?"
+                                                       : "Do we have the Major correct?", isPresented: $showCheckCollegeAlert) {
                                                     Button(action: {
                                                         if self.collegeIsOther {
                                                             /* MARK: First, ensure the state actually has the college being inputted. */
@@ -1011,6 +1052,16 @@ struct SignUpScreen : View, KeyboardReadable {
                                                             
                                                             return
                                                         }
+                                                        
+                                                        if self.majorIsOther {
+                                                            assignUDKey(key: "temp_major", value: self.otherMajor)
+                                                            self.major = self.otherMajor
+                                                            self.otherMajor.removeAll()
+                                                            self.majorIsOther = false
+                                                            
+                                                            /* MARK: Selecting the major is the last step. Prompt the alert upon submission. */
+                                                            self.checkInfoAlert = true
+                                                        }
                                                     }) {
                                                         Text("Yes")
                                                     }
@@ -1018,7 +1069,11 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     
                                                     Button("Not correct", role: .cancel) {}.buttonStyle(NoLongPressButtonStyle())
                                                 } message: {
-                                                    Text(self.collegeIsOther ? "Is \(self.otherCollege) the correct college?" : "Is \(self.otherMajorField) the correct field?")
+                                                    Text(self.collegeIsOther
+                                                         ? "Is \(self.otherCollege) the correct college?"
+                                                         : self.majorFieldIsOther
+                                                            ? "Is \(self.otherMajorField) the correct field?"
+                                                            : "Is \(self.otherMajor) the correct major?")
                                                 }
                                             
                                         }
@@ -1111,20 +1166,6 @@ struct SignUpScreen : View, KeyboardReadable {
                     .padding()
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top) // Keep VStack aligned to the top
                     .ignoresSafeArea(edges: .bottom) // Ignore keyboard safe area
-                    /*.onChange(of: prop.size.height) {
-                        if prop.size.height < self.lastHeight {
-                            self.isLargerScreen = prop.size.height / 2.5 > 200 || prop.size.height / 2.5 > 180
-                        }
-                        else {
-                            if prop.size.height == self.screenHeight {
-                                self.isLargerScreen = prop.size.height / 2.5 > 300
-                            } else {
-                                self.isLargerScreen = prop.size.height / 2.5 > 200
-                            }
-                        }
-                        
-                        self.lastHeight = prop.size.height
-                    }*/
                     
                     //Spacer()
                     
@@ -1211,19 +1252,18 @@ struct SignUpScreen : View, KeyboardReadable {
                                             self.section = "select_state_and_college"
                                             
                                             /* MARK: Set the last section. */
-                                            UserDefaults.standard.set("select_state_and_college", forKey: "last_signup_section")
+                                            assignUDKey(key: "last_signup_section", value: "select_state_and_college")
                                             
                                             /* MARK: Ensure to (temporarily) store username, email and password (just in case they leave the app and come back). */
-                                            UserDefaults.standard.set(self.username, forKey: "temp_username")
-                                            UserDefaults.standard.set(self.email, forKey: "temp_email")
-                                            UserDefaults.standard.set(self.password, forKey: "temp_password")
+                                            //assignUDKey(key: "temp_username", value: self.username)
+                                            //assignUDKey(key: "temp_email", value: self.email)
+                                            //assignUDKey(key: "temp_password", value: self.password)
                                             //UserDefaults.standard.set(self.accountID, forKey: "temp_account_id")
                                         }
                                     }
                                 } else {
                                     /* TODO: Is the below if statement needed? */
                                     if self.section == "code_input" {
-                                        print("\(accountID)!")
                                         RequestAction<SignUp2RequestData>(
                                             parameters: SignUp2RequestData(
                                                 AccountID: accountID,
@@ -1256,15 +1296,18 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     
                                                     /* MARK: Go back to the "main" section. Reset the "last_signup_section" key. */
                                                     self.section = "main"
-                                                    UserDefaults.standard.set("main", forKey: "last_signup_section")
+                                                    assignUDKey(key: "last_signup_section", value: "main")
                                                     
-                                                    UserDefaults.standard.removeObject(forKey: "temp_college")
-                                                    UserDefaults.standard.removeObject(forKey: "temp_field")
-                                                    UserDefaults.standard.removeObject(forKey: "temp_major")
-                                                    UserDefaults.standard.removeObject(forKey: "temp_state")
-                                                    UserDefaults.standard.removeObject(forKey: "temp_username")
-                                                    UserDefaults.standard.removeObject(forKey: "temp_email")
-                                                    UserDefaults.standard.removeObject(forKey: "temp_password")
+                                                    removeAllSignUpTempKeys()
+                                                    self.college.removeAll()
+                                                    self.major.removeAll()
+                                                    self.majorField.removeAll()
+                                                    self.state.removeAll()
+                                                    self.accountID.removeAll()
+                                                    
+                                                    self.colleges.removeAll()
+                                                    self.majors.removeAll()
+                                                    self.majorFields.removeAll()
                                                     
                                                     /* MARK: Reset code attemp information. */
                                                     self.wrongCodeAttempts = 0
@@ -1277,17 +1320,19 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 return
                                             }
                                             
-                                            UserDefaults.standard.set(self.username, forKey: "username")
-                                            UserDefaults.standard.set(self.email, forKey: "email")
-                                            UserDefaults.standard.set(self.majorField, forKey: "major_field")
-                                            UserDefaults.standard.set(self.major, forKey: "major_name")
-                                            UserDefaults.standard.set(self.state, forKey: "college_state")
-                                            UserDefaults.standard.set(self.college, forKey: "college_name")
+                                            print(self.username)
+                                            
+                                            assignUDKey(key: "username", value: self.username)
+                                            assignUDKey(key: "email", value: self.email)
+                                            assignUDKey(key: "major_field", value: self.majorField)
+                                            assignUDKey(key: "major_name", value: self.major)
+                                            assignUDKey(key: "college_state", value: self.state)
+                                            assignUDKey(key: "college_name", value: self.college)
                                             
                                             if self.makeContentRed { self.makeContentRed = false }
                                             if self.wrongCode { self.wrongCode = false }
                                             
-                                            UserDefaults.standard.set("select_plan", forKey: "last_signup_section")
+                                            assignUDKey(key: "last_signup_section", value: "select_plan")
                                             self.section = "select_plan"
                                         }
                                         
@@ -1392,14 +1437,10 @@ struct SignUpScreen : View, KeyboardReadable {
         .edgesIgnoringSafeArea(self.section == "main" ? .init() : .bottom)
         .background(Color.EZNotesBlack)
         .onAppear {
-            self.isLargerScreen = prop.size.height / 2.5 > 300
-            self.lastHeight = prop.size.height
-            self.screenHeight = prop.size.height
-            
             /* MARK: If the key "username" exists in `UserDefaults`, then there has been an account created on the device. */
             /* MARK: This will not work if users wipe data from the app. */
-            if UserDefaults.standard.object(forKey: "username") != nil {
-                if UserDefaults.standard.object(forKey: "plan_selected") != nil {
+            if udKeyExists(key: "username") {
+                if udKeyExists(key: "plan_selected") {
                     self.alreadySignedUp = true
                     return
                 }
@@ -1407,17 +1448,17 @@ struct SignUpScreen : View, KeyboardReadable {
             
             self.alreadySignedUp = false
             
-            guard UserDefaults.standard.object(forKey: "last_signup_section") != nil else {
+            guard udKeyExists(key: "last_signup_section") else {
                 self.section = "main"
-                UserDefaults.standard.set("main", forKey: "last_signup_section")
+                assignUDKey(key: "main", value: "last_signup_section")
                 return
             }
             
-            self.section = UserDefaults.standard.string(forKey: "last_signup_section")!
-            if UserDefaults.standard.object(forKey: "temp_username") != nil { self.username = UserDefaults.standard.string(forKey: "temp_username")! }
-            if UserDefaults.standard.object(forKey: "temp_email") != nil { self.email = UserDefaults.standard.string(forKey: "temp_email")! }
-            if UserDefaults.standard.object(forKey: "temp_password") != nil { self.password = UserDefaults.standard.string(forKey: "temp_password")! }
-            if UserDefaults.standard.object(forKey: "temp_account_id") != nil { self.accountID = UserDefaults.standard.string(forKey: "temp_account_id")! }
+            self.section = getUDValue(key: "last_signup_section")//UserDefaults.standard.string(forKey: "last_signup_section")!
+            if udKeyExists(key: "temp_username") { print("YES"); self.username = getUDValue(key: "temp_username") }
+            if udKeyExists(key: "temp_email") { self.email = getUDValue(key: "temp_email") }
+            if udKeyExists(key: "temp_password") { self.password = getUDValue(key: "temp_password") }
+            if udKeyExists(key: "temp_account_id") { self.accountID = getUDValue(key: "temp_account_id") }
             
             /* MARK: FOR DEVELOPMENT PURPOSES ONLY. */
             //self.section = "main"
@@ -1426,37 +1467,37 @@ struct SignUpScreen : View, KeyboardReadable {
             //self.major = ""
             //self.majorField = ""
             
-            if self.section == "select_state_and_college" {
-                guard UserDefaults.standard.object(forKey: "temp_state") != nil else { return }
+            /* MARK: If the section is currently `select_state_and_college` or `code_input`, we want to get all of the data over the state, college, major field and major. This data will be needed to finish the sign up process and assign the according `UserDefault` keys. */
+            if self.section == "select_state_and_college" || self.section == "code_input" {
+                guard udKeyExists(key: "temp_state") else { return }
                 
-                self.state = UserDefaults.standard.string(forKey: "temp_state")!
+                self.state = getUDValue(key: "temp_state")
                 //self.loadingColleges = true
                 
-                guard UserDefaults.standard.object(forKey: "temp_college") != nil else {
+                guard udKeyExists(key: "temp_college") else {
                     self.get_custom_colleges()
                     return
                 }
                 
-                self.college = UserDefaults.standard.string(forKey: "temp_college")!
+                self.college = getUDValue(key: "temp_college")
                 //self.loadingMajorFields = true
                 
-                guard UserDefaults.standard.object(forKey: "temp_field") != nil else {
+                guard udKeyExists(key: "temp_field") else {
                     self.get_custom_major_fields(collegeName: self.college)
                     return
                 }
                 
-                self.majorField = UserDefaults.standard.string(forKey: "temp_field")!
+                self.majorField = getUDValue(key: "temp_field")
                 //self.loadingMajors = true
                 
-                guard UserDefaults.standard.object(forKey: "temp_major") != nil else {
+                guard udKeyExists(key: "temp_major") else {
                     self.get_majors()
                     return
                 }
-                self.major = UserDefaults.standard.string(forKey: "temp_major")!
                 
-                self.section = "loading_code"
+                self.major = getUDValue(key: "temp_major")
                 
-                RequestAction<SignUpRequestData>(
+                /*RequestAction<SignUpRequestData>(
                     parameters: SignUpRequestData(
                         Username: username,
                         Email: email,
@@ -1486,8 +1527,8 @@ struct SignUpScreen : View, KeyboardReadable {
                     self.accountID = resp!["Message"] as! String
                     self.section = "code_input"
                     
-                    UserDefaults.standard.set("code_input", forKey: "last_signup_section")
-                }
+                    assignUDKey(key: "last_signup_section", value: "code_input")
+                }*/
                 
                 //if UserDefaults.standard.object(forKey: "temp_major") != nil { self.major = UserDefaults.standard.string(forKey: "temp_major")! }*/
             }

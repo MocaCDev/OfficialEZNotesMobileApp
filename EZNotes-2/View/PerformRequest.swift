@@ -326,8 +326,8 @@ struct RequestAction<T> {
                 request.addValue(params.Email, forHTTPHeaderField: "N-Em")
                 request.addValue(params.State, forHTTPHeaderField: "N-St")
                 request.addValue(params.College, forHTTPHeaderField: "N-Cl")
-                request.addValue(params.College, forHTTPHeaderField: "N-Field")
-                request.addValue(params.College, forHTTPHeaderField: "N-Major")
+                request.addValue(params.Field, forHTTPHeaderField: "N-Field")
+                request.addValue(params.Major, forHTTPHeaderField: "N-Major")
                 request.addValue("", forHTTPHeaderField: "N-Bgimg")
                 request.addValue("", forHTTPHeaderField: "N-Cip")
                 break

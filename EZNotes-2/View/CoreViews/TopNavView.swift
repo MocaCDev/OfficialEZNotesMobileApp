@@ -65,9 +65,6 @@ struct AccountPopup: View {
     @State private var accountPopupSection: String = "main"
     @State private var switchFieldAndMajorSection: String = "choose_field" /* MARK: Values will be "choose_field" or "choose_major". This variable is adherent strictly to the "switch_field_and_major" section. */
     
-    @State public var isLargerScreen: Bool = false
-    @State public var lastHeight: CGFloat = 0
-    
     /* MARK: This is for the binding `makeContentRed` for `Plans` view. */
     @State public var p: Bool = false
     
@@ -155,14 +152,14 @@ struct AccountPopup: View {
                         
                         if self.errorUploadingPFP {
                             Text("Error saving PFP. Try Again.")
-                                .frame(maxWidth: .infinity, alignment: .center)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                                 .padding(.top, 8)
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.black)
                                 .font(Font.custom("Poppins-Regular", size: 12))
                                 .minimumScaleFactor(0.5)
                         } else {
                             Text("Error saving PFP Background. Try Again.")
-                                .frame(maxWidth: .infinity, alignment: .center)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                                 .padding(.top, 8)
                                 .foregroundStyle(.black)
                                 .font(Font.custom("Poppins-Regular", size: 12))
@@ -183,7 +180,7 @@ struct AccountPopup: View {
                         .padding(.trailing, 10)
                         .padding(.top, 8)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: 25)
+                    .frame(maxWidth: .infinity, maxHeight: 35)
                     .background(Color.EZNotesRed)
                     .onAppear {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
@@ -267,7 +264,7 @@ struct AccountPopup: View {
                                         //.resizableImageFill(width: prop.size.height / 2.5 > 300 ? 90 : 80, height: prop.size.height / 2.5 > 300 ? 90 : 80)
                                             .resizable()
                                             .aspectRatio(contentMode: .fill)
-                                            .frame(width: self.isLargerScreen ? 90 : 80, height: self.isLargerScreen ? 90 : 80, alignment: .center)
+                                            .frame(width: prop.isLargerScreen ? 90 : 80, height: prop.isLargerScreen ? 90 : 80, alignment: .center)
                                             .minimumScaleFactor(0.8)
                                             .foregroundStyle(.white)
                                             .clipShape(.rect)
@@ -297,6 +294,10 @@ struct AccountPopup: View {
                                                 PFP(pfp: image, accountID: self.accountInfo.accountID)
                                                     .requestSavePFP() { statusCode, resp in
                                                         self.changingProfilePic = false
+                                                        
+                                                        /* MARK: Reset the y-offset of the status bar at the top of the popup to ensure the "banner" actually shows. */
+                                                        self.statusBarYOffset = 0
+                                                        
                                                         guard resp != nil && statusCode == 200 else {
                                                             self.pfpUploadStatus = "failed"
                                                             self.errorUploadingPFP = true
@@ -378,6 +379,9 @@ struct AccountPopup: View {
                                                     .requestSavePFP() { statusCode, resp in
                                                         self.changingProfilePic = false
                                                         
+                                                        /* MARK: Reset the y-offset of the status bar at the top of the popup to ensure the "banner" actually shows. */
+                                                        self.statusBarYOffset = 0
+                                                        
                                                         guard resp != nil && statusCode == 200 else {
                                                             self.pfpUploadStatus = "failed"
                                                             return
@@ -412,13 +416,16 @@ struct AccountPopup: View {
                                             if let image = try? await pfpBackgroundPhotoPicked!.loadTransferable(type: Image.self) {
                                                 PFP(pfpBg: image, accountID: self.accountInfo.accountID)
                                                     .requestSavePFPBg() { statusCode, resp in
+                                                        /* MARK: Reset the y-offset of the status bar at the top of the popup to ensure the "banner" actually shows. */
+                                                        self.statusBarYOffset = 0
+                                                        
                                                         guard resp != nil && statusCode == 200 else {
                                                             self.pfpBgUploadStatus = "failed"
-                                                            self.errorUploadingPFPBg = true
+                                                            //self.errorUploadingPFPBg = true
                                                             return
                                                         }
                                                         
-                                                        if self.errorUploadingPFPBg { self.errorUploadingPFPBg = false }
+                                                        //if self.errorUploadingPFPBg { self.errorUploadingPFPBg = false }
                                                         self.pfpBgUploadStatus = "good"
                                                         
                                                         self.accountInfo.profileBackgroundPicture = image
@@ -1050,9 +1057,11 @@ struct AccountPopup: View {
                                         .overlay(.black)
                                     
                                     Button(action: {
-                                        UserDefaults.standard.set(false, forKey: "logged_in")
+                                        assignUDKey(key: "logged_in", value: false)
                                         self.userHasSignedIn = false
                                         self.accountInfo.reset()
+                                        
+                                        udRemoveAllAccountInfoKeys()
                                     }) {
                                         HStack {
                                             Text("Logout")
@@ -1082,39 +1091,6 @@ struct AccountPopup: View {
                                         .fill(Color.EZNotesLightBlack)
                                 )
                                 .cornerRadius(15)
-                                /*HStack {
-                                 Text("Logout")
-                                 .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                                 .padding(.leading, 15)
-                                 .padding([.top, .bottom])
-                                 .foregroundStyle(.white)
-                                 .font(.system(size: 18))
-                                 .fontWeight(.semibold)
-                                 
-                                 ZStack {
-                                 Button(action: {
-                                 UserDefaults.standard.set(false, forKey: "logged_in")
-                                 }) {
-                                 Image(systemName: "door.left.hand.open")
-                                 .resizable()
-                                 .frame(width: 15, height: 15)
-                                 .foregroundStyle(.white)
-                                 }
-                                 .buttonStyle(NoLongPressButtonStyle())
-                                 }
-                                 .frame(maxWidth: .infinity, alignment: .trailing)
-                                 .padding(.trailing, 15)
-                                 }
-                                 .frame(maxWidth: prop.size.width - 40, maxHeight: prop.size.height / 2.5 > 300 ? 55 : 45)
-                                 .background(
-                                 RoundedRectangle(cornerRadius: 15)
-                                 .fill(Color.EZNotesLightBlack)
-                                 .stroke(.red, lineWidth: 1)
-                                 )
-                                 .cornerRadius(15)
-                                 .onTapGesture {
-                                 print("Report An Issue")
-                                 }*/
                                 
                                 Text("Joined 10/10/2024")
                                     .frame(maxWidth: .infinity, alignment: .center)
@@ -1134,7 +1110,7 @@ struct AccountPopup: View {
                                 accountID: self.accountInfo.accountID,
                                 borderBottomColor: borderBottomColor,
                                 borderBottomColorError: borderBottomColorError,
-                                isLargerScreen: isLargerScreen,
+                                isLargerScreen: prop.isLargerScreen,
                                 action: doSomething,
                                 makeContentRed: $p
                             )
@@ -1144,393 +1120,24 @@ struct AccountPopup: View {
                                 prop: prop,
                                 borderBottomColor: self.borderBottomColor,
                                 accountInfo: self.accountInfo,
-                                accountPopupSection: $accountPopupSection,
-                                isLargerScreen: $isLargerScreen
+                                accountPopupSection: $accountPopupSection
                             )
                         case "update_password":
                             UpdatePassword(
-                                prop: prop,
+                                prop: self.prop,
                                 borderBottomColor: self.borderBottomColor,
                                 accountInfo: self.accountInfo,
-                                isLargerScreen: $isLargerScreen,
                                 accountPopupSection: $accountPopupSection
                             )
-                            /*VStack {
-                                if self.newPasswordTooShort || self.oldPasswordTooShort || self.errorUpdatingPassword || self.wrongOldPassword || self.oldAndNewPasswordsAreTheSame {
-                                    Text(self.newPasswordTooShort
-                                         ? "New password too short. Password must be 8 characters or more."
-                                         : self.oldPasswordTooShort
-                                            ? "Current password is too short. Passwords require 8 or more characters."
-                                            : self.errorUpdatingPassword
-                                                ? "Error updating password. Try again."
-                                                : self.wrongOldPassword
-                                                    ? "The current password you provided is incorrect. Please try again."
-                                                    : "Current password cannot be the same as the new password.")
-                                    .frame(maxWidth: prop.size.width - 30, alignment: .center)
-                                    .foregroundStyle(Color.EZNotesRed)
-                                    .font(
-                                        .system(
-                                            size: prop.isIpad || self.isLargerScreen
-                                            ? 15
-                                            : 13
-                                        )
-                                    )
-                                    .multilineTextAlignment(.center)
-                                }
-
-                                
-                                if !self.passwordUpdated {
-                                    Text("Current Password")
-                                        .frame(
-                                            width: prop.isIpad
-                                            ? UIDevice.current.orientation.isLandscape
-                                            ? prop.size.width - 800
-                                            : prop.size.width - 450
-                                            : prop.size.width - 80,
-                                            height: 5,
-                                            alignment: .leading
-                                        )
-                                        .padding(.top, 10)
-                                        .font(
-                                            .system(
-                                                size: self.isLargerScreen ? 18 : 13
-                                            )
-                                        )
-                                        .foregroundStyle(.white)
-                                        .fontWeight(.medium)
-                                    
-                                    TextField("Old Password...", text: $oldPassword)
-                                        .frame(
-                                            width: prop.isIpad
-                                            ? UIDevice.current.orientation.isLandscape
-                                            ? prop.size.width - 800
-                                            : prop.size.width - 450
-                                            : prop.size.width - 100,
-                                            height: self.isLargerScreen ? 40 : 30
-                                        )
-                                        .padding([.leading], 15)
-                                        .background(
-                                            Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                                .fill(.clear)
-                                                .border(
-                                                    width: 1,
-                                                    edges: [.bottom],
-                                                    lcolor: self.borderBottomColor
-                                                )
-                                        )
-                                        .foregroundStyle(Color.EZNotesBlue)
-                                        .padding(self.isLargerScreen ? 10 : 8)
-                                        .tint(Color.EZNotesBlue)
-                                        .font(.system(size: 18))
-                                        .fontWeight(.medium)
-                                        .autocapitalization(.none)
-                                        .disableAutocorrection(true)
-                                        .keyboardType(.alphabet)
-                                    
-                                    Text("New Password")
-                                        .frame(
-                                            width: prop.isIpad
-                                            ? UIDevice.current.orientation.isLandscape
-                                            ? prop.size.width - 800
-                                            : prop.size.width - 450
-                                            : prop.size.width - 80,
-                                            height: 5,
-                                            alignment: .leading
-                                        )
-                                        .padding(.top, 10)
-                                        .font(
-                                            .system(
-                                                size: self.isLargerScreen ? 18 : 13
-                                            )
-                                        )
-                                        .foregroundStyle(.white)
-                                        .fontWeight(.medium)
-                                    
-                                    TextField("New Password...", text: $newPassword)
-                                        .frame(
-                                            width: prop.isIpad
-                                            ? UIDevice.current.orientation.isLandscape
-                                            ? prop.size.width - 800
-                                            : prop.size.width - 450
-                                            : prop.size.width - 100,
-                                            height: self.isLargerScreen ? 40 : 30
-                                        )
-                                        .padding([.leading], 15)
-                                        .background(
-                                            Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                                .fill(.clear)
-                                                .border(
-                                                    width: 1,
-                                                    edges: [.bottom],
-                                                    lcolor: self.borderBottomColor
-                                                )
-                                        )
-                                        .foregroundStyle(Color.EZNotesBlue)
-                                        .padding(self.isLargerScreen ? 10 : 8)
-                                        .tint(Color.EZNotesBlue)
-                                        .font(.system(size: 18))
-                                        .fontWeight(.medium)
-                                        .autocapitalization(.none)
-                                        .disableAutocorrection(true)
-                                        .keyboardType(.alphabet)
-                                    
-                                    Button(action: {
-                                        if self.oldPassword.count < 8 { self.oldPasswordTooShort = true; return }
-                                        if self.oldPasswordTooShort { self.oldPasswordTooShort = false }
-                                        
-                                        if self.newPassword.count < 8 { self.newPasswordTooShort = true; return }
-                                        if self.newPasswordTooShort { self.newPasswordTooShort = false }
-                                        
-                                        self.errorUpdatingPassword = false
-                                        
-                                        if self.oldPassword == self.newPassword { self.oldAndNewPasswordsAreTheSame = true; return }
-                                        if self.oldAndNewPasswordsAreTheSame { self.oldAndNewPasswordsAreTheSame = false }
-                                        
-                                        self.changePasswordAlert = true
-                                    }) {
-                                        HStack {
-                                            Text("Update")
-                                                .frame(maxWidth: .infinity, alignment: .center)
-                                                .padding([.top, .bottom], 8)
-                                                .foregroundStyle(.black)
-                                                .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                .minimumScaleFactor(0.5)
-                                        }
-                                        .frame(maxWidth: prop.isIpad
-                                               ? UIDevice.current.orientation.isLandscape
-                                               ? prop.size.width - 800
-                                               : prop.size.width - 450
-                                               : prop.size.width - 80)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(.white)
-                                        )
-                                        .cornerRadius(15)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    
-                                    Spacer()
-                                } else {
-                                    VStack {
-                                        Image(systemName: "checkmark")
-                                            .resizable()
-                                            .frame(width: 40, height: 40)
-                                            .foregroundStyle(Color.EZNotesGreen)
-                                        
-                                        Text("Password Updated")
-                                            .frame(maxWidth: .infinity, alignment: .center)
-                                            .foregroundStyle(.white)
-                                            .font(Font.custom("Poppins-SemiBold", size: 18))
-                                            .minimumScaleFactor(0.5)
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .onAppear {
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                                            self.accountPopupSection = "main"
-                                            
-                                            self.passwordUpdated = false
-                                            
-                                            /* MARK: Just to ensure no sort of error message shows. */
-                                            self.oldPasswordTooShort = false
-                                            self.newPasswordTooShort = false
-                                            self.errorUpdatingPassword = false
-                                            
-                                            /* MARK: Ensure the old/new textfields will have no text in them if the user comes back. */
-                                            self.oldPassword.removeAll()
-                                            self.newPassword.removeAll()
-                                        }
-                                    }
-                                }
-                            }
-                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-                            .alert("Are you sure?", isPresented: $changePasswordAlert) {
-                                Button(action: {
-                                    RequestAction<UpdatePasswordData>(parameters: UpdatePasswordData(
-                                        OldPassword: self.oldPassword, NewPassword: self.newPassword, AccountID: self.accountInfo.accountID
-                                    ))
-                                    .perform(action: update_password_req) { statusCode, resp in
-                                        guard resp != nil && statusCode == 200 else {
-                                            if let resp = resp {
-                                                if !resp.keys.contains("Message") { self.errorUpdatingPassword = true }
-                                                else {
-                                                    if resp["Message"] as! String == "wrong_old_password" {
-                                                        self.wrongOldPassword = true
-                                                        return
-                                                    }
-                                                }
-                                            }
-                                            
-                                            self.errorUpdatingPassword = true
-                                            return
-                                        }
-                                        
-                                        self.passwordUpdated = true
-                                    }
-                                }) { Text("Yes") }
-                                Button("No", role: .cancel) { }
-                            } message: {
-                                Text("If you change your password, your old one will no longer be eligible to be used to login. Are you sure?")
-                            }*/
                         case "switch_state":
                             SwitchState(
-                                prop: prop,
+                                prop: self.prop,
                                 accountInfo: self.accountInfo,
                                 accountPopupSection: $accountPopupSection,
                                 loadingChangeSchoolsSection: $loadingChangeSchoolsSection,
                                 errorLoadingChangeSchoolsSection: $errorLoadingChangeSchoolsSection,
                                 colleges: $colleges
                             )
-                            /*VStack {
-                                if self.errorUpdatingStateName {
-                                    Image(systemName: "exclamationmark.warninglight.fill")
-                                        .resizable()
-                                        .frame(width: 45, height: 40)
-                                        .padding([.top, .bottom], 15)
-                                        .foregroundStyle(Color.EZNotesRed)
-                                    
-                                    Text("Error updating state")
-                                        .frame(maxWidth: prop.size.width - 60, alignment: .center)
-                                        .foregroundColor(.white)
-                                        .setFontSizeAndWeight(weight: .medium, size: 20)
-                                        .minimumScaleFactor(0.5)
-                                        .multilineTextAlignment(.center)
-                                    
-                                    Button(action: { print("Report Problem") }) {
-                                        HStack {
-                                            Text("Report a Problem")
-                                                .frame(maxWidth: .infinity, alignment: .center)
-                                                .padding([.top, .bottom], 8)
-                                                .foregroundStyle(.black)
-                                                .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                .minimumScaleFactor(0.5)
-                                        }
-                                        .frame(maxWidth: prop.size.width - 80)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(.white)
-                                        )
-                                        .cornerRadius(15)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    .padding(.top, 15)
-                                    
-                                    Spacer()
-                                } else {
-                                    ScrollView(.vertical, showsIndicators: false) {
-                                        VStack {
-                                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
-                                                ForEach(self.states, id: \.self) { state in
-                                                    Button(action: {
-                                                        self.temporaryStateValue = state
-                                                        self.updateStateAlert = true
-                                                    }) {
-                                                        HStack {
-                                                            Text(state)
-                                                                .frame(maxWidth: .infinity, alignment: .center)
-                                                                .padding([.leading, .top, .bottom], 10)
-                                                                .foregroundStyle(.white)
-                                                                .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
-                                                                .fontWeight(.bold)
-                                                                .minimumScaleFactor(0.5)
-                                                                .multilineTextAlignment(.leading)
-                                                        }
-                                                        .frame(maxWidth: .infinity)
-                                                        .padding(10)
-                                                        .background(
-                                                            RoundedRectangle(cornerRadius: 15)
-                                                                .fill(Color.EZNotesLightBlack.opacity(0.65))
-                                                                .shadow(color: Color.black, radius: 1.5)
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-                            .alert("Did you switch colleges?", isPresented: $updateStateAlert) {
-                                Button(action: {
-                                    RequestAction<UpdateStateData>(parameters: UpdateStateData(
-                                        NewState: self.temporaryStateValue,
-                                        AccountID: self.accountInfo.accountID
-                                    ))
-                                    .perform(action: update_state_req) { statusCode, resp in
-                                        guard resp != nil && statusCode == 200 else {
-                                            /* TODO: Add error checking. */
-                                            self.errorUpdatingStateName = true
-                                            return
-                                        }
-                                        
-                                        self.errorUpdatingStateName = false
-                                        
-                                        self.accountInfo.setCollegeState(collegeState: self.temporaryStateValue)
-                                        UserDefaults.standard.set(self.temporaryStateValue, forKey: "college_state")
-                                        self.temporaryStateValue.removeAll()
-                                        
-                                        self.accountPopupSection = "switch_college"
-                                        self.loadingChangeSchoolsSection = true
-                                        
-                                        /* MARK: Get all the colleges for the state. */
-                                        RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(State: self.accountInfo.state))
-                                            .perform(action: get_colleges) { statusCode, resp in
-                                                self.loadingChangeSchoolsSection = false
-                                                /* TODO: Add loading screen while college names load. */
-                                                guard
-                                                    resp != nil,
-                                                    resp!.keys.contains("Colleges"),
-                                                    statusCode == 200
-                                                else {
-                                                    /* TODO: Add some sort of error checking. We can use the banner-thing that is used to signify a success or failure when updating PFP/PFP BG image. */
-                                                    /* TODO: As has been aforementioned - lets go ahead and ensure the banner message can be used across the board, not just with update success/failures of PFP/PFP BG image. */
-                                                    //self.serverError = true
-                                                    if let resp = resp { print(resp) }
-                                                    self.errorLoadingChangeSchoolsSection = true
-                                                    return
-                                                }
-                                                
-                                                self.errorLoadingChangeSchoolsSection = false
-                                                
-                                                let respColleges = resp!["Colleges"] as! [String]
-                                                
-                                                /* MARK: Ensure the `colleges` array is empty. */
-                                                self.colleges.removeAll()
-                                                
-                                                for c in respColleges {
-                                                    if !self.colleges.contains(c) { self.colleges.append(c) }
-                                                }
-                                                
-                                                self.colleges.append("Other")
-                                                //self.college = self.colleges[0]
-                                            }
-                                    }
-                                }) { Text("Yes") }
-                                
-                                Button(action: {
-                                    RequestAction<UpdateStateData>(parameters: UpdateStateData(
-                                        NewState: self.temporaryStateValue,
-                                        AccountID: self.accountInfo.accountID
-                                    ))
-                                    .perform(action: update_state_req) { statusCode, resp in
-                                        guard resp != nil && statusCode == 200 else {
-                                            self.temporaryStateValue.removeAll()
-                                            
-                                            /* TODO: Error handling. For now this is okay. */
-                                            self.accountPopupSection = "main"
-                                            return
-                                        }
-                                        
-                                        self.accountInfo.setCollegeState(collegeState: self.temporaryStateValue)
-                                        UserDefaults.standard.set(self.temporaryStateValue, forKey: "college_state")
-                                        self.temporaryStateValue.removeAll()
-                                        
-                                        /* MARK: Since "no" is tapped, redirect back to the main section. */
-                                        self.accountPopupSection = "main"
-                                    }
-                                }) { Text("No") }
-                            } message: {
-                                Text("If you switched colleges it would be of your best interest to update that information to ensure EZNotes AI can assist you accordingly.")
-                            }*/
                         case "switch_college":
                             VStack {
                                 if self.loadingChangeSchoolsSection {
@@ -1544,39 +1151,12 @@ struct AccountPopup: View {
                                         .tint(Color.EZNotesBlue)
                                 } else {
                                     if self.errorLoadingChangeSchoolsSection {
-                                        Image(systemName: "exclamationmark.warninglight.fill")
-                                            .resizable()
-                                            .frame(width: 45, height: 40)
-                                            .padding([.top, .bottom], 15)
-                                            .foregroundStyle(Color.EZNotesRed)
-                                        
-                                        Text("Error obtaining colleges from \(self.accountInfo.state)")
-                                            .frame(maxWidth: prop.size.width - 60, alignment: .center)
-                                            .foregroundColor(.white)
-                                            .setFontSizeAndWeight(weight: .medium, size: 20)
-                                            .minimumScaleFactor(0.5)
-                                            .multilineTextAlignment(.center)
-                                        
-                                        Button(action: { print("Report Problem") }) {
-                                            HStack {
-                                                Text("Report a Problem")
-                                                    .frame(maxWidth: .infinity, alignment: .center)
-                                                    .padding([.top, .bottom], 8)
-                                                    .foregroundStyle(.black)
-                                                    .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                    .minimumScaleFactor(0.5)
-                                            }
-                                            .frame(maxWidth: prop.size.width - 80)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 15)
-                                                    .fill(.white)
-                                            )
-                                            .cornerRadius(15)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        .padding(.top, 15)
-                                        
-                                        Spacer()
+                                        ErrorMessage(
+                                            prop: prop,
+                                            placement: .top,
+                                            message: "Error obtaining colleges from \(self.accountInfo.state)",
+                                            showReportProblemButton: true
+                                        )
                                     } else {
                                         ScrollView(.vertical, showsIndicators: false) {
                                             VStack {
@@ -1636,7 +1216,7 @@ struct AccountPopup: View {
                                             return
                                         }
                                         
-                                        UserDefaults.standard.set(self.temporaryCollegeValue, forKey: "college_name")
+                                        assignUDKey(key: "college_name", value: self.temporaryCollegeValue)
                                         self.accountInfo.setCollegeName(collegeName: self.temporaryCollegeValue)
                                         
                                         self.accountPopupSection = "switch_field_and_major"
@@ -1695,39 +1275,12 @@ struct AccountPopup: View {
                                         .tint(Color.EZNotesBlue)
                                 } else {
                                     if self.errorLoadingMajorFields || self.errorLoadingMajors {
-                                        Image(systemName: "exclamationmark.warninglight.fill")
-                                            .resizable()
-                                            .frame(width: 45, height: 40)
-                                            .padding([.top, .bottom], 15)
-                                            .foregroundStyle(Color.EZNotesRed)
-                                        
-                                        Text(self.errorLoadingMajorFields ? "Failed to obtain major fields from \(self.accountInfo.college)" : "Failed to obtain majors for \(self.temporaryMajorFieldValue)")
-                                            .frame(maxWidth: prop.size.width - 60, alignment: .center)
-                                            .foregroundColor(.white)
-                                            .setFontSizeAndWeight(weight: .medium, size: 20)
-                                            .minimumScaleFactor(0.5)
-                                            .multilineTextAlignment(.center)
-                                        
-                                        Button(action: { print("Report Problem") }) {
-                                            HStack {
-                                                Text("Report a Problem")
-                                                    .frame(maxWidth: .infinity, alignment: .center)
-                                                    .padding([.top, .bottom], 8)
-                                                    .foregroundStyle(.black)
-                                                    .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                    .minimumScaleFactor(0.5)
-                                            }
-                                            .frame(maxWidth: prop.size.width - 80)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 15)
-                                                    .fill(.white)
-                                            )
-                                            .cornerRadius(15)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        .padding(.top, 15)
-                                        
-                                        Spacer()
+                                        ErrorMessage(
+                                            prop: self.prop,
+                                            placement: .top,
+                                            message: self.errorLoadingMajorFields ? "Failed to obtain major fields from \(self.accountInfo.college)" : "Failed to obtain majors for \(self.temporaryMajorFieldValue)",
+                                            showReportProblemButton: true
+                                        )
                                     } else {
                                         ScrollView(.vertical, showsIndicators: false) {
                                             VStack {
@@ -1749,7 +1302,7 @@ struct AccountPopup: View {
                                                                 self.loadingMajors = false
                                                                 
                                                                 guard resp != nil && statusCode == 200 else {
-                                                                    self.errorLoadingMajors
+                                                                    self.errorLoadingMajors = true
                                                                     return
                                                                 }
                                                                 
@@ -1823,8 +1376,8 @@ struct AccountPopup: View {
                                             }
                                             
                                             /* MARK: If updating the major is good, then update the UserDefault values. */
-                                            UserDefaults.standard.set(self.temporaryMajorFieldValue, forKey: "major_field")
-                                            UserDefaults.standard.set(self.temporaryMajorValue, forKey: "major_name")
+                                            assignUDKey(key: "major_field", value: self.temporaryMajorFieldValue)
+                                            assignUDKey(key: "major_name", value: self.temporaryMajorValue)
                                             self.accountInfo.setMajorName(majorName: self.temporaryMajorValue)
                                             
                                             self.temporaryMajorFieldValue.removeAll()
@@ -2299,7 +1852,7 @@ struct AccountPopup: View {
                 .background(
                     Rectangle()
                         .fill(Color.EZNotesBlack)
-                        .cornerRadius(15, corners: self.isLargerScreen ? [.topLeft, .topRight, .bottomLeft, .bottomRight] : [.topLeft, .topRight])
+                        .cornerRadius(15, corners: prop.isLargerScreen ? [.topLeft, .topRight, .bottomLeft, .bottomRight] : [.topLeft, .topRight])
                         .shadow(color: .black, radius: 6.5)
                 )
                 .edgesIgnoringSafeArea(.bottom)
@@ -2310,9 +1863,6 @@ struct AccountPopup: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.EZNotesBlack)
         .onAppear {
-            self.isLargerScreen = prop.size.height / 2.5 > 300
-            self.lastHeight = prop.size.height
-            
             /* MARK: Initiation for animations of the parts of the popup. */
             self.bodyYOffset = prop.size.height - 100
             self.topBodyYOffset = -prop.size.height

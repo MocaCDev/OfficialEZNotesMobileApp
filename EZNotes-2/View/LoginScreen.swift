@@ -51,10 +51,6 @@ struct LoginScreen: View, KeyboardReadable {
         )
         self.userHasSignedIn = true
     }
-    
-    /* TODO: Create a observed object for this. The below variables can be found in `SignUpScreen.swift` as well. */
-    @State private var isLargerScreen: Bool = false
-    @State private var lastHeight: CGFloat = 0.0
 
     var body: some View {
         VStack {
@@ -79,7 +75,7 @@ struct LoginScreen: View, KeyboardReadable {
                             .system(
                                 size: prop.isIpad
                                 ? 90
-                                : self.isLargerScreen
+                                : prop.isLargerScreen
                                 ? 40
                                 : 30
                             )
@@ -88,6 +84,11 @@ struct LoginScreen: View, KeyboardReadable {
                     
                     ZStack {
                         Menu {
+                            Button(action: { self.screen = "signup" }) {
+                                Label("Go to sign up", systemImage: "chevron.forward")
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            
                             Button(action: { print("Get Help") }) {
                                 Label("I need help", systemImage: "questionmark")
                             }
@@ -108,11 +109,11 @@ struct LoginScreen: View, KeyboardReadable {
                     ? "Use your Email or Username to login to your account"
                     : "Email, Username or Password is incorrect"
                 )
-                .frame(maxWidth: prop.size.width - 30, minHeight: 45, alignment: .center)
+                .frame(maxWidth: prop.size.width - 100, alignment: .center)
                 .foregroundStyle(self.loginError ? Color.red : Color.white)
                 .font(
                     .system(
-                        size: prop.isIpad || self.isLargerScreen
+                        size: prop.isIpad || prop.isLargerScreen
                         ? 15
                         : 13
                     )
@@ -126,14 +127,14 @@ struct LoginScreen: View, KeyboardReadable {
                             ? UIDevice.current.orientation.isLandscape
                             ? prop.size.width - 800
                             : prop.size.width - 450
-                            : prop.size.width - 100,
+                            : prop.size.width - 80,
                             height: 5,
                             alignment: .leading
                         )
                         .padding(.top, 10)
                         .font(
                             .system(
-                                size: self.isLargerScreen ? 25 : 20
+                                size: prop.isLargerScreen ? 18 : 13
                             )
                         )
                         .foregroundStyle(.white)
@@ -146,9 +147,9 @@ struct LoginScreen: View, KeyboardReadable {
                             ? prop.size.width - 800
                             : prop.size.width - 450
                             : prop.size.width - 100,
-                            height: self.isLargerScreen ? 40 : 30
+                            height: prop.isLargerScreen ? 40 : 30
                         )
-                        .padding([.leading], 15)
+                        .padding(.leading, prop.isLargerScreen ? 15 : 5)
                         .background(
                             Rectangle()//RoundedRectangle(cornerRadius: 15)
                                 .fill(.clear)
@@ -162,7 +163,7 @@ struct LoginScreen: View, KeyboardReadable {
                                 )
                         )
                         .foregroundStyle(Color.EZNotesBlue)
-                        .padding([.top, .leading, .trailing], self.isLargerScreen ? 10 : 8)
+                        .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
                         .tint(Color.EZNotesBlue)
                         .font(.system(size: 18))
                         .fontWeight(.medium)
@@ -175,7 +176,7 @@ struct LoginScreen: View, KeyboardReadable {
                             Text("Forgot Username?")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .foregroundStyle(Color.EZNotesBlue)
-                                .font(Font.custom("Poppins-ExtraLight", size: 12))
+                                .font(Font.custom("Poppins-ExtraLight", size: 14))
                         }
                         .buttonStyle(NoLongPressButtonStyle())
                     }
@@ -192,14 +193,14 @@ struct LoginScreen: View, KeyboardReadable {
                             ? UIDevice.current.orientation.isLandscape
                             ? prop.size.width - 800
                             : prop.size.width - 450
-                            : prop.size.width - 100,
+                            : prop.size.width - 80,
                             height: 5,
                             alignment: .leading
                         )
                         .padding(.top, 10)
                         .font(
                             .system(
-                                size: self.isLargerScreen ? 25 : 20
+                                size: prop.isLargerScreen ? 18 : 13
                             )
                         )
                         .foregroundStyle(.white)
@@ -212,9 +213,9 @@ struct LoginScreen: View, KeyboardReadable {
                                     ? prop.size.width - 800
                                     : prop.size.width - 450
                                 : prop.size.width - 100,
-                            height: self.isLargerScreen ? 40 : 30
+                            height: prop.isLargerScreen ? 40 : 30
                         )
-                        .padding([.leading], 15)
+                        .padding(.leading, prop.isLargerScreen ? 15 : 5)
                         .background(
                             Rectangle()//RoundedRectangle(cornerRadius: 15)
                                 .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
@@ -228,7 +229,7 @@ struct LoginScreen: View, KeyboardReadable {
                                 )
                         )
                         .foregroundStyle(Color.EZNotesBlue)
-                        .padding([.top, .leading, .trailing], self.isLargerScreen ? 10 : 8)
+                        .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
                         .tint(Color.EZNotesBlue)
                         .font(.system(size: 18))
                         .fontWeight(.medium)
@@ -241,7 +242,7 @@ struct LoginScreen: View, KeyboardReadable {
                             Text("Forgot Password?")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .foregroundStyle(Color.EZNotesBlue)
-                                .font(Font.custom("Poppins-ExtraLight", size: 12))
+                                .font(Font.custom("Poppins-ExtraLight", size: 14))
                         }
                         .buttonStyle(NoLongPressButtonStyle())
                     }
@@ -251,17 +252,11 @@ struct LoginScreen: View, KeyboardReadable {
                                : prop.size.width - 450
                            : prop.size.width - 80)
                 }
-                .padding(.top, self.isLargerScreen ? 25 : 20)
+                .padding(.top, prop.isLargerScreen ? 25 : 20)
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .top) // Keep VStack aligned to the top
             .ignoresSafeArea(.keyboard, edges: .bottom) // Ignore keyboard safe area
-            .onChange(of: prop.size.height) {
-                if prop.size.height < self.lastHeight { self.isLargerScreen = prop.size.height / 2.5 > 200 }
-                else { self.isLargerScreen = prop.size.height / 2.5 > 300 }
-                
-                self.lastHeight = prop.size.height
-            }
             
             Spacer()
             
@@ -314,10 +309,6 @@ struct LoginScreen: View, KeyboardReadable {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.EZNotesBlack)
-        .onAppear {
-            self.isLargerScreen = prop.size.height / 2.5 > 300
-            self.lastHeight = prop.size.height
-        }
     }
 }
 

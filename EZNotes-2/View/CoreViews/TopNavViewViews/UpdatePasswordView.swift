@@ -13,7 +13,6 @@ struct UpdatePassword: View {
     var borderBottomColor: LinearGradient
     
     @ObservedObject public var accountInfo: AccountDetails
-    @Binding public var isLargerScreen: Bool
     @Binding public var accountPopupSection: String
     
     @State private var newPassword: String = ""
@@ -42,7 +41,7 @@ struct UpdatePassword: View {
                 .foregroundStyle(Color.EZNotesRed)
                 .font(
                     .system(
-                        size: prop.isIpad || self.isLargerScreen
+                        size: prop.isIpad || prop.isLargerScreen
                         ? 15
                         : 13
                     )
@@ -65,7 +64,7 @@ struct UpdatePassword: View {
                     .padding(.top, 10)
                     .font(
                         .system(
-                            size: self.isLargerScreen ? 18 : 13
+                            size: prop.isLargerScreen ? 18 : 13
                         )
                     )
                     .foregroundStyle(.white)
@@ -78,7 +77,7 @@ struct UpdatePassword: View {
                         ? prop.size.width - 800
                         : prop.size.width - 450
                         : prop.size.width - 100,
-                        height: self.isLargerScreen ? 40 : 30
+                        height: prop.isLargerScreen ? 40 : 30
                     )
                     .padding([.leading], 15)
                     .background(
@@ -91,7 +90,7 @@ struct UpdatePassword: View {
                             )
                     )
                     .foregroundStyle(Color.EZNotesBlue)
-                    .padding(self.isLargerScreen ? 10 : 8)
+                    .padding(prop.isLargerScreen ? 10 : 8)
                     .tint(Color.EZNotesBlue)
                     .font(.system(size: 18))
                     .fontWeight(.medium)
@@ -112,7 +111,7 @@ struct UpdatePassword: View {
                     .padding(.top, 10)
                     .font(
                         .system(
-                            size: self.isLargerScreen ? 18 : 13
+                            size: prop.isLargerScreen ? 18 : 13
                         )
                     )
                     .foregroundStyle(.white)
@@ -125,7 +124,7 @@ struct UpdatePassword: View {
                         ? prop.size.width - 800
                         : prop.size.width - 450
                         : prop.size.width - 100,
-                        height: self.isLargerScreen ? 40 : 30
+                        height: prop.isLargerScreen ? 40 : 30
                     )
                     .padding([.leading], 15)
                     .background(
@@ -138,7 +137,7 @@ struct UpdatePassword: View {
                             )
                     )
                     .foregroundStyle(Color.EZNotesBlue)
-                    .padding(self.isLargerScreen ? 10 : 8)
+                    .padding(prop.isLargerScreen ? 10 : 8)
                     .tint(Color.EZNotesBlue)
                     .font(.system(size: 18))
                     .fontWeight(.medium)
