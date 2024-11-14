@@ -327,9 +327,13 @@ struct ReviewNewCategories: View {
                 }
                 
                 for (_, value) in self.newSetNotes.enumerated() {
-                    print(value)
+                    if !self.setAndNotes.keys.contains(value.key) { self.setAndNotes[value.key] = [[:]] }
+                    
+                    for (_, value2) in value.value.enumerated() {
+                        self.setAndNotes[value.key]!.append(value2)
+                    }
                 }
-                //self.newSetNotes.removeAll()
+                self.newSetNotes.removeAll()
                 
                 //print(self.categoryCreationDates)
                 
@@ -337,7 +341,7 @@ struct ReviewNewCategories: View {
                 writeCategoryData(categoryData: self.categoriesAndSets)
                 writeCategoryImages(categoryImages: self.categoryImages)
                 writeCategoryCreationDates(categoryCreationDates: categoryCreationDates)
-                //writeSetsAndNotes(setsAndNotes: self.setAndNotes)
+                writeSetsAndNotes(setsAndNotes: self.setAndNotes)
                 
                 /* Remove all upload information. */
                 self.photos.removeAll()

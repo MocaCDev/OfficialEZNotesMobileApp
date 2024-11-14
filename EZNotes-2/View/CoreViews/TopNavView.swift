@@ -1927,7 +1927,7 @@ struct TopNavHome: View {
                 ProfileIconView(prop: prop, accountInfo: accountInfo, showAccountPopup: $showAccountPopup)
             }
             .frame(maxWidth: 90,  alignment: .leading)
-            .padding(.bottom, 10)//.padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15) /* MARK: Aligns icon for larger screens. */
+            .padding(.bottom, 20)//.padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15) /* MARK: Aligns icon for larger screens. */
             //.padding(.bottom, prop.size.height / 2.5 > 300 ? 0 : 10) /* MARK: Aligns icon for smaller screens. */
             .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
             
@@ -2019,7 +2019,8 @@ struct TopNavHome: View {
                             .fontWeight(.thin)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    .padding(.top, prop.size.height / 2.5 > 300 ? 45 : 15)
+                    .padding(.bottom, 20)
+                    //.padding(.top, prop.size.height / 2.5 > 300 ? 45 : 15)
                 }
             }
             
@@ -2048,7 +2049,7 @@ struct TopNavHome: View {
             }
             .frame(maxWidth: 90, maxHeight: .infinity, alignment: .trailing)
             //.padding(.top, prop.size.height / 2.5 > 300 ? 40 : 0)
-            .padding(.bottom, 10)
+            .padding(.bottom, 20)
         }
         .topNavSettings(prop: prop, backgroundColor: .clear)
         .padding([.top], 5)
@@ -3106,51 +3107,49 @@ struct TopNavCategoryView: View {
     @Binding public var showTitle: Bool
     
     var body: some View {
-        VStack {
-            HStack {
-                VStack {
-                    Button(action: { self.launchCategory = false }) {
-                        Image(systemName: "arrow.left")
-                            .resizable()
-                            .frame(width: 20, height: 20)
-                            .tint(Color.EZNotesBlue)
-                    }
-                    .buttonStyle(NoLongPressButtonStyle())
-                    .padding([.leading], 20)
+        HStack {
+            VStack {
+                Button(action: { self.launchCategory = false }) {
+                    Image(systemName: "arrow.left")
+                        .resizable()
+                        .frame(width: 20, height: 20)
+                        .tint(Color.EZNotesBlue)
                 }
-                .frame(maxWidth: 50, alignment: .leading)
-                .padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15)
+                .buttonStyle(NoLongPressButtonStyle())
+                .padding([.leading], 20)
+            }
+            .frame(maxWidth: 50, maxHeight: .infinity, alignment: .leading)
+            .padding(.top, prop.size.height / 2.5 > 300 ? 55 : 15)
+            
+            Spacer()
+            
+            if self.showTitle {
+                Text("TITLE!")
                 
                 Spacer()
-                
-                if self.showTitle {
-                    Text("TITLE!")
-                    
-                    Spacer()
-                }
-                
-                //Spacer()
-                
-                VStack {
-                    Button(action: { print("POPUP!") }) {
-                        Image("AI-Chat-Icon")
-                            .resizable()
-                            .frame(
-                                width: prop.size.height / 2.5 > 300 ? 45 : 40,
-                                height: prop.size.height / 2.5 > 300 ? 45 : 40
-                            )
-                            .padding([.trailing], 20)
-                    }
-                    .buttonStyle(NoLongPressButtonStyle())
-                }
-                .frame(maxWidth: 90, maxHeight: .infinity, alignment: .trailing)
-                .padding(.top, prop.size.height / 2.5 > 300 ? 40 : 0)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            
+            //Spacer()
+            
+            VStack {
+                Button(action: { print("POPUP!") }) {
+                    Image("AI-Chat-Icon")
+                        .resizable()
+                        .frame(
+                            width: prop.size.height / 2.5 > 300 ? 45 : 40,
+                            height: prop.size.height / 2.5 > 300 ? 45 : 40
+                        )
+                        .padding([.trailing], 20)
+                }
+                .buttonStyle(NoLongPressButtonStyle())
+            }
+            .frame(maxWidth: 90, maxHeight: .infinity, alignment: .trailing)
+            .padding(.top, prop.size.height / 2.5 > 300 ? 55 : 0)
         }
-        .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 115 : 65, alignment: .top)
-        .padding(.top, 5)
-        .edgesIgnoringSafeArea(.top)
+        .frame(maxWidth: .infinity, maxHeight: 100, alignment: .top)
+        .padding([.top], 5)
+        .background(Color.EZNotesBlack.opacity(0.95))
+        .ignoresSafeArea(.keyboard, edges: .bottom)
         .zIndex(1)
     }
 }
@@ -3175,7 +3174,7 @@ struct TopNavUpload: View {
             VStack {
                 ProfileIconView(prop: prop, accountInfo: accountInfo, showAccountPopup: $showAccountPopup)
             }
-            .padding([.bottom], 10)
+            .padding([.bottom], 20)
             .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
             
             Spacer()
@@ -3224,7 +3223,7 @@ struct TopNavChat: View {
             VStack {
                 ProfileIconView(prop: prop, accountInfo: accountInfo, showAccountPopup: $showAccountPopup)
             }
-            .padding([.bottom], 10)
+            .padding([.bottom], 20)
             .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
             
             Spacer()
@@ -3244,6 +3243,7 @@ struct TopNavChat: View {
                 .buttonStyle(NoLongPressButtonStyle())
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.bottom, 20)
         }
         .topNavSettings(prop: prop, backgroundColor: .clear)
         .padding([.top], 5)

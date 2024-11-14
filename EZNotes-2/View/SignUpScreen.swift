@@ -1516,6 +1516,10 @@ struct SignUpScreen : View, KeyboardReadable {
                 
                 self.major = getUDValue(key: "temp_major")
                 
+                if self.section == "select_state_and_college" {
+                    self.checkInfoAlert = true
+                }
+                
                 /*RequestAction<SignUpRequestData>(
                     parameters: SignUpRequestData(
                         Username: username,
