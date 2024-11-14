@@ -36,6 +36,7 @@ struct HomeView: View {
     @Binding public var messages: Array<MessageDetails>
     @Binding public var section: String
     @Binding public var categoriesAndSets: [String: Array<String>]
+    @Binding public var setAndNotes: [String: Array<[String: String]>]
     @Binding public var categoryImages: [String: UIImage]
     @Binding var categoryCreationDates: [String: Date]
     
@@ -81,6 +82,7 @@ struct HomeView: View {
     @State private var categoryBackgroundColor: Color? = nil
     @State private var categoryLaunched: String = ""
     @State private var categoryBackground: UIImage = UIImage(systemName: "arrow.left")! /* TODO: Figure out how to initialize a UIImage variable. */
+    @State private var categoriesSetsAndNotes: Array<[String: String]> = [[:]]
     
     @State private var categorySearch: String = ""
     @State private var searchDone: Bool = false
@@ -257,6 +259,11 @@ struct HomeView: View {
                                                         self.categoryTitleColor = self.categoryCustomTextColors[key]
                                                         self.categoryBackgroundColor = self.categoryCustomColors[key]
                                                         self.categoryBackground = self.categoryImages[key]!
+                                                        
+                                                        self.categoriesSetsAndNotes.removeAll()
+                                                        if self.setAndNotes.keys.contains(key) {
+                                                            self.categoriesSetsAndNotes = self.setAndNotes[key]!
+                                                        }
                                                     }) {
                                                         HStack {
                                                             VStack {
@@ -1166,6 +1173,7 @@ struct HomeView: View {
                 categoryBackgroundColor: self.categoryBackgroundColor,
                 categoriesAndSets: categoriesAndSets,
                 categoryBackground: categoryBackground,
+                categoriesSetsAndNotes: categoriesSetsAndNotes,
                 launchCategory: $launchCategory,
                 categoryDescriptions: $categoryDescriptions
             )

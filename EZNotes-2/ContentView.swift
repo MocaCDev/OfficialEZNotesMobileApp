@@ -86,6 +86,7 @@ struct ContentView: View {
     @StateObject private var model: FrameHandler = FrameHandler()
     
     @State private var categoriesAndSets: [String: Array<String>] = getCategoryData() /* MARK: Key will be the category name, value will be the set names */
+    @State private var setAndNotes: [String: Array<[String: String]>] = getSetsAndNotes()
     @State private var categoryCreationDates: [String: Date] = getCategoryCreationDates()
     @State private var categoryImages: [String: UIImage] = getCategoriesImageData() /* MARK: Key will be the category name, value will be the categories image (first uploaded image for category). */
     @State private var categoryDescriptions: [String: String] = getCategoryDescriptions()
@@ -124,6 +125,7 @@ struct ContentView: View {
                             model: model,
                             prop: prop,
                             categoriesAndSets: $categoriesAndSets,
+                            setAndNotes: $setAndNotes,
                             categoryCreationDates: $categoryCreationDates,
                             categoryImages: $categoryImages,
                             categoryDescriptions: $categoryDescriptions,

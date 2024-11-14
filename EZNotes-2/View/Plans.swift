@@ -120,326 +120,366 @@ public struct Plans: View {
                 VStack {
                     VStack {
                         VStack {
-                            Text("Basic Plan")
+                            VStack {
+                                Text("Basic Plan")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .foregroundStyle(.black)
+                                    .padding([.top, .bottom])
+                                    .font(.system(size: 24))
+                                    .fontWeight(.bold)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .background(.white)
+                        
+                        VStack {
+                            VStack {
+                                Text("Description")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.semibold)
+                                
+                                /*Text("The Basic Plan includes all of the fundamental features that a user will need to automate the note taking process.")*/
+                                Text("The Basic Plan equips you with all the fundamentals that the app comes with.\nIt enables you to uploads roughly 100 images of notes at once and backup roughly 450K notes. You also get access to EZNotes Chatbot which can be your personal tutor through your note taking and studying adventures.")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .padding(.top, 5)
+                                    .padding([.bottom, .leading], 10)
+                                    .font(.system(size: 12))
+                                    .minimumScaleFactor(0.5)
+                                    .fontWeight(.light)
+                                    .multilineTextAlignment(.leading)
+                            }
+                            .padding(.leading)
+                            
+                            VStack {
+                                Text("Uploads:")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.semibold)
+                                
+                                Text("• 1gb Upload Limit\n\t◦ 100 Image Upload Limit\n• 5gb Backup Limit\n\t◦ Roughly 450K notes can be backed up")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .padding(.top, 5)
+                                    .padding(.leading, 10)
+                                    .font(.system(size: 15))
+                                    .minimumScaleFactor(0.5)
+                            }
+                            .padding([.top, .leading])
+                            
+                            VStack {
+                                Text("AI Access:")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.semibold)
+                                
+                                Text("• EZNotes LLM\n\t◦ Powers the automated note-curation\n• EZNotes Chatbot\n\t◦ Your personal tutor")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .padding(.top, 5)
+                                    .padding(.leading, 10)
+                                    .font(.system(size: 15))
+                                    .minimumScaleFactor(0.5)
+                            }
+                            .padding([.top, .leading])
+                            
+                            VStack {
+                                Text("Built-in Features:")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.semibold)
+                                
+                                Text("• Essay Helper\n• Note Curation")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .padding(.top, 5)
+                                    .padding(.leading, 10)
+                                    .font(.system(size: 15))
+                                    .minimumScaleFactor(0.5)
+                            }
+                            .padding([.top, .leading, .bottom])
+                        }
+                        .padding()
+                        
+                        VStack {
+                            Button(action: {
+                                self.planPicked = "basic_plan_monthly"
+                                self.isPlanPicked = true
+                            }) {
+                                HStack {
+                                    VStack {
+                                        Text("Select Monthly")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: prop.isLargerScreen ? 20 : 16, design: .rounded))
+                                            .minimumScaleFactor(0.5)
+                                            .fontWeight(.semibold)
+                                        
+                                        Text("From $12/month ($144/year)")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 12))
+                                            .minimumScaleFactor(0.5)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    ZStack {
+                                        Image(systemName: "chevron.forward")
+                                            .resizable()
+                                            .frame(width: 10, height: 15)
+                                            .foregroundStyle(.gray)
+                                    }
+                                    .frame(maxWidth: 20, alignment: .trailing)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .top)
+                                .padding(8)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            
+                            Divider()
+                                .background(.gray)
+                            
+                            Button(action: {
+                                self.planPicked = "basic_plan_annually"
+                                self.isPlanPicked = true
+                            }) {
+                                HStack {
+                                    VStack {
+                                        Text("Select Yearly")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: prop.isLargerScreen ? 20 : 16, design: .rounded))
+                                            .minimumScaleFactor(0.5)
+                                            .fontWeight(.semibold)
+                                        
+                                        Text("From $126/year ($10.50/month)")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 12))
+                                            .minimumScaleFactor(0.5)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    ZStack {
+                                        Image(systemName: "chevron.forward")
+                                            .resizable()
+                                            .frame(width: 10, height: 15)
+                                            .foregroundStyle(.gray)
+                                    }
+                                    .frame(maxWidth: 20, alignment: .trailing)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .top)
+                                .padding(8)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(8)
+                        .background(Color.black.opacity(0.30))
+                        .cornerRadius(15, corners: [.bottomLeft, .bottomRight])
+                    }
+                    .frame(maxWidth: prop.size.width - 40)
+                    .cornerRadius(15)
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.EZNotesBlack)
+                            .shadow(color: .black, radius: 2.5)
+                    )
+                    .padding(.bottom, 15)
+                }
+                .frame(maxWidth: prop.size.width - 30)
+                
+                VStack {
+                    VStack {
+                        VStack {
+                            Text("Pro Plan")
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .foregroundStyle(.black)
                                 .padding([.top, .bottom])
                                 .font(.system(size: 24))
                                 .fontWeight(.bold)
                         }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .background(.white)
-                    
-                    VStack {
-                        VStack {
-                            Text("Description")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 18))
-                                .fontWeight(.semibold)
-                            
-                            /*Text("The Basic Plan includes all of the fundamental features that a user will need to automate the note taking process.")*/
-                            Text("The Basic Plan equips you with all the fundamentals that the app comes with.\nIt enables you to uploads roughly 100 images of notes at once and backup roughly 450K notes. You also get access to EZNotes Chatbot which can be your personal tutor through your note taking and studying adventures.")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .padding(.top, 5)
-                                .padding([.bottom, .leading], 10)
-                                .font(.system(size: 12))
-                                .minimumScaleFactor(0.5)
-                                .fontWeight(.light)
-                                .multilineTextAlignment(.leading)
-                        }
-                        .padding(.leading)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            MeshGradient(width: 3, height: 3, points: [
+                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                            ], colors: [
+                                Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                            ])
+                        )
                         
                         VStack {
-                            Text("Uploads:")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 18))
-                                .fontWeight(.semibold)
-                            
-                            Text("• 1gb Upload Limit\n\t◦ 100 Image Upload Limit\n• 5gb Backup Limit\n\t◦ Roughly 450K notes can be backed up")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .padding(.top, 5)
-                                .padding(.leading, 10)
-                                .font(.system(size: 15))
-                                .minimumScaleFactor(0.5)
-                        }
-                        .padding([.top, .leading])
-                        
-                        VStack {
-                            Text("AI Access:")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 18))
-                                .fontWeight(.semibold)
-                            
-                            Text("• EZNotes LLM\n\t◦ Powers the automated note-curation\n• EZNotes Chatbot\n\t◦ Your personal tutor")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .padding(.top, 5)
-                                .padding(.leading, 10)
-                                .font(.system(size: 15))
-                                .minimumScaleFactor(0.5)
-                        }
-                        .padding([.top, .leading])
-                        
-                        VStack {
-                            Text("Built-in Features:")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 18))
-                                .fontWeight(.semibold)
-                            
-                            Text("• Essay Helper\n• Note Curation")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .padding(.top, 5)
-                                .padding(.leading, 10)
-                                .font(.system(size: 15))
-                                .minimumScaleFactor(0.5)
-                        }
-                        .padding([.top, .leading, .bottom])
-                    }
-                    .padding()
-                    
-                    HStack {
-                        VStack {
-                            Button(action: {
-                                self.planPicked = "basic_plan_monthly"
-                                self.isPlanPicked = true
-                            }) {
-                                Text("Select Monthly")
-                                    .frame(maxWidth: (prop.size.width - 40) - 40, alignment: .center)
-                                    .padding([.top, .bottom], 8)
+                            VStack {
+                                Text("Description")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                     .foregroundStyle(.white)
-                                    .font(.system(size: 20, design: .rounded))
-                                    .minimumScaleFactor(0.5)
+                                    .font(.system(size: 18))
                                     .fontWeight(.semibold)
-                            }
-                            .buttonStyle(NoLongPressButtonStyle())
-                            .background(
-                                Rectangle()
-                                    .fill(Color.EZNotesBlue)
-                            )
-                            
-                            Text("From $12/month")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 12))
-                                .minimumScaleFactor(0.5)
-                                .fontWeight(.thin)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        VStack {
-                            Button(action: {
-                                self.planPicked = "basic_plan_annually"
-                                self.isPlanPicked = true
-                            }) {
-                                Text("Select Annually")
-                                    .frame(maxWidth: (prop.size.width - 40) - 40, alignment: .center)
-                                    .padding([.top, .bottom], 8)
+                                
+                                Text("The Pro Plan equips you with everything from the Basic Plan and more.\nWith the Pro Plan, you get 2x the limit on the uploads and backups enabling you to upload 200+ images of notes at once and enabling you to store roughly 1M curated sets of notes. Further, the Pro Plan equips you with a model of EZNotes AI that is capable of adapting to your handwriting and curating a essay in your handwriting.")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                     .foregroundStyle(.white)
-                                    .font(.system(size: 20, design: .rounded))
+                                    .padding(.top, 5)
+                                    .padding([.bottom, .leading], 10)
+                                    .font(.system(size: 14))
                                     .minimumScaleFactor(0.5)
-                                    .fontWeight(.semibold)
+                                    .fontWeight(.light)
+                                    .multilineTextAlignment(.leading)
                             }
-                            .buttonStyle(NoLongPressButtonStyle())
-                            .background(
-                                Rectangle()
-                                    .fill(Color.EZNotesBlue)
-                            )
+                            .padding(.leading)
                             
-                            Text("From $120/year")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 12))
-                                .minimumScaleFactor(0.5)
-                                .fontWeight(.thin)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                    }
-                    .frame(maxWidth: prop.size.width - 80, alignment: .center)
-                    .padding(.bottom)
-                }
-                .frame(maxWidth: prop.size.width - 40)
-                .cornerRadius(15)
-                .background(
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.EZNotesBlack)
-                        .shadow(color: .black, radius: 2.5)
-                )
-                .padding(.bottom, 15)
-                
-                VStack {
-                    VStack {
-                        Text("Pro Plan")
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .foregroundStyle(.black)
-                            .padding([.top, .bottom])
-                            .font(.system(size: 24))
-                            .fontWeight(.bold)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        MeshGradient(width: 3, height: 3, points: [
-                            .init(0, 0), .init(0.3, 0), .init(1, 0),
-                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                            .init(0, 1), .init(0.5, 1), .init(1, 1)
-                        ], colors: [
-                            Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                            Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                            Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                             Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                             Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                        ])
-                    )
-                    
-                    VStack {
-                        VStack {
-                            Text("Description")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 18))
-                                .fontWeight(.semibold)
+                            VStack {
+                                Text("Uploads:")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.semibold)
+                                
+                                Text("• 2gb Upload Limit\n\t◦ 200-250 Image Upload Limit\n• 10gb Backup Limit\n\t◦ Roughly 1M notes can be backed up")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .padding(.top, 5)
+                                    .padding(.leading, 10)
+                                    .font(.system(size: 15))
+                                    .minimumScaleFactor(0.5)
+                            }
+                            .padding([.top, .leading])
                             
-                            Text("The Pro Plan equips you with everything from the Basic Plan and more.\nWith the Pro Plan, you get 2x the limit on the uploads and backups enabling you to upload 200+ images of notes at once and enabling you to store roughly 1M curated sets of notes. Further, the Pro Plan equips you with a model of EZNotes AI that is capable of adapting to your handwriting and curating a essay in your handwriting.")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .padding(.top, 5)
-                                .padding([.bottom, .leading], 10)
-                                .font(.system(size: 14))
-                                .minimumScaleFactor(0.5)
-                                .fontWeight(.light)
-                                .multilineTextAlignment(.leading)
+                            VStack {
+                                Text("AI Access:")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.semibold)
+                                
+                                Text("• EZNotes LLM\n\t◦ Powers the automated note-curation\n• EZNotes Chatbot\n\t◦ Your personal tutor")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .padding(.top, 5)
+                                    .padding(.leading, 10)
+                                    .font(.system(size: 15))
+                                    .minimumScaleFactor(0.5)
+                            }
+                            .padding([.top, .leading])
+                            
+                            VStack {
+                                Text("Built-in Features:")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 18))
+                                    .fontWeight(.semibold)
+                                
+                                Text("• Essay Helper\n• Handwritten Note Curation\n• Integrated Note-taking Styles\n• Note Curation")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .padding(.top, 5)
+                                    .padding(.leading, 10)
+                                    .font(.system(size: 15))
+                                    .minimumScaleFactor(0.5)
+                            }
+                            .padding([.top, .leading, .bottom])
                         }
-                        .padding(.leading)
+                        .padding()
                         
-                        VStack {
-                            Text("Uploads:")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 18))
-                                .fontWeight(.semibold)
-                            
-                            Text("• 2gb Upload Limit\n\t◦ 200-250 Image Upload Limit\n• 10gb Backup Limit\n\t◦ Roughly 1M notes can be backed up")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .padding(.top, 5)
-                                .padding(.leading, 10)
-                                .font(.system(size: 15))
-                                .minimumScaleFactor(0.5)
-                        }
-                        .padding([.top, .leading])
-                        
-                        VStack {
-                            Text("AI Access:")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 18))
-                                .fontWeight(.semibold)
-                            
-                            Text("• EZNotes LLM\n\t◦ Powers the automated note-curation\n• EZNotes Chatbot\n\t◦ Your personal tutor")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .padding(.top, 5)
-                                .padding(.leading, 10)
-                                .font(.system(size: 15))
-                                .minimumScaleFactor(0.5)
-                        }
-                        .padding([.top, .leading])
-                        
-                        VStack {
-                            Text("Built-in Features:")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 18))
-                                .fontWeight(.semibold)
-                            
-                            Text("• Essay Helper\n• Handwritten Note Curation\n• Integrated Note-taking Styles\n• Note Curation")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .padding(.top, 5)
-                                .padding(.leading, 10)
-                                .font(.system(size: 15))
-                                .minimumScaleFactor(0.5)
-                        }
-                        .padding([.top, .leading, .bottom])
-                    }
-                    .padding()
-                    
-                    HStack {
                         VStack {
                             Button(action: {
                                 self.planPicked = "pro_plan_monthly"
                                 self.isPlanPicked = true
                             }) {
-                                Text("Select Monthly")
-                                    .frame(maxWidth: (prop.size.width - 40) - 40, alignment: .center)
-                                    .padding([.top, .bottom], 8)
-                                    .foregroundStyle(.white)
-                                    .font(.system(size: 20, design: .rounded))
-                                    .minimumScaleFactor(0.5)
-                                    .fontWeight(.semibold)
+                                HStack {
+                                    VStack {
+                                        Text("Select Monthly")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: prop.isLargerScreen ? 20 : 16, design: .rounded))
+                                            .minimumScaleFactor(0.5)
+                                            .fontWeight(.semibold)
+                                        
+                                        Text("From $16/month ($192/year)")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 12))
+                                            .minimumScaleFactor(0.5)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    ZStack {
+                                        Image(systemName: "chevron.forward")
+                                            .resizable()
+                                            .frame(width: 10, height: 15)
+                                            .foregroundStyle(.gray)
+                                    }
+                                    .frame(maxWidth: 20, alignment: .trailing)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .top)
+                                .padding(8)
                             }
                             .buttonStyle(NoLongPressButtonStyle())
-                            .background(
-                                Rectangle()
-                                    .fill(Color.EZNotesBlue)
-                            )
                             
-                            Text("From $16/month")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 12))
-                                .minimumScaleFactor(0.5)
-                                .fontWeight(.thin)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        VStack {
+                            Divider()
+                                .background(.gray)
+                            
                             Button(action: {
                                 self.planPicked = "pro_plan_annually"
                                 self.isPlanPicked = true
                             }) {
-                                Text("Select Annually")
-                                    .frame(maxWidth: (prop.size.width - 40) - 40, alignment: .center)
-                                    .foregroundStyle(.white)
-                                    .padding([.top, .bottom], 8)
-                                    .foregroundStyle(.white)
-                                    .font(.system(size: 20, design: .rounded))
-                                    .minimumScaleFactor(0.5)
-                                    .fontWeight(.semibold)
+                                HStack {
+                                    VStack {
+                                        Text("Select Yearly")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: prop.isLargerScreen ? 20 : 16, design: .rounded))
+                                            .minimumScaleFactor(0.5)
+                                            .fontWeight(.semibold)
+                                        
+                                        Text("From $170/year ($14/month)")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 12))
+                                            .minimumScaleFactor(0.5)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    ZStack {
+                                        Image(systemName: "chevron.forward")
+                                            .resizable()
+                                            .frame(width: 10, height: 15)
+                                            .foregroundStyle(.gray)
+                                    }
+                                    .frame(maxWidth: 20, alignment: .trailing)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .top)
+                                .padding(8)
                             }
                             .buttonStyle(NoLongPressButtonStyle())
-                            .background(
-                                Rectangle()
-                                    .fill(Color.EZNotesBlue)
-                            )
-                            
-                            Text("From $160/year")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .font(.system(size: 12))
-                                .minimumScaleFactor(0.5)
-                                .fontWeight(.thin)
                         }
-                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                        .padding(8)
+                        .background(Color.black.opacity(0.30))
+                        .cornerRadius(15, corners: [.bottomLeft, .bottomRight])
                     }
-                    .frame(maxWidth: prop.size.width - 80, alignment: .center)
-                    .padding(.bottom)
+                    .frame(maxWidth: prop.size.width - 40)
+                    .cornerRadius(15)
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.EZNotesBlack)
+                            .shadow(color: .black, radius: 2.5)
+                    )
+                    .padding(.bottom, 10)
                 }
-                .frame(maxWidth: prop.size.width - 40)
-                .cornerRadius(15)
-                .background(
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.EZNotesBlack)
-                        .shadow(color: .black, radius: 2.5)
-                )
-                .padding(.bottom, 10)
+                .frame(maxWidth: prop.size.width - 30)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -878,6 +918,9 @@ public struct Plans: View {
                     
                     self.planPrice = self.planCosts[self.planName]!
                 })
+                .onTapGesture {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }
             }
         }
     }

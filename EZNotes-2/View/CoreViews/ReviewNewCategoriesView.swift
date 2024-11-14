@@ -12,7 +12,9 @@ struct ReviewNewCategories: View {
     @ObservedObject public var images_to_upload: ImagesUploads
     
     @Binding public var newCategoriesAndSets: [String: Array<String>]
+    @Binding public var newSetNotes: [String: Array<[String: String]>]
     @Binding public var categoriesAndSets: [String: Array<String>]
+    @Binding public var setAndNotes: [String: Array<[String: String]>]
     @Binding public var categoryCreationDates: [String: Date]
     @Binding public var categoryImages: [String: UIImage]
     @Binding public var categories: Array<String>
@@ -290,13 +292,14 @@ struct ReviewNewCategories: View {
                         for (_, value2) in self.newCategoriesAndSets.enumerated() {
                             if value2.key == value {
                                 self.newCategoriesAndSets.removeValue(forKey: value)
+                                self.newSetNotes.removeValue(forKey: value)
                                 break
                             }
                         }
                     }
                 }
                 
-                if self.indexOfSetsToRemove.count > 0 {
+                /*if self.indexOfSetsToRemove.count > 0 {
                     for (_, value) in self.valueOfSetsToRemove.enumerated() {
                         for (index, value2) in self.newCategoriesAndSets[value.key]!.enumerated() {
                             if value.value.contains(value2) {
@@ -308,7 +311,7 @@ struct ReviewNewCategories: View {
                             }
                         }
                     }
-                }
+                }*/
                 
                 //print("After: \(self.newCategoriesAndSets)")
                 
@@ -323,12 +326,18 @@ struct ReviewNewCategories: View {
                     }
                 }
                 
-                print(self.categoryCreationDates)
+                for (_, value) in self.newSetNotes.enumerated() {
+                    print(value)
+                }
+                //self.newSetNotes.removeAll()
+                
+                //print(self.categoryCreationDates)
                 
                 /* MARK: Save the categories to a JSON file. */
                 writeCategoryData(categoryData: self.categoriesAndSets)
                 writeCategoryImages(categoryImages: self.categoryImages)
                 writeCategoryCreationDates(categoryCreationDates: categoryCreationDates)
+                //writeSetsAndNotes(setsAndNotes: self.setAndNotes)
                 
                 /* Remove all upload information. */
                 self.photos.removeAll()

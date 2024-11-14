@@ -77,8 +77,12 @@ struct CoreApp: View {
      * */
     @State private var newCategoriesAndSets: [String: Array<String>] = [:]
     
+    /* MARK: Each set holds notes. The outter-most key will be the category name. The inner-most key will be the set name. The value of the inner-most key will be the notes pertaining to the set. */
+    @State private var newSetNotes: [String: Array<[String: String]>] = [:]
+    
     /* MARK: See `ContentView.swift` lines 41 & 42. */
     @Binding public var categoriesAndSets: [String: Array<String>]
+    @Binding public var setAndNotes: [String: Array<[String: String]>]
     @Binding public var categoryCreationDates: [String: Date]
     @Binding public var categoryImages: [String: UIImage]
     @Binding public var categoryDescriptions: [String: String]
@@ -145,6 +149,7 @@ struct CoreApp: View {
                     lastSection: $lastSection,
                     errorType: $errorType,
                     newCategoriesAndSets: $newCategoriesAndSets,
+                    newSetNotes: $newSetNotes,
                     categoryImages: $categoryImages,
                     categories: $categories,
                     sets: $sets,
@@ -157,7 +162,9 @@ struct CoreApp: View {
                     section: $section,
                     images_to_upload: images_to_upload,
                     newCategoriesAndSets: $newCategoriesAndSets,
+                    newSetNotes: $newSetNotes,
                     categoriesAndSets: $categoriesAndSets,
+                    setAndNotes: $setAndNotes,
                     categoryCreationDates: $categoryCreationDates,
                     categoryImages: $categoryImages,
                     categories: $categories,
@@ -171,6 +178,7 @@ struct CoreApp: View {
                     messages: $messages,
                     section: $section,
                     categoriesAndSets: $categoriesAndSets,
+                    setAndNotes: $setAndNotes,
                     categoryImages: $categoryImages,
                     categoryCreationDates: $categoryCreationDates,
                     categoryDescriptions: $categoryDescriptions,

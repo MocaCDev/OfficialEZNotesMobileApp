@@ -493,7 +493,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                     .padding(.top, 10)
                                     .font(
                                         .system(
-                                            size: prop.isLargerScreen ? 18 : 13
+                                            size: prop.isLargerScreen ? 18 : 15
                                         )
                                     )
                                     .foregroundStyle(.white)
@@ -545,7 +545,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                     .padding(.top, 10)
                                     .font(
                                         .system(
-                                            size: prop.isLargerScreen ? 18 : 13
+                                            size: prop.isLargerScreen ? 18 : 15
                                         )
                                     )
                                     .foregroundStyle(.white)
@@ -596,7 +596,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                     .padding(.top, 10)
                                     .font(
                                         .system(
-                                            size: prop.isLargerScreen ? 18 : 13
+                                            size: prop.isLargerScreen ? 18 : 15
                                         )
                                     )
                                     .foregroundStyle(.white)
@@ -1099,14 +1099,21 @@ struct SignUpScreen : View, KeyboardReadable {
                                 Text("Code")
                                     .frame(
                                         width: prop.isIpad
-                                        ? prop.size.width - 450
-                                        : prop.size.width - 100,
+                                        ? UIDevice.current.orientation.isLandscape
+                                        ? prop.size.width - 800
+                                        : prop.size.width - 450
+                                        : prop.size.width - 80,
                                         height: 5,
                                         alignment: .leading
                                     )
-                                    .padding(.top, 15)
-                                    .font(.system(size: 25))
+                                    .padding(.top, 10)
+                                    .font(
+                                        .system(
+                                            size: prop.isLargerScreen ? 18 : 15
+                                        )
+                                    )
                                     .foregroundStyle(.white)
+                                    .fontWeight(.medium)
                                 
                                 TextField(
                                     "Code...",
@@ -1121,7 +1128,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                     : prop.size.width - 100,
                                     height: prop.isLargerScreen ? 40 : 30
                                 )
-                                .padding([.leading], 15)
+                                .padding([.leading], prop.isLargerScreen ? 15 : 5)
                                 .background(
                                     Rectangle()//RoundedRectangle(cornerRadius: 15)
                                         .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
@@ -1134,7 +1141,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                         )
                                 )
                                 .foregroundStyle(Color.EZNotesBlue)
-                                .padding()
+                                .padding(prop.isLargerScreen ? 10 : 4)
                                 .tint(Color.EZNotesBlue)
                                 .font(.system(size: 18))
                                 .fontWeight(.medium)
@@ -1165,6 +1172,9 @@ struct SignUpScreen : View, KeyboardReadable {
                             }
                         }
                         .padding(.top, prop.isLargerScreen ? 25 : 20)
+                        .onTapGesture {
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        }
                     }
                     .padding()
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top) // Keep VStack aligned to the top
@@ -1202,6 +1212,9 @@ struct SignUpScreen : View, KeyboardReadable {
                                         self.tooShortPassword = false
                                         self.makePasswordFieldRed = false
                                     }
+                                    
+                                    /* MARK: Since the focus of the password textfield might not be set to false when the screen switches, we'll go ahead and assign the "temp_password" `UserDefault` key here as well. */
+                                    assignUDKey(key: "temp_password", value: self.password)
                                     
                                     if !self.email.contains("@") {
                                         self.invalidEmail = true
@@ -1367,7 +1380,10 @@ struct SignUpScreen : View, KeyboardReadable {
                                     .fill(.white)
                             )
                         }
-                        .padding(.bottom, self.section == "main" ? 0 : 30)
+                        .padding(.bottom, self.section == "main"
+                                 ? prop.isLargerScreen ? 0 : 10
+                                 : 30
+                        )
                     }
                 }
             } else {

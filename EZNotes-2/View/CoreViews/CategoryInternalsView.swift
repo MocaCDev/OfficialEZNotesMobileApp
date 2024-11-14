@@ -15,6 +15,7 @@ struct CategoryInternalsView: View {
     var categoryBackgroundColor: Color?
     var categoriesAndSets: [String: Array<String>]
     var categoryBackground: UIImage
+    var categoriesSetsAndNotes: Array<[String: String]>
     
     @State private var categoryDescription: String? = nil
     @State private var generatingDesc: Bool = false
@@ -243,7 +244,27 @@ struct CategoryInternalsView: View {
             )*/
             
             VStack {
-                ForEach(Array(self.categoriesAndSets.keys), id: \.self) { key in
+                if self.categoriesSetsAndNotes.count == 0 {
+                    Text("No sets or notes in this category.")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        .foregroundStyle(.white)
+                        .font(Font.custom("Poppins-Regular", size: 20))
+                        .minimumScaleFactor(0.5)
+                } else {
+                    ForEach(self.categoriesSetsAndNotes, id: \.self) { value in
+                        ForEach(Array(value.keys), id: \.self) { key in
+                            HStack {
+                                Text(key)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(5)
+                            }
+                            .frame(maxWidth: prop.size.width - 20, maxHeight: 190)
+                            .background(RoundedRectangle(cornerRadius: 15).fill(Color.EZNotesBlack.opacity(0.65)).shadow(color: Color.EZNotesBlack, radius: 4))
+                            .padding([.bottom], 5)
+                        }
+                    }
+                }
+                /*ForEach(Array(self.categoriesAndSets.keys), id: \.self) { key in
                     HStack {
                         Text(key)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -252,7 +273,7 @@ struct CategoryInternalsView: View {
                     .frame(maxWidth: prop.size.width - 20, maxHeight: 190)
                     .background(RoundedRectangle(cornerRadius: 15).fill(Color.EZNotesBlack.opacity(0.65)).shadow(color: Color.EZNotesBlack, radius: 4))
                     .padding([.bottom], 5)
-                }
+                }*/
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(
@@ -534,6 +555,10 @@ struct CategoryInternalsView: View {
         .background(.black)//.background(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : .black)//.background(.black)
         .onAppear {
             self.categoryDescription = self.categoryDescriptions[self.categoryName]
+            
+            for (_, value) in self.categoriesSetsAndNotes.enumerated() {
+                print(value)
+            }
         }
     }
 }

@@ -15,6 +15,7 @@ struct UploadReview: View {
     @Binding public var errorType: String
     
     @Binding public var newCategoriesAndSets: [String: Array<String>]
+    @Binding public var newSetNotes: [String: Array<[String: String]>]
     @Binding public var categoryImages: [String: UIImage]
     @Binding public var categories: Array<String>
     @Binding public var sets: Array<String>
@@ -324,11 +325,16 @@ struct UploadReview: View {
                                         if self.newCategoriesAndSets.keys.contains(r.category) {
                                             //if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
                                                 self.newCategoriesAndSets[r.category]!.append(r.set_name)
+                                                self.newSetNotes[r.category]!.append([r.set_name: r.notes])
+                                            
                                             //}
                                         } else {
                                             self.newCategoriesAndSets[r.category] = [r.set_name]
+                                            self.newSetNotes[r.category] = [[r.set_name: r.notes]]
                                         }
                                     }
+                                    
+                                    print(self.newSetNotes)
                                     
                                     self.lastSection = self.section
                                     self.section = "review_new_categories"
@@ -383,11 +389,13 @@ struct UploadReview: View {
                                                  * so the `Home` view gets updated.
                                                  * */
                                                 if self.newCategoriesAndSets.keys.contains(r.category) {
-                                                    if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
+                                                    //if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
                                                         self.newCategoriesAndSets[r.category]!.append(r.set_name)
-                                                    }
+                                                    self.newSetNotes[r.category]!.append([r.set_name: r.notes])
+                                                    //}
                                                 } else {
                                                     self.newCategoriesAndSets[r.category] = [r.set_name]
+                                                    self.newSetNotes[r.category] = [[r.set_name: r.notes]]
                                                 }
                                             }
                                             

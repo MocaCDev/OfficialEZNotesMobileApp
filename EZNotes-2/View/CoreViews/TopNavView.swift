@@ -1438,34 +1438,34 @@ struct AccountPopup: View {
                                             
                                             HStack {
                                                 Text("Next Payment:")
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .frame(alignment: .leading)
                                                     .padding(.leading, 30)
                                                     .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-Regular", size: 16))
+                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
                                                     .fontWeight(.bold)
                                                 
                                                 Text("\(self.subscriptionInfo.CurrentPeriodEnd!.formatted(date: .numeric, time: .shortened))")
                                                     .frame(maxWidth: .infinity, alignment: .trailing)
                                                     .padding(.trailing, 30)
                                                     .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                    .font(Font.custom("Poppins-ExtraLight", size: prop.isLargerScreen ? 16 : 14))
                                                     .fontWeight(.semibold)
                                             }
                                             .frame(maxWidth: .infinity)
                                             
                                             HStack {
                                                 Text("Period Started:")
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .frame(alignment: .leading)
                                                     .padding(.leading, 30)
                                                     .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-Regular", size: 16))
+                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
                                                     .fontWeight(.bold)
                                                 
                                                 Text("\(self.subscriptionInfo.CurrentPeriodStart!.formatted(date: .numeric, time: .shortened))")
                                                     .frame(maxWidth: .infinity, alignment: .trailing)
                                                     .padding(.trailing, 30)
                                                     .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                                    .font(Font.custom("Poppins-ExtraLight", size: prop.isLargerScreen ? 16 : 14))
                                                     .fontWeight(.semibold)
                                             }
                                             .frame(maxWidth: .infinity)

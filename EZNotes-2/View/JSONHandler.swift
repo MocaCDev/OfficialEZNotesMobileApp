@@ -165,6 +165,13 @@ func writeTemporaryChatHistory(chatHistory: [String: [UUID: Array<MessageDetails
     }
 }
 
+func writeSetsAndNotes(setsAndNotes: [String: Array<[String: String]>]) -> Void {
+    guard let _ = try? writeJSON(data: setsAndNotes, filename: "sets_and_notes.json") else {
+        print("[writeSetsAndNotes] -> Failed to write \(setsAndNotes) to cache")
+        return
+    }
+}
+
 public func getCategoryData() -> [String: Array<String>] {
     if let result = try? obtainJSON(type: [String: Array<String>].self, filename: "categories_data.json") { return result }
     else {
@@ -240,6 +247,15 @@ public func getCategoryCustomTextColors() -> [String: Color] {
 func getTemporaryStoredChats() -> [String: [UUID: Array<MessageDetails>]] {
     guard let result = try? obtainJSON(type: [String: [UUID: Array<MessageDetails>]].self, filename: "temp_chat_history.json") else {
         print("[getTemporaryStoredChats] -> Failed to get temporary stores chats from cache")
+        return [:]
+    }
+    
+    return result
+}
+
+func getSetsAndNotes() -> [String: Array<[String: String]>] {
+    guard let result = try? obtainJSON(type: [String: Array<[String: String]>].self, filename: "sets_and_notes.json") else {
+        print("[getSetsAndNotes] -> Failed to get sets and notes from cache")
         return [:]
     }
     
