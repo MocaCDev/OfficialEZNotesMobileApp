@@ -21,10 +21,14 @@ struct ShowNotes: View {
     @FocusState private var notePadFocus: Bool
     
     @State private var showMenu: Bool = false
+    @State private var selectionText: TextSelection? = nil
+    @State private var selectedTextPopover: Bool = false
+    @State private var menuHeight: CGFloat = 0
+    @State private var menuOpacity: CGFloat = 0
     
     var body: some View {
         ZStack {
-            if self.showMenu {
+            /*if self.showMenu {
                 HStack {
                     VStack {
                         
@@ -74,7 +78,7 @@ struct ShowNotes: View {
                             .background(Color.EZNotesBlack.opacity(0.4))
                             .border(width: 0.5, edges: [.bottom], color: .gray)*/
                             HStack {
-                                Text("Undo Changed")
+                                Text("Undo Changes")
                                     .frame(maxWidth: .infinity, alignment: .center)
                                     .padding(8)
                                     .foregroundStyle(.black)
@@ -119,7 +123,7 @@ struct ShowNotes: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .zIndex(1)
-            }
+            }*/
             
             VStack {
                 /*VStack {
@@ -176,7 +180,7 @@ struct ShowNotes: View {
                         Image(systemName: "arrow.backward")
                             .resizable()
                             .frame(maxWidth: 15, maxHeight: 15)
-                            .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
+                            .foregroundStyle(.white)
                     }
                     .buttonStyle(NoLongPressButtonStyle())
                     .frame(maxWidth: 80, alignment: .leading)
@@ -185,25 +189,42 @@ struct ShowNotes: View {
                     Text(self.setName)
                         .frame(maxWidth: .infinity)
                         .padding([.top, .bottom], 4)
-                        .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
+                        .foregroundStyle(.white)//(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
                         .font(Font.custom("Poppins-SemiBold", size: 26))
                         .minimumScaleFactor(0.5)
                         .multilineTextAlignment(.center)
                     
-                    Button(action: { self.showMenu = true }) {
-                        ZStack {
-                            Image("Menu")
-                                .resizable()
-                                .frame(width: 25, height: 25)
-                                .shadow(color: Color.black, radius: 1.5)
+                    if self.notePadFocus {
+                        Button(action: {
+                            self.notePadFocus = false
+                            
+                            withAnimation(.easeIn(duration: 0.5)) {
+                                self.menuHeight = 150
+                            }
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                withAnimation(.easeIn(duration: 0.5)) {
+                                    self.menuOpacity = 1
+                                }
+                            }
+                            
+                            self.showMenu = true
+                        }) {
+                            ZStack {
+                                Image("Menu")
+                                    .resizable()
+                                    .frame(width: 25, height: 25)
+                                    .shadow(color: Color.black, radius: 1.5)
+                            }
+                            .frame(maxWidth: 80, alignment: .trailing)
+                            .padding(.trailing, 15)
                         }
-                        .frame(maxWidth: 80, alignment: .trailing)
-                        .padding(.trailing, 15)
+                        .buttonStyle(NoLongPressButtonStyle())
                     }
-                    .buttonStyle(NoLongPressButtonStyle())
+                    else { ZStack { }.frame(maxWidth: 80, alignment: .trailing).padding(.trailing, 15) }
                 }
                 .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 60 : 40)
-                .background(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesBlack)
+                .background(.black)//self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesBlack)
                 
                 if self.showMenu {
                     Text(self.notesContent)
@@ -215,16 +236,157 @@ struct ShowNotes: View {
                         .minimumScaleFactor(0.5)
                         .onTapGesture {
                             self.showMenu = false
+                            
+                            withAnimation(.easeOut(duration: 0.5)) {
+                                self.menuHeight = 60
+                                self.menuOpacity = 0
+                            }
                         }
                 } else {
-                    TextEditor(text: $notesContent)
+                    TextEditor(text: $notesContent, selection: $selectionText)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .padding(4.5)
                         .font(Font.custom("Poppins-Regular", size: 16))
                         .focused($notePadFocus)
                 }
+                
+                VStack {
+                    Button(action: {
+                        if self.showMenu {
+                            self.showMenu = false
+                            
+                            /* MARK: Animate the menu down. */
+                            withAnimation(.easeOut(duration: 0.5)) {
+                                self.menuHeight = 60
+                                self.menuOpacity = 0
+                            }
+                            
+                            return
+                        }
+                        
+                        withAnimation(.easeIn(duration: 0.5)) {
+                            self.menuHeight = 150
+                        }
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            withAnimation(.easeIn(duration: 0.5)) {
+                                self.menuOpacity = 1
+                            }
+                        }
+                        
+                        self.showMenu = true
+                    }) {
+                        ZStack {
+                            Image(systemName: !self.showMenu ? "chevron.up" : "chevron.down")
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, self.showMenu ? 10 : 0)
+                        .padding(.bottom, self.showMenu ? 0 : 20)
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
+                    .padding(.bottom)
+                    
+                    if self.showMenu {
+                        VStack {
+                            HStack {
+                                ZStack {
+                                    Text("Save Changes")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .padding(4.5)
+                                        .foregroundStyle(.black)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(.white)
+                                )
+                                .cornerRadius(15)
+                                
+                                ZStack {
+                                    Text("Undo Changes")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .padding(4.5)
+                                        .foregroundStyle(.black)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(.white)
+                                )
+                                .cornerRadius(15)
+                            }
+                            .frame(maxWidth: prop.size.width - 40)
+                            
+                            VStack {
+                                HStack {
+                                    HStack {
+                                        ZStack {
+                                            Image(systemName: "sparkles")
+                                                .resizable()
+                                                .frame(width: 20, height: 25)
+                                                .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
+                                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                ], colors: [
+                                                    .indigo, .indigo, Color.EZNotesBlue,
+                                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                ]))
+                                        }
+                                        .frame(maxWidth: 20, alignment: .leading)
+                                        
+                                        Text("Get AI Help")
+                                            .frame(alignment: .center)
+                                            .padding(4.5)
+                                            .foregroundStyle(.black)
+                                    }
+                                    .frame(maxWidth: 200, alignment: .center)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding([.top, .bottom], 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(.white)
+                                        .strokeBorder(MeshGradient(width: 3, height: 3, points: [
+                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                        ], colors: [
+                                            .indigo, .indigo, Color.EZNotesBlue,
+                                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                             Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                             Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                        ]))
+                                )
+                            }
+                            .frame(maxWidth: prop.size.width - 40)
+                            
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .opacity(self.menuOpacity)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: self.menuHeight)//self.showMenu ? 150 : 60)
+                .background(self.categoryBackgroundColor != nil
+                            ? self.categoryBackgroundColor!.opacity(0.8)
+                            : Color.EZNotesBlack.opacity(0.8)
+                )
+                .cornerRadius(15, corners: [.topLeft, .topRight])
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea(edges: [.bottom])
+        .onAppear {
+            withAnimation(.easeIn(duration: 0.5)) {
+                self.menuHeight = 60
+            }
+        }
     }
 }
