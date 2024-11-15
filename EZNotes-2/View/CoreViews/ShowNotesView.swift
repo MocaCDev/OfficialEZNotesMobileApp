@@ -8,6 +8,7 @@ import SwiftUI
 
 struct ShowNotes: View {
     var prop: Properties
+    var categoryName: String
     var setName: String
     var categoryBackgroundColor: Color?
     var categoryTitleColor: Color?
@@ -17,6 +18,7 @@ struct ShowNotes: View {
     
     @Binding public var notesContent: String
     @Binding public var launchedSet: Bool
+    @Binding public var setAndNotes: [String: Array<[String: String]>]
     
     @FocusState private var notePadFocus: Bool
     
@@ -25,6 +27,7 @@ struct ShowNotes: View {
     @State private var selectedTextPopover: Bool = false
     @State private var menuHeight: CGFloat = 0
     @State private var menuOpacity: CGFloat = 0
+    @State private var saveAlert: Bool = false
     
     var body: some View {
         ZStack {
@@ -174,6 +177,10 @@ struct ShowNotes: View {
                 
                 HStack {
                     Button(action: {
+                        /* MARK: When going back, check to see if the content in the TextEditor is the same as it was when the TextEditor loaded. If it is not, prompt an alert asking the user if they want to save. */
+                        /*if self.notesContent != self.originalContent {
+                            self.saveAlert = true
+                        }*/
                         self.notePadFocus = false
                         self.launchedSet = false
                     }) {
@@ -227,24 +234,28 @@ struct ShowNotes: View {
                 .background(.black)//self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesBlack)
                 
                 if self.showMenu {
-                    Text(self.notesContent)
-                        .frame(maxWidth: prop.size.width - 20, maxHeight: .infinity, alignment: .leading)
-                        .padding(4.5)
-                        .foregroundStyle(.white)
-                        .font(Font.custom("Poppins-Regular", size: 16))
-                        .multilineTextAlignment(.leading)
-                        .minimumScaleFactor(0.5)
-                        .onTapGesture {
-                            self.showMenu = false
-                            
-                            withAnimation(.easeOut(duration: 0.5)) {
-                                self.menuHeight = 60
-                                self.menuOpacity = 0
+                    ScrollView(.vertical, showsIndicators: true) {
+                        Text(self.notesContent)
+                            .frame(maxWidth: prop.size.width - 20, maxHeight: .infinity, alignment: .leading)
+                            .padding(4.5)
+                            .foregroundStyle(.white)
+                            .font(Font.custom("Poppins-Regular", size: 16))
+                            .multilineTextAlignment(.leading)
+                            .minimumScaleFactor(0.5)
+                            .onTapGesture {
+                                self.showMenu = false
+                                
+                                withAnimation(.easeOut(duration: 0.5)) {
+                                    self.menuHeight = 60
+                                    self.menuOpacity = 0
+                                }
                             }
-                        }
+                    }
                 } else {
                     TextEditor(text: $notesContent, selection: $selectionText)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.EZNotesBlack)
                         .padding(4.5)
                         .font(Font.custom("Poppins-Regular", size: 16))
                         .focused($notePadFocus)
@@ -289,18 +300,23 @@ struct ShowNotes: View {
                     if self.showMenu {
                         VStack {
                             HStack {
-                                ZStack {
-                                    Text("Save Changes")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .padding(4.5)
-                                        .foregroundStyle(.black)
+                                Button(action: {
+                                    self.saveAlert = true
+                                    //self.setAndNotes[self.categoryName]!.removeValue(forKey: self.setName)
+                                }) {
+                                    ZStack {
+                                        Text("Save Changes")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .padding(4.5)
+                                            .foregroundStyle(.black)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(.white)
+                                    )
+                                    .cornerRadius(15)
                                 }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(.white)
-                                )
-                                .cornerRadius(15)
                                 
                                 ZStack {
                                     Text("Undo Changes")
@@ -376,7 +392,7 @@ struct ShowNotes: View {
                 .frame(maxWidth: .infinity, maxHeight: self.menuHeight)//self.showMenu ? 150 : 60)
                 .background(self.categoryBackgroundColor != nil
                             ? self.categoryBackgroundColor!.opacity(0.8)
-                            : Color.EZNotesBlack.opacity(0.8)
+                            : .black.opacity(0.8)
                 )
                 .cornerRadius(15, corners: [.topLeft, .topRight])
             }
@@ -387,6 +403,31 @@ struct ShowNotes: View {
             withAnimation(.easeIn(duration: 0.5)) {
                 self.menuHeight = 60
             }
+        }
+        .background(Color.EZNotesBlack)
+        .alert("Are you sure?", isPresented: $saveAlert) {
+            Button(action: {
+                for (index, value) in self.setAndNotes[self.categoryName]!.enumerated() {
+                    /* TODO: We need to make it to where the initial value (`[:]`), which gets assigned when initiating the variable, gets deleted. */
+                    if value != [:] {
+                        for key in value.keys {
+                            if key == self.setName {
+                                /* MARK: Remove the data from the dictionary. */
+                                self.setAndNotes[self.categoryName]!.remove(at: index)
+                                
+                                /* MARK: Append the new dictionary with the update text. */
+                                self.setAndNotes[self.categoryName]!.append([key: self.notesContent])
+                            }
+                        }
+                    }
+                }
+                
+                writeSetsAndNotes(setsAndNotes: self.setAndNotes)
+            }) { Text("Yes") }
+            
+            Button("No", role: .cancel) { }
+        } message: {
+            Text("By continuing, your changes will be saved and you will not be able to undo them.")
         }
     }
 }

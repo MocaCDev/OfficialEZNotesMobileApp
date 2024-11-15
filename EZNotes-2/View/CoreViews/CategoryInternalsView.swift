@@ -15,7 +15,7 @@ struct CategoryInternalsView: View {
     var categoryBackgroundColor: Color?
     var categoriesAndSets: [String: Array<String>]
     var categoryBackground: UIImage
-    var categoriesSetsAndNotes: Array<[String: String]>
+    //var categoriesSetsAndNotes: Array<[String: String]>
     
     @State private var categoryDescription: String? = nil
     @State private var generatingDesc: Bool = false
@@ -23,6 +23,7 @@ struct CategoryInternalsView: View {
     @State private var setsYOffset: CGFloat = 0
     @State private var internalInfoOpacity: CGFloat = 0
     
+    @Binding public var setAndNotes: [String: Array<[String: String]>]
     @Binding public var launchCategory: Bool
     @Binding public var categoryDescriptions: [String: String]
     
@@ -282,7 +283,7 @@ struct CategoryInternalsView: View {
                     
                     VStack {
                         VStack {
-                            if self.categoriesSetsAndNotes.count == 0 {
+                            if self.setAndNotes[self.categoryName]!.count == 0 {
                                 Text("No sets or notes in this category.")
                                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                                     .padding(.top)
@@ -291,7 +292,7 @@ struct CategoryInternalsView: View {
                                     .minimumScaleFactor(0.5)
                             } else {
                                 ScrollView(.vertical, showsIndicators: false) {
-                                    ForEach(Array(self.categoriesSetsAndNotes.enumerated()), id: \.offset) { index, val in
+                                    ForEach(Array(self.setAndNotes[self.categoryName]!.enumerated()), id: \.offset) { index, val in
                                         if val != [:] {
                                             ForEach(Array(val.keys), id: \.self) { key in
                                                 Button(action: {
@@ -320,7 +321,7 @@ struct CategoryInternalsView: View {
                                                             .padding(.trailing, 15)
                                                         }
                                                         .frame(maxWidth: .infinity, maxHeight: 190)
-                                                        .padding(index == self.categoriesSetsAndNotes.count - 1
+                                                        .padding(index == self.setAndNotes[self.categoryName]!.count - 1
                                                                  ? [.top, .bottom, .leading, .trailing]
                                                                  : [.top, .leading, .trailing],
                                                                  8
@@ -369,12 +370,14 @@ struct CategoryInternalsView: View {
         } else {
             ShowNotes(
                 prop: self.prop,
+                categoryName: self.categoryName,
                 setName: self.setName,
                 categoryBackgroundColor: self.categoryBackgroundColor,
                 categoryTitleColor: self.categoryTitleColor,
                 originalContent: self.originalContet,
                 notesContent: $notesContent,
-                launchedSet: $launchedSet
+                launchedSet: $launchedSet,
+                setAndNotes: $setAndNotes
             )
         }
     }
