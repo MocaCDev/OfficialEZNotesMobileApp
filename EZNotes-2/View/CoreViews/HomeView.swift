@@ -1194,7 +1194,7 @@ struct HomeView: View {
                     endPoint: .bottom
                 )
             )
-            .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
+            .gesture(DragGesture(minimumDistance: 0.5, coordinateSpace: .local)
                 .onEnded({ value in
                     if value.translation.width < 0 {
                         self.section = "upload"
