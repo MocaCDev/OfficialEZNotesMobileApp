@@ -17,6 +17,11 @@ let server = "http://192.168.1.109:8088"
  * */
 struct ReqPlaceholder {}
 
+struct SummarizeNotesData {
+    let OriginalNotes: String
+    let EditedNotes: String
+}
+
 struct CheckStateHasCollege {
     let State: String
     let College: String
@@ -353,4 +358,10 @@ let update_password_req: CSIARequest = CSIARequest(
     url: "\(server)/update_password",
     method: "post",
     reqData: UpdatePasswordData.self
+)
+
+let summarize_notes_req: CSIARequest = CSIARequest(
+    url: "\(server)/summarize_changes_to_notes",
+    method: "post",
+    reqData: SummarizeNotesData.self
 )

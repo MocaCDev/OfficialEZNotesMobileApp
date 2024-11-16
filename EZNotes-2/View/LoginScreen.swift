@@ -297,7 +297,7 @@ struct LoginScreen: View, KeyboardReadable {
                         assignUDKey(key: "usename", value: resp!["Username"] as! String)
                         assignUDKey(key: "email", value: resp!["Email"] as! String)
                         assignUDKey(key: "account_id", value: resp!["AccountID"] as! String)
-                        assignUDKey(key: "client_sub_id", value: resp!["CustomerSubscriptionID"] as! String)
+                        assignUDKey(key: "client_sub_id", value: resp!["PlanID"] as! String)
                         assignUDKey(key: "college_name", value: resp!["College"] as! String)
                         assignUDKey(key: "major_name", value: resp!["Major"] as! String)
                         assignUDKey(key: "college_state", value: resp!["State"] as! String)

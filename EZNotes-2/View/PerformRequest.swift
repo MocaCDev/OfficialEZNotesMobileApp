@@ -355,6 +355,12 @@ struct RequestAction<T> {
                 request.httpBody = try? JSONSerialization.data(withJSONObject: jsonData)
                 //request.addValue(params.Message, forHTTPHeaderField: "Message")
                 break
+            case is SummarizeNotesData.Type:
+                guard let params: SummarizeNotesData = (parameters as? SummarizeNotesData) else { return }
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                let jsonData: [String: String] = ["OriginalNotes": params.OriginalNotes, "EditedNotes": params.EditedNotes]
+                request.httpBody = try? JSONSerialization.data(withJSONObject: jsonData)
+                break
             case is GenerateDescRequestData.Type:
                 guard let params: GenerateDescRequestData = (parameters as? GenerateDescRequestData) else { return }
                 request.addValue(params.Subject, forHTTPHeaderField: "Subject")

@@ -762,6 +762,7 @@ public struct Plans: View {
                                     .font(.system(size: self.isLargerScreen ? 13 : 11))
                                     .minimumScaleFactor(0.5)
                                     .fontWeight(.medium)
+                                    .multilineTextAlignment(.leading)
                                 
                                 HStack {
                                     Button(action: { self.showPrivacyPolicy.toggle() }) {
