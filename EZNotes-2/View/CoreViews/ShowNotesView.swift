@@ -10,8 +10,11 @@ struct EditableNotes: View {
     var prop: Properties
     var fontPicked: String
     var fontSizePicked: CGFloat
+    var categoryName: String
+    var setName: String
     
     @Binding public var notesContent: String
+    @Binding public var setAndNotes: [String: Array<[String: String]>]
     
     @FocusState private var notePadFocus: Bool
     @State private var selectionText: TextSelection? = nil
@@ -45,6 +48,23 @@ struct EditableNotes: View {
         let fixedWidth = UIScreen.main.bounds.width // Screen width minus padding (adjust as needed)
         let size = textView.sizeThatFits(CGSize(width: fixedWidth, height: CGFloat.infinity))
         return max(size.height, 100) // Return height with a minimum fallback
+    }
+    
+    private func textHeight(for text: String, width: CGFloat) -> CGFloat {
+        /*let font = UIFont.systemFont(ofSize: 17)  // Customize this to match your font
+         let constrainedSize = CGSize(width: width - 20, height: .infinity)  // Add padding to the width
+         let boundingRect = text.boundingRect(with: constrainedSize, options: .usesLineFragmentOrigin, attributes: [.font: font], context: nil)
+         return boundingRect.height*/
+        let textView = UITextView()
+        textView.text = text + "\n\n\n"
+        textView.font = UIFont.systemFont(ofSize: 17)
+        textView.textContainerInset = UIEdgeInsets(top: 8, left: 4, bottom: 8, right: 4)
+        textView.textContainer.lineFragmentPadding = 0
+        textView.isScrollEnabled = false
+        
+        let fixedWidth = width - 16 // Account for padding
+        let size = textView.sizeThatFits(CGSize(width: fixedWidth, height: CGFloat.greatestFiniteMagnitude))
+        return max(size.height + 80, 100) // Add a buffer and ensure a minimum height
     }
     
     var body: some View {
@@ -105,7 +125,27 @@ struct EditableNotes: View {
                             ]))
                     )
                     
-                    Button(action: { self.notePadFocus = false }) {
+                    Button(action: {
+                        self.notePadFocus = false
+                        
+                        /* MARK: Just testing. */
+                        for (index, value) in self.setAndNotes[self.categoryName]!.enumerated() {
+                            /* TODO: We need to make it to where the initial value (`[:]`), which gets assigned when initiating the variable, gets deleted. */
+                            if value != [:] {
+                                for key in value.keys {
+                                    if key == self.setName {
+                                        /* MARK: Remove the data from the dictionary. */
+                                        self.setAndNotes[self.categoryName]!.remove(at: index)
+                                        
+                                        /* MARK: Append the new dictionary with the update text. */
+                                        self.setAndNotes[self.categoryName]!.append([key: self.notesContent])
+                                    }
+                                }
+                            }
+                        }
+                        
+                        writeSetsAndNotes(setsAndNotes: self.setAndNotes)
+                    }) {
                         HStack {
                             Text("Stop Editing")
                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -144,36 +184,69 @@ struct EditableNotes: View {
             
             VStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.secondary)
             
-            ScrollView(.vertical, showsIndicators: true) {
-                TextEditor(text: $notesContent, selection: $selectionText).id(0)
-                    .frame(height: self.textHeight)
-                    .scrollDisabled(true)
-                    .scrollContentBackground(.hidden)
-                    .background(Color.EZNotesBlack)
-                    .padding(4.5)
-                    .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
-                    .focused($notePadFocus)
-                    .padding(.bottom, self.textEditorPaddingBottom)
-                    .overlay(
-                        GeometryReader { proxy in
-                            Color.clear.onChange(of: self.notesContent) {
-                                self.updateHeight(proxy: proxy)
-                            }
-                        }
-                    )
-            }
-            .onChange(of: self.notePadFocus) {
-                /* TODO: Are animations really needed? */
-                if self.notePadFocus {
-                    withAnimation(.easeIn(duration: 0.5)) {
-                        self.textEditorPaddingBottom = 350
-                    }
-                } else {
-                    withAnimation(.easeOut(duration: 0.5)) {
-                        self.textEditorPaddingBottom = 100
-                    }
+            /*ScrollView(.vertical, showsIndicators: true) {
+             TextEditor(text: $notesContent, selection: $selectionText).id(0)
+             .frame(height: self.textHeight)
+             .scrollDisabled(true)
+             .scrollContentBackground(.hidden)
+             .background(Color.EZNotesBlack)
+             .padding(4.5)
+             .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
+             .focused($notePadFocus)
+             .padding(.bottom, self.textEditorPaddingBottom)
+             .overlay(
+             GeometryReader { proxy in
+             Color.clear.onChange(of: self.notesContent) {
+             self.updateHeight(proxy: proxy)
+             }
+             }
+             )
+             }
+             .onChange(of: self.notePadFocus) {
+             /* TODO: Are animations really needed? */
+             if self.notePadFocus {
+             withAnimation(.easeIn(duration: 0.5)) {
+             self.textEditorPaddingBottom = 350
+             }
+             } else {
+             withAnimation(.easeOut(duration: 0.5)) {
+             self.textEditorPaddingBottom = 100
+             }
+             }
+             }*/
+            
+            ScrollView(.vertical) {
+                /*GeometryReader { geometry in
+                 TextEditor(text: $notesContent)
+                 .frame(maxWidth: .infinity, maxHeight: max(100, textHeight(for: self.notesContent, width: geometry.size.width)))
+                 .scrollDisabled(true)
+                 }
+                 .frame(maxWidth: .infinity, maxHeight: .infinity)*/
+                /*VStack {
+                 GeometryReader { geometry in
+                 TextEditor(text: $notesContent)
+                 .frame(
+                 maxWidth: .infinity,
+                 maxHeight: max(100, textHeight(for: notesContent, width: geometry.size.width))
+                 )
+                 .padding(4.5)
+                 .scrollDisabled(true)
+                 .scrollContentBackground(.hidden)
+                 .background(Color.EZNotesBlack)
+                 }
+                 .frame(height: textHeight(for: notesContent, width: UIScreen.main.bounds.width)) // Match calculated height
+                 }*/
+                VStack(alignment: .leading) {
+                    TextEditor(text: $notesContent)
+                        .frame(height: textHeight(for: notesContent, width: UIScreen.main.bounds.width - 32)) // Calculate height dynamically
+                        .padding(4.5)
+                        .scrollDisabled(true)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.EZNotesBlack)
+                        .focused($notePadFocus)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
@@ -569,7 +642,10 @@ struct ShowNotes: View {
                         prop: prop,
                         fontPicked: self.fontPicked,
                         fontSizePicked: self.fontSizePicked,
-                        notesContent: $notesContent
+                        categoryName: self.categoryName,
+                        setName: self.setName,
+                        notesContent: $notesContent,
+                        setAndNotes: $setAndNotes
                     )
                 case "save_changes":
                     VStack {
@@ -581,7 +657,10 @@ struct ShowNotes: View {
                         prop: prop,
                         fontPicked: self.fontPicked,
                         fontSizePicked: self.fontSizePicked,
-                        notesContent: $notesContent
+                        categoryName: self.categoryName,
+                        setName: self.setName,
+                        notesContent: $notesContent,
+                        setAndNotes: $setAndNotes
                     )
                 }
                 

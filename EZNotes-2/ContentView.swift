@@ -219,6 +219,7 @@ struct ContentView: View {
                             guard pfp != nil && statusCode == 200 else {
                                 guard resp != nil else { return }
                                 
+                                /* MARK: If `ErrorCode` is 0x6966 means the user was not found in the database. */
                                 if resp!["ErrorCode"] as! Int == 0x6966 {
                                     UserDefaults.standard.removeObject(forKey: "username")
                                     UserDefaults.standard.removeObject(forKey: "email")

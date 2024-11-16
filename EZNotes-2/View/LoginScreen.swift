@@ -294,10 +294,13 @@ struct LoginScreen: View, KeyboardReadable {
                             return
                         }
                         
-                        UserDefaults.standard.set(resp!["Username"] as? String, forKey: "username")
-                        UserDefaults.standard.set(resp!["Email"] as? String, forKey: "email")
-                        UserDefaults.standard.set(resp!["AccountID"] as? String, forKey: "account_id")
-                        UserDefaults.standard.set(resp!["CustomerSubscriptionID"] as? String, forKey: "client_sub_id")
+                        assignUDKey(key: "usename", value: resp!["Username"] as! String)
+                        assignUDKey(key: "email", value: resp!["Email"] as! String)
+                        assignUDKey(key: "account_id", value: resp!["AccountID"] as! String)
+                        assignUDKey(key: "client_sub_id", value: resp!["CustomerSubscriptionID"] as! String)
+                        assignUDKey(key: "college_name", value: resp!["College"] as! String)
+                        assignUDKey(key: "major_name", value: resp!["Major"] as! String)
+                        assignUDKey(key: "college_state", value: resp!["State"] as! String)
                         self.setLoginStatus()
                     }
                 }) {
