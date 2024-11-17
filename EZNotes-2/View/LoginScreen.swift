@@ -294,7 +294,7 @@ struct LoginScreen: View, KeyboardReadable {
                             return
                         }
                         
-                        assignUDKey(key: "usename", value: resp!["Username"] as! String)
+                        assignUDKey(key: "username", value: resp!["Username"] as! String)
                         assignUDKey(key: "email", value: resp!["Email"] as! String)
                         assignUDKey(key: "account_id", value: resp!["AccountID"] as! String)
                         assignUDKey(key: "client_sub_id", value: resp!["PlanID"] as! String)

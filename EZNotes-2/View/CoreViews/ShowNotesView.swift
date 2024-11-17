@@ -346,6 +346,26 @@ struct ShowNotes: View {
     @State private var showHelp: Bool = false
     @State private var aiGeneratedSummaryWidth: CGFloat = 0
     @State private var isVisible: Bool = false /* TODO: Change the name of this variable. */
+    @State private var noteSelected: String = ""
+    
+    @State private var noteSelectedAnimation: Bool = false
+    
+    private func textHeight(for text: String, width: CGFloat) -> CGFloat {
+        /*let font = UIFont.systemFont(ofSize: 17)  // Customize this to match your font
+         let constrainedSize = CGSize(width: width - 20, height: .infinity)  // Add padding to the width
+         let boundingRect = text.boundingRect(with: constrainedSize, options: .usesLineFragmentOrigin, attributes: [.font: font], context: nil)
+         return boundingRect.height*/
+        let textView = UITextView()
+        textView.text = text + "\n\n\n"
+        textView.font = UIFont.systemFont(ofSize: 17)
+        textView.textContainerInset = UIEdgeInsets(top: 8, left: 4, bottom: 8, right: 4)
+        textView.textContainer.lineFragmentPadding = 0
+        textView.isScrollEnabled = false
+        
+        let fixedWidth = width - 16 // Account for padding
+        let size = textView.sizeThatFits(CGSize(width: fixedWidth, height: CGFloat.greatestFiniteMagnitude))
+        return max(size.height + 60, 100) // Add a buffer and ensure a minimum height
+    }
     
     var body: some View {
         ZStack {
@@ -688,207 +708,326 @@ struct ShowNotes: View {
                     VStack {
                         //VStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.secondary)
                         
-                        VStack {
-                            if self.loadingAiGeneratedSummaryOfChanges {
-                                ZStack {
-                                    ProgressView()
-                                        .tint(Color.EZNotesBlue)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .center)
-                            } else {
-                                HStack {
-                                    Image(systemName: "sparkles")
-                                        .frame(width: 20, height: 20)
-                                        .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
-                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                        ], colors: [
-                                            .indigo, .indigo, Color.EZNotesBlue,
-                                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                             Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                             Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                        ]))
-                                    
-                                    Text(self.aiGeneratedSummaryOfChanges)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .foregroundStyle(self.aiGeneratedSummaryOfChanges != "No Changes"
-                                                         ? MeshGradient(width: 3, height: 3, points: [
-                                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                         ], colors: [
-                                                            .indigo, .indigo, Color.EZNotesBlue,
-                                                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                             Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                             Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                         ])
-                                                         :MeshGradient(width: 3, height: 3, points: [
-                                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                         ], colors: [
-                                                            .white, .white, .white,
-                                                            .white, .white, .white,
-                                                            .white, .white, .white
-                                                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                             Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                             Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                         ])
-                                        )
-                                        .padding(.leading, 10)
-                                        .font(Font.custom("Poppins-SemiBold", size: 16))
-                                        .minimumScaleFactor(0.5)
-                                        .multilineTextAlignment(.leading)
-                                }
-                                .frame(maxWidth: prop.size.width - 40)
-                                .padding()
-                                .background(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(Color.EZNotesBlack)
-                                        .shadow(color: Color.white, radius: 2.5)
-                                )
-                                .padding(.top, 20)
-                                .padding([.leading, .trailing, .bottom], 10)
-                                .cornerRadius(15)
-                                .scaleEffect(x: 1.0, y: isVisible ? 1.0 : 0.0, anchor: .leading) // Animate width from left to right
-                                .animation(.easeOut(duration: 0.5), value: isVisible) // Apply animation
-                                .onAppear {
-                                    isVisible = true
-                                }
-                                .onDisappear {
-                                    isVisible = false
-                                }
-                            }
-                            
+                        ScrollView(.vertical, showsIndicators: false) {
                             VStack {
-                                Text("Notes:")
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .foregroundStyle(.white)
-                                    .font(.system(size: 26))
-                                    .fontWeight(.bold)
-                                    .minimumScaleFactor(0.5)
+                                if self.loadingAiGeneratedSummaryOfChanges {
+                                    ZStack {
+                                        ProgressView()
+                                            .tint(Color.EZNotesBlue)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                } else {
+                                    HStack {
+                                        Image(systemName: "sparkles")
+                                            .frame(width: 20, height: 20)
+                                            .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
+                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                            ], colors: [
+                                                .indigo, .indigo, Color.EZNotesBlue,
+                                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                            ]))
+                                        
+                                        Text(self.aiGeneratedSummaryOfChanges)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(self.aiGeneratedSummaryOfChanges != "No Changes"
+                                                             ? MeshGradient(width: 3, height: 3, points: [
+                                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                             ], colors: [
+                                                                .indigo, .indigo, Color.EZNotesBlue,
+                                                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                             ])
+                                                             :MeshGradient(width: 3, height: 3, points: [
+                                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                             ], colors: [
+                                                                .white, .white, .white,
+                                                                .white, .white, .white,
+                                                                .white, .white, .white
+                                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                             ])
+                                            )
+                                            .padding(.leading, 10)
+                                            .font(Font.custom("Poppins-SemiBold", size: 16))
+                                            .minimumScaleFactor(0.5)
+                                            .multilineTextAlignment(.leading)
+                                    }
+                                    .frame(maxWidth: prop.size.width - 40)
+                                    .padding()
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(Color.EZNotesBlack)
+                                            .shadow(color: Color.white, radius: 2.5)
+                                    )
+                                    .padding(.top, 20)
+                                    .padding([.leading, .trailing, .bottom], 10)
+                                    .cornerRadius(15)
+                                    .scaleEffect(x: 1.0, y: isVisible ? 1.0 : 0.0, anchor: .leading) // Animate width from left to right
+                                    .animation(.easeOut(duration: 0.5), value: isVisible) // Apply animation
+                                    .onAppear {
+                                        isVisible = true
+                                    }
+                                    .onDisappear {
+                                        isVisible = false
+                                    }
+                                }
                                 
-                                HStack {
-                                    VStack {
-                                        Text(self.originalContent)
-                                            .frame(width: 115, height: 115)
+                                VStack {
+                                    HStack {
+                                        HStack {
+                                            if self.noteSelected != "" {
+                                                Button(action: {
+                                                    self.noteSelected.removeAll()
+                                                    self.noteSelectedAnimation = false
+                                                }) {
+                                                    Image(systemName: "arrow.backward")
+                                                        .resizable()
+                                                        .frame(width: 15, height: 15)
+                                                        .foregroundStyle(.white)
+                                                        .padding(.trailing, 10)
+                                                }
+                                            }
+                                            
+                                            Text(self.noteSelected == "original"
+                                                 ? "Original Version:"
+                                                 : self.noteSelected == "edited"
+                                                 ? "Edited Version:"
+                                                 : "Notes:")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
                                             .foregroundStyle(.white)
-                                            .font(Font.custom(self.fontPicked, size: 10))
-                                            .padding(8)
-                                            .background(Color.EZNotesLightBlack.opacity(0.8))
-                                            .cornerRadius(15)
-                                        
-                                        Text("Original")
-                                            .frame(maxWidth: .infinity, alignment: .center)
-                                            .foregroundStyle(.white)
-                                            .font(Font.custom("Poppins-Regular", size: 20))
+                                            .font(.system(size: 26))
+                                            .fontWeight(.bold)
                                             .minimumScaleFactor(0.5)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    
-                                    VStack {
-                                        Text(self.notesContent)
-                                            .frame(width: 115, height: 115)
-                                            .foregroundStyle(.white)
-                                            .font(Font.custom(self.fontPicked, size: 10))
-                                            .padding(8)
-                                            .background(Color.EZNotesLightBlack.opacity(0.8))
-                                            .cornerRadius(15)
-                                        
-                                        Text("Edited")
-                                            .frame(maxWidth: .infinity, alignment: .center)
-                                            .foregroundStyle(.white)
-                                            .font(Font.custom("Poppins-Regular", size: 20))
-                                            .minimumScaleFactor(0.5)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    
-                                    VStack {
-                                        Spacer()
-                                        VStack {
-                                            Image(systemName: "plus")
-                                                .resizable()
-                                                .frame(width: 30, height: 30)
                                         }
-                                        .frame(maxWidth: .infinity, maxHeight: 115, alignment: .center)
-                                        .padding(8)
-                                        .background(Color.EZNotesLightBlack.opacity(0.8))
-                                        .cornerRadius(15)
-                                        Spacer()
-                                        Text("Add")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                     }
-                                    .frame(maxWidth: .infinity, maxHeight: 115, alignment: .trailing)
-                                }
-                                .frame(maxWidth: prop.size.width - 40)
-                                
-                                /*HStack {
-                                    VStack {
-                                        Text("Original")
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .font(Font.custom("Poppins-Semibold", size: 20))
-                                            .minimumScaleFactor(0.5)
-                                        
-                                        Text("Tap to view unedited notes")
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .font(Font.custom("Poppins-Regular", size: 12))
-                                            .minimumScaleFactor(0.5)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding([.top, .leading, .bottom], 8)
                                     
-                                    ZStack {
-                                        Image(systemName: "chevron.right")
-                                            .resizable()
-                                            .frame(width: 10, height: 15)
-                                            .foregroundStyle(.gray)
+                                    if self.noteSelected == "" {
+                                        ZStack {
+                                            HStack {
+                                                Button(action: {
+                                                    self.noteSelected = "original"
+                                                    self.noteSelectedAnimation = true
+                                                }) {
+                                                    VStack {
+                                                        Text(self.originalContent)
+                                                            .frame(width: 105, height: 105)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom(self.fontPicked, size: 8))
+                                                            .padding(8)
+                                                            .background(Color.EZNotesLightBlack.opacity(0.8))
+                                                            .cornerRadius(15)
+                                                        
+                                                        Text("Original")
+                                                            .frame(maxWidth: .infinity, alignment: .center)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: 20))
+                                                            .minimumScaleFactor(0.5)
+                                                    }
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 10)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                                
+                                                Button(action: {
+                                                    self.noteSelected = "edited"
+                                                    self.noteSelectedAnimation = true
+                                                }) {
+                                                    VStack {
+                                                        Text(self.notesContent)
+                                                            .frame(width: 105, height: 105)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom(self.fontPicked, size: 8))
+                                                            .padding(8)
+                                                            .background(Color.EZNotesLightBlack.opacity(0.8))
+                                                            .cornerRadius(15)
+                                                        
+                                                        Text("Edited")
+                                                            .frame(maxWidth: .infinity, alignment: .center)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: 20))
+                                                            .minimumScaleFactor(0.5)
+                                                    }
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                                
+                                                Button(action: { print("Add Notes") }) {
+                                                    /*VStack {
+                                                     VStack {
+                                                     Spacer()
+                                                     
+                                                     Image(systemName: "plus")
+                                                     .resizable()
+                                                     .frame(width: 30, height: 30)
+                                                     
+                                                     Spacer()
+                                                     }
+                                                     .frame(maxWidth: .infinity, maxHeight: 115, alignment: .center)
+                                                     .scaledToFit()
+                                                     .padding(8)
+                                                     .background(Color.EZNotesLightBlack.opacity(0.8))
+                                                     .cornerRadius(15)
+                                                     
+                                                     Text("Add")
+                                                     .frame(maxWidth: .infinity, alignment: .center)
+                                                     .foregroundStyle(.white)
+                                                     .font(Font.custom("Poppins-Regular", size: 20))
+                                                     .minimumScaleFactor(0.5)
+                                                     }
+                                                     .frame(maxWidth: .infinity, maxHeight: 115, alignment: .trailing)*/
+                                                    VStack {
+                                                        ZStack {
+                                                            Image(systemName: "plus")
+                                                                .resizable()
+                                                                .frame(width: 30, height: 30)
+                                                        }
+                                                        .frame(width: 105, height: 105)
+                                                        .foregroundStyle(.white)
+                                                        .font(Font.custom(self.fontPicked, size: 10))
+                                                        .padding(8)
+                                                        .background(Color.EZNotesLightBlack.opacity(0.8))
+                                                        .cornerRadius(15)
+                                                        
+                                                        Text("Add")
+                                                            .frame(maxWidth: .infinity, alignment: .center)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: 20))
+                                                            .minimumScaleFactor(0.5)
+                                                    }
+                                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                                    .padding(.trailing, 10)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                            }
+                                            .frame(maxWidth: prop.size.width - 50)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                    } else {
+                                        switch(self.noteSelected) {
+                                        case "original":
+                                            VStack {
+                                                ScrollView(.vertical, showsIndicators: true) {
+                                                    Text(self.originalContent)
+                                                        .frame(maxWidth: prop.size.width - 60, alignment: .leading)
+                                                        .foregroundStyle(.white)
+                                                        .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
+                                                        .multilineTextAlignment(.leading)
+                                                }
+                                                .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2 - 60)
+                                                .scaleEffect(x: self.noteSelectedAnimation ? 1.0 : 0.0, y: self.noteSelectedAnimation ? 1.0 : 0.0, anchor: .leading) // Animate width from left to right
+                                                .animation(.easeOut(duration: 0.5), value: self.noteSelectedAnimation) // Apply animation
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(12)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(Color.EZNotesLightBlack)
+                                            )
+                                            .cornerRadius(15)
+                                        case "edited":
+                                            VStack {
+                                                ScrollView(.vertical, showsIndicators: true) {
+                                                    Text(self.originalContent)
+                                                        .frame(maxWidth: prop.size.width - 60, alignment: .leading)
+                                                        .foregroundStyle(.white)
+                                                        .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
+                                                        .multilineTextAlignment(.leading)
+                                                }
+                                                .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2 - 60)
+                                                .scaleEffect(x: self.noteSelectedAnimation ? 1.0 : 0.0, y: self.noteSelectedAnimation ? 1.0 : 0.0, anchor: .leading) // Animate width from left to right
+                                                .animation(.easeOut(duration: 0.5), value: self.noteSelectedAnimation) // Apply animation
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                            .padding(12)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(Color.EZNotesLightBlack)
+                                            )
+                                            .cornerRadius(15)
+                                        default:
+                                            VStack { }
+                                        }
                                     }
-                                    .frame(maxWidth: 20, alignment: .trailing)
-                                    .padding([.top, .trailing, .bottom], 8)
+                                    
+                                    /*HStack {
+                                     VStack {
+                                     Text("Original")
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .font(Font.custom("Poppins-Semibold", size: 20))
+                                     .minimumScaleFactor(0.5)
+                                     
+                                     Text("Tap to view unedited notes")
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .font(Font.custom("Poppins-Regular", size: 12))
+                                     .minimumScaleFactor(0.5)
+                                     }
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .padding([.top, .leading, .bottom], 8)
+                                     
+                                     ZStack {
+                                     Image(systemName: "chevron.right")
+                                     .resizable()
+                                     .frame(width: 10, height: 15)
+                                     .foregroundStyle(.gray)
+                                     }
+                                     .frame(maxWidth: 20, alignment: .trailing)
+                                     .padding([.top, .trailing, .bottom], 8)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     .padding(8)
+                                     .background(Color.EZNotesLightBlack.opacity(0.5))
+                                     .cornerRadius(15)
+                                     .padding(.bottom, 5)
+                                     
+                                     HStack {
+                                     VStack {
+                                     Text("Edited")
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .font(Font.custom("Poppins-Semibold", size: 20))
+                                     .minimumScaleFactor(0.5)
+                                     
+                                     Text("Tap to view edited notes")
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .font(Font.custom("Poppins-Regular", size: 12))
+                                     .minimumScaleFactor(0.5)
+                                     }
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .padding([.top, .leading, .bottom], 8)
+                                     
+                                     ZStack {
+                                     Image(systemName: "chevron.right")
+                                     .resizable()
+                                     .frame(width: 10, height: 15)
+                                     .foregroundStyle(.gray)
+                                     }
+                                     .frame(maxWidth: 20, alignment: .trailing)
+                                     .padding([.top, .trailing, .bottom], 8)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     .padding(8)
+                                     .background(Color.EZNotesLightBlack.opacity(0.5))
+                                     .cornerRadius(15)*/
                                 }
                                 .frame(maxWidth: .infinity)
-                                .padding(8)
-                                .background(Color.EZNotesLightBlack.opacity(0.5))
-                                .cornerRadius(15)
-                                .padding(.bottom, 5)
-                                
-                                HStack {
-                                    VStack {
-                                        Text("Edited")
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .font(Font.custom("Poppins-Semibold", size: 20))
-                                            .minimumScaleFactor(0.5)
-                                        
-                                        Text("Tap to view edited notes")
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .font(Font.custom("Poppins-Regular", size: 12))
-                                            .minimumScaleFactor(0.5)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding([.top, .leading, .bottom], 8)
-                                    
-                                    ZStack {
-                                        Image(systemName: "chevron.right")
-                                            .resizable()
-                                            .frame(width: 10, height: 15)
-                                            .foregroundStyle(.gray)
-                                    }
-                                    .frame(maxWidth: 20, alignment: .trailing)
-                                    .padding([.top, .trailing, .bottom], 8)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(8)
-                                .background(Color.EZNotesLightBlack.opacity(0.5))
-                                .cornerRadius(15)*/
+                                .padding(.top, 10)
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.top, 10)
+                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .top)
                         }
-                        .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .top)
                         
                         Spacer()
                         /*Text("Review changes you've made. Compare/contrast changes in the edited notes to those in the original notes. If everything looks good, proceed with saving. **EZNotes AI** is here to help if you need it")
