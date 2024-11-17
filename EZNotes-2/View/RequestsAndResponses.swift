@@ -9,7 +9,7 @@ import SwiftUI
 
 /* MARK: URLs used for requests. */
 //let server = "https://www.eznotes.space"
-let server = "http://192.168.1.109:8088"
+let server = "http://192.168.0.14:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
@@ -20,6 +20,10 @@ struct ReqPlaceholder {}
 struct SummarizeNotesData {
     let OriginalNotes: String
     let EditedNotes: String
+}
+
+struct ReWordNotesData {
+    let Notes: String
 }
 
 struct CheckStateHasCollege {
@@ -364,4 +368,10 @@ let summarize_notes_req: CSIARequest = CSIARequest(
     url: "\(server)/summarize_changes_to_notes",
     method: "post",
     reqData: SummarizeNotesData.self
+)
+
+let reword_notes_req: CSIARequest = CSIARequest(
+    url: "\(server)/reword_edited_notes",
+    method: "post",
+    reqData: ReWordNotesData.self
 )

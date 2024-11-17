@@ -361,6 +361,12 @@ struct RequestAction<T> {
                 let jsonData: [String: String] = ["OriginalNotes": params.OriginalNotes, "EditedNotes": params.EditedNotes]
                 request.httpBody = try? JSONSerialization.data(withJSONObject: jsonData)
                 break
+            case is ReWordNotesData.Type:
+                guard let params: ReWordNotesData = (parameters as? ReWordNotesData) else { return }
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                let jsonData: [String: String] = ["EditedNotes": params.Notes]
+                request.httpBody = try? JSONSerialization.data(withJSONObject: jsonData)
+                break
             case is GenerateDescRequestData.Type:
                 guard let params: GenerateDescRequestData = (parameters as? GenerateDescRequestData) else { return }
                 request.addValue(params.Subject, forHTTPHeaderField: "Subject")

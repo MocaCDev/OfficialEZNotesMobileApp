@@ -347,6 +347,7 @@ struct ShowNotes: View {
     @State private var aiGeneratedSummaryWidth: CGFloat = 0
     @State private var isVisible: Bool = false /* TODO: Change the name of this variable. */
     @State private var noteSelected: String = ""
+    @State private var reWordedNotes: String = ""
     
     @State private var noteSelectedAnimation: Bool = false
     
@@ -813,11 +814,11 @@ struct ShowNotes: View {
                                             .fontWeight(.bold)
                                             .minimumScaleFactor(0.5)
                                         }
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .frame(maxWidth: prop.size.width - 40, alignment: .leading)
                                     }
                                     
                                     if self.noteSelected == "" {
-                                        ZStack {
+                                        VStack {
                                             HStack {
                                                 Button(action: {
                                                     self.noteSelected = "original"
@@ -941,24 +942,153 @@ struct ShowNotes: View {
                                             .cornerRadius(15)
                                         case "edited":
                                             VStack {
-                                                ScrollView(.vertical, showsIndicators: true) {
-                                                    Text(self.originalContent)
-                                                        .frame(maxWidth: prop.size.width - 60, alignment: .leading)
-                                                        .foregroundStyle(.white)
-                                                        .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
-                                                        .multilineTextAlignment(.leading)
+                                                VStack {
+                                                    ScrollView(.vertical, showsIndicators: true) {
+                                                        Text(self.notesContent)
+                                                            .frame(maxWidth: prop.size.width - 60, alignment: .leading)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
+                                                            .multilineTextAlignment(.leading)
+                                                    }
+                                                    .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2 - 60)
+                                                    .scaleEffect(x: self.noteSelectedAnimation ? 1.0 : 0.0, y: self.noteSelectedAnimation ? 1.0 : 0.0, anchor: .leading) // Animate width from left to right
+                                                    .animation(.easeOut(duration: 0.5), value: self.noteSelectedAnimation) // Apply animation
                                                 }
-                                                .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2 - 60)
-                                                .scaleEffect(x: self.noteSelectedAnimation ? 1.0 : 0.0, y: self.noteSelectedAnimation ? 1.0 : 0.0, anchor: .leading) // Animate width from left to right
-                                                .animation(.easeOut(duration: 0.5), value: self.noteSelectedAnimation) // Apply animation
+                                                .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+                                                .padding(12)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(Color.EZNotesLightBlack)
+                                                )
+                                                .cornerRadius(15)
+                                                
+                                                if self.reWordedNotes != "" {
+                                                    VStack {
+                                                        ZStack {
+                                                            MeshGradient(width: 3, height: 3, points: [
+                                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                            ], colors: [
+                                                                .indigo, .indigo, Color.EZNotesBlue,
+                                                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                            ])
+                                                            .blur(radius: 10)
+                                                            .offset(
+                                                                x: self.moving ? CGFloat(Int.random(in: 0...6)) : 0,
+                                                                y: self.moving ? CGFloat(Int.random(in: 0...6)) : 0
+                                                            )
+                                                            .animation(.easeInOut(duration: 1.5), value: self.moving)
+                                                            .padding(5.5)
+                                                            
+                                                            HStack {
+                                                                Image(systemName: "sparkles")
+                                                                    .frame(width: 20, height: 20)
+                                                                    .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
+                                                                        .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                        .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                        .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                                    ], colors: [
+                                                                        .indigo, .indigo, Color.EZNotesBlue,
+                                                                        Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                                        .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                        /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                         Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                         Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                                    ]))
+                                                                
+                                                                ScrollView(.vertical, showsIndicators: true) {
+                                                                    Text(self.reWordedNotes)
+                                                                        .frame(maxWidth: prop.size.width - 40, alignment: .leading)
+                                                                        .padding(4.5)
+                                                                        .foregroundStyle(.white)
+                                                                        .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
+                                                                        .multilineTextAlignment(.leading)
+                                                                }
+                                                                .frame(maxWidth: prop.size.width - 40, maxHeight: (prop.size.height / 2) - 80)
+                                                            }
+                                                            .frame(maxWidth: .infinity)
+                                                            //.padding(4)
+                                                            .background(Color.EZNotesBlack)
+                                                            .cornerRadius(15)
+                                                        }
+                                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                        .padding([.top, .bottom, .leading, .trailing], 20)
+                                                        .cornerRadius(15)
+                                                        .onAppear {
+                                                            self.moving.toggle()
+                                                            self.animationTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in
+                                                                self.moving.toggle()
+                                                            }
+                                                        }
+                                                    }
+                                                    .frame(maxWidth: .infinity, maxHeight: (prop.size.height / 2) - 60)
+                                                    
+                                                    VStack { }.frame(maxWidth: .infinity, maxHeight: 35).background(.clear)
+                                                }
+                                                
+                                                
+                                                Button(action: {
+                                                    RequestAction<ReWordNotesData>(parameters: ReWordNotesData(
+                                                        Notes: self.reWordedNotes == "" ? self.notesContent : self.reWordedNotes
+                                                    ))
+                                                    .perform(action: reword_notes_req) { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            return /* TODO: handle errors. */
+                                                        }
+                                                        
+                                                        if resp!["Reworded"] as! String != "No Changes" {
+                                                            self.reWordedNotes = resp!["Reworded"] as! String
+                                                        }
+                                                    }
+                                                }) {
+                                                    HStack {
+                                                        Image(systemName: "sparkles")
+                                                            .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
+                                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                            ], colors: [
+                                                                .indigo, .indigo, Color.EZNotesBlue,
+                                                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                            ]))
+                                                        
+                                                        Text("Re-write for me")
+                                                            .frame(alignment: .center)
+                                                            .foregroundStyle(.white)
+                                                    }
+                                                    .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                                    .padding([.top, .bottom], 10)
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 15)
+                                                            .fill(.clear)
+                                                            .strokeBorder(MeshGradient(width: 3, height: 3, points: [
+                                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                            ], colors: [
+                                                                .indigo, .indigo, Color.EZNotesBlue,
+                                                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                            ]))
+                                                    )
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                                .padding(.top, self.reWordedNotes != "" ? 0 : 15)
+                                                .padding(.bottom, self.reWordedNotes != "" ? 35 : 0)
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                            .padding(12)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 15)
-                                                    .fill(Color.EZNotesLightBlack)
-                                            )
-                                            .cornerRadius(15)
                                         default:
                                             VStack { }
                                         }
@@ -1026,7 +1156,7 @@ struct ShowNotes: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.top, 10)
                             }
-                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .top)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                         }
                         
                         Spacer()
