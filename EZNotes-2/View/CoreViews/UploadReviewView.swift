@@ -6,8 +6,102 @@
 //
 import SwiftUI
 
+/*class ReviewActions: ObservableObject {
+    @Published public var longPressed: Bool = false
+    @Published public var uploadsSelected: Array<String> = []
+}*/
+
+struct ReviewView: View {
+    var prop: Properties
+    
+    @ObservedObject public var images_to_upload: ImagesUploads
+    //@ObservedObject public var reviewActions: ReviewActions
+    
+    @Binding public var longPressed: Bool
+    @Binding public var showLargerImage: Bool
+    @Binding public var imageSelected: UIImage!
+    @Binding public var uploadsSelected: Array<String>
+    
+    let cols4 = [
+        GridItem(.flexible()),
+        GridItem(.flexible()),
+        GridItem(.flexible()),
+        GridItem(.flexible())
+    ]
+    
+    var body: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            LazyVGrid(columns: /*self.images_to_upload.images_to_upload.count >= 8 ? cols4 : cols2*/cols4, spacing: 5) {
+                ForEach(Array(self.images_to_upload.images_to_upload.enumerated()), id: \.offset) { index, value in
+                    ForEach(Array(self.images_to_upload.images_to_upload[index].keys), id: \.self) { key in
+                        /* MARK: Below if statement needed as the array `images_to_upload.images_to_upload` will be manipulated. The view updates accordingly, but `index` does not. So, we want to ensure we are only performing code within the bounds of the aforementioned array. */
+                        if index < self.images_to_upload.images_to_upload.count {
+                            Button(action: {
+                                if self.longPressed {
+                                    if self.uploadsSelected.contains(key) {
+                                        for (index, value) in self.uploadsSelected.enumerated() {
+                                            if value == key { self.uploadsSelected.remove(at: index); break }
+                                        }
+                                        
+                                        if self.uploadsSelected.count == 0 { self.longPressed = false }
+                                    } else {
+                                        self.uploadsSelected.append(key)
+                                    }
+                                    
+                                    return
+                                }
+                                self.showLargerImage = true
+                                self.imageSelected = self.images_to_upload.images_to_upload[index][key]!
+                            }) {
+                                Image(uiImage: self.images_to_upload.images_to_upload[index][key]!)
+                                    .resizable()
+                                    .frame(width: 80, height: 130)
+                                    .minimumScaleFactor(0.5)
+                                    .clipShape(.rect(cornerRadius: 10))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(Color.clear)
+                                            .strokeBorder(.white, lineWidth: 1)
+                                    )
+                                    .onLongPressGesture {
+                                        if !self.longPressed { self.longPressed = true }
+                                        
+                                        if self.uploadsSelected.contains(key) {
+                                            for (index, value) in self.uploadsSelected.enumerated() {
+                                                if value == key { self.uploadsSelected.remove(at: index); break }
+                                            }
+                                            
+                                            if self.uploadsSelected.count == 0 { self.longPressed = false }
+                                        } else {
+                                            self.uploadsSelected.append(key)
+                                        }
+                                    }
+                                
+                                if self.longPressed {
+                                    VStack {
+                                        Circle()
+                                            .fill(self.uploadsSelected.contains(key) ? Color.EZNotesBlue : Color.clear)
+                                            .strokeBorder(Color.white, lineWidth: 1)
+                                    }
+                                    .frame(width: 20, height: 20)
+                                    .padding([.top, .bottom], 6)
+                                }
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .top)
+            .padding(.top, 5)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
 struct UploadReview: View {
     @ObservedObject public var images_to_upload: ImagesUploads
+    //@StateObject public var reviewActions: ReviewActions = ReviewActions()
     
     @Binding public var localUpload: Bool
     @Binding public var section: String
@@ -49,6 +143,11 @@ struct UploadReview: View {
         return nil
     }
     
+    @State private var longPressed: Bool = false
+    @State private var uploadsSelected: Array<String> = []
+    @State private var longPressTopMenuVisible: Bool = false
+    @State private var reviewSection: String = "review"
+    
     var body: some View {
         VStack {
             if self.uploadState == "uploading" {
@@ -73,21 +172,13 @@ struct UploadReview: View {
                             self.section = self.lastSection
                             self.lastSection = self.section
                         }) {
-                            VStack {
-                                Image("Back")
+                            HStack {
+                                Image(systemName: "arrow.backward")
                                     .resizable()
-                                    .frame(width: 20, height: 20)
+                                    .frame(width: 15, height: 15)
                                     .padding([.leading], 20)
-                                    .padding([.top], prop.size.height / 2.5 > 300 ? 20 : -5)
-                                
-                                if self.showLargerImage {
-                                    Text("Exit Preview")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .padding([.leading], 20)
-                                        .font(.system(size: 8))
-                                        .minimumScaleFactor(0.5)
-                                        .fontWeight(.medium)
-                                }
+                                    .foregroundStyle(.white)
+                                //.padding([.top], prop.size.height / 2.5 > 300 ? 20 : -5)
                             }
                         }
                     }
@@ -96,20 +187,21 @@ struct UploadReview: View {
                     VStack {
                         Text("Review Uploads")
                             .foregroundStyle(.white)
-                            .font(.system(size: 30))
-                            .padding([.top], prop.size.height / 2.5 > 300 ? 10 : -10)
-                            //.padding([.leading], -30)
+                            .font(.system(size: 25, design: .rounded))
+                            .fontWeight(.semibold)
+                            //.padding([.top], prop.isLargerScreen ? 10 : -10)
+                        //.padding([.leading], -30)
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
                     
-                    /* MARK: The below `ZStack` forces the above `VStack` to be in th middle. */
+                    /* MARK: The below `ZStack` forces the above `VStack` to be in the middle. */
                     ZStack { }.frame(maxWidth: 70, alignment: .trailing)
                 }
                 .frame(maxWidth: .infinity)
                 
-                if self.images_to_upload.images_to_upload.count == 1 {
+                if self.showLargerImage {
                     VStack {
-                        Image(uiImage: self.images_to_upload.images_to_upload[0].first!.value)
+                        Image(uiImage: self.imageSelected)
                             .resizable()
                             .frame(width: prop.size.width - 100, height: 550)
                             .clipShape(.rect(cornerRadius: 10))
@@ -121,9 +213,7 @@ struct UploadReview: View {
                         
                         HStack {
                             Button(action: {
-                                self.section = self.lastSection
-                                self.lastSection = ""
-                                
+                                self.showLargerImage = false
                                 self.images_to_upload.images_to_upload.remove(at: 0)
                             }) {
                                 Image(systemName: "trash")
@@ -139,301 +229,377 @@ struct UploadReview: View {
                         .padding([.top], 10)
                         .padding([.bottom], 30)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .centerLastTextBaseline)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     .padding([.bottom], 25)
                 } else {
-                    if self.showLargerImage {
-                        VStack {
-                            Image(uiImage: self.imageSelected)
-                                .resizable()
-                                .frame(width: prop.size.width - 100, height: 550)
-                                .clipShape(.rect(cornerRadius: 10))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(Color.clear)
-                                )
-                                .shadow(color: Color.EZNotesLightBlack, radius: 3.5)
-                            
-                            HStack {
-                                Button(action: {
-                                    self.section = self.lastSection
-                                    self.lastSection = ""
-                                    
-                                    self.images_to_upload.images_to_upload.remove(at: 0)
-                                }) {
-                                    Image(systemName: "trash")
-                                        .resizable()
-                                        .frame(width: 20, height: 20)
-                                        .foregroundStyle(.red)
-                                    
-                                    Text("Delete")
-                                        .foregroundStyle(.red)
-                                        .font(.system(size: 16))
-                                }
-                            }
-                            .padding([.top], 10)
-                            .padding([.bottom], 30)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                        .padding([.bottom], 25)
-                    } else {
-                        ScrollView(.vertical, showsIndicators: false) {
-                            LazyVGrid(columns: self.images_to_upload.images_to_upload.count >= 8 ? cols4 : cols2, spacing: 5) {
-                                ForEach(Array(self.images_to_upload.images_to_upload.enumerated()), id: \.offset) { index, value in
-                                    ForEach(Array(self.images_to_upload.images_to_upload[index].keys), id: \.self) { key in
-                                        Button(action: {
-                                            self.showLargerImage = true
-                                            self.imageSelected = self.images_to_upload.images_to_upload[index][key]!
-                                        }) {
-                                            Image(uiImage: self.images_to_upload.images_to_upload[index][key]!)
-                                                .resizable()
-                                                .frame(width: 80, height: 130)
-                                                .minimumScaleFactor(0.5)
-                                                .clipShape(.rect(cornerRadius: 10))
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 10)
-                                                        .fill(Color.clear)
-                                                        .strokeBorder(.white, lineWidth: 1)
-                                                )
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                    }
-                                }
-                            }
-                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .top)
-                            .padding(.top, 5)
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                    /*ScrollView(.horizontal, showsIndicators: false) {
+                    if self.longPressed {
                         HStack {
-                            ForEach(Array(self.images_to_upload.images_to_upload.enumerated()), id: \.offset) { index, value in
-                                ForEach(Array(value.enumerated()), id: \.offset) { index2, photo in
-                                    VStack {
-                                        Image(uiImage: photo.value)
-                                            .resizable()
-                                            .frame(width: prop.size.width - 100, height: 550)
-                                            .clipShape(.rect(cornerRadius: 10))
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 10)
-                                                    .fill(Color.clear)
-                                            )
-                                            .shadow(color: Color.white, radius: 3.5)
-                                        
-                                        HStack {
-                                            Button(action: {
+                            if self.uploadsSelected.count == 1 {
+                                VStack {
+                                    Image(systemName: "square.and.arrow.up")
+                                        .resizable()
+                                        .frame(width: 20, height: 25)
+                                        .foregroundStyle(.white)
+                                    
+                                    Text("Share")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 12, weight: .light))
+                                        .minimumScaleFactor(0.5)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 10)
+                                
+                                VStack {
+                                    Image(systemName: "square.and.arrow.down")
+                                        .resizable()
+                                        .frame(width: 20, height: 25)
+                                        .foregroundStyle(.white)
+                                    
+                                    Text("Save")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 12, weight: .light))
+                                        .minimumScaleFactor(0.5)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                
+                                Button(action: {
+                                    /* MARK: Since there is only one selection, get the first value from the array. */
+                                    let toDelete = self.uploadsSelected.first!
+                                    self.reviewSection = "deleting_selecte"
+                                    
+                                    for (index, value) in self.images_to_upload.images_to_upload.enumerated() {
+                                        for key in value.keys {
+                                            if key == toDelete {
                                                 self.images_to_upload.images_to_upload.remove(at: index)
                                                 
-                                                if self.images_to_upload.images_to_upload.count == 0 {
-                                                    self.section = self.lastSection
-                                                    self.lastSection = ""
-                                                }
-                                            }) {
-                                                Image(systemName: "trash")
-                                                    .resizable()
-                                                    .frame(width: 20, height: 20)
-                                                    .foregroundStyle(.red)
+                                                self.uploadsSelected.removeAll()
+                                                self.longPressed = false
                                                 
-                                                Text("Delete")
-                                                    .foregroundStyle(.red)
-                                                    .font(.system(size: 16))
-                                            }
-                                        }
-                                        .padding([.top], 10)
-                                        .padding([.bottom], 30)
-                                    }
-                                    .padding([.trailing], 15)
-                                    .padding([.leading], index == 0 ? 15 : 0)
-                                }
-                            }
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .centerFirstTextBaseline)
-                        .padding([.bottom], 25)
-                    }*/
-                }
-                
-                VStack {
-                    Toggle("Save upload to device", isOn: $localUpload)
-                        .frame(maxWidth: prop.size.width - 150)
-                        .foregroundStyle(.white)
-                        .fontWeight(.bold)
-                        .font(.system(size: 18))
-                        .toggleStyle(SwitchToggleStyle(tint: Color.EZNotesBlue))
-                    
-                    if self.localUpload == false {
-                        Text("All categories will be created and stored in the cloud.")
-                            .frame(maxWidth: prop.size.width - 100)
-                            .foregroundStyle(Color.EZNotesLightBlack)
-                            .font(.system(size: 14))
-                            .italic()
-                            .fontWeight(.bold)
-                            .multilineTextAlignment(.center)
-                    } else {
-                        Text("All categories will be created and stored on your device.")
-                            .frame(maxWidth: prop.size.width - 100)
-                            .foregroundStyle(Color.EZNotesLightBlack)
-                            .font(.system(size: 14))
-                            .italic()
-                            .fontWeight(.bold)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding([.bottom], 15)
-                
-                Button(action: {
-                    self.uploadState = "uploading" /* MARK: Show the loading screen. */
-                    
-                    var errors: Int = 0
-                    
-                    if self.images_to_upload.images_to_upload.count < 10 {
-                        UploadImages(imageUpload: self.images_to_upload.images_to_upload)
-                            .requestNativeImageUpload() { resp in
-                                if resp.Bad != nil {
-                                    print(resp.Bad!)
-                                    
-                                    /* MARK: If `errors` accumulates to the # of values in the array `images_to_upload`, that means none of the images uploaded had anything valuable in them. Prompt an error.
-                                     * */
-                                    if errors == self.images_to_upload.images_to_upload.count - 1 {
-                                        self.images_to_upload.images_to_upload.removeAll()
-                                        
-                                        self.lastSection = self.section
-                                        self.section = "upload_error"
-                                        //self.errorText = resp.Bad!.Message
-                                        self.errorType = resp.Bad!.Message
-                                    }
-                                    
-                                    errors += 1
-                                    
-                                    return
-                                } else {
-                                    self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
-                                    
-                                    for r in resp.Good!.Data {
-                                        self.categories.append(r.category)
-                                        self.sets.append(r.set_name)
-                                        self.briefDescriptions.append(r.brief_description)
-                                        self.photos.append(r.image_name)
-                                        
-                                        if !self.categoryImages.keys.contains(r.category) {
-                                            self.categoryImages[r.category] = findImage(for: r.image_name)!
-                                        }
-                                        
-                                        /* Append the category/set_name to the `categoriesAndSets` variable
-                                         * so the `Home` view gets updated.
-                                         * */
-                                        if self.newCategoriesAndSets.keys.contains(r.category) {
-                                            //if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
-                                                self.newCategoriesAndSets[r.category]!.append(r.set_name)
-                                                self.newSetNotes[r.category]!.append([r.set_name: r.notes])
-                                            
-                                            //}
-                                        } else {
-                                            self.newCategoriesAndSets[r.category] = [r.set_name]
-                                            self.newSetNotes[r.category] = [[r.set_name: r.notes]]
-                                        }
-                                    }
-                                    
-                                    print(self.newSetNotes)
-                                    
-                                    self.lastSection = self.section
-                                    self.section = "review_new_categories"
-                                    return
-                                }
-                            }
-                    } else {
-                        var uploads: Array<[String: UIImage]> = []
-                        let requestsBeingSent: Float = Float(self.images_to_upload.images_to_upload.count) / 5
-                        let totalResponsesExpected = Int(requestsBeingSent.rounded(.up))
-                        var totalResponses = 0
-                        var i: Int = 0
-                        var errors: Int = 0
-                        
-                        for (index, value) in self.images_to_upload.images_to_upload.enumerated() {
-                            uploads.append(value)
-                            i += 1
-                            
-                            if i == 5  || index == self.images_to_upload.images_to_upload.count - 1 {
-                                UploadImages(imageUpload: uploads)
-                                    .requestNativeImageUpload() { resp in
-                                        if resp.Bad != nil || (resp.Bad == nil && resp.Good!.Status != "200") {
-                                            print(resp.Bad!)
-                                            
-                                            if errors == self.images_to_upload.images_to_upload.count - 1 {
-                                                self.images_to_upload.images_to_upload.removeAll()
+                                                self.reviewSection = "review"
                                                 
-                                                self.lastSection = self.section
-                                                self.section = "upload_error"
-                                                self.errorType = resp.Bad!.Message
-                                            }
-                                            
-                                            errors += 1
-                                            
-                                            return
-                                        } else {
-                                            totalResponses += 1
-                                            print(totalResponses, totalResponsesExpected)
-                                            //self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
-                                            
-                                            for r in resp.Good!.Data {
-                                                self.categories.append(r.category)
-                                                self.sets.append(r.set_name)
-                                                self.briefDescriptions.append(r.brief_description)
-                                                self.photos.append(r.image_name)
-                                                
-                                                if !self.categoryImages.keys.contains(r.category) {
-                                                    self.categoryImages[r.category] = findImage(for: r.image_name)!
-                                                }
-                                                
-                                                /* Append the category/set_name to the `categoriesAndSets` variable
-                                                 * so the `Home` view gets updated.
-                                                 * */
-                                                if self.newCategoriesAndSets.keys.contains(r.category) {
-                                                    //if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
-                                                        self.newCategoriesAndSets[r.category]!.append(r.set_name)
-                                                    self.newSetNotes[r.category]!.append([r.set_name: r.notes])
-                                                    //}
-                                                } else {
-                                                    self.newCategoriesAndSets[r.category] = [r.set_name]
-                                                    self.newSetNotes[r.category] = [[r.set_name: r.notes]]
-                                                }
-                                            }
-                                            
-                                            if totalResponses == totalResponsesExpected {
-                                                self.uploadState = "review"
-                                                self.lastSection = self.section
-                                                self.section = "review_new_categories"
-                                            }
-                                        }
-                                    }
-                                
-                                i = 0
-                                uploads.removeAll()
-                            }
-                            /*if i >= 5 || index == self.images_to_upload.images_to_upload.count - 1 {
-                                print("OKAY")
-                                
-                                UploadImages(imageUpload: uploads)
-                                    .requestNativeImageUpload() { resp in
-                                        if resp.Bad != nil {
-                                            print(resp.Bad!)
-                                            
-                                            if resp.Bad?.ErrorCode == 0x422 {
-                                                self.images_to_upload.images_to_upload.removeAll()
-                                                self.lastSection = self.section
-                                                self.section = "confidential_upload_error"
                                                 return
                                             }
+                                        }
+                                    }
+                                }) {
+                                    VStack {
+                                        Image(systemName: "trash")
+                                            .resizable()
+                                            .frame(width: 20, height: 20)
+                                            .foregroundStyle(Color.EZNotesRed)
+                                        
+                                        Text("Delete")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: 12, weight: .light))
+                                            .minimumScaleFactor(0.5)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                    .padding(.trailing, 10)
+                                }
+                            } else {
+                                HStack {
+                                    Button(action: {
+                                        let newImagesToUploads: ImagesUploads = ImagesUploads()
+                                        
+                                        /* MARK: Filter out all of the selected images from the array and only append the images not selected to `newImagesToUploads`. */
+                                        for (index, value) in self.images_to_upload.images_to_upload.enumerated() {
+                                            for key in value.keys {
+                                                if !self.uploadsSelected.contains(key) {
+                                                    newImagesToUploads.images_to_upload.append(self.images_to_upload.images_to_upload[index])
+                                                }
+                                            }
+                                        }
+                                        
+                                        /* MARK: Reassign the array with the new images. */
+                                        self.images_to_upload.images_to_upload = newImagesToUploads.images_to_upload
+                                        
+                                        self.uploadsSelected.removeAll()
+                                        self.longPressed = false
+                                    }) {
+                                        HStack {
+                                            Text("Remove All")
+                                                .frame(alignment: .center)
+                                                .padding(8)
+                                                .foregroundStyle(.black)
+                                                .setFontSizeAndWeight(weight: .medium, size: 18)
+                                                .minimumScaleFactor(0.5)
+                                            
+                                            Image(systemName: "trash")
+                                                .resizable()
+                                                .frame(width: 20, height: 20)
+                                                .foregroundStyle(.black)
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding([.top, .bottom], 5)
+                                .background(Color.EZNotesRed.opacity(0.8))
+                                .cornerRadius(20)
+                            }
+                        }
+                        .frame(maxWidth: prop.size.width - 40)
+                        .padding([.top, .bottom], 10)
+                        .background(self.uploadsSelected.count == 1
+                                    ? AnyView(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+                                    : AnyView(Color.clear)
+                        )
+                        .cornerRadius(15)
+                        .scaleEffect(x: 1.0, y: self.longPressTopMenuVisible ? 1.0 : 0.0, anchor: .leading) // Animate width from left to right
+                        .animation(.easeOut(duration: 0.5), value: self.longPressTopMenuVisible)
+                        .onAppear {
+                            self.longPressTopMenuVisible = true
+                        }
+                        .onDisappear {
+                            self.longPressTopMenuVisible = false
+                        }
+                    } else {
+                        HStack {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack {
+                                    Button(action: { self.reviewSection = "review" }) {
+                                        HStack {
+                                            Text("Review")
+                                                .frame(alignment: .center)
+                                                .padding([.top, .bottom], 4)
+                                                .padding([.leading, .trailing], 8.5)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(self.reviewSection == "review" ? Color.EZNotesBlue : .clear)
+                                                )
+                                                .foregroundStyle(self.reviewSection == "review" ? .black : .secondary)
+                                                .font(Font.custom("Poppins-SemiBold", size: 12))
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    
+                                    Button(action: { self.reviewSection = "configuration" }) {
+                                        HStack {
+                                            Text("Configuration")
+                                                .frame(alignment: .center)
+                                                .padding([.top, .bottom], 4)
+                                                .padding([.leading, .trailing], 8.5)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(self.reviewSection == "configuration" ? Color.EZNotesBlue : .clear)
+                                                )
+                                                .foregroundStyle(self.reviewSection == "configuration" ? .black : .secondary)
+                                                .font(Font.custom("Poppins-SemiBold", size: 12))
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 10)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 15)
+                        .padding(.top, 5)
+                        
+                        VStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.secondary)
+                    }
+                    
+                    switch(self.reviewSection) {
+                    case "review":
+                        ReviewView(
+                            prop: self.prop,
+                            images_to_upload: self.images_to_upload,
+                            longPressed: $longPressed,
+                            showLargerImage: $showLargerImage,
+                            imageSelected: $imageSelected,
+                            uploadsSelected: $uploadsSelected
+                        )
+                    case "configuration":
+                        VStack {
+                            VStack {
+                                Toggle("Save upload to device", isOn: $localUpload)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .fontWeight(.bold)
+                                    .font(.system(size: 18))
+                                    .toggleStyle(SwitchToggleStyle(tint: Color.EZNotesBlue))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding([.leading, .trailing], 10)
+                            .padding([.top, .bottom], 12)
+                            .background(Color.EZNotesLightBlack.opacity(0.8))
+                            .cornerRadius(15)
+                            .padding(.top)
+                            
+                            if self.localUpload == false {
+                                Text("All categories will be created and stored in the cloud.")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.bottom, 2)
+                                    .foregroundStyle(.gray)
+                                    .font(.system(size: prop.isLargerScreen ? 13 : 11))
+                                    .minimumScaleFactor(0.5)
+                                    .fontWeight(.medium)
+                                    .multilineTextAlignment(.leading)
+                                /*.frame(maxWidth: prop.size.width - 100)
+                                 .foregroundStyle(Color.EZNotesLightBlack)
+                                 .font(.system(size: 14))
+                                 .italic()
+                                 .fontWeight(.bold)
+                                 .multilineTextAlignment(.center)*/
+                            } else {
+                                Text("All categories will be created and stored on your device.")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.bottom, 2)
+                                    .foregroundStyle(.gray)
+                                    .font(.system(size: prop.isLargerScreen ? 13 : 11))
+                                    .minimumScaleFactor(0.5)
+                                    .fontWeight(.medium)
+                                    .multilineTextAlignment(.leading)
+                                    /*.frame(maxWidth: prop.size.width - 100)
+                                    .foregroundStyle(Color.EZNotesLightBlack)
+                                    .font(.system(size: 14))
+                                    .italic()
+                                    .fontWeight(.bold)
+                                    .multilineTextAlignment(.center)*/
+                            }
+                            
+                            Spacer()
+                        }
+                        .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+                    default:
+                        ReviewView(
+                            prop: self.prop,
+                            images_to_upload: self.images_to_upload,
+                            longPressed: $longPressed,
+                            showLargerImage: $showLargerImage,
+                            imageSelected: $imageSelected,
+                            uploadsSelected: $uploadsSelected
+                        )
+                    }
+                }
+                
+                /*VStack {
+                 Toggle("Save upload to device", isOn: $localUpload)
+                 .frame(maxWidth: prop.size.width - 150)
+                 .foregroundStyle(.white)
+                 .fontWeight(.bold)
+                 .font(.system(size: 18))
+                 .toggleStyle(SwitchToggleStyle(tint: Color.EZNotesBlue))
+                 
+                 if self.localUpload == false {
+                 Text("All categories will be created and stored in the cloud.")
+                 .frame(maxWidth: prop.size.width - 100)
+                 .foregroundStyle(Color.EZNotesLightBlack)
+                 .font(.system(size: 14))
+                 .italic()
+                 .fontWeight(.bold)
+                 .multilineTextAlignment(.center)
+                 } else {
+                 Text("All categories will be created and stored on your device.")
+                 .frame(maxWidth: prop.size.width - 100)
+                 .foregroundStyle(Color.EZNotesLightBlack)
+                 .font(.system(size: 14))
+                 .italic()
+                 .fontWeight(.bold)
+                 .multilineTextAlignment(.center)
+                 }
+                 }
+                 .frame(maxWidth: .infinity)
+                 .padding([.bottom], 15)*/
+                
+                if !self.showLargerImage {
+                    Button(action: {
+                        self.uploadState = "uploading" /* MARK: Show the loading screen. */
+                        
+                        var errors: Int = 0
+                        
+                        if self.images_to_upload.images_to_upload.count < 10 {
+                            UploadImages(imageUpload: self.images_to_upload.images_to_upload)
+                                .requestNativeImageUpload() { resp in
+                                    if resp.Bad != nil {
+                                        print(resp.Bad!)
+                                        
+                                        /* MARK: If `errors` accumulates to the # of values in the array `images_to_upload`, that means none of the images uploaded had anything valuable in them. Prompt an error.
+                                         * */
+                                        if errors == self.images_to_upload.images_to_upload.count - 1 {
+                                            self.images_to_upload.images_to_upload.removeAll()
                                             
                                             self.lastSection = self.section
                                             self.section = "upload_error"
-                                            return
-                                        } else {
-                                            totalResponses += 1
-                                            print(totalResponses, totalResponsesExpected)
-                                            //self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
+                                            //self.errorText = resp.Bad!.Message
+                                            self.errorType = resp.Bad!.Message
+                                        }
+                                        
+                                        errors += 1
+                                        
+                                        return
+                                    } else {
+                                        self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
+                                        
+                                        for r in resp.Good!.Data {
+                                            self.categories.append(r.category)
+                                            self.sets.append(r.set_name)
+                                            self.briefDescriptions.append(r.brief_description)
+                                            self.photos.append(r.image_name)
                                             
-                                            if totalResponses == totalResponsesExpected {
+                                            if !self.categoryImages.keys.contains(r.category) {
+                                                self.categoryImages[r.category] = findImage(for: r.image_name)!
+                                            }
+                                            
+                                            /* Append the category/set_name to the `categoriesAndSets` variable
+                                             * so the `Home` view gets updated.
+                                             * */
+                                            if self.newCategoriesAndSets.keys.contains(r.category) {
+                                                //if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
+                                                self.newCategoriesAndSets[r.category]!.append(r.set_name)
+                                                self.newSetNotes[r.category]!.append([r.set_name: r.notes])
+                                                
+                                                //}
+                                            } else {
+                                                self.newCategoriesAndSets[r.category] = [r.set_name]
+                                                self.newSetNotes[r.category] = [[r.set_name: r.notes]]
+                                            }
+                                        }
+                                        
+                                        print(self.newSetNotes)
+                                        
+                                        self.lastSection = self.section
+                                        self.section = "review_new_categories"
+                                        return
+                                    }
+                                }
+                        } else {
+                            var uploads: Array<[String: UIImage]> = []
+                            let requestsBeingSent: Float = Float(self.images_to_upload.images_to_upload.count) / 5
+                            let totalResponsesExpected = Int(requestsBeingSent.rounded(.up))
+                            var totalResponses = 0
+                            var i: Int = 0
+                            var errors: Int = 0
+                            
+                            for (index, value) in self.images_to_upload.images_to_upload.enumerated() {
+                                uploads.append(value)
+                                i += 1
+                                
+                                if i == 5  || index == self.images_to_upload.images_to_upload.count - 1 {
+                                    UploadImages(imageUpload: uploads)
+                                        .requestNativeImageUpload() { resp in
+                                            if resp.Bad != nil || (resp.Bad == nil && resp.Good!.Status != "200") {
+                                                print(resp.Bad!)
+                                                
+                                                if errors == self.images_to_upload.images_to_upload.count - 1 {
+                                                    self.images_to_upload.images_to_upload.removeAll()
+                                                    
+                                                    self.lastSection = self.section
+                                                    self.section = "upload_error"
+                                                    self.errorType = resp.Bad!.Message
+                                                }
+                                                
+                                                errors += 1
+                                                
+                                                return
+                                            } else {
+                                                totalResponses += 1
+                                                print(totalResponses, totalResponsesExpected)
+                                                //self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
+                                                
                                                 for r in resp.Good!.Data {
                                                     self.categories.append(r.category)
                                                     self.sets.append(r.set_name)
@@ -448,11 +614,13 @@ struct UploadReview: View {
                                                      * so the `Home` view gets updated.
                                                      * */
                                                     if self.newCategoriesAndSets.keys.contains(r.category) {
-                                                        if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
-                                                            self.newCategoriesAndSets[r.category]!.append(r.set_name)
-                                                        }
+                                                        //if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
+                                                        self.newCategoriesAndSets[r.category]!.append(r.set_name)
+                                                        self.newSetNotes[r.category]!.append([r.set_name: r.notes])
+                                                        //}
                                                     } else {
                                                         self.newCategoriesAndSets[r.category] = [r.set_name]
+                                                        self.newSetNotes[r.category] = [[r.set_name: r.notes]]
                                                     }
                                                 }
                                                 
@@ -463,87 +631,144 @@ struct UploadReview: View {
                                                 }
                                             }
                                         }
-                                    }
-                                
-                                uploads.removeAll()
-                                i = 0
+                                    
+                                    i = 0
+                                    uploads.removeAll()
+                                }
+                                /*if i >= 5 || index == self.images_to_upload.images_to_upload.count - 1 {
+                                 print("OKAY")
+                                 
+                                 UploadImages(imageUpload: uploads)
+                                 .requestNativeImageUpload() { resp in
+                                 if resp.Bad != nil {
+                                 print(resp.Bad!)
+                                 
+                                 if resp.Bad?.ErrorCode == 0x422 {
+                                 self.images_to_upload.images_to_upload.removeAll()
+                                 self.lastSection = self.section
+                                 self.section = "confidential_upload_error"
+                                 return
+                                 }
+                                 
+                                 self.lastSection = self.section
+                                 self.section = "upload_error"
+                                 return
+                                 } else {
+                                 totalResponses += 1
+                                 print(totalResponses, totalResponsesExpected)
+                                 //self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
+                                 
+                                 if totalResponses == totalResponsesExpected {
+                                 for r in resp.Good!.Data {
+                                 self.categories.append(r.category)
+                                 self.sets.append(r.set_name)
+                                 self.briefDescriptions.append(r.brief_description)
+                                 self.photos.append(r.image_name)
+                                 
+                                 if !self.categoryImages.keys.contains(r.category) {
+                                 self.categoryImages[r.category] = findImage(for: r.image_name)!
+                                 }
+                                 
+                                 /* Append the category/set_name to the `categoriesAndSets` variable
+                                  * so the `Home` view gets updated.
+                                  * */
+                                 if self.newCategoriesAndSets.keys.contains(r.category) {
+                                 if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
+                                 self.newCategoriesAndSets[r.category]!.append(r.set_name)
+                                 }
+                                 } else {
+                                 self.newCategoriesAndSets[r.category] = [r.set_name]
+                                 }
+                                 }
+                                 
+                                 if totalResponses == totalResponsesExpected {
+                                 self.uploadState = "review"
+                                 self.lastSection = self.section
+                                 self.section = "review_new_categories"
+                                 }
+                                 }
+                                 }
+                                 }
+                                 
+                                 uploads.removeAll()
+                                 i = 0
+                                 }
+                                 
+                                 uploads.append(value)
+                                 i += 1*/
                             }
                             
-                            uploads.append(value)
-                            i += 1*/
+                            /*UploadImages(imageUpload: self.images_to_upload.images_to_upload)
+                             .multiImageUpload() { resp in
+                             self.uploadState = "review"
+                             
+                             /* MARK: Make sure none of the responses were bad*/
+                             for r in resp {
+                             if r.Bad != nil {
+                             if r.Bad!.ErrorCode == 0x422 {
+                             self.images_to_upload.images_to_upload.removeAll()
+                             self.lastSection = self.section
+                             self.section = "confidential_upload_error"
+                             return
+                             }
+                             
+                             self.lastSection = self.section
+                             self.section = "upload_error"
+                             return
+                             }
+                             }
+                             
+                             for (index, _) in resp.enumerated() {
+                             print(resp[index].Good!.Data.count)
+                             }
+                             
+                             print(resp[resp.count - 1].Good!.Data.count)
+                             
+                             for d in resp[resp.count - 1].Good!.Data {
+                             self.categories.append(d.category)
+                             self.sets.append(d.set_name)
+                             self.briefDescriptions.append(d.brief_description)
+                             self.photos.append(d.image_name)
+                             
+                             if !self.categoryImages.keys.contains(d.category) {
+                             self.categoryImages[d.category] = findImage(for: d.image_name)!
+                             }
+                             
+                             /* Append the category/set_name to the `categoriesAndSets` variable
+                              * so the `Home` view gets updated.
+                              * */
+                             if self.newCategoriesAndSets.keys.contains(d.category) {
+                             /* TODO: Should there be a if statement here that makes sure there aren't more than one of the same set names in the array belonging to the category?
+                              * */
+                             self.newCategoriesAndSets[d.category]!.append(d.set_name)
+                             } else {
+                             self.newCategoriesAndSets[d.category] = [d.set_name]
+                             }
+                             }
+                             
+                             /* TODO: Iterate through all of the responses and curate data accordingly */
+                             
+                             self.lastSection = self.section
+                             self.section = "review_new_categories"
+                             }*/
                         }
-                        
-                        /*UploadImages(imageUpload: self.images_to_upload.images_to_upload)
-                            .multiImageUpload() { resp in
-                                self.uploadState = "review"
-                                
-                                /* MARK: Make sure none of the responses were bad*/
-                                for r in resp {
-                                    if r.Bad != nil {
-                                        if r.Bad!.ErrorCode == 0x422 {
-                                            self.images_to_upload.images_to_upload.removeAll()
-                                            self.lastSection = self.section
-                                            self.section = "confidential_upload_error"
-                                            return
-                                        }
-                                        
-                                        self.lastSection = self.section
-                                        self.section = "upload_error"
-                                        return
-                                    }
-                                }
-                                
-                                for (index, _) in resp.enumerated() {
-                                    print(resp[index].Good!.Data.count)
-                                }
-                                
-                                print(resp[resp.count - 1].Good!.Data.count)
-                                
-                                for d in resp[resp.count - 1].Good!.Data {
-                                    self.categories.append(d.category)
-                                    self.sets.append(d.set_name)
-                                    self.briefDescriptions.append(d.brief_description)
-                                    self.photos.append(d.image_name)
-                                    
-                                    if !self.categoryImages.keys.contains(d.category) {
-                                        self.categoryImages[d.category] = findImage(for: d.image_name)!
-                                    }
-                                    
-                                    /* Append the category/set_name to the `categoriesAndSets` variable
-                                     * so the `Home` view gets updated.
-                                     * */
-                                    if self.newCategoriesAndSets.keys.contains(d.category) {
-                                        /* TODO: Should there be a if statement here that makes sure there aren't more than one of the same set names in the array belonging to the category?
-                                         * */
-                                        self.newCategoriesAndSets[d.category]!.append(d.set_name)
-                                    } else {
-                                        self.newCategoriesAndSets[d.category] = [d.set_name]
-                                    }
-                                }
-                                
-                                /* TODO: Iterate through all of the responses and curate data accordingly */
-                                
-                                self.lastSection = self.section
-                                self.section = "review_new_categories"
-                            }*/
+                    }) {
+                        HStack {
+                            Text("Upload")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .foregroundStyle(.black)
+                                .setFontSizeAndWeight(weight: .bold, size: 18)
+                                .minimumScaleFactor(0.5)
+                        }
+                        .frame(maxWidth: prop.size.width - 40)
+                        .padding(8)
+                        .background(.white)
+                        .cornerRadius(15)
                     }
-                }) {
-                    Text("Upload")
-                        .foregroundStyle(Color.white)
-                        .font(.system(size: 16))
-                        .frame(maxWidth: prop.size.width - 120, maxHeight: 25)
-                        .padding(5)
+                    .buttonStyle(NoLongPressButtonStyle())
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(Color.EZNotesOrange)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(Color.clear)
-                        .stroke(Color.EZNotesOrange, lineWidth: 1)
-                        .shadow(color: Color.EZNotesBlack, radius: 12)
-                )
                 
-                if prop.size.height / 2.5 < 300 {
+                if !prop.isLargerScreen {
                     Spacer()
                 }
             }

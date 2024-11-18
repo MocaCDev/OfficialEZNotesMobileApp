@@ -29,6 +29,7 @@ struct UploadSection: View {
     @State private var targetX: CGFloat = 0
     @State private var targetY: CGFloat = 0
     @State private var showEntireSidePreview: Bool = false
+    @State private var arrowUpAnimation: Bool = false
     
     var body: some View {
         VStack {
@@ -140,13 +141,81 @@ struct UploadSection: View {
                                     if !self.showEntireSidePreview {
                                         Spacer()
                                         
-                                        Image(uiImage: self.images_to_upload.images_to_upload.first![self.images_to_upload.images_to_upload.first!.keys.first!]!)
-                                         .resizable()
-                                         .scaledToFit()
+                                        Image(systemName: "chevron.up")
+                                            .resizable()
+                                            .frame(width: 15, height: 10)
+                                            .offset(y: self.arrowUpAnimation ? 8 : 0)
+                                            .animation(.easeIn(duration: 1.3), value: self.arrowUpAnimation)
+                                            .animation(.easeOut(duration: 1.3), value: !self.arrowUpAnimation)
+                                            .onAppear {
+                                                self.arrowUpAnimation.toggle()
+                                                
+                                                Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { timer in
+                                                    self.arrowUpAnimation.toggle()
+                                                }
+                                            }
+                                            .padding(.bottom, 5)
+                                        
+                                        Button(action: { self.showEntireSidePreview = true }) {
+                                            Image(uiImage: self.images_to_upload.images_to_upload.first![self.images_to_upload.images_to_upload.first!.keys.first!]!)
+                                                .resizable()
+                                                .frame(width: 60, height: 100)
+                                                .scaledToFit()
+                                                .cornerRadius(15)
+                                        }
+                                        .padding(.bottom, 35)
+                                    } else {
+                                        Spacer()
+                                        
+                                        VStack {
+                                            HStack {
+                                                Button(action: { self.showEntireSidePreview = false }) {
+                                                    ZStack {
+                                                        Image(systemName: "multiply")
+                                                            .resizable()
+                                                            .frame(width: 15, height: 15)
+                                                            .foregroundStyle(.black)
+                                                            .padding(4)
+                                                            .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .light))
+                                                            .clipShape(.circle)
+                                                    }
+                                                    .frame(width: 30, height: 30, alignment: .leading)
+                                                    .padding(.leading, 10)
+                                                }
+                                                
+                                                Spacer()
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.top, 10)
+                                            
+                                            ScrollView(.vertical, showsIndicators: true) {
+                                                VStack {
+                                                    ForEach(Array(self.images_to_upload.images_to_upload.enumerated()), id: \.offset) { index, value in
+                                                        ForEach(Array(self.images_to_upload.images_to_upload[index].keys), id: \.self) { key in
+                                                            Image(uiImage: self.images_to_upload.images_to_upload[index][key]!)
+                                                                .resizable()
+                                                                .frame(width: prop.isLargerScreen ? 80 : 60, height: prop.isLargerScreen ? 120 : 100)
+                                                                .scaledToFit()
+                                                                .cornerRadius(15)
+                                                        }
+                                                    }
+                                                }
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                            }
+                                            .frame(maxWidth: prop.size.height, alignment: .top)
+                                            
+                                            Spacer()
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                        .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark).shadow(color: Color.black, radius: 1.5))
+                                        .cornerRadius(15, corners: [.topLeft, .bottomLeft])
+                                        
+                                        Spacer()
                                     }
                                 }
                             }
                             .frame(maxWidth: .infinity, alignment: .trailing)
+                            .padding(.trailing, self.showEntireSidePreview ? 0 : 15)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         
@@ -264,11 +333,73 @@ struct UploadSection: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             
-            ButtomNavbar(
-                section: $section,
-                backgroundColor: !(self.model.permissionGranted && self.model.cameraDeviceFound) ? Color.EZNotesBlack : Color.EZNotesLightBlack.opacity(0.85),
-                prop: prop
-            )
+            if self.images_to_upload.images_to_upload.count == 0 {
+                ButtomNavbar(
+                    section: $section,
+                    backgroundColor: !(self.model.permissionGranted && self.model.cameraDeviceFound) ? Color.EZNotesBlack : Color.EZNotesLightBlack.opacity(0.85),
+                    prop: prop
+                )
+            } else {
+                VStack {
+                    HStack {
+                        Button(action: { self.images_to_upload.images_to_upload.removeAll() }) {
+                            ZStack {
+                                HStack {
+                                    Text("Remove All")
+                                        .frame(alignment: .center)
+                                        .padding(8)
+                                        .foregroundStyle(.white)
+                                        .setFontSizeAndWeight(weight: .medium, size: 18)
+                                        .minimumScaleFactor(0.5)
+                                    
+                                    Image(systemName: "trash")
+                                        .resizable()
+                                        .frame(width: 15, height: 15)
+                                        .foregroundStyle(.gray)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding([.top, .bottom], 5)
+                            .background(Color.EZNotesLightBlack.opacity(0.8))
+                            .cornerRadius(20)
+                            .padding(.leading, 10)
+                        }
+                        
+                        Button(action: {
+                            self.lastSection = self.section
+                            self.section = "upload_review"
+                        }) {
+                            HStack {
+                                HStack {
+                                    Text("Review")
+                                        .frame(alignment: .center)
+                                        .padding(8)
+                                        .foregroundStyle(.white)
+                                        .setFontSizeAndWeight(weight: .medium, size: 18)
+                                        .minimumScaleFactor(0.5)
+                                    
+                                    Image(systemName: "chevron.forward")
+                                        .resizable()
+                                        .frame(width: 10, height: 15)
+                                        .foregroundStyle(.gray)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .padding([.top, .bottom], 5)
+                            .background(Color.EZNotesLightBlack.opacity(0.8))
+                            .cornerRadius(20)
+                            .padding(.trailing, 10)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.bottom)
+                    .padding(.top, 10)
+                }
+                .frame(maxWidth: .infinity, maxHeight: 70, alignment: .bottom)
+                .background(Color.EZNotesBlack)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .background(

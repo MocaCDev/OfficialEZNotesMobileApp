@@ -3179,7 +3179,7 @@ struct TopNavUpload: View {
             
             Spacer()
             
-            VStack {
+            /*VStack {
                 VStack {
                     Button(action: {
                         self.lastSection = self.section
@@ -3199,7 +3199,7 @@ struct TopNavUpload: View {
                 .frame(width: 200, height: 40, alignment: .topTrailing)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-            .background(.clear)
+            .background(.clear)*/
         }
         .topNavSettings(prop: prop, backgroundColor: .clear)
         .padding([.top], 5)

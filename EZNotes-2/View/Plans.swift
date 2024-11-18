@@ -505,7 +505,7 @@ public struct Plans: View {
                                 .padding([.top, .leading, .trailing])
                                 .padding(.bottom, 5)
                                 .foregroundStyle(.white)
-                                .font(.system(size: self.isLargerScreen ? 30 : 25, design: .rounded))
+                                .font(.system(size: prop.isLargerScreen ? 30 : 25, design: .rounded))
                                 .fontWeight(.heavy)
                             
                             if !self.paymentGood {
@@ -531,7 +531,7 @@ public struct Plans: View {
                                 TextField("Card Holder Name", text: $cardHolderName)
                                     .frame(
                                         maxWidth: .infinity,
-                                        maxHeight: self.isLargerScreen ? 40 : 30
+                                        maxHeight: prop.isLargerScreen ? 40 : 30
                                     )
                                     .padding(.leading, 15)
                                     .padding([.top, .bottom], 5)
@@ -567,7 +567,7 @@ public struct Plans: View {
                                 TextField("Card Number", text: $cardNumber)
                                     .frame(
                                         maxWidth: .infinity,
-                                        maxHeight: self.isLargerScreen ? 40 : 30
+                                        maxHeight: prop.isLargerScreen ? 40 : 30
                                     )
                                     .padding(.leading, 15)
                                     .padding([.top, .bottom], 5)
@@ -615,7 +615,7 @@ public struct Plans: View {
                                             TextField("02", text: $expMonth)
                                                 .frame(
                                                     maxWidth: .infinity,
-                                                    maxHeight: self.isLargerScreen ? 40 : 30,
+                                                    maxHeight: prop.isLargerScreen ? 40 : 30,
                                                     alignment: .leading
                                                 )
                                                 .padding(.leading, 5)
@@ -658,7 +658,7 @@ public struct Plans: View {
                                             TextField("27", text: $expYear)
                                                 .frame(
                                                     maxWidth: .infinity,
-                                                    maxHeight: self.isLargerScreen ? 40 : 30,
+                                                    maxHeight: prop.isLargerScreen ? 40 : 30,
                                                     alignment: .trailing
                                                 )
                                                 .padding(.leading, 5)
@@ -703,11 +703,11 @@ public struct Plans: View {
                                         TextField("CVC", text: $cvc)
                                             .frame(
                                                 maxWidth: .infinity,
-                                                maxHeight: self.isLargerScreen ? 40 : 30,
+                                                maxHeight: prop.isLargerScreen ? 40 : 30,
                                                 alignment: .leading
                                             )
                                             .padding(.leading, 15)
-                                            .padding([.top], self.isLargerScreen ? 5 : 0)
+                                            .padding([.top], prop.isLargerScreen ? 5 : 0)
                                             .padding(.horizontal, 25)
                                             .background(
                                                 Rectangle()//RoundedRectangle(cornerRadius: 15)
@@ -750,7 +750,7 @@ public struct Plans: View {
                                             }
                                     }
                                     .frame(maxWidth: .infinity, alignment: .trailing)
-                                    .padding(.bottom, self.isLargerScreen ? 18 : 14)
+                                    .padding(.bottom, prop.isLargerScreen ? 18 : 14)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 
@@ -759,7 +759,7 @@ public struct Plans: View {
                                     .padding(.top)
                                     .padding(.bottom, 2)
                                     .foregroundStyle(.gray)
-                                    .font(.system(size: self.isLargerScreen ? 13 : 11))
+                                    .font(.system(size: prop.isLargerScreen ? 13 : 11))
                                     .minimumScaleFactor(0.5)
                                     .fontWeight(.medium)
                                     .multilineTextAlignment(.leading)
@@ -768,7 +768,7 @@ public struct Plans: View {
                                     Button(action: { self.showPrivacyPolicy.toggle() }) {
                                         Text("Privacy & Policy")
                                             .foregroundStyle(.blue)
-                                            .font(.system(size: self.isLargerScreen ? 13 : 11))
+                                            .font(.system(size: prop.isLargerScreen ? 13 : 11))
                                             .minimumScaleFactor(0.5)
                                             .fontWeight(.light)
                                             .underline()
@@ -782,7 +782,7 @@ public struct Plans: View {
                                     Button(action: { self.showPrivacyPolicy.toggle() }) {
                                         Text("Terms and Conditions")
                                             .foregroundStyle(.blue)
-                                            .font(.system(size: self.isLargerScreen ? 13 : 11))
+                                            .font(.system(size: prop.isLargerScreen ? 13 : 11))
                                             .minimumScaleFactor(0.5)
                                             .fontWeight(.light)
                                             .underline()
@@ -790,9 +790,9 @@ public struct Plans: View {
                                     .buttonStyle(NoLongPressButtonStyle())
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: 26, alignment: .leading)
-                                .padding(.top, self.isLargerScreen ? 0 : -5)
+                                .padding(.top, prop.isLargerScreen ? 0 : -5)
                                 
-                                if !self.isLargerScreen {
+                                if !prop.isLargerScreen {
                                     Button(action: {
                                         self.processingPayment = true
                                         
@@ -850,7 +850,7 @@ public struct Plans: View {
                         
                         //Spacer()
                         
-                        if self.isLargerScreen {
+                        if prop.isLargerScreen {
                             VStack {
                                 Button(action: {
                                     self.processingPayment = true
