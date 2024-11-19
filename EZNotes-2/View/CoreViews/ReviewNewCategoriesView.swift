@@ -40,6 +40,7 @@ struct ReviewNewCategories: View {
     }
     
     @State private var categoryDescHeight: CGFloat = 0
+    @State private var categorySimilarities: [String: Array<String>] = [:]
     
     var body: some View {
         VStack {
@@ -107,20 +108,32 @@ struct ReviewNewCategories: View {
                                                 self.valueOfCategoriesToRemove = self.valueOfCategoriesToRemove.filter { $0 != self.categories[index] }
                                             }
                                         }) {
-                                            Text(!self.indexOfCategoriesToRemove.contains(index) ? "Delete" : "Undo Removal")
-                                                .padding([.leading, .trailing], 5)
-                                                .foregroundStyle(.white)
-                                                .font(.system(size: 18))
-                                                .minimumScaleFactor(0.5)
-                                                .fontWeight(.light)
+                                            ZStack {
+                                                HStack {
+                                                    Text(!self.indexOfCategoriesToRemove.contains(index) ? "Delete" : "Undo Removal")
+                                                        .frame(alignment: .center)
+                                                        .foregroundStyle(.white)
+                                                        .setFontSizeAndWeight(weight: .medium, size: 16)
+                                                        .minimumScaleFactor(0.5)
+                                                    
+                                                    if !self.indexOfCategoriesToRemove.contains(index) {
+                                                        Image(systemName: "trash")
+                                                            .resizable()
+                                                            .frame(width: 15, height: 15)
+                                                            .foregroundStyle(.gray)
+                                                    }
+                                                }
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding([.top, .bottom], 5)
+                                            .background(!self.indexOfCategoriesToRemove.contains(index)
+                                                        ? Color.EZNotesRed.opacity(0.8)
+                                                        : Color.EZNotesGreen.opacity(0.8)
+                                            )
+                                            .cornerRadius(20)
                                         }
-                                        .buttonStyle(.borderedProminent)
-                                        .tint(Color.clear)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(Color.clear)
-                                                .stroke(!self.indexOfCategoriesToRemove.contains(index) ? Color.red : Color.green, lineWidth: 1)
-                                        )
+                                        .buttonStyle(NoLongPressButtonStyle())
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     
@@ -161,9 +174,41 @@ struct ReviewNewCategories: View {
                             
                             if self.categoriesAndSets.keys.contains(self.categories[index]) {
                                 Text("Category already exists.")
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding(.top, 8)
                                     .foregroundStyle(.white)
                                     .font(.system(size: 12, weight: .medium))
+                            } else {
+                                if self.categorySimilarities != [:] {
+                                    if self.categorySimilarities.keys.contains(self.categories[index]) {
+                                        HStack {
+                                            Text("Similar Categories:")
+                                                .frame(alignment: .leading)
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: 12, weight: .medium))
+                                                .minimumScaleFactor(0.5)
+                                            
+                                            ScrollView(.horizontal, showsIndicators: true) {
+                                                HStack {
+                                                    ForEach(self.categorySimilarities[self.categories[index]]!, id: \.self) { similarity in
+                                                        Text(similarity)
+                                                            .frame(maxWidth: .infinity, alignment: .center)
+                                                            .padding(8)
+                                                            .background(Color.EZNotesLightBlack.opacity(0.8))
+                                                            .cornerRadius(20)
+                                                            .foregroundStyle(.white)
+                                                            .font(.system(size: 10, weight: .medium))
+                                                            .minimumScaleFactor(0.5)
+                                                    }
+                                                }
+                                                .padding([.top, .bottom], 10)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        //Text("\(self.categorySimilarities[self.categories[index]]!)")
+                                    }
+                                }
                             }
                         }
                         .frame(maxWidth: prop.size.width - 20)
@@ -407,7 +452,7 @@ struct ReviewNewCategories: View {
                 }
                 
                 if let resp = resp {
-                    print(resp["Similarities"] as! String)
+                    self.categorySimilarities = resp as! [String: Array<String>]
                 }
             }
         }

@@ -297,12 +297,8 @@ struct UploadSection: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .onAppear {
                         Timer.scheduledTimer(withTimeInterval: 0.6, repeats: true) { timer in
-                            if self.section != "upload" {
-                                timer.invalidate() // Stop the timer when animation is off
-                            } else {
-                                targetX = CGFloat.random(in: -4...8) // Random X offset
-                                targetY = CGFloat.random(in: -4...8) // Random Y offset
-                            }
+                            targetX = CGFloat.random(in: -4...8) // Random X offset
+                            targetY = CGFloat.random(in: -4...8) // Random Y offset
                         }
                     }
                 }

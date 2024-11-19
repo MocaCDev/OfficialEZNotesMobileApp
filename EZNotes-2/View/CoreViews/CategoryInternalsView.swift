@@ -321,9 +321,9 @@ struct CategoryInternalsView: View {
                                                             .padding(.trailing, 15)
                                                         }
                                                         .frame(maxWidth: .infinity, maxHeight: 190)
-                                                        .padding(index == self.setAndNotes[self.categoryName]!.count - 1
+                                                        .padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
                                                                  ? [.top, .bottom, .leading, .trailing]
-                                                                 : [.top, .leading, .trailing],
+                                                                 : [.top, .leading, .trailing],*/
                                                                  8
                                                         )
                                                     }
