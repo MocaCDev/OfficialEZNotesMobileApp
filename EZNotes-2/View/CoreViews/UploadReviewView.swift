@@ -104,6 +104,7 @@ struct UploadReview: View {
     //@StateObject public var reviewActions: ReviewActions = ReviewActions()
     
     @Binding public var localUpload: Bool
+    @Binding public var createOneCategory: Bool
     @Binding public var section: String
     @Binding public var lastSection: String
     @Binding public var errorType: String
@@ -432,6 +433,7 @@ struct UploadReview: View {
                             if self.localUpload == false {
                                 Text("All categories will be created and stored in the cloud.")
                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding([.leading, .trailing], 10)
                                     .padding(.bottom, 2)
                                     .foregroundStyle(.gray)
                                     .font(.system(size: prop.isLargerScreen ? 13 : 11))
@@ -447,6 +449,56 @@ struct UploadReview: View {
                             } else {
                                 Text("All categories will be created and stored on your device.")
                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding([.leading, .trailing], 10)
+                                    .padding(.bottom, 2)
+                                    .foregroundStyle(.gray)
+                                    .font(.system(size: prop.isLargerScreen ? 13 : 11))
+                                    .minimumScaleFactor(0.5)
+                                    .fontWeight(.medium)
+                                    .multilineTextAlignment(.leading)
+                                    /*.frame(maxWidth: prop.size.width - 100)
+                                    .foregroundStyle(Color.EZNotesLightBlack)
+                                    .font(.system(size: 14))
+                                    .italic()
+                                    .fontWeight(.bold)
+                                    .multilineTextAlignment(.center)*/
+                            }
+                            
+                            VStack {
+                                Toggle("Create One Category", isOn: $createOneCategory)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .fontWeight(.bold)
+                                    .font(.system(size: 18))
+                                    .toggleStyle(SwitchToggleStyle(tint: Color.EZNotesBlue))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding([.leading, .trailing], 10)
+                            .padding([.top, .bottom], 12)
+                            .background(Color.EZNotesLightBlack.opacity(0.8))
+                            .cornerRadius(15)
+                            .padding(.top)
+                            
+                            if self.createOneCategory {
+                                Text("The first image received by the server will be used to determine the category name. Any sets/set of notes belonging to the given set will then be stored in the category. This is best if all of your uploads are directly adjacent to a specific topic. If they are not, it is recommended to disable this.")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding([.leading, .trailing], 10)
+                                    .padding(.bottom, 2)
+                                    .foregroundStyle(.gray)
+                                    .font(.system(size: prop.isLargerScreen ? 13 : 11))
+                                    .minimumScaleFactor(0.5)
+                                    .fontWeight(.medium)
+                                    .multilineTextAlignment(.leading)
+                                /*.frame(maxWidth: prop.size.width - 100)
+                                 .foregroundStyle(Color.EZNotesLightBlack)
+                                 .font(.system(size: 14))
+                                 .italic()
+                                 .fontWeight(.bold)
+                                 .multilineTextAlignment(.center)*/
+                            } else {
+                                Text("Each image will generate a different category, each with sets and each with notes belonging to the set.")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding([.leading, .trailing], 10)
                                     .padding(.bottom, 2)
                                     .foregroundStyle(.gray)
                                     .font(.system(size: prop.isLargerScreen ? 13 : 11))

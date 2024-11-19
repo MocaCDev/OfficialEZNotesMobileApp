@@ -26,6 +26,11 @@ struct ReWordNotesData {
     let Notes: String
 }
 
+struct DetectPossibleSimilarCategories {
+    let NewCategories: Array<String>
+    let ExistingCategories: Array<String>
+}
+
 struct CheckStateHasCollege {
     let State: String
     let College: String
@@ -374,4 +379,10 @@ let reword_notes_req: CSIARequest = CSIARequest(
     url: "\(server)/reword_edited_notes",
     method: "post",
     reqData: ReWordNotesData.self
+)
+
+let detect_possible_similar_categories_req: CSIARequest = CSIARequest(
+    url: "\(server)/detect_possible_similar_categories",
+    method: "post",
+    reqData: DetectPossibleSimilarCategories.self
 )

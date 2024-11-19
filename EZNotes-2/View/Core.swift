@@ -71,6 +71,9 @@ struct CoreApp: View {
     @State private var currentZoom: Double = 0.0
     @State private var localUpload: Bool = true
     
+    /* MARK: In `UploadReviewView.view`, if this gets set to `true` the first image uploaded will be the one where the server gets the category name. Each image, including the one used to decipher the category name, will thus be used to curate a set, with the respective notes, all which will belong to the detected category. */
+    @State private var createOneCategory: Bool = false
+    
     /* For every one category there can be multiple sets.
      * The `key` to `categoriesAndSets` will be the category name, and the value (`Array<String>`)
      * will be the array of sets pertaining to that category.
@@ -145,6 +148,7 @@ struct CoreApp: View {
                 UploadReview(
                     images_to_upload: images_to_upload,
                     localUpload: $localUpload,
+                    createOneCategory: $createOneCategory,
                     section: $section,
                     lastSection: $lastSection,
                     errorType: $errorType,

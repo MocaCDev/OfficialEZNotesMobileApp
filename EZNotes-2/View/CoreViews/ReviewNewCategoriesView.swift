@@ -26,6 +26,7 @@ struct ReviewNewCategories: View {
     @State public var indexOfCategoriesToRemove: Array<Int> = []
     @State public var valueOfCategoriesToRemove: Array<String> = []
     @State public var valueOfSetsToRemove: [String: Array<String>] = [:] /* The key will be the category where the sets are, the array will be the value of all the sets to remove. */
+    @State private var possibleSameCategories: String = ""
 
     var prop: Properties
     
@@ -157,8 +158,20 @@ struct ReviewNewCategories: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.top, 5)
+                            
+                            if self.categoriesAndSets.keys.contains(self.categories[index]) {
+                                Text("Category already exists.")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 12, weight: .medium))
+                            }
                         }
                         .frame(maxWidth: prop.size.width - 20)
+                        
+                        VStack {
+                            
+                        }
+                        .frame(maxWidth: prop.size.width - 20, maxHeight: 0.5).background(.secondary)
                         /*VStack {
                             if let image = findImage(for: value) {
                                 Image(uiImage: image)
@@ -376,5 +389,27 @@ struct ReviewNewCategories: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.EZNotesBlack)
+        .onAppear {
+            var existingCategories: Array<String> = []
+            
+            for key in self.categoriesAndSets.keys {
+                existingCategories.append(key)
+            }
+            
+            RequestAction<DetectPossibleSimilarCategories>(parameters: DetectPossibleSimilarCategories(
+                NewCategories: self.categories, ExistingCategories: existingCategories
+            ))
+            .perform(action: detect_possible_similar_categories_req) { statusCode, resp in
+                guard resp != nil && statusCode == 200 else {
+                    /* TODO: Deal with error. */
+                    if let resp = resp { print(resp) }
+                    return
+                }
+                
+                if let resp = resp {
+                    print(resp["Similarities"] as! String)
+                }
+            }
+        }
     }
 }
