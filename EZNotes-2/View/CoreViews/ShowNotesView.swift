@@ -1229,7 +1229,12 @@ struct ShowNotes: View {
                                 .font(Font.custom(self.fontPicked, size: 16))
                                 .minimumScaleFactor(0.5)
                                 .padding([.top, .bottom], 8)
-                                .multilineTextAlignment(self.fontAlignment)
+                                .multilineTextAlignment(self.fontAlignment == .leading
+                                    ? .leading
+                                    : self.fontAlignment == .center
+                                        ? .center
+                                        : .trailing
+                                )
                         }
                         
                         /*HStack {
