@@ -16,17 +16,24 @@ struct ProfileIconView: View {
     @Binding public var showAccountPopup: Bool
     
     var body: some View {
-        Button(action: { self.showAccountPopup = true }) {
-            /*Image(systemName: "person.crop.circle.fill")*/
-            self.accountInfo.profilePicture
-                .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
-                .scaledToFill()
-                .frame(maxWidth: 35, maxHeight: 35)
-                .clipShape(.circle)
-                .padding([.leading], 20)
-                .foregroundStyle(.white)
+        ZStack {
+            Circle()
+                .fill(Color.EZNotesBlue)
+                
+            Button(action: { self.showAccountPopup = true }) {
+                /*Image(systemName: "person.crop.circle.fill")*/
+                self.accountInfo.profilePicture
+                    .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
+                    .scaledToFill()
+                    .frame(maxWidth: 35, maxHeight: 35)
+                    .clipShape(.circle)
+                    
+                    .foregroundStyle(.white)
+            }
+            .buttonStyle(NoLongPressButtonStyle())
         }
-        .buttonStyle(NoLongPressButtonStyle())
+        .frame(width: 38, height: 38)
+        .padding([.leading], 20)
     }
 }
 
@@ -1923,17 +1930,98 @@ struct TopNavHome: View {
     
     var body: some View {
         HStack {
-            VStack {
-                ProfileIconView(prop: prop, accountInfo: accountInfo, showAccountPopup: $showAccountPopup)
+            HStack {
+                VStack {
+                    ProfileIconView(prop: prop, accountInfo: accountInfo, showAccountPopup: $showAccountPopup)
+                }
+                .frame(alignment: .leading)
+                .padding(.bottom, 20)//.padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15) /* MARK: Aligns icon for larger screens. */
+                //.padding(.bottom, prop.size.height / 2.5 > 300 ? 0 : 10) /* MARK: Aligns icon for smaller screens. */
+                .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
+                
+                if self.showSearchBar {
+                    VStack {
+                        TextField(
+                            prop.size.height / 2.5 > 300 ? "Search Categories..." : "Search...",
+                            text: $categorySearch
+                        )
+                        .onAppear(perform: { print(prop.size.height / 2.5) })
+                        .frame(
+                            maxWidth: .infinity,/*prop.isIpad
+                                                 ? UIDevice.current.orientation.isLandscape
+                                                 ? prop.size.width - 800
+                                                 : prop.size.width - 450
+                                                 : 150,*/
+                            maxHeight: prop.isLargerScreen ? 20 : 15
+                        )
+                        .padding(7)
+                        .padding(.horizontal, 25)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(7.5)
+                        .padding(.horizontal, 10)
+                        .overlay(
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.gray)
+                                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                                    .padding(.leading, 15)
+                                
+                                if self.categorySearchFocus || self.categorySearch != "" {
+                                    Button(action: {
+                                        self.categorySearch = ""
+                                        self.lookedUpCategoriesAndSets.removeAll()
+                                        self.searchDone = false
+                                        self.showSearchBar = false
+                                    }) {
+                                        Image(systemName: "multiply.circle.fill")
+                                            .foregroundColor(.gray)
+                                            .padding(.trailing, 15)
+                                    }
+                                }
+                            }
+                        )
+                        .onSubmit {
+                            if !(self.categorySearch == "") {
+                                self.lookedUpCategoriesAndSets.removeAll()
+                                
+                                for (_, value) in self.categoriesAndSets.keys.enumerated() {
+                                    if value.lowercased() == self.categorySearch.lowercased() || value.lowercased().contains(self.categorySearch.lowercased()) {
+                                        self.lookedUpCategoriesAndSets[value] = self.categoriesAndSets[value]
+                                        
+                                        print(self.lookedUpCategoriesAndSets)
+                                    }
+                                }
+                                
+                                self.searchDone = true
+                            } else {
+                                self.lookedUpCategoriesAndSets.removeAll()
+                                self.searchDone = false
+                            }
+                            
+                            self.categorySearchFocus = false
+                        }
+                        .focused($categorySearchFocus)
+                        .onChange(of: categorySearchFocus) {
+                            if !self.categorySearchFocus && self.categorySearch == "" { self.showSearchBar = false }
+                        }
+                        .onTapGesture {
+                            self.categorySearchFocus = true
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.bottom, 20)
+                    .padding(.trailing, 10)
+                    .padding(.leading, -10)
+                    //.padding(.top, prop.size.height / 2.5 > 300 ? 45 : 15)//.padding(.top, 10)
+                }
             }
-            .frame(maxWidth: 90,  alignment: .leading)
-            .padding(.bottom, 20)//.padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15) /* MARK: Aligns icon for larger screens. */
-            //.padding(.bottom, prop.size.height / 2.5 > 300 ? 0 : 10) /* MARK: Aligns icon for smaller screens. */
-            .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
+            .frame(maxWidth: self.showSearchBar ? .infinity : 90, alignment: .leading)
             
-            Spacer()
+            if !self.showSearchBar {
+                Spacer()
+            }
             
-            if self.showSearchBar && self.categoriesAndSets.count > 0 {
+            /*if self.showSearchBar {
                 VStack {
                     TextField(
                         prop.size.height / 2.5 > 300 ? "Search Categories..." : "Search...",
@@ -2003,9 +2091,10 @@ struct TopNavHome: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top, prop.size.height / 2.5 > 300 ? 45 : 15)//.padding(.top, 10)
+                .padding(.bottom, 20)
+                //.padding(.top, prop.size.height / 2.5 > 300 ? 45 : 15)//.padding(.top, 10)
                 //.padding([.top], prop.size.height > 340 ? 50 : 45)
-            } else {
+            } else {*/
                 if self.changeNavbarColor {
                     VStack {
                         Text("View Categories")
@@ -2022,30 +2111,52 @@ struct TopNavHome: View {
                     .padding(.bottom, 20)
                     //.padding(.top, prop.size.height / 2.5 > 300 ? 45 : 15)
                 }
-            }
+            //}
             
             Spacer()
             
             HStack {
-                Button(action: { self.showSearchBar.toggle() }) {
-                    Image(systemName: "magnifyingglass")
-                        .resizable()
-                        .frame(width: 25, height: 25)
-                        .foregroundStyle(Color.EZNotesOrange)
+                ZStack {
+                    Button(action: {
+                        if self.categoriesAndSets.count > 0 {
+                            self.showSearchBar = true
+                        }
+                    }) {
+                        Image("SearchIcon")//(systemName: "magnifyingglass")
+                            .resizable()
+                            .frame(width: 20, height: 20)
+                            .foregroundStyle(Color.EZNotesOrange)
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
                 }
-                .buttonStyle(NoLongPressButtonStyle())
-                .padding([.top], 5)
+                .frame(width: 30, height: 30)
+                .padding(6)
+                .background(
+                    Circle()
+                        .fill(Color.EZNotesLightBlack.opacity(0.5))
+                )
                 
-                Button(action: { self.aiChatPopover = true }) {
-                    Image("AI-Chat-Icon")
-                        .resizable()
-                        .frame(
-                            width: prop.size.height / 2.5 > 300 ? 45 : 40,
-                            height: prop.size.height / 2.5 > 300 ? 45 : 40
-                        )
-                        .padding([.trailing], 20)
+                ZStack {
+                    Button(action: { self.aiChatPopover = true }) {
+                        Image("AI-Chat-Icon")
+                            .resizable()
+                            .frame(
+                                width: 30,//prop.size.height / 2.5 > 300 ? 45 : 40,
+                                height: 30//prop.size.height / 2.5 > 300 ? 45 : 40
+                            )
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
                 }
-                .buttonStyle(NoLongPressButtonStyle())
+                .frame(
+                    width: 30,//prop.size.height / 2.5 > 300 ? 45 : 40,
+                    height: 30//prop.size.height / 2.5 > 300 ? 45 : 40
+                )
+                .padding(6)
+                .background(
+                    Circle()
+                        .fill(Color.EZNotesLightBlack.opacity(0.5))
+                )
+                .padding([.trailing], 20)
             }
             .frame(maxWidth: 90, maxHeight: .infinity, alignment: .trailing)
             //.padding(.top, prop.size.height / 2.5 > 300 ? 40 : 0)
@@ -3229,18 +3340,23 @@ struct TopNavChat: View {
             Spacer()
             
             HStack {
-                Text("Add Friend")
-                    .foregroundStyle(.white)
-                    .font(.system(size: 12.5, design: .rounded))
-                    .fontWeight(.bold)
-                
-                Button(action: { print("Adding Friend!") }) {
-                    Image(systemName: "person.badge.plus")//Image("Add-Friend-Icon")
-                        .resizable()
-                        .frame(maxWidth: 30, maxHeight: 30)
-                        .foregroundStyle(Color.EZNotesBlue)
+                ZStack {
+                    Button(action: { print("Adding Friend!") }) {
+                        Image(systemName: "person.badge.plus")//Image("Add-Friend-Icon")
+                            .resizable()
+                            .frame(maxWidth: 25, maxHeight: 25)
+                            .foregroundStyle(Color.EZNotesBlue)
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
+                    .padding(.leading, 5)
                 }
-                .buttonStyle(NoLongPressButtonStyle())
+                .frame(width: 30, height: 30, alignment: .center)
+                .padding(6)
+                .background(
+                    Circle()
+                        .fill(Color.EZNotesLightBlack.opacity(0.5))
+                )
+                .padding(.trailing, 20)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
             .padding(.bottom, 20)
