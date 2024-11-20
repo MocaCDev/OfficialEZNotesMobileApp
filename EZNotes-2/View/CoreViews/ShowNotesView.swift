@@ -208,7 +208,7 @@ struct EditableNotes: View {
                                 }
                                 .frame(minWidth: 10, alignment: .leading)
                                 .padding(12.5)
-                                .background(Color.EZNotesLightBlack.opacity(0.65))
+                                .background(Color.EZNotesBlack.opacity(0.65))
                                 .clipShape(.circle)
                                 .padding(.leading, 10)
                                 .padding(.top, 10)
@@ -239,38 +239,8 @@ struct EditableNotes: View {
                                 }
                                 .frame(minWidth: 10, alignment: .leading)
                                 .padding(12.5)
-                                .background(Color.EZNotesLightBlack.opacity(0.65))
+                                .background(Color.EZNotesBlack.opacity(0.65))
                                 .clipShape(.circle)
-                                .padding(.top, 10)
-                                .padding(.bottom, self.keyboardHeight == 0 ? 10 : 0)
-                                
-                                VStack {
-                                    Button(action: { print("Select category to talk to the AI chat about") }) {
-                                        Image("Categories-Icon")
-                                            .resizableImage(width: 15, height: 15)
-                                            .foregroundStyle(.white)/*(
-                                                                     MeshGradient(width: 3, height: 3, points: [
-                                                                     .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                     .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                     .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                                     ], colors: [
-                                                                     Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                                                                     Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                                                                     Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                     /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                      Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                      Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                                     ])
-                                                                     )*/
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    //.padding(.top, 5)
-                                }
-                                .frame(minWidth: 10, alignment: .leading)
-                                .padding(12.5)
-                                .background(Color.EZNotesLightBlack.opacity(0.65))
-                                .clipShape(.circle)
-                                .padding(.trailing, 5)
                                 .padding(.top, 10)
                                 .padding(.bottom, self.keyboardHeight == 0 ? 10 : 0)
                             }
@@ -394,10 +364,12 @@ struct EditableNotes: View {
                                 }
                                 .frame(minWidth: 10, alignment: .leading)
                                 .padding(12.5)
-                                .background(Color.EZNotesLightBlack.opacity(0.65))
+                                .background(Color.EZNotesBlack.opacity(0.65))
                                 .clipShape(.circle)
                                 .padding(.trailing, 10)
                                 .padding(.leading, 5)
+                                .padding(.top, 10)
+                                .padding(.bottom, self.keyboardHeight == 0 ? 10 : 0)
                             }
                         }
                         .padding(.bottom, self.keyboardHeight == 0 ? 0 : self.keyboardHeight)
@@ -690,6 +662,7 @@ struct ShowNotes: View {
     /* MARK: Variables for "change_font" section */
     let fonts = ["Poppins-Regular", "Poppins-SemiBold", "Poppins-ExtraLight"]
     @State private var fontPicked: String = "Poppins-Regular"
+    @State private var fontAlignment: Alignment = .leading
     @State private var fontMenuTapped: Bool = false
     
     /* MARK: Variable for font size menu. */
@@ -1089,6 +1062,208 @@ struct ShowNotes: View {
                         setAndNotes: $setAndNotes,
                         aiChatOverNotesIsLive: $aiChatOverNotesIsLive
                     )
+                case "change_font":
+                    VStack {
+                        ScrollView(.vertical, showsIndicators: false) {
+                            HStack {
+                                Text("Font Family:")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 26, weight: .bold))
+                                    .minimumScaleFactor(0.5)
+                                
+                                Menu {
+                                    ForEach(self.fonts, id: \.self) { font in
+                                        Button(action: { self.fontPicked = font }) { Text(font) }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text(self.fontPicked)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom(self.fontPicked, size: 16))
+                                            .padding([.top, .leading, .bottom], 10)
+                                        
+                                        VStack {
+                                            Image(systemName: "arrowtriangle.up")
+                                                .resizable()
+                                                .frame(width: 6.5, height: 6.5)
+                                                .foregroundStyle(.white)
+                                            
+                                            Image(systemName: "arrowtriangle.down")
+                                                .resizable()
+                                                .frame(width: 6.5, height: 6.5)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .padding(.trailing, 10)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding([.top, .bottom], 2)
+                                    .background(Color.EZNotesLightBlack)
+                                    .cornerRadius(15)
+                                }
+                            }
+                            .frame(maxWidth: prop.size.width - 40)
+                            .padding(.top, 20)
+                            
+                            Text("This text is displaying what it will look like in the notes. If you don't like it, change it.")
+                                .frame(maxWidth: prop.size.width - 60, alignment: .leading) /* MARK: "Indent" the actual test text a bit. */
+                                .foregroundStyle(.white)
+                                .font(Font.custom(self.fontPicked, size: 16))
+                                .minimumScaleFactor(0.5)
+                                .padding(.top, 2)
+                            //.padding(.bottom, -10)
+                            
+                            Divider()
+                                .background(.secondary)
+                                .frame(width: prop.size.width - 40)
+                            
+                            HStack {
+                                Text("Font Size:")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 26, weight: .bold))
+                                    .minimumScaleFactor(0.5)
+                                
+                                Menu {
+                                    ForEach(8...60, id: \.self) { size in
+                                        Button(action: { self.fontSizePicked = CGFloat(size) }) { Text("\(size)") }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text("\(Int(self.fontSizePicked))")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom(self.fontPicked, size: 16))
+                                            .padding([.top, .leading, .bottom], 10)
+                                        
+                                        VStack {
+                                            Image(systemName: "arrowtriangle.up")
+                                                .resizable()
+                                                .frame(width: 6.5, height: 6.5)
+                                                .foregroundStyle(.white)
+                                            
+                                            Image(systemName: "arrowtriangle.down")
+                                                .resizable()
+                                                .frame(width: 6.5, height: 6.5)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .padding(.trailing, 10)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding([.top, .bottom], 2)
+                                    .background(Color.EZNotesLightBlack)
+                                    .cornerRadius(15)
+                                }
+                            }
+                            .frame(maxWidth: prop.size.width - 40)
+                            
+                            
+                            Text("This text is displaying what it will look like in the notes. If you don't like it, change it.")
+                                .frame(maxWidth: prop.size.width - 60, alignment: .leading)
+                                .foregroundStyle(.white)
+                                .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
+                                .minimumScaleFactor(0.5)
+                                .padding([.top, .bottom], 8)
+                            //.padding(.bottom, -10)
+                            
+                            Divider()
+                                .background(.secondary)
+                                .frame(width: prop.size.width - 40)
+                            
+                            VStack {
+                                Text("Alignment:")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 26, weight: .bold))
+                                    .minimumScaleFactor(0.5)
+                                
+                                HStack {
+                                    Button(action: { self.fontAlignment = .leading }) {
+                                        VStack {
+                                            Image(systemName: "align.horizontal.left")
+                                                .resizable()
+                                                .frame(width: 50, height: 50)
+                                            
+                                            Text("Left")
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    
+                                    Button(action: { self.fontAlignment = .center }) {
+                                        VStack {
+                                            Image(systemName: "align.horizontal.center")
+                                                .resizable()
+                                                .frame(width: 50, height: 50)
+                                            
+                                            Text("Center")
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                    }
+                                    
+                                    Button(action: { self.fontAlignment = .trailing }) {
+                                        VStack {
+                                            Image(systemName: "align.horizontal.right")
+                                                .resizable()
+                                                .frame(width: 50, height: 50)
+                                            
+                                            Text("Right")
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .trailing)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                            }
+                            .frame(maxWidth: prop.size.width - 40)
+                            
+                            Text("This text is displaying what it will look like in the notes. If you don't like it, change it.")
+                                .frame(maxWidth: prop.size.width - 60, alignment: self.fontAlignment)
+                                .foregroundStyle(.white)
+                                .font(Font.custom(self.fontPicked, size: 16))
+                                .minimumScaleFactor(0.5)
+                                .padding([.top, .bottom], 8)
+                                .multilineTextAlignment(self.fontAlignment)
+                        }
+                        
+                        /*HStack {
+                            Text(self.fontPicked)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .foregroundStyle(.white)
+                                .font(Font.custom(self.fontPicked, size: 16))
+                                .padding([.top, .leading, .bottom], 10)
+                            
+                            VStack {
+                                Menu {
+                                    ForEach(self.fonts, id: \.self) { font in
+                                        Text(font)
+                                    }
+                                } label: {
+                                    VStack {
+                                        Image(systemName: "arrowtriangle.up")
+                                            .resizable()
+                                            .frame(width: 5, height: 5)
+                                        
+                                        Image(systemName: "arrowtriangle.down")
+                                            .resizable()
+                                            .frame(width: 5, height: 5)
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                        }
+                        .frame(maxWidth: prop.size.width - 40)
+                        .padding(.top, 20)*/
+                        
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 case "save_changes":
                     VStack {
                         //VStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.secondary)
