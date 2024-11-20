@@ -89,7 +89,7 @@ struct EditableNotes: View {
             object: nil,
             queue: .main) { notification in
                 if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                    self.keyboardHeight = keyboardFrame.height
+                    self.keyboardHeight = keyboardFrame.height - 30
                 }
             }
         
@@ -122,7 +122,7 @@ struct EditableNotes: View {
                                     .clipShape(.circle)
                             }
                             .frame(width: 30, height: 30, alignment: .leading)
-                            .padding(.leading, 10)
+                            .padding([.leading, .top], 10)
                         }
                         
                         Spacer()
@@ -211,6 +211,8 @@ struct EditableNotes: View {
                                 .background(Color.EZNotesLightBlack.opacity(0.65))
                                 .clipShape(.circle)
                                 .padding(.leading, 10)
+                                .padding(.top, 10)
+                                .padding(.bottom, self.keyboardHeight == 0 ? 10 : 0)
                                 
                                 VStack {
                                     Button(action: { print("Take live picture to get instant feedback") }) {
@@ -239,6 +241,8 @@ struct EditableNotes: View {
                                 .padding(12.5)
                                 .background(Color.EZNotesLightBlack.opacity(0.65))
                                 .clipShape(.circle)
+                                .padding(.top, 10)
+                                .padding(.bottom, self.keyboardHeight == 0 ? 10 : 0)
                                 
                                 VStack {
                                     Button(action: { print("Select category to talk to the AI chat about") }) {
@@ -267,6 +271,8 @@ struct EditableNotes: View {
                                 .background(Color.EZNotesLightBlack.opacity(0.65))
                                 .clipShape(.circle)
                                 .padding(.trailing, 5)
+                                .padding(.top, 10)
+                                .padding(.bottom, self.keyboardHeight == 0 ? 10 : 0)
                             }
                             
                             VStack {
@@ -313,14 +319,12 @@ struct EditableNotes: View {
                                             }
                                         }
                                     )
-                                    .padding([.top], 10)
-                                    .padding(.bottom, self.keyboardHeight == 0 ? 10 : self.keyboardHeight)
-                                
+                                    .padding(.top, 10)
+                                    .padding(.bottom, self.keyboardHeight == 0 ? 10 : 0)
                                     .onChange(of: self.messageInput) {
                                         if self.messageInput.count > 0 { self.hideLeftsideContent = true }
                                         else { self.hideLeftsideContent = false }
                                     }
-                                    .animation(.easeOut(duration: 0.3), value: keyboardHeight)
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.trailing, !self.hideLeftsideContent ? 15 : 0)
@@ -332,14 +336,6 @@ struct EditableNotes: View {
                                 
                                 self.currentYPosOfMessageBox = value
                             }
-                            .onAppear {
-                                        // Detect keyboard notifications when the view appears
-                                        addKeyboardObservers()
-                                    }
-                                    .onDisappear {
-                                        // Remove keyboard observers when the view disappears
-                                        removeKeyboardObservers()
-                                    }
                             
                             if self.hideLeftsideContent {
                                 VStack {
@@ -404,6 +400,8 @@ struct EditableNotes: View {
                                 .padding(.leading, 5)
                             }
                         }
+                        .padding(.bottom, self.keyboardHeight == 0 ? 0 : self.keyboardHeight)
+                        .animation(.easeOut(duration: 0.3), value: keyboardHeight)
                         
                         VStack {
                             
@@ -415,10 +413,17 @@ struct EditableNotes: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(
                     Rectangle()
-                        .fill(Color.EZNotesLightBlack.opacity(0.8))
-                        .blur(radius: 10)
+                        .fill(Color.EZNotesLightBlack.opacity(0.95))
                 )
                 .zIndex(1)
+                .onAppear {
+                    // Detect keyboard notifications when the view appears
+                    addKeyboardObservers()
+                }
+                .onDisappear {
+                    // Remove keyboard observers when the view disappears
+                    removeKeyboardObservers()
+                }
             }
             
             VStack {
