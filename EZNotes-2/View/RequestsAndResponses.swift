@@ -9,7 +9,7 @@ import SwiftUI
 
 /* MARK: URLs used for requests. */
 //let server = "https://www.eznotes.space"
-let server = "http://192.168.0.14:8088"
+let server = "http://192.168.1.109:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
@@ -88,6 +88,10 @@ struct StartAIChatData {
     let AccountId: String
     let Major: String
     let Topic: String
+}
+
+struct StartAIChatOverNotesData {
+    let Notes: String
 }
 
 struct SendAIChatMessageData {
@@ -259,6 +263,12 @@ let start_ai_chat_req: CSIARequest = CSIARequest(
     url: "\(server)/mobile_start_aichat",
     method: "get",
     reqData: StartAIChatData.self
+)
+
+let start_ai_chat_over_notes_req: CSIARequest = CSIARequest(
+    url: "\(server)/mobile_start_aichat_over_notes",
+    method: "post",
+    reqData: StartAIChatOverNotesData.self
 )
 
 let send_ai_chat_message_req: CSIARequest = CSIARequest(

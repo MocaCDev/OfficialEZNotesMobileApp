@@ -20,6 +20,7 @@ struct EditableNotes: View {
     @State private var selectionText: TextSelection? = nil
     @State private var textEditorPaddingBottom: CGFloat = 40
     @State private var textHeight: CGFloat = 40 // Initial height
+    @State private var keyboardHeight: CGFloat = 0
     
     /*private func updateHeight(proxy: GeometryProxy? = nil) {
         let uiTextView = UITextView()
@@ -67,199 +68,569 @@ struct EditableNotes: View {
         return max(size.height + self.textEditorPaddingBottom, 100) // Add a buffer and ensure a minimum height
     }
     
-    var body: some View {
-        VStack {
-            HStack {
-                HStack {
-                    Text(self.fontPicked)
-                        .frame(alignment: .leading)
-                        .foregroundStyle(.white)
-                    
-                    Divider()
-                        .background(.white)
-                        .frame(height: 15)
-                    
-                    Text("\(Int(self.fontSizePicked))px")
-                        .frame(alignment: .leading)
-                        .foregroundStyle(.white)
+    @State private var aiChatOverNotesChatID: UUID = UUID()
+    @State private var aiChatOverNotes: Array<MessageDetails> = []
+    @Binding public var aiChatOverNotesIsLive: Bool
+    @State private var aiIsTyping: Bool = false
+    @State private var numberOfTheAnimationgBall = 3
+    @State private var messageBoxTapped: Bool = false
+    @State private var hideLeftsideContent: Bool = false
+    @State private var messageInput: String = ""
+    @State private var currentYPosOfMessageBox: CGFloat = 0
+    
+    // MAKR: - Drawing Constants
+    let ballSize: CGFloat = 10
+    let speed: Double = 0.3
+    let chatUUID: UUID = UUID()
+    
+    private func addKeyboardObservers() {
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillShowNotification,
+            object: nil,
+            queue: .main) { notification in
+                if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                    self.keyboardHeight = keyboardFrame.height
                 }
-                .frame(maxWidth: (prop.size.width / 2) - 35, maxHeight: .infinity, alignment: .leading)
-                .padding(.leading, 10)
-                
-                HStack {
+            }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillHideNotification,
+            object: nil,
+            queue: .main) { _ in
+                self.keyboardHeight = 0
+            }
+    }
+
+    private func removeKeyboardObservers() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+    
+    var body: some View {
+        ZStack {
+            if self.aiChatOverNotesIsLive {
+                VStack {
                     HStack {
-                        Image(systemName: "sparkles")
-                            .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
-                                .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                .init(0, 1), .init(0.5, 1), .init(1, 1)
-                            ], colors: [
-                                .indigo, .indigo, Color.EZNotesBlue,
-                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                            ]))
+                        Button(action: { self.aiChatOverNotesIsLive = false }) {
+                            ZStack {
+                                Image(systemName: "multiply")
+                                    .resizable()
+                                    .frame(width: 15, height: 15)
+                                    .foregroundStyle(.black)
+                                    .padding(8)
+                                    .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .light))
+                                    .clipShape(.circle)
+                            }
+                            .frame(width: 30, height: 30, alignment: .leading)
+                            .padding(.leading, 10)
+                        }
                         
-                        Text("AI Chat")
-                            .frame(alignment: .center)
-                            .foregroundStyle(.white)
+                        Spacer()
                     }
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(4)
-                    .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(.clear)
-                            .strokeBorder(MeshGradient(width: 3, height: 3, points: [
-                                .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                .init(0, 1), .init(0.5, 1), .init(1, 1)
-                            ], colors: [
-                                .indigo, .indigo, Color.EZNotesBlue,
-                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                            ]))
-                    )
+                    .frame(maxWidth: .infinity, maxHeight: 32)
                     
-                    Button(action: {
-                        self.notePadFocus = false
-                        
-                        /* MARK: Just testing. */
-                        for (index, value) in self.setAndNotes[self.categoryName]!.enumerated() {
-                            /* TODO: We need to make it to where the initial value (`[:]`), which gets assigned when initiating the variable, gets deleted. */
-                            if value != [:] {
-                                for key in value.keys {
-                                    if key == self.setName {
-                                        /* MARK: Remove the data from the dictionary. */
-                                        self.setAndNotes[self.categoryName]!.remove(at: index)
+                    VStack {
+                        ZStack {
+                            ScrollViewReader { proxy in
+                                ScrollView {
+                                    LazyVStack {
+                                        ForEach(aiChatOverNotes, id: \.self) { message in
+                                            MessageView(message: message, aiIsTyping: $aiIsTyping)
+                                                .id(message)
+                                        }
                                         
-                                        /* MARK: Append the new dictionary with the update text. */
-                                        self.setAndNotes[self.categoryName]!.append([key: self.notesContent])
+                                        if self.aiIsTyping {
+                                            HStack(alignment: .firstTextBaseline) {
+                                                ForEach(0..<3) { i in
+                                                    Capsule()
+                                                        .foregroundColor((self.numberOfTheAnimationgBall == i) ? .blue : Color(UIColor.darkGray))
+                                                        .frame(width: self.ballSize, height: self.ballSize)
+                                                        .offset(y: (self.numberOfTheAnimationgBall == i) ? -5 : 0)
+                                                }
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .animation(Animation.spring(response: 0.5, dampingFraction: 0.7, blendDuration: 0.1).speed(2), value: UUID())
+                                            .onAppear {
+                                                Timer.scheduledTimer(withTimeInterval: self.speed, repeats: true) { _ in
+                                                    var randomNumb: Int
+                                                    repeat {
+                                                        randomNumb = Int.random(in: 0...2)
+                                                    } while randomNumb == self.numberOfTheAnimationgBall
+                                                    self.numberOfTheAnimationgBall = randomNumb
+                                                }
+                                            }
+                                        }
+                                    }
+                                    .onChange(of: aiChatOverNotes) {
+                                        withAnimation {
+                                            proxy.scrollTo(aiChatOverNotes.last)
+                                        }
+                                    }
+                                    /*.onChange(of: self.aiIsTyping) {
+                                     //if self.aiIsTyping {
+                                     //    proxy.scrollTo(self.chatUUID)
+                                     //}
+                                     }*/
+                                    .onChange(of: self.messageBoxTapped) {
+                                        withAnimation {
+                                            proxy.scrollTo(aiChatOverNotes.last)
+                                        }
+                                    }
+                                    .onAppear {
+                                        withAnimation {
+                                            proxy.scrollTo(aiChatOverNotes.last, anchor: .bottom)
+                                        }
                                     }
                                 }
                             }
+                            .frame(maxWidth: prop.size.width - 20, maxHeight: .infinity)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .ignoresSafeArea(.keyboard, edges: .bottom)
+                        .onTapGesture {
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                            self.messageBoxTapped = false
                         }
                         
-                        writeSetsAndNotes(setsAndNotes: self.setAndNotes)
-                    }) {
+                        Spacer()
+                        
                         HStack {
-                            Text("Stop Editing")
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .foregroundStyle(.black)
-                                .padding(5)
+                            if !self.hideLeftsideContent {
+                                VStack {
+                                    Button(action: { print("Upload File") }) {
+                                        Image(systemName: "square.and.arrow.up")
+                                            .resizable()
+                                            .frame(width: 15, height: 20)
+                                            .foregroundStyle(.white)//(Color.EZNotesOrange)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .padding(.bottom, 2.5)
+                                }
+                                .frame(minWidth: 10, alignment: .leading)
+                                .padding(12.5)
+                                .background(Color.EZNotesLightBlack.opacity(0.65))
+                                .clipShape(.circle)
+                                .padding(.leading, 10)
+                                
+                                VStack {
+                                    Button(action: { print("Take live picture to get instant feedback") }) {
+                                        Image(systemName: "camera")
+                                            .resizable()
+                                            .frame(width: 20, height: 15)
+                                            .foregroundStyle(.white)/*(
+                                                                     MeshGradient(width: 3, height: 3, points: [
+                                                                     .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                     .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                     .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                                     ], colors: [
+                                                                     Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                                                     Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                                                     Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                     /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                      Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                      Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                                     ])
+                                                                     )*/
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    //.padding(.top, 5)
+                                }
+                                .frame(minWidth: 10, alignment: .leading)
+                                .padding(12.5)
+                                .background(Color.EZNotesLightBlack.opacity(0.65))
+                                .clipShape(.circle)
+                                
+                                VStack {
+                                    Button(action: { print("Select category to talk to the AI chat about") }) {
+                                        Image("Categories-Icon")
+                                            .resizableImage(width: 15, height: 15)
+                                            .foregroundStyle(.white)/*(
+                                                                     MeshGradient(width: 3, height: 3, points: [
+                                                                     .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                     .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                     .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                                     ], colors: [
+                                                                     Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                                                     Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                                                     Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                     /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                      Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                      Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                                     ])
+                                                                     )*/
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    //.padding(.top, 5)
+                                }
+                                .frame(minWidth: 10, alignment: .leading)
+                                .padding(12.5)
+                                .background(Color.EZNotesLightBlack.opacity(0.65))
+                                .clipShape(.circle)
+                                .padding(.trailing, 5)
+                            }
+                            
+                            VStack {
+                                TextField("Message...", text: $messageInput, axis: .vertical)
+                                    .frame(maxWidth: prop.size.width - 40, minHeight: 30)
+                                    .padding([.top, .bottom], 4)
+                                    .padding(.leading, 8)
+                                    .padding(.trailing, 35)
+                                    .cornerRadius(7.5)
+                                    .padding(.horizontal, 5)
+                                    .keyboardType(.alphabet)
+                                    .background(
+                                        self.hideLeftsideContent
+                                        ? AnyView(RoundedRectangle(cornerRadius: 15)
+                                            .fill(.clear)
+                                            .stroke(LinearGradient(gradient: Gradient(
+                                                colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
+                                            ), startPoint: .leading, endPoint: .trailing), lineWidth: 1))
+                                        : AnyView(RoundedRectangle(cornerRadius: 15)
+                                            .fill(.clear)
+                                            .border(width: 1, edges: [.bottom], lcolor: LinearGradient(gradient: Gradient(
+                                                colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
+                                            ), startPoint: .leading, endPoint: .trailing)))
+                                    )
+                                    .foregroundStyle(.white)
+                                    .overlay(
+                                        HStack {
+                                            GeometryReader { geometry in
+                                                Color.clear
+                                                    .preference(key: ViewPositionKey.self, value: geometry.frame(in: .global).minY)
+                                            }.frame(width: 0, height: 0)
+                                            
+                                            /* MARK: Exists to push the `x` button to the end of the textfield. */
+                                            VStack { }.frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                                            
+                                            if self.messageInput.count > 0 {
+                                                Button(action: {
+                                                    self.messageInput.removeAll()
+                                                }) {
+                                                    Image(systemName: "multiply.circle.fill")
+                                                        .foregroundColor(.gray)
+                                                        .padding(.trailing, 15)
+                                                }
+                                            }
+                                        }
+                                    )
+                                    .padding([.top], 10)
+                                    .padding(.bottom, self.keyboardHeight == 0 ? 10 : self.keyboardHeight)
+                                
+                                    .onChange(of: self.messageInput) {
+                                        if self.messageInput.count > 0 { self.hideLeftsideContent = true }
+                                        else { self.hideLeftsideContent = false }
+                                    }
+                                    .animation(.easeOut(duration: 0.3), value: keyboardHeight)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.trailing, !self.hideLeftsideContent ? 15 : 0)
+                            .padding(.leading, !self.hideLeftsideContent ? 0 : 10)
+                            .onPreferenceChange(ViewPositionKey.self) { value in
+                                if value < self.currentYPosOfMessageBox {
+                                    self.messageBoxTapped = true
+                                }
+                                
+                                self.currentYPosOfMessageBox = value
+                            }
+                            .onAppear {
+                                        // Detect keyboard notifications when the view appears
+                                        addKeyboardObservers()
+                                    }
+                                    .onDisappear {
+                                        // Remove keyboard observers when the view disappears
+                                        removeKeyboardObservers()
+                                    }
+                            
+                            if self.hideLeftsideContent {
+                                VStack {
+                                    Button(action: {
+                                        self.aiIsTyping = true
+                                        
+                                        self.aiChatOverNotes.append(MessageDetails(
+                                            MessageID: UUID(),
+                                            MessageContent: self.messageInput,
+                                            userSent: true,
+                                            dateSent: Date.now
+                                        ))
+                                        
+                                        RequestAction<SendAIChatMessageData>(
+                                            parameters: SendAIChatMessageData(
+                                                ChatID: self.aiChatOverNotesChatID,
+                                                AccountId: getUDValue(key: "account_id"),
+                                                Message: self.messageInput
+                                            )
+                                        ).perform(action: send_ai_chat_message_req) { statusCode, resp in
+                                            self.aiIsTyping = false
+                                            
+                                            guard resp != nil && statusCode == 200 else {
+                                                return
+                                            }
+                                            
+                                            self.aiChatOverNotes.append(MessageDetails(
+                                                MessageID: UUID(),
+                                                MessageContent: resp!["AIResponse"] as! String,
+                                                userSent: false,
+                                                dateSent: Date.now
+                                            ))
+                                        }
+                                        
+                                        self.messageInput.removeAll()
+                                    }) {
+                                        Image(systemName: "arrow.up")
+                                            .resizableImage(width: 15, height: 20)
+                                            .foregroundStyle(.white)/*(
+                                                                     MeshGradient(width: 3, height: 3, points: [
+                                                                     .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                     .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                     .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                                     ], colors: [
+                                                                     Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                                                     Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                                                     Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                     /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                      Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                      Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                                     ])
+                                                                     )*/
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    //.padding(.top, 5)
+                                }
+                                .frame(minWidth: 10, alignment: .leading)
+                                .padding(12.5)
+                                .background(Color.EZNotesLightBlack.opacity(0.65))
+                                .clipShape(.circle)
+                                .padding(.trailing, 10)
+                                .padding(.leading, 5)
+                            }
                         }
-                        .background(
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(Color.EZNotesBlue)
-                        )
-                        .cornerRadius(15)
+                        
+                        VStack {
+                            
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: 5)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                .padding(.trailing, 10)
-                
-                /*HStack {
-                 Button(action: { self.notePadFocus = false }) {
-                 HStack {
-                 Text("Stop Editing")
-                 .frame(maxWidth: .infinity, alignment: .center)
-                 .foregroundStyle(.black)
-                 .padding(5)
-                 }
-                 .background(
-                 RoundedRectangle(cornerRadius: 15)
-                 .fill(Color.EZNotesBlue)
-                 )
-                 .cornerRadius(15)
-                 }
-                 }
-                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                 .padding(.trailing, 10)*/
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(
+                    Rectangle()
+                        .fill(Color.EZNotesLightBlack.opacity(0.8))
+                        .blur(radius: 10)
+                )
+                .zIndex(1)
             }
-            .frame(maxWidth: .infinity, maxHeight: 40)
             
-            VStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.secondary)
-            
-            /*ScrollView(.vertical, showsIndicators: true) {
-             TextEditor(text: $notesContent, selection: $selectionText).id(0)
-             .frame(height: self.textHeight)
-             .scrollDisabled(true)
-             .scrollContentBackground(.hidden)
-             .background(Color.EZNotesBlack)
-             .padding(4.5)
-             .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
-             .focused($notePadFocus)
-             .padding(.bottom, self.textEditorPaddingBottom)
-             .overlay(
-             GeometryReader { proxy in
-             Color.clear.onChange(of: self.notesContent) {
-             self.updateHeight(proxy: proxy)
-             }
-             }
-             )
-             }
-             .onChange(of: self.notePadFocus) {
-             /* TODO: Are animations really needed? */
-             if self.notePadFocus {
-             withAnimation(.easeIn(duration: 0.5)) {
-             self.textEditorPaddingBottom = 350
-             }
-             } else {
-             withAnimation(.easeOut(duration: 0.5)) {
-             self.textEditorPaddingBottom = 100
-             }
-             }
-             }*/
-            
-            ScrollView(.vertical) {
-                /*GeometryReader { geometry in
-                 TextEditor(text: $notesContent)
-                 .frame(maxWidth: .infinity, maxHeight: max(100, textHeight(for: self.notesContent, width: geometry.size.width)))
-                 .scrollDisabled(true)
-                 }
-                 .frame(maxWidth: .infinity, maxHeight: .infinity)*/
-                /*VStack {
-                 GeometryReader { geometry in
-                 TextEditor(text: $notesContent)
-                 .frame(
-                 maxWidth: .infinity,
-                 maxHeight: max(100, textHeight(for: notesContent, width: geometry.size.width))
-                 )
-                 .padding(4.5)
+            VStack {
+                HStack {
+                    HStack {
+                        Text(self.fontPicked)
+                            .frame(alignment: .leading)
+                            .foregroundStyle(.white)
+                        
+                        Divider()
+                            .background(.white)
+                            .frame(height: 15)
+                        
+                        Text("\(Int(self.fontSizePicked))px")
+                            .frame(alignment: .leading)
+                            .foregroundStyle(.white)
+                    }
+                    .frame(maxWidth: (prop.size.width / 2) - 35, maxHeight: .infinity, alignment: .leading)
+                    .padding(.leading, 10)
+                    
+                    HStack {
+                        Button(action: {
+                            RequestAction<StartAIChatOverNotesData>(parameters: StartAIChatOverNotesData(
+                                Notes: self.notesContent
+                            ))
+                            .perform(action: start_ai_chat_over_notes_req) { statusCode, resp in
+                                guard resp != nil && statusCode == 200 else {
+                                    if let resp = resp { print(resp) }
+                                    /* TODO: handle errors. */
+                                    return
+                                }
+                                
+                                self.aiChatOverNotesChatID = UUID(uuidString: resp!["ChatID"]! as! String)!
+                                self.aiChatOverNotesIsLive = true
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "sparkles")
+                                    .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
+                                        .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                        .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                        .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                    ], colors: [
+                                        .indigo, .indigo, Color.EZNotesBlue,
+                                        Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                        .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                        /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                         Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                         Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                    ]))
+                                
+                                Text("AI Chat")
+                                    .frame(alignment: .center)
+                                    .foregroundStyle(.white)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .padding(4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(.clear)
+                                    .strokeBorder(MeshGradient(width: 3, height: 3, points: [
+                                        .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                        .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                        .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                    ], colors: [
+                                        .indigo, .indigo, Color.EZNotesBlue,
+                                        Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                        .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                        /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                         Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                         Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                    ]))
+                            )
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        
+                        Button(action: {
+                            self.notePadFocus = false
+                            
+                            /* MARK: Just testing. */
+                            for (index, value) in self.setAndNotes[self.categoryName]!.enumerated() {
+                                /* TODO: We need to make it to where the initial value (`[:]`), which gets assigned when initiating the variable, gets deleted. */
+                                if value != [:] {
+                                    for key in value.keys {
+                                        if key == self.setName {
+                                            /* MARK: Remove the data from the dictionary. */
+                                            self.setAndNotes[self.categoryName]!.remove(at: index)
+                                            
+                                            /* MARK: Append the new dictionary with the update text. */
+                                            self.setAndNotes[self.categoryName]!.append([key: self.notesContent])
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            writeSetsAndNotes(setsAndNotes: self.setAndNotes)
+                        }) {
+                            HStack {
+                                Text("Stop Editing")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .foregroundStyle(.black)
+                                    .padding(5)
+                            }
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.EZNotesBlue)
+                            )
+                            .cornerRadius(15)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                    .padding(.trailing, 10)
+                    
+                    /*HStack {
+                     Button(action: { self.notePadFocus = false }) {
+                     HStack {
+                     Text("Stop Editing")
+                     .frame(maxWidth: .infinity, alignment: .center)
+                     .foregroundStyle(.black)
+                     .padding(5)
+                     }
+                     .background(
+                     RoundedRectangle(cornerRadius: 15)
+                     .fill(Color.EZNotesBlue)
+                     )
+                     .cornerRadius(15)
+                     }
+                     }
+                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                     .padding(.trailing, 10)*/
+                }
+                .frame(maxWidth: .infinity, maxHeight: 40)
+                
+                VStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.secondary)
+                
+                /*ScrollView(.vertical, showsIndicators: true) {
+                 TextEditor(text: $notesContent, selection: $selectionText).id(0)
+                 .frame(height: self.textHeight)
                  .scrollDisabled(true)
                  .scrollContentBackground(.hidden)
                  .background(Color.EZNotesBlack)
+                 .padding(4.5)
+                 .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
+                 .focused($notePadFocus)
+                 .padding(.bottom, self.textEditorPaddingBottom)
+                 .overlay(
+                 GeometryReader { proxy in
+                 Color.clear.onChange(of: self.notesContent) {
+                 self.updateHeight(proxy: proxy)
                  }
-                 .frame(height: textHeight(for: notesContent, width: UIScreen.main.bounds.width)) // Match calculated height
+                 }
+                 )
+                 }
+                 .onChange(of: self.notePadFocus) {
+                 /* TODO: Are animations really needed? */
+                 if self.notePadFocus {
+                 withAnimation(.easeIn(duration: 0.5)) {
+                 self.textEditorPaddingBottom = 350
+                 }
+                 } else {
+                 withAnimation(.easeOut(duration: 0.5)) {
+                 self.textEditorPaddingBottom = 100
+                 }
+                 }
                  }*/
-                VStack(alignment: .leading) {
-                    TextEditor(text: $notesContent)
-                        .frame(height: textHeight(for: notesContent, width: UIScreen.main.bounds.width - 32)) // Calculate height dynamically
-                        .padding(4.5)
-                        .scrollDisabled(true)
-                        .scrollContentBackground(.hidden)
-                        .background(Color.EZNotesBlack)
-                        .focused($notePadFocus)
-                }
-                .onChange(of: self.notePadFocus) {
-                    if self.notePadFocus {
-                        withAnimation(.easeIn(duration: 0.5)) {
-                            self.textEditorPaddingBottom = 350
+                
+                ScrollView(.vertical) {
+                    /*GeometryReader { geometry in
+                     TextEditor(text: $notesContent)
+                     .frame(maxWidth: .infinity, maxHeight: max(100, textHeight(for: self.notesContent, width: geometry.size.width)))
+                     .scrollDisabled(true)
+                     }
+                     .frame(maxWidth: .infinity, maxHeight: .infinity)*/
+                    /*VStack {
+                     GeometryReader { geometry in
+                     TextEditor(text: $notesContent)
+                     .frame(
+                     maxWidth: .infinity,
+                     maxHeight: max(100, textHeight(for: notesContent, width: geometry.size.width))
+                     )
+                     .padding(4.5)
+                     .scrollDisabled(true)
+                     .scrollContentBackground(.hidden)
+                     .background(Color.EZNotesBlack)
+                     }
+                     .frame(height: textHeight(for: notesContent, width: UIScreen.main.bounds.width)) // Match calculated height
+                     }*/
+                    VStack(alignment: .leading) {
+                        TextEditor(text: $notesContent)
+                            .frame(height: textHeight(for: notesContent, width: UIScreen.main.bounds.width - 32)) // Calculate height dynamically
+                            .padding(4.5)
+                            .scrollDisabled(true)
+                            .scrollContentBackground(.hidden)
+                            .background(Color.EZNotesBlack)
+                            .focused($notePadFocus)
+                    }
+                    .onChange(of: self.notePadFocus) {
+                        if self.notePadFocus {
+                            withAnimation(.easeIn(duration: 0.5)) {
+                                self.textEditorPaddingBottom = 350
+                            }
+                            return
                         }
-                        return
-                    }
-                    
-                    /* MARK: We can assume `notePadFocus` is hereby false. */
-                    withAnimation(.easeOut(duration: 0.5)) {
-                        self.textEditorPaddingBottom = 80
+                        
+                        /* MARK: We can assume `notePadFocus` is hereby false. */
+                        withAnimation(.easeOut(duration: 0.5)) {
+                            self.textEditorPaddingBottom = 80
+                        }
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         /*.onAppear {
@@ -372,6 +743,8 @@ struct ShowNotes: View {
     
     @State private var targetX: CGFloat = 0
     @State private var targetY: CGFloat = 0
+    
+    @State private var aiChatOverNotesIsLive: Bool = false
     
     var body: some View {
         ZStack {
@@ -708,7 +1081,8 @@ struct ShowNotes: View {
                         categoryName: self.categoryName,
                         setName: self.setName,
                         notesContent: $notesContent,
-                        setAndNotes: $setAndNotes
+                        setAndNotes: $setAndNotes,
+                        aiChatOverNotesIsLive: $aiChatOverNotesIsLive
                     )
                 case "save_changes":
                     VStack {
@@ -1494,7 +1868,8 @@ struct ShowNotes: View {
                         categoryName: self.categoryName,
                         setName: self.setName,
                         notesContent: $notesContent,
-                        setAndNotes: $setAndNotes
+                        setAndNotes: $setAndNotes,
+                        aiChatOverNotesIsLive: $aiChatOverNotesIsLive
                     )
                 }
                 
@@ -1916,7 +2291,7 @@ struct ShowNotes: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .ignoresSafeArea(edges: [.bottom])
+        //.edgesIgnoringSafeArea(self.aiChatOverNotesIsLive ? .init() : .bottom)//.ignoresSafeArea(edges: !self.aiChatOverNotesIsLive ? [.bottom] : .init())
         /*.onAppear {
             withAnimation(.easeIn(duration: 0.5)) {
                 self.menuHeight = 60

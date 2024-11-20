@@ -95,10 +95,10 @@ struct ContentView: View {
     /* MARK: The below colors will apply only to text that is on the top of the right-side of the category details. */
     @State private var categoryCustomTextColors: [String: Color] = getCategoryCustomTextColors()
     
+    @State private var messages: Array<MessageDetails> = []
+    
     /* MARK: `UUID` will be the chat ID. */
     @State private var temporaryStoredChats: [String: [UUID: Array<MessageDetails>]] = getTemporaryStoredChats()
-    
-    @State private var messages: Array<MessageDetails> = []
     
     //private let rotationChangePublisher = NotificationCenter.default
         //.publisher(for: UIDevice.orientationDidChangeNotification)
@@ -133,7 +133,8 @@ struct ContentView: View {
                             categoryCustomTextColors: $categoryCustomTextColors,
                             accountInfo: accountInfo,
                             userHasSignedIn: $userHasSignedIn,
-                            tempChatHistory: $temporaryStoredChats
+                            tempChatHistory: $temporaryStoredChats,
+                            messages: $messages
                         )
                     }
                 } else {

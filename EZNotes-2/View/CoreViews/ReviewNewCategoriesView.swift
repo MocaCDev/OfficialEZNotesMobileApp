@@ -376,7 +376,14 @@ struct ReviewNewCategories: View {
                 for (_, value) in self.newCategoriesAndSets.enumerated() {
                     for (_, value2) in value.value.enumerated() {
                         if self.categoriesAndSets.keys.contains(value.key) {
-                            self.categoriesAndSets[value.key]!.append(value2)
+                            var number: Int = 0
+                            
+                            for set in self.categoriesAndSets[value.key]! {
+                                if set == value2 { number += 1 }
+                            }
+                            
+                            if number > 0 { self.categoriesAndSets[value.key]!.append("\(value2) \(number)") }
+                            else { self.categoriesAndSets[value.key]!.append(value2) }
                         } else {
                             self.categoryCreationDates[value.key] = Date.now
                             self.categoriesAndSets[value.key] = [value2]
@@ -385,10 +392,25 @@ struct ReviewNewCategories: View {
                 }
                 
                 for (_, value) in self.newSetNotes.enumerated() {
-                    if !self.setAndNotes.keys.contains(value.key) { self.setAndNotes[value.key] = [[:]] }
+                    var setName: String = ""
+                    
+                    if !self.setAndNotes.keys.contains(value.key) {
+                        self.setAndNotes[value.key] = [[:]]
+                        setName = value.key
+                    }
+                    else {
+                        var number: Int = 0
+                        
+                        for key in self.setAndNotes.keys {
+                            if key == value.key { number += 1 }
+                        }
+                        
+                        self.setAndNotes["\(value.key) \(number)"] = [[:]]
+                        setName = "\(value.key) \(number)"
+                    }
                     
                     for (_, value2) in value.value.enumerated() {
-                        self.setAndNotes[value.key]!.append(value2)
+                        self.setAndNotes[setName]!.append(value2)
                     }
                 }
                 self.newSetNotes.removeAll()
@@ -452,7 +474,10 @@ struct ReviewNewCategories: View {
                 }
                 
                 if let resp = resp {
-                    self.categorySimilarities = resp as! [String: Array<String>]
+                    /* MARK: If `NoData` is in the response, that means there were no similarities found. */
+                    if !resp.keys.contains("NoData") {
+                        self.categorySimilarities = resp as! [String: Array<String>]
+                    }
                 }
             }
         }

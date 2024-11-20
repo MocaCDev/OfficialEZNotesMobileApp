@@ -346,6 +346,12 @@ struct RequestAction<T> {
                 request.addValue(params.Major, forHTTPHeaderField: "Major")
                 request.addValue(params.Topic, forHTTPHeaderField: "Topic")
                 break
+            case is StartAIChatOverNotesData.Type:
+                guard let params: StartAIChatOverNotesData = (parameters as? StartAIChatOverNotesData) else { return }
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                let jsonData: [String: String] = ["Notes": params.Notes]
+                request.httpBody = try? JSONSerialization.data(withJSONObject: jsonData)
+                break
             case is SendAIChatMessageData.Type:
                 guard let params: SendAIChatMessageData = (parameters as? SendAIChatMessageData) else { return }
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")

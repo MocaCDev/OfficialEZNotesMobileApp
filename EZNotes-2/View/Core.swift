@@ -130,7 +130,7 @@ struct CoreApp: View {
     
     @State private var errorType: String = ""
     
-    @State private var messages: Array<MessageDetails> = []
+    @Binding public var messages: Array<MessageDetails>
     
     var body: some View {
         VStack {
