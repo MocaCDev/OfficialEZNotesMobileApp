@@ -276,7 +276,18 @@ struct CategoryInternalsView: View {
                         .padding(.top, 10)
                         
                         Divider()
-                            .background(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : .white)
+                            .background(MeshGradient(width: 3, height: 3, points: [
+                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                            ], colors: [
+                                .indigo, .indigo, Color.EZNotesBlue,
+                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                            ]))//.background(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : .white)
                     }
                     .frame(maxWidth: prop.size.width - 40, alignment: .top)
                     .padding(.top, -15)

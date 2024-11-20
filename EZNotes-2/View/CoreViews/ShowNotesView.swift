@@ -6,10 +6,27 @@
 //
 import SwiftUI
 
+class FontConfiguration: ObservableObject {
+    @Published public var fontPicked: String
+    @Published public var fontSizePicked: CGFloat
+    @Published public var fontAlignment: Alignment
+    @Published public var fontTextAlignment: TextAlignment
+    @Published public var fontColor: Color
+    
+    init(defaultFont: String, defaultFontSize: CGFloat) {
+        fontPicked = defaultFont
+        fontSizePicked = defaultFontSize
+        fontColor = .white
+        fontAlignment = .leading
+        fontTextAlignment = .leading
+    }
+}
+
 struct EditableNotes: View {
     var prop: Properties
-    var fontPicked: String
-    var fontSizePicked: CGFloat
+    /*var fontPicked: String
+    var fontSizePicked: CGFloat*/
+    @ObservedObject public var fontConfiguration: FontConfiguration
     var categoryName: String
     var setName: String
     
@@ -401,7 +418,7 @@ struct EditableNotes: View {
             VStack {
                 HStack {
                     HStack {
-                        Text(self.fontPicked)
+                        Text(self.fontConfiguration.fontPicked)
                             .frame(alignment: .leading)
                             .foregroundStyle(.white)
                         
@@ -409,7 +426,7 @@ struct EditableNotes: View {
                             .background(.white)
                             .frame(height: 15)
                         
-                        Text("\(Int(self.fontSizePicked))px")
+                        Text("\(Int(self.fontConfiguration.fontSizePicked))px")
                             .frame(alignment: .leading)
                             .foregroundStyle(.white)
                     }
@@ -529,7 +546,18 @@ struct EditableNotes: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: 40)
                 
-                VStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.secondary)
+                VStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(MeshGradient(width: 3, height: 3, points: [
+                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                ], colors: [
+                    .indigo, .indigo, Color.EZNotesBlue,
+                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                ]))
                 
                 /*ScrollView(.vertical, showsIndicators: true) {
                  TextEditor(text: $notesContent, selection: $selectionText).id(0)
@@ -585,12 +613,15 @@ struct EditableNotes: View {
                      }*/
                     VStack(alignment: .leading) {
                         TextEditor(text: $notesContent)
-                            .frame(height: textHeight(for: notesContent, width: UIScreen.main.bounds.width - 32)) // Calculate height dynamically
+                            .frame(height: textHeight(for: notesContent, width: UIScreen.main.bounds.width - 32), alignment: self.fontConfiguration.fontAlignment) // Calculate height dynamically
+                            .foregroundStyle(self.fontConfiguration.fontColor)
                             .padding(4.5)
                             .scrollDisabled(true)
                             .scrollContentBackground(.hidden)
                             .background(Color.EZNotesBlack)
                             .focused($notePadFocus)
+                            .font(Font.custom(self.fontConfiguration.fontPicked, size: self.fontConfiguration.fontSizePicked))
+                            .multilineTextAlignment(self.fontConfiguration.fontTextAlignment)
                     }
                     .onChange(of: self.notePadFocus) {
                         if self.notePadFocus {
@@ -661,12 +692,17 @@ struct ShowNotes: View {
     /* TODO: Grow this list. */
     /* MARK: Variables for "change_font" section */
     let fonts = ["Poppins-Regular", "Poppins-SemiBold", "Poppins-ExtraLight"]
-    @State private var fontPicked: String = "Poppins-Regular"
-    @State private var fontAlignment: Alignment = .leading
+    //@State private var fontPicked: String = "Poppins-Regular"
+    //@State private var fontAlignment: Alignment = .leading
     @State private var fontMenuTapped: Bool = false
     
+    @StateObject private var fontConfiguration: FontConfiguration = FontConfiguration(
+        defaultFont: "Poppins-Regular",
+        defaultFontSize: 16
+    )
+    
     /* MARK: Variable for font size menu. */
-    @State private var fontSizePicked: CGFloat = 16
+    //@State private var fontSizePicked: CGFloat = 16
     @State private var fontSizeMenuTapped: Bool = false
     
     /* MARK: The section of the menu the user is in. */
@@ -1054,8 +1090,9 @@ struct ShowNotes: View {
                 case "edit":
                     EditableNotes(
                         prop: prop,
-                        fontPicked: self.fontPicked,
-                        fontSizePicked: self.fontSizePicked,
+                        fontConfiguration: self.fontConfiguration,
+                        /*fontPicked: self.fontPicked,
+                        fontSizePicked: self.fontSizePicked,*/
                         categoryName: self.categoryName,
                         setName: self.setName,
                         notesContent: $notesContent,
@@ -1074,14 +1111,14 @@ struct ShowNotes: View {
                                 
                                 Menu {
                                     ForEach(self.fonts, id: \.self) { font in
-                                        Button(action: { self.fontPicked = font }) { Text(font) }
+                                        Button(action: { self.fontConfiguration.fontPicked = font }) { Text(font) }
                                     }
                                 } label: {
                                     HStack {
-                                        Text(self.fontPicked)
+                                        Text(self.fontConfiguration.fontPicked)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .foregroundStyle(.white)
-                                            .font(Font.custom(self.fontPicked, size: 16))
+                                            .font(Font.custom(self.fontConfiguration.fontPicked, size: 16))
                                             .padding([.top, .leading, .bottom], 10)
                                         
                                         VStack {
@@ -1089,6 +1126,7 @@ struct ShowNotes: View {
                                                 .resizable()
                                                 .frame(width: 6.5, height: 6.5)
                                                 .foregroundStyle(.white)
+                                                .padding(.bottom, -2)
                                             
                                             Image(systemName: "arrowtriangle.down")
                                                 .resizable()
@@ -1109,13 +1147,24 @@ struct ShowNotes: View {
                             Text("This text is displaying what it will look like in the notes. If you don't like it, change it.")
                                 .frame(maxWidth: prop.size.width - 60, alignment: .leading) /* MARK: "Indent" the actual test text a bit. */
                                 .foregroundStyle(.white)
-                                .font(Font.custom(self.fontPicked, size: 16))
+                                .font(Font.custom(self.fontConfiguration.fontPicked, size: 16))
                                 .minimumScaleFactor(0.5)
                                 .padding(.top, 2)
                             //.padding(.bottom, -10)
                             
                             Divider()
-                                .background(.secondary)
+                                .background(MeshGradient(width: 3, height: 3, points: [
+                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                ], colors: [
+                                    .indigo, .indigo, Color.EZNotesBlue,
+                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                ]))
                                 .frame(width: prop.size.width - 40)
                             
                             HStack {
@@ -1127,14 +1176,14 @@ struct ShowNotes: View {
                                 
                                 Menu {
                                     ForEach(8...60, id: \.self) { size in
-                                        Button(action: { self.fontSizePicked = CGFloat(size) }) { Text("\(size)") }
+                                        Button(action: { self.fontConfiguration.fontSizePicked = CGFloat(size) }) { Text("\(size)") }
                                     }
                                 } label: {
                                     HStack {
-                                        Text("\(Int(self.fontSizePicked))")
+                                        Text("\(Int(self.fontConfiguration.fontSizePicked))")
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .foregroundStyle(.white)
-                                            .font(Font.custom(self.fontPicked, size: 16))
+                                            .font(Font.custom(self.fontConfiguration.fontPicked, size: 16))
                                             .padding([.top, .leading, .bottom], 10)
                                         
                                         VStack {
@@ -1142,6 +1191,7 @@ struct ShowNotes: View {
                                                 .resizable()
                                                 .frame(width: 6.5, height: 6.5)
                                                 .foregroundStyle(.white)
+                                                .padding(.bottom, -5)
                                             
                                             Image(systemName: "arrowtriangle.down")
                                                 .resizable()
@@ -1157,19 +1207,31 @@ struct ShowNotes: View {
                                 }
                             }
                             .frame(maxWidth: prop.size.width - 40)
-                            
+                            .padding(.top, 15)
                             
                             Text("This text is displaying what it will look like in the notes. If you don't like it, change it.")
                                 .frame(maxWidth: prop.size.width - 60, alignment: .leading)
                                 .foregroundStyle(.white)
-                                .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
+                                .font(Font.custom(self.fontConfiguration.fontPicked, size: self.fontConfiguration.fontSizePicked))
                                 .minimumScaleFactor(0.5)
                                 .padding([.top, .bottom], 8)
                             //.padding(.bottom, -10)
                             
                             Divider()
-                                .background(.secondary)
+                                .background(MeshGradient(width: 3, height: 3, points: [
+                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                ], colors: [
+                                    .indigo, .indigo, Color.EZNotesBlue,
+                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                ]))
                                 .frame(width: prop.size.width - 40)
+                                .padding(.bottom, 15)
                             
                             VStack {
                                 Text("Alignment:")
@@ -1179,11 +1241,26 @@ struct ShowNotes: View {
                                     .minimumScaleFactor(0.5)
                                 
                                 HStack {
-                                    Button(action: { self.fontAlignment = .leading }) {
+                                    Button(action: {
+                                        self.fontConfiguration.fontAlignment = .leading
+                                        self.fontConfiguration.fontTextAlignment = .leading
+                                    }) {
                                         VStack {
                                             Image(systemName: "align.horizontal.left")
                                                 .resizable()
                                                 .frame(width: 50, height: 50)
+                                                .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
+                                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                ], colors: [
+                                                    .indigo, .indigo, Color.EZNotesBlue,
+                                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                ]))
                                             
                                             Text("Left")
                                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -1192,11 +1269,26 @@ struct ShowNotes: View {
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                     }
                                     
-                                    Button(action: { self.fontAlignment = .center }) {
+                                    Button(action: {
+                                        self.fontConfiguration.fontAlignment = .center
+                                        self.fontConfiguration.fontTextAlignment = .center
+                                    }) {
                                         VStack {
                                             Image(systemName: "align.horizontal.center")
                                                 .resizable()
                                                 .frame(width: 50, height: 50)
+                                                .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
+                                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                ], colors: [
+                                                    .indigo, .indigo, Color.EZNotesBlue,
+                                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                ]))
                                             
                                             Text("Center")
                                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -1205,11 +1297,26 @@ struct ShowNotes: View {
                                         .frame(maxWidth: .infinity, alignment: .center)
                                     }
                                     
-                                    Button(action: { self.fontAlignment = .trailing }) {
+                                    Button(action: {
+                                        self.fontConfiguration.fontAlignment = .trailing
+                                        self.fontConfiguration.fontTextAlignment = .trailing
+                                    }) {
                                         VStack {
                                             Image(systemName: "align.horizontal.right")
                                                 .resizable()
                                                 .frame(width: 50, height: 50)
+                                                .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
+                                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                ], colors: [
+                                                    .indigo, .indigo, Color.EZNotesBlue,
+                                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                ]))
                                             
                                             Text("Right")
                                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -1224,17 +1331,75 @@ struct ShowNotes: View {
                             .frame(maxWidth: prop.size.width - 40)
                             
                             Text("This text is displaying what it will look like in the notes. If you don't like it, change it.")
-                                .frame(maxWidth: prop.size.width - 60, alignment: self.fontAlignment)
+                                .frame(maxWidth: prop.size.width - 60, alignment: self.fontConfiguration.fontAlignment)
                                 .foregroundStyle(.white)
-                                .font(Font.custom(self.fontPicked, size: 16))
+                                .font(Font.custom(self.fontConfiguration.fontPicked, size: 16))
                                 .minimumScaleFactor(0.5)
                                 .padding([.top, .bottom], 8)
-                                .multilineTextAlignment(self.fontAlignment == .leading
-                                    ? .leading
-                                    : self.fontAlignment == .center
-                                        ? .center
-                                        : .trailing
-                                )
+                                .multilineTextAlignment(self.fontConfiguration.fontTextAlignment)
+                            
+                            Divider()
+                                .background(MeshGradient(width: 3, height: 3, points: [
+                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                ], colors: [
+                                    .indigo, .indigo, Color.EZNotesBlue,
+                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                ]))
+                                .frame(width: prop.size.width - 40)
+                                .padding(.bottom, 15)
+                            
+                            VStack {
+                                HStack {
+                                    Text("Text Color:")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .foregroundStyle(.white)
+                                        .font(.system(size: 26, weight: .bold))
+                                        .minimumScaleFactor(0.5)
+                                    
+                                    ZStack {
+                                        ColorPicker("", selection: $fontConfiguration.fontColor)
+                                            .frame(width: 38, height: 40)
+                                            .padding(3.5)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                }
+                                .frame(maxWidth: .infinity)
+                                
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(self.fontConfiguration.fontColor)
+                                    .frame(maxHeight: prop.isLargerScreen ? 100 : 80)
+                                    .scaledToFit()
+                            }
+                            .frame(maxWidth: prop.size.width - 40)
+                            
+                            Text("This text is displaying what it will look like in the notes. If you don't like it, change it.")
+                                .frame(maxWidth: prop.size.width - 60, alignment: .leading)
+                                .foregroundStyle(self.fontConfiguration.fontColor)
+                                .font(Font.custom(self.fontConfiguration.fontPicked, size: 16))
+                                .minimumScaleFactor(0.5)
+                                .padding([.top, .bottom], 8)
+                                .multilineTextAlignment(.leading)
+                            
+                            /*HStack {
+                                Text("Save")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding([.top, .bottom], 8)
+                                    .foregroundStyle(.black)
+                                    .setFontSizeAndWeight(weight: .bold, size: 18)
+                                    .minimumScaleFactor(0.5)
+                            }
+                            .frame(maxWidth: prop.size.width - 80)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(.white)
+                            )
+                            .cornerRadius(15)*/
                         }
                         
                         /*HStack {
@@ -1392,7 +1557,7 @@ struct ShowNotes: View {
                                                         Text(self.originalContent)
                                                             .frame(width: 105, height: 105)
                                                             .foregroundStyle(.white)
-                                                            .font(Font.custom(self.fontPicked, size: 8))
+                                                            .font(Font.custom(self.fontConfiguration.fontPicked, size: 8))
                                                             .padding(8)
                                                             .background(Color.EZNotesLightBlack.opacity(0.8))
                                                             .cornerRadius(15)
@@ -1416,7 +1581,7 @@ struct ShowNotes: View {
                                                         Text(self.notesContent)
                                                             .frame(width: 105, height: 105)
                                                             .foregroundStyle(.white)
-                                                            .font(Font.custom(self.fontPicked, size: 8))
+                                                            .font(Font.custom(self.fontConfiguration.fontPicked, size: 8))
                                                             .padding(8)
                                                             .background(Color.EZNotesLightBlack.opacity(0.8))
                                                             .cornerRadius(15)
@@ -1463,7 +1628,7 @@ struct ShowNotes: View {
                                                         }
                                                         .frame(width: 105, height: 105)
                                                         .foregroundStyle(.white)
-                                                        .font(Font.custom(self.fontPicked, size: 10))
+                                                        .font(Font.custom(self.fontConfiguration.fontPicked, size: 10))
                                                         .padding(8)
                                                         .background(Color.EZNotesLightBlack.opacity(0.8))
                                                         .cornerRadius(15)
@@ -1491,7 +1656,7 @@ struct ShowNotes: View {
                                                         Text(self.originalContent)
                                                             .frame(height: textHeight(for: originalContent, width: UIScreen.main.bounds.width - 32), alignment: .topLeading)//(maxWidth: prop.size.width - 60, alignment: .leading)
                                                             .foregroundStyle(.white)
-                                                            .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
+                                                            .font(Font.custom(self.fontConfiguration.fontPicked, size: self.fontConfiguration.fontSizePicked))
                                                             .multilineTextAlignment(.leading)
                                                     }
                                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -1515,7 +1680,7 @@ struct ShowNotes: View {
                                                         Text(self.notesContent)
                                                             .frame(maxWidth: prop.size.width - 60, alignment: .leading)
                                                             .foregroundStyle(.white)
-                                                            .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
+                                                            .font(Font.custom(self.fontConfiguration.fontPicked, size: self.fontConfiguration.fontSizePicked))
                                                             .multilineTextAlignment(.leading)
                                                             /*.scaleEffect(self.rewritingNotes
                                                                          ? self.rewritingNotesAnimation
@@ -1641,7 +1806,7 @@ struct ShowNotes: View {
                                                                             .frame(maxWidth: prop.size.width - 40, alignment: .leading)
                                                                             .padding(4.5)
                                                                             .foregroundStyle(.white)
-                                                                            .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
+                                                                            .font(Font.custom(self.fontConfiguration.fontPicked, size: self.fontConfiguration.fontSizePicked))
                                                                             .multilineTextAlignment(.leading)
                                                                     }
                                                                     .frame(maxWidth: prop.size.width - 20, maxHeight: prop.size.height / 2 - 60)
@@ -2048,8 +2213,9 @@ struct ShowNotes: View {
                 default:
                     EditableNotes(
                         prop: prop,
-                        fontPicked: self.fontPicked,
-                        fontSizePicked: self.fontSizePicked,
+                        fontConfiguration: self.fontConfiguration,
+                        /*fontPicked: self.fontPicked,
+                        fontSizePicked: self.fontSizePicked,*/
                         categoryName: self.categoryName,
                         setName: self.setName,
                         notesContent: $notesContent,
