@@ -22,6 +22,18 @@ class FontConfiguration: ObservableObject {
     }
 }
 
+class NotesChatDetails: ObservableObject {
+    @Published public var aiChatOverNotesChatID: UUID? = nil
+    @Published public var aiChatOverNotes: Array<MessageDetails> = []
+    @Published public var aiChatOverNotesIsLive: Bool = false
+    
+    func reset() {
+        aiChatOverNotesChatID = nil
+        aiChatOverNotes.removeAll()
+        aiChatOverNotesIsLive = false
+    }
+}
+
 struct EditableNotes: View {
     var prop: Properties
     /*var fontPicked: String
@@ -85,9 +97,10 @@ struct EditableNotes: View {
         return max(size.height + self.textEditorPaddingBottom, 100) // Add a buffer and ensure a minimum height
     }
     
-    @State private var aiChatOverNotesChatID: UUID = UUID()
+    /*@State private var aiChatOverNotesChatID: UUID? = nil
     @State private var aiChatOverNotes: Array<MessageDetails> = []
-    @Binding public var aiChatOverNotesIsLive: Bool
+    @Binding public var aiChatOverNotesIsLive: Bool*/
+    @ObservedObject public var noteChatDetails: NotesChatDetails
     @State private var aiIsTyping: Bool = false
     @State private var numberOfTheAnimationgBall = 3
     @State private var messageBoxTapped: Bool = false
@@ -125,16 +138,16 @@ struct EditableNotes: View {
     
     var body: some View {
         ZStack {
-            if self.aiChatOverNotesIsLive {
+            if self.noteChatDetails.aiChatOverNotesIsLive {
                 VStack {
                     HStack {
-                        Button(action: { self.aiChatOverNotesIsLive = false }) {
+                        Button(action: { self.noteChatDetails.aiChatOverNotesIsLive = false }) {
                             ZStack {
                                 Image(systemName: "multiply")
                                     .resizable()
-                                    .frame(width: 15, height: 15)
+                                    .frame(width: 12, height: 12)
                                     .foregroundStyle(.black)
-                                    .padding(8)
+                                    .padding(5.5)
                                     .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .light))
                                     .clipShape(.circle)
                             }
@@ -151,7 +164,7 @@ struct EditableNotes: View {
                             ScrollViewReader { proxy in
                                 ScrollView {
                                     LazyVStack {
-                                        ForEach(aiChatOverNotes, id: \.self) { message in
+                                        ForEach(self.noteChatDetails.aiChatOverNotes, id: \.self) { message in
                                             MessageView(message: message, aiIsTyping: $aiIsTyping)
                                                 .id(message)
                                         }
@@ -178,9 +191,9 @@ struct EditableNotes: View {
                                             }
                                         }
                                     }
-                                    .onChange(of: aiChatOverNotes) {
+                                    .onChange(of: self.noteChatDetails.aiChatOverNotes) {
                                         withAnimation {
-                                            proxy.scrollTo(aiChatOverNotes.last)
+                                            proxy.scrollTo(self.noteChatDetails.aiChatOverNotes.last)
                                         }
                                     }
                                     /*.onChange(of: self.aiIsTyping) {
@@ -190,12 +203,12 @@ struct EditableNotes: View {
                                      }*/
                                     .onChange(of: self.messageBoxTapped) {
                                         withAnimation {
-                                            proxy.scrollTo(aiChatOverNotes.last)
+                                            proxy.scrollTo(self.noteChatDetails.aiChatOverNotes.last)
                                         }
                                     }
                                     .onAppear {
                                         withAnimation {
-                                            proxy.scrollTo(aiChatOverNotes.last, anchor: .bottom)
+                                            proxy.scrollTo(self.noteChatDetails.aiChatOverNotes.last, anchor: .bottom)
                                         }
                                     }
                                 }
@@ -329,7 +342,7 @@ struct EditableNotes: View {
                                     Button(action: {
                                         self.aiIsTyping = true
                                         
-                                        self.aiChatOverNotes.append(MessageDetails(
+                                        self.noteChatDetails.aiChatOverNotes.append(MessageDetails(
                                             MessageID: UUID(),
                                             MessageContent: self.messageInput,
                                             userSent: true,
@@ -338,7 +351,7 @@ struct EditableNotes: View {
                                         
                                         RequestAction<SendAIChatMessageData>(
                                             parameters: SendAIChatMessageData(
-                                                ChatID: self.aiChatOverNotesChatID,
+                                                ChatID: self.noteChatDetails.aiChatOverNotesChatID!,
                                                 AccountId: getUDValue(key: "account_id"),
                                                 Message: self.messageInput
                                             )
@@ -349,7 +362,7 @@ struct EditableNotes: View {
                                                 return
                                             }
                                             
-                                            self.aiChatOverNotes.append(MessageDetails(
+                                            self.noteChatDetails.aiChatOverNotes.append(MessageDetails(
                                                 MessageID: UUID(),
                                                 MessageContent: resp!["AIResponse"] as! String,
                                                 userSent: false,
@@ -435,19 +448,21 @@ struct EditableNotes: View {
                     
                     HStack {
                         Button(action: {
-                            RequestAction<StartAIChatOverNotesData>(parameters: StartAIChatOverNotesData(
-                                Notes: self.notesContent
-                            ))
-                            .perform(action: start_ai_chat_over_notes_req) { statusCode, resp in
-                                guard resp != nil && statusCode == 200 else {
-                                    if let resp = resp { print(resp) }
-                                    /* TODO: handle errors. */
-                                    return
+                            if self.noteChatDetails.aiChatOverNotesChatID == nil {
+                                RequestAction<StartAIChatOverNotesData>(parameters: StartAIChatOverNotesData(
+                                    Notes: self.notesContent
+                                ))
+                                .perform(action: start_ai_chat_over_notes_req) { statusCode, resp in
+                                    guard resp != nil && statusCode == 200 else {
+                                        if let resp = resp { print(resp) }
+                                        /* TODO: handle errors. */
+                                        return
+                                    }
+                                    
+                                    self.noteChatDetails.aiChatOverNotesChatID = UUID(uuidString: resp!["ChatID"]! as! String)!
+                                    self.noteChatDetails.aiChatOverNotesIsLive = true
                                 }
-                                
-                                self.aiChatOverNotesChatID = UUID(uuidString: resp!["ChatID"]! as! String)!
-                                self.aiChatOverNotesIsLive = true
-                            }
+                            } else { self.noteChatDetails.aiChatOverNotesIsLive = true }
                         }) {
                             HStack {
                                 Image(systemName: "sparkles")
@@ -758,7 +773,18 @@ struct ShowNotes: View {
     @State private var targetX: CGFloat = 0
     @State private var targetY: CGFloat = 0
     
-    @State private var aiChatOverNotesIsLive: Bool = false
+    //@State private var aiChatOverNotesIsLive: Bool = false
+    @StateObject private var noteChatDetails: NotesChatDetails = NotesChatDetails()
+    
+    let EZNotesMG: MeshGradient = MeshGradient(width: 3, height: 3, points: [
+        .init(0, 0), .init(0.3, 0), .init(1, 0),
+        .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+        .init(0, 1), .init(0.5, 1), .init(1, 1)
+    ], colors: [
+        .indigo, .indigo, Color.EZNotesBlue,
+        Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+        .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+    ])
     
     var body: some View {
         ZStack {
@@ -913,6 +939,7 @@ struct ShowNotes: View {
                             self.saveAlert = true
                         }*/
                         //self.notePadFocus = false
+                        self.noteChatDetails.reset()
                         self.launchedSet = false
                     }) {
                         Image(systemName: "arrow.backward")
@@ -993,14 +1020,18 @@ struct ShowNotes: View {
                                 ))
                                 .perform(action: summarize_notes_req) { statusCode, resp in
                                     self.loadingAiGeneratedSummaryOfChanges = false
-                                    guard resp != nil && statusCode == 200 else {
+                                    guard
+                                        let resp = resp,
+                                        resp.keys.contains("Summarization"),
+                                        statusCode == 200
+                                    else {
                                         if let resp = resp { print(resp) }
                                         
                                         self.aiGeneratedSummaryOfChanges = "I was unable to effectively perform my duties detecting changes :("
                                         return
                                     }
                                     
-                                    self.aiGeneratedSummaryOfChanges = resp!["Summarization"] as! String
+                                    self.aiGeneratedSummaryOfChanges = resp["Summarization"] as! String
                                 }
                             }) {
                                 HStack {
@@ -1033,51 +1064,6 @@ struct ShowNotes: View {
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             }
-                            
-                            /*Button(action: { self.menuSection = "change_font" }) {
-                                HStack {
-                                    Text("Edit Font")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .padding(5)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(self.menuSection == "change_font" ? Color.EZNotesBlue : .clear)
-                                        )
-                                        .foregroundStyle(self.menuSection == "change_font" ? .black : .secondary)
-                                        .font(Font.custom("Poppins-SemiBold", size: 16))
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            
-                            Button(action: { self.menuSection = "change_font" }) {
-                                HStack {
-                                    Text("Edit Font")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .padding(5)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(self.menuSection == "change_font" ? Color.EZNotesBlue : .clear)
-                                        )
-                                        .foregroundStyle(self.menuSection == "change_font" ? .black : .secondary)
-                                        .font(Font.custom("Poppins-SemiBold", size: 16))
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            
-                            Button(action: { self.menuSection = "change_font" }) {
-                                HStack {
-                                    Text("Edit Font")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .padding(5)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(self.menuSection == "change_font" ? Color.EZNotesBlue : .clear)
-                                        )
-                                        .foregroundStyle(self.menuSection == "change_font" ? .black : .secondary)
-                                        .font(Font.custom("Poppins-SemiBold", size: 16))
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }*/
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.leading, 10)
@@ -1091,13 +1077,11 @@ struct ShowNotes: View {
                     EditableNotes(
                         prop: prop,
                         fontConfiguration: self.fontConfiguration,
-                        /*fontPicked: self.fontPicked,
-                        fontSizePicked: self.fontSizePicked,*/
                         categoryName: self.categoryName,
                         setName: self.setName,
                         notesContent: $notesContent,
                         setAndNotes: $setAndNotes,
-                        aiChatOverNotesIsLive: $aiChatOverNotesIsLive
+                        noteChatDetails: self.noteChatDetails
                     )
                 case "change_font":
                     VStack {
@@ -1150,21 +1134,9 @@ struct ShowNotes: View {
                                 .font(Font.custom(self.fontConfiguration.fontPicked, size: 16))
                                 .minimumScaleFactor(0.5)
                                 .padding(.top, 2)
-                            //.padding(.bottom, -10)
                             
                             Divider()
-                                .background(MeshGradient(width: 3, height: 3, points: [
-                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                ], colors: [
-                                    .indigo, .indigo, Color.EZNotesBlue,
-                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                ]))
+                                .background(self.EZNotesMG)
                                 .frame(width: prop.size.width - 40)
                             
                             HStack {
@@ -1215,21 +1187,9 @@ struct ShowNotes: View {
                                 .font(Font.custom(self.fontConfiguration.fontPicked, size: self.fontConfiguration.fontSizePicked))
                                 .minimumScaleFactor(0.5)
                                 .padding([.top, .bottom], 8)
-                            //.padding(.bottom, -10)
                             
                             Divider()
-                                .background(MeshGradient(width: 3, height: 3, points: [
-                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                ], colors: [
-                                    .indigo, .indigo, Color.EZNotesBlue,
-                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                ]))
+                                .background(self.EZNotesMG)
                                 .frame(width: prop.size.width - 40)
                                 .padding(.bottom, 15)
                             
@@ -1249,18 +1209,7 @@ struct ShowNotes: View {
                                             Image(systemName: "align.horizontal.left")
                                                 .resizable()
                                                 .frame(width: 50, height: 50)
-                                                .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
-                                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                ], colors: [
-                                                    .indigo, .indigo, Color.EZNotesBlue,
-                                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                ]))
+                                                .foregroundStyle(self.EZNotesMG)
                                             
                                             Text("Left")
                                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -1277,18 +1226,7 @@ struct ShowNotes: View {
                                             Image(systemName: "align.horizontal.center")
                                                 .resizable()
                                                 .frame(width: 50, height: 50)
-                                                .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
-                                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                ], colors: [
-                                                    .indigo, .indigo, Color.EZNotesBlue,
-                                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                ]))
+                                                .foregroundStyle(self.EZNotesMG)
                                             
                                             Text("Center")
                                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -1305,18 +1243,7 @@ struct ShowNotes: View {
                                             Image(systemName: "align.horizontal.right")
                                                 .resizable()
                                                 .frame(width: 50, height: 50)
-                                                .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
-                                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                ], colors: [
-                                                    .indigo, .indigo, Color.EZNotesBlue,
-                                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                ]))
+                                                .foregroundStyle(self.EZNotesMG)
                                             
                                             Text("Right")
                                                 .frame(maxWidth: .infinity, alignment: .center)
@@ -1339,18 +1266,7 @@ struct ShowNotes: View {
                                 .multilineTextAlignment(self.fontConfiguration.fontTextAlignment)
                             
                             Divider()
-                                .background(MeshGradient(width: 3, height: 3, points: [
-                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                ], colors: [
-                                    .indigo, .indigo, Color.EZNotesBlue,
-                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                ]))
+                                .background(self.EZNotesMG)
                                 .frame(width: prop.size.width - 40)
                                 .padding(.bottom, 15)
                             
@@ -1386,21 +1302,51 @@ struct ShowNotes: View {
                                 .padding([.top, .bottom], 8)
                                 .multilineTextAlignment(.leading)
                             
-                            /*HStack {
-                                Text("Save")
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .padding([.top, .bottom], 8)
-                                    .foregroundStyle(.black)
-                                    .setFontSizeAndWeight(weight: .bold, size: 18)
-                                    .minimumScaleFactor(0.5)
+                            Button(action: {
+                                /* MARK: Obtain values of RGB from the picked font color. `ColorData` can be found in `JSONHandler.swift`. */
+                                let components = self.fontConfiguration.fontColor.components()
+                                let colorDataArray = ColorData(red: components.red, green: components.green, blue: components.blue)
+                                
+                                var fontConfigData: [String: [String: String]] = getFontConfiguration() != nil ? getFontConfiguration()! : [:]
+                                
+                                fontConfigData[self.setName] = [
+                                    "Family": "\(self.fontConfiguration.fontPicked)",
+                                    "Size": "\(Int(self.fontConfiguration.fontSizePicked))",
+                                    "Alignment": self.fontConfiguration.fontAlignment == .leading
+                                        ? "leading"
+                                        : self.fontConfiguration.fontAlignment == .center
+                                            ? "center"
+                                            : "trailing",
+                                    "TextAlignment": self.fontConfiguration.fontTextAlignment == .leading
+                                        ? "leading"
+                                        : self.fontConfiguration.fontTextAlignment == .center
+                                            ? "center"
+                                            : "trailing",
+                                    "FontColorRed": "\(colorDataArray.red)",
+                                    "FontColorGreen": "\(colorDataArray.green)",
+                                    "FontColorBlue": "\(colorDataArray.blue)"
+                                ]
+                                
+                                writeFontConfiguration(fontConfiguration: fontConfigData)
+                            }) {
+                                HStack {
+                                    Text("Save")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .padding([.top, .bottom], 8)
+                                        .foregroundStyle(.black)
+                                        .setFontSizeAndWeight(weight: .bold, size: 18)
+                                        .minimumScaleFactor(0.5)
+                                }
+                                .frame(maxWidth: prop.size.width - 40)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(.white)
+                                )
+                                .cornerRadius(15)
                             }
-                            .frame(maxWidth: prop.size.width - 80)
-                            .background(
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(.white)
-                            )
-                            .cornerRadius(15)*/
                         }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .padding(.top, 15)
                         
                         /*HStack {
                             Text(self.fontPicked)
@@ -1450,34 +1396,12 @@ struct ShowNotes: View {
                                     HStack {
                                         Image(systemName: "sparkles")
                                             .frame(width: 20, height: 20)
-                                            .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
-                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                            ], colors: [
-                                                .indigo, .indigo, Color.EZNotesBlue,
-                                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                            ]))
+                                            .foregroundStyle(self.EZNotesMG)
                                         
                                         Text(self.aiGeneratedSummaryOfChanges)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .foregroundStyle(self.aiGeneratedSummaryOfChanges != "No Changes"
-                                                             ? MeshGradient(width: 3, height: 3, points: [
-                                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                             ], colors: [
-                                                                .indigo, .indigo, Color.EZNotesBlue,
-                                                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                             ])
+                                                             ? self.EZNotesMG
                                                              :MeshGradient(width: 3, height: 3, points: [
                                                                 .init(0, 0), .init(0.3, 0), .init(1, 0),
                                                                 .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
@@ -1724,18 +1648,7 @@ struct ShowNotes: View {
                                                     VStack {
                                                         Text("Re-writing the notes...")
                                                             .frame(maxWidth: .infinity, alignment: .center)
-                                                            .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
-                                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                            ], colors: [
-                                                                .indigo, .indigo, Color.EZNotesBlue,
-                                                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                            ]))
+                                                            .foregroundStyle(self.EZNotesMG)
                                                             .font(.system(size: 14))
                                                             .fontWeight(.medium)
                                                         
@@ -1755,18 +1668,7 @@ struct ShowNotes: View {
                                                                 .minimumScaleFactor(0.5)
                                                             
                                                             ZStack {
-                                                                MeshGradient(width: 3, height: 3, points: [
-                                                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                                ], colors: [
-                                                                    .indigo, .indigo, Color.EZNotesBlue,
-                                                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                                ])
+                                                                self.EZNotesMG
                                                                 .blur(radius: 10)
                                                                 /*.offset(
                                                                  x: self.moving ? CGFloat(Int.random(in: 0...6)) : 0,
@@ -1788,18 +1690,7 @@ struct ShowNotes: View {
                                                                 HStack {
                                                                     Image(systemName: "sparkles")
                                                                         .frame(width: 20, height: 20)
-                                                                        .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
-                                                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                                        ], colors: [
-                                                                            .indigo, .indigo, Color.EZNotesBlue,
-                                                                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                             Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                             Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                                        ]))
+                                                                        .foregroundStyle(self.EZNotesMG)
                                                                     
                                                                     ScrollView(.vertical, showsIndicators: true) {
                                                                         Text(self.reWordedNotes)
@@ -1919,18 +1810,7 @@ struct ShowNotes: View {
                                                     }) {
                                                         HStack {
                                                             Image(systemName: "sparkles")
-                                                                .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
-                                                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                                ], colors: [
-                                                                    .indigo, .indigo, Color.EZNotesBlue,
-                                                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                                ]))
+                                                                .foregroundStyle(self.EZNotesMG)
                                                             
                                                             Text(self.reWordedNotes != "" ? "Re-write again" : "Re-write for me")
                                                                 .frame(alignment: .center)
@@ -1943,18 +1823,7 @@ struct ShowNotes: View {
                                                         .background(
                                                             RoundedRectangle(cornerRadius: 15)
                                                                 .fill(.clear)
-                                                                .strokeBorder(MeshGradient(width: 3, height: 3, points: [
-                                                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                                ], colors: [
-                                                                    .indigo, .indigo, Color.EZNotesBlue,
-                                                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                                ]))
+                                                                .strokeBorder(self.EZNotesMG)
                                                         )
                                                     }
                                                     .buttonStyle(NoLongPressButtonStyle())
@@ -2220,7 +2089,7 @@ struct ShowNotes: View {
                         setName: self.setName,
                         notesContent: $notesContent,
                         setAndNotes: $setAndNotes,
-                        aiChatOverNotesIsLive: $aiChatOverNotesIsLive
+                        noteChatDetails: self.noteChatDetails//aiChatOverNotesIsLive: $aiChatOverNotesIsLive
                     )
                 }
                 
@@ -2679,6 +2548,33 @@ struct ShowNotes: View {
             Button("No", role: .cancel) { }
         } message: {
             Text("By continuing, your changes will be saved and you will not be able to undo them.")
+        }
+        .onAppear {
+            guard
+                let fontConfig = getFontConfiguration(),
+                fontConfig != [:],
+                fontConfig.keys.contains(self.setName)
+            else {
+                return
+            }
+            
+            self.fontConfiguration.fontPicked = fontConfig[self.setName]!["Family"]!
+            self.fontConfiguration.fontSizePicked = CGFloat(Double(fontConfig[self.setName]!["Size"]!)!)
+            self.fontConfiguration.fontColor = Color(
+                red: Double(fontConfig[self.setName]!["FontColorRed"]!)!,
+                green: Double(fontConfig[self.setName]!["FontColorGreen"]!)!,
+                blue: Double(fontConfig[self.setName]!["FontColorBlue"]!)!
+            )
+            self.fontConfiguration.fontAlignment = fontConfig[self.setName]!["Alignment"]! == "leading"
+                ? .leading
+                : fontConfig[self.setName]!["Alignment"]! == "center"
+                    ? .center
+                    : .trailing
+            self.fontConfiguration.fontTextAlignment = fontConfig[self.setName]!["TextAlignment"]! == "leading"
+                ? .leading
+                : fontConfig[self.setName]!["TextAlignment"]! == "center"
+                    ? .center
+                    : .trailing
         }
         /*.popover(isPresented: $showMenu) {
             VStack {

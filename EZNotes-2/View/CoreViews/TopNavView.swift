@@ -1945,7 +1945,6 @@ struct TopNavHome: View {
                             prop.size.height / 2.5 > 300 ? "Search Categories..." : "Search...",
                             text: $categorySearch
                         )
-                        .onAppear(perform: { print(prop.size.height / 2.5) })
                         .frame(
                             maxWidth: .infinity,/*prop.isIpad
                                                  ? UIDevice.current.orientation.isLandscape
@@ -1966,7 +1965,7 @@ struct TopNavHome: View {
                                     .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                                     .padding(.leading, 15)
                                 
-                                if self.categorySearchFocus || self.categorySearch != "" {
+                                //if self.categorySearchFocus || self.categorySearch != "" {
                                     Button(action: {
                                         self.categorySearch = ""
                                         self.lookedUpCategoriesAndSets.removeAll()
@@ -1977,7 +1976,7 @@ struct TopNavHome: View {
                                             .foregroundColor(.gray)
                                             .padding(.trailing, 15)
                                     }
-                                }
+                                //}
                             }
                         )
                         .onSubmit {
@@ -2020,98 +2019,23 @@ struct TopNavHome: View {
             if !self.showSearchBar {
                 Spacer()
             }
-            
-            /*if self.showSearchBar {
+    
+            if self.changeNavbarColor {
                 VStack {
-                    TextField(
-                        prop.size.height / 2.5 > 300 ? "Search Categories..." : "Search...",
-                        text: $categorySearch
-                    )
-                    .onAppear(perform: { print(prop.size.height / 2.5) })
-                    .frame(
-                        maxWidth: .infinity,/*prop.isIpad
-                            ? UIDevice.current.orientation.isLandscape
-                                ? prop.size.width - 800
-                                : prop.size.width - 450
-                            : 150,*/
-                        maxHeight: prop.size.height / 2.5 > 300 ? 20 : 15
-                    )
-                    .padding(7)
-                    .padding(.horizontal, 25)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(7.5)
-                    .padding(.horizontal, 10)
-                    .overlay(
-                        HStack {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundColor(.gray)
-                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
-                                .padding(.leading, 15)
-                            
-                            if self.categorySearchFocus || self.categorySearch != "" {
-                                Button(action: {
-                                    self.categorySearch = ""
-                                    self.lookedUpCategoriesAndSets.removeAll()
-                                    self.searchDone = false
-                                    self.showSearchBar = false
-                                }) {
-                                    Image(systemName: "multiply.circle.fill")
-                                        .foregroundColor(.gray)
-                                        .padding(.trailing, 15)
-                                }
-                            }
-                        }
-                    )
-                    .onSubmit {
-                        if !(self.categorySearch == "") {
-                            self.lookedUpCategoriesAndSets.removeAll()
-                            
-                            for (_, value) in self.categoriesAndSets.keys.enumerated() {
-                                if value.lowercased() == self.categorySearch.lowercased() || value.lowercased().contains(self.categorySearch.lowercased()) {
-                                    self.lookedUpCategoriesAndSets[value] = self.categoriesAndSets[value]
-                                    
-                                    print(self.lookedUpCategoriesAndSets)
-                                }
-                            }
-                            
-                            self.searchDone = true
-                        } else {
-                            self.lookedUpCategoriesAndSets.removeAll()
-                            self.searchDone = false
-                        }
-                        
-                        self.categorySearchFocus = false
-                    }
-                    .focused($categorySearchFocus)
-                    .onChange(of: categorySearchFocus) {
-                        if !self.categorySearchFocus && self.categorySearch == "" { self.showSearchBar = false }
-                    }
-                    .onTapGesture {
-                        self.categorySearchFocus = true
-                    }
+                    Text("View Categories")
+                        .foregroundStyle(.primary)
+                        .font(.system(size: 18, design: .rounded))
+                        .fontWeight(.semibold)
+                    
+                    Text("Total: \(self.categoriesAndSets.count)")
+                        .foregroundStyle(.white)
+                        .font(.system(size: 14, design: .rounded))
+                        .fontWeight(.thin)
                 }
-                .frame(maxWidth: .infinity, alignment: .center)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 .padding(.bottom, 20)
-                //.padding(.top, prop.size.height / 2.5 > 300 ? 45 : 15)//.padding(.top, 10)
-                //.padding([.top], prop.size.height > 340 ? 50 : 45)
-            } else {*/
-                if self.changeNavbarColor {
-                    VStack {
-                        Text("View Categories")
-                            .foregroundStyle(.primary)
-                            .font(.system(size: 18, design: .rounded))
-                            .fontWeight(.semibold)
-                        
-                        Text("Total: \(self.categoriesAndSets.count)")
-                            .foregroundStyle(.white)
-                            .font(.system(size: 14, design: .rounded))
-                            .fontWeight(.thin)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    .padding(.bottom, 20)
-                    //.padding(.top, prop.size.height / 2.5 > 300 ? 45 : 15)
-                }
-            //}
+                //.padding(.top, prop.size.height / 2.5 > 300 ? 45 : 15)
+            }
             
             Spacer()
             
@@ -2119,6 +2043,7 @@ struct TopNavHome: View {
                 ZStack {
                     Button(action: {
                         if self.categoriesAndSets.count > 0 {
+                            if self.showSearchBar { self.showSearchBar = false; return }
                             self.showSearchBar = true
                         }
                     }) {

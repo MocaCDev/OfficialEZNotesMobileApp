@@ -172,6 +172,13 @@ func writeSetsAndNotes(setsAndNotes: [String: Array<[String: String]>]) -> Void 
     }
 }
 
+func writeFontConfiguration(fontConfiguration: [String: [String: String]]) -> Void {
+    guard let _ = try? writeJSON(data: fontConfiguration, filename: "font_configuration.json") else {
+        print("[writeSetsAndNotes] -> Failed to write \(fontConfiguration) to cache")
+        return
+    }
+}
+
 public func getCategoryData() -> [String: Array<String>] {
     if let result = try? obtainJSON(type: [String: Array<String>].self, filename: "categories_data.json") { return result }
     else {
@@ -257,6 +264,15 @@ func getSetsAndNotes() -> [String: Array<[String: String]>] {
     guard let result = try? obtainJSON(type: [String: Array<[String: String]>].self, filename: "sets_and_notes.json") else {
         print("[getSetsAndNotes] -> Failed to get sets and notes from cache")
         return [:]
+    }
+    
+    return result
+}
+
+func getFontConfiguration() -> [String: [String: String]]? {
+    guard let result = try? obtainJSON(type: [String: [String: String]].self, filename: "font_configuration.json") else {
+        print("[getFontConfiguration] -> Failed to get font configuration from cache")
+        return nil
     }
     
     return result
