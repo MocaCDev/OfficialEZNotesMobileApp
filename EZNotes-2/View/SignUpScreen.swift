@@ -28,6 +28,8 @@ struct SignUpScreen : View, KeyboardReadable {
     @State private var tooShortUsername: Bool = false
     @State private var makeUsernameFieldRed: Bool = false
     
+    @State private var loadingSelectStateAndCollegeSection: Bool = false
+    
     /* MARK: A "invalid" email is a email missing "@" or a email missing a domain after "@". */
     let emailDomains = [".com", ".edu", ".net", ".gov", ".org"]
     @State private var invalidEmail: Bool = false
@@ -480,160 +482,174 @@ struct SignUpScreen : View, KeyboardReadable {
                         
                         VStack {
                             if self.section == "main" {
-                                Text("Username")
-                                    .frame(
-                                        width: prop.isIpad
-                                        ? UIDevice.current.orientation.isLandscape
-                                        ? prop.size.width - 800
-                                        : prop.size.width - 450
-                                        : prop.size.width - 80,
-                                        height: 5,
-                                        alignment: .leading
-                                    )
-                                    .padding(.top, 10)
-                                    .font(
-                                        .system(
-                                            size: prop.isLargerScreen ? 18 : 15
-                                        )
-                                    )
-                                    .foregroundStyle(.white)
-                                    .fontWeight(.medium)
-                                
-                                TextField("Username...", text: $username)
-                                    .frame(
-                                        width: prop.isIpad
-                                        ? UIDevice.current.orientation.isLandscape
-                                        ? prop.size.width - 800
-                                        : prop.size.width - 450
-                                        : prop.size.width - 100,
-                                        height: prop.isLargerScreen ? 40 : 30
-                                    )
-                                    .padding([.leading], prop.isLargerScreen ? 15 : 5)
-                                    .background(
-                                        Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                            .fill(.clear)
-                                            .border(
-                                                width: 1,
-                                                edges: [.bottom],
-                                                lcolor: !self.makeContentRed
-                                                ? self.userExists || self.makeUsernameFieldRed ? self.borderBottomColorError : self.borderBottomColor
-                                                : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
-                                            )
-                                    )
-                                    .foregroundStyle(Color.EZNotesBlue)
-                                    .padding(prop.isLargerScreen ? 10 : 4)
-                                    .tint(Color.EZNotesBlue)
-                                    .font(.system(size: 18))
-                                    .fontWeight(.medium)
-                                    .autocapitalization(.none)
-                                    .disableAutocorrection(true)
-                                    .focused($usernameTextfieldFocus)
-                                    .onChange(of: usernameTextfieldFocus) {
-                                        if !self.usernameTextfieldFocus { assignUDKey(key: "temp_username", value: self.username) }
+                                if self.loadingSelectStateAndCollegeSection {
+                                    VStack {
+                                        Text("Hang Tight...")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .medium, size: 26)
+                                            .fontWeight(.semibold)
+                                            .minimumScaleFactor(0.5)
+                                        
+                                        ProgressView()
+                                            .tint(Color.EZNotesBlue)
                                     }
-                                
-                                Text("Email")
-                                    .frame(
-                                        width: prop.isIpad
-                                        ? UIDevice.current.orientation.isLandscape
-                                        ? prop.size.width - 800
-                                        : prop.size.width - 450
-                                        : prop.size.width - 80,
-                                        height: 5,
-                                        alignment: .leading
-                                    )
-                                    .padding(.top, 10)
-                                    .font(
-                                        .system(
-                                            size: prop.isLargerScreen ? 18 : 15
+                                    .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .center)
+                                } else {
+                                    Text("Username")
+                                        .frame(
+                                            width: prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                            ? prop.size.width - 800
+                                            : prop.size.width - 450
+                                            : prop.size.width - 80,
+                                            height: 5,
+                                            alignment: .leading
                                         )
-                                    )
-                                    .foregroundStyle(.white)
-                                    .fontWeight(.medium)
-                                
-                                TextField("Email...", text: $email)
-                                    .frame(
-                                        width: prop.isIpad
-                                        ? UIDevice.current.orientation.isLandscape
-                                        ? prop.size.width - 800
-                                        : prop.size.width - 450
-                                        : prop.size.width - 100,
-                                        height: prop.isLargerScreen ? 40 : 30
-                                    )
-                                    .padding([.leading], prop.isLargerScreen ? 15 : 5)
-                                    .background(
-                                        Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                            .fill(.clear)
-                                            .border(
-                                                width: 1,
-                                                edges: [.bottom],
-                                                lcolor: !self.makeContentRed
-                                                ? self.userExists || self.makeEmailFieldRed ? self.borderBottomColorError : self.borderBottomColor
-                                                : self.email == "" ? self.borderBottomColorError : self.borderBottomColor
+                                        .padding(.top, 10)
+                                        .font(
+                                            .system(
+                                                size: prop.isLargerScreen ? 18 : 15
                                             )
-                                    )
-                                    .foregroundStyle(Color.EZNotesBlue)
-                                    .padding(prop.isLargerScreen ? 10 : 4)
-                                    .tint(Color.EZNotesBlue)
-                                    .font(.system(size: 18))
-                                    .fontWeight(.medium)
-                                    .autocapitalization(.none)
-                                    .disableAutocorrection(true)
+                                        )
+                                        .foregroundStyle(.white)
+                                        .fontWeight(.medium)
+                                    
+                                    TextField("Username...", text: $username)
+                                        .frame(
+                                            width: prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                            ? prop.size.width - 800
+                                            : prop.size.width - 450
+                                            : prop.size.width - 100,
+                                            height: prop.isLargerScreen ? 40 : 30
+                                        )
+                                        .padding([.leading], prop.isLargerScreen ? 15 : 5)
+                                        .background(
+                                            Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                .fill(.clear)
+                                                .border(
+                                                    width: 1,
+                                                    edges: [.bottom],
+                                                    lcolor: !self.makeContentRed
+                                                    ? self.userExists || self.makeUsernameFieldRed ? self.borderBottomColorError : self.borderBottomColor
+                                                    : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                )
+                                        )
+                                        .foregroundStyle(Color.EZNotesBlue)
+                                        .padding(prop.isLargerScreen ? 10 : 4)
+                                        .tint(Color.EZNotesBlue)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.medium)
+                                        .autocapitalization(.none)
+                                        .disableAutocorrection(true)
+                                        .focused($usernameTextfieldFocus)
+                                        .onChange(of: usernameTextfieldFocus) {
+                                            if !self.usernameTextfieldFocus { assignUDKey(key: "temp_username", value: self.username) }
+                                        }
+                                    
+                                    Text("Email")
+                                        .frame(
+                                            width: prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                            ? prop.size.width - 800
+                                            : prop.size.width - 450
+                                            : prop.size.width - 80,
+                                            height: 5,
+                                            alignment: .leading
+                                        )
+                                        .padding(.top, 10)
+                                        .font(
+                                            .system(
+                                                size: prop.isLargerScreen ? 18 : 15
+                                            )
+                                        )
+                                        .foregroundStyle(.white)
+                                        .fontWeight(.medium)
+                                    
+                                    TextField("Email...", text: $email)
+                                        .frame(
+                                            width: prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                            ? prop.size.width - 800
+                                            : prop.size.width - 450
+                                            : prop.size.width - 100,
+                                            height: prop.isLargerScreen ? 40 : 30
+                                        )
+                                        .padding([.leading], prop.isLargerScreen ? 15 : 5)
+                                        .background(
+                                            Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                .fill(.clear)
+                                                .border(
+                                                    width: 1,
+                                                    edges: [.bottom],
+                                                    lcolor: !self.makeContentRed
+                                                    ? self.userExists || self.makeEmailFieldRed ? self.borderBottomColorError : self.borderBottomColor
+                                                    : self.email == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                )
+                                        )
+                                        .foregroundStyle(Color.EZNotesBlue)
+                                        .padding(prop.isLargerScreen ? 10 : 4)
+                                        .tint(Color.EZNotesBlue)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.medium)
+                                        .autocapitalization(.none)
+                                        .disableAutocorrection(true)
                                     //.keyboardType(.emailAddress)
-                                    .focused($emailTextfieldFocus)
-                                    .onChange(of: emailTextfieldFocus) { if !self.emailTextfieldFocus { assignUDKey(key: "temp_email", value: self.email) } }
-                                
-                                Text("Password")
-                                    .frame(
-                                        width: prop.isIpad
-                                        ? UIDevice.current.orientation.isLandscape
-                                        ? prop.size.width - 800
-                                        : prop.size.width - 450
-                                        : prop.size.width - 80,
-                                        height: 5,
-                                        alignment: .leading
-                                    )
-                                    .padding(.top, 10)
-                                    .font(
-                                        .system(
-                                            size: prop.isLargerScreen ? 18 : 15
+                                        .focused($emailTextfieldFocus)
+                                        .onChange(of: emailTextfieldFocus) { if !self.emailTextfieldFocus { assignUDKey(key: "temp_email", value: self.email) } }
+                                    
+                                    Text("Password")
+                                        .frame(
+                                            width: prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                            ? prop.size.width - 800
+                                            : prop.size.width - 450
+                                            : prop.size.width - 80,
+                                            height: 5,
+                                            alignment: .leading
                                         )
-                                    )
-                                    .foregroundStyle(.white)
-                                    .fontWeight(.medium)
-                                
-                                SecureField("Password...", text: $password)
-                                    .frame(
-                                        width: prop.isIpad
-                                        ? UIDevice.current.orientation.isLandscape
-                                        ? prop.size.width - 800
-                                        : prop.size.width - 450
-                                        : prop.size.width - 100,
-                                        height: prop.isLargerScreen ? 40 : 30
-                                    )
-                                    .padding([.leading], prop.isLargerScreen ? 15 : 5)
-                                    .background(
-                                        Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                            .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                            .border(
-                                                width: 1,
-                                                edges: [.bottom],
-                                                lcolor: !self.makeContentRed
-                                                ? self.makePasswordFieldRed ? self.borderBottomColorError : self.borderBottomColor
-                                                : self.password == "" ? self.borderBottomColorError : self.borderBottomColor
+                                        .padding(.top, 10)
+                                        .font(
+                                            .system(
+                                                size: prop.isLargerScreen ? 18 : 15
                                             )
-                                    )
-                                    .foregroundStyle(Color.EZNotesBlue)
-                                    .padding(prop.isLargerScreen ? 10 : 4)
-                                    .tint(Color.EZNotesBlue)
-                                    .font(.system(size: 18))
-                                    .fontWeight(.medium)
-                                    .focused($passwordFieldInFocus)
-                                    .autocapitalization(.none)
-                                    .disableAutocorrection(true)
-                                    .focused($passwordTextfieldFocus)
-                                    .onChange(of: passwordTextfieldFocus) { if !self.passwordTextfieldFocus { assignUDKey(key: "temp_password", value: self.password) } }
-                                
+                                        )
+                                        .foregroundStyle(.white)
+                                        .fontWeight(.medium)
+                                    
+                                    SecureField("Password...", text: $password)
+                                        .frame(
+                                            width: prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                            ? prop.size.width - 800
+                                            : prop.size.width - 450
+                                            : prop.size.width - 100,
+                                            height: prop.isLargerScreen ? 40 : 30
+                                        )
+                                        .padding([.leading], prop.isLargerScreen ? 15 : 5)
+                                        .background(
+                                            Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
+                                                .border(
+                                                    width: 1,
+                                                    edges: [.bottom],
+                                                    lcolor: !self.makeContentRed
+                                                    ? self.makePasswordFieldRed ? self.borderBottomColorError : self.borderBottomColor
+                                                    : self.password == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                )
+                                        )
+                                        .foregroundStyle(Color.EZNotesBlue)
+                                        .padding(prop.isLargerScreen ? 10 : 4)
+                                        .tint(Color.EZNotesBlue)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.medium)
+                                        .focused($passwordFieldInFocus)
+                                        .autocapitalization(.none)
+                                        .disableAutocorrection(true)
+                                        .focused($passwordTextfieldFocus)
+                                        .onChange(of: passwordTextfieldFocus) { if !self.passwordTextfieldFocus { assignUDKey(key: "temp_password", value: self.password) } }
+                                }
                             } else if self.section == "select_state_and_college" {
                                 /* TODO: This code is going to need a lot of refactoring. It is very repetitive.. just want it to work for now lol. */
                                 HStack {
@@ -776,6 +792,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             .minimumScaleFactor(0.5)
                                             
                                             ProgressView()
+                                                .tint(Color.EZNotesBlue)
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                                     } else {
@@ -1092,7 +1109,9 @@ struct SignUpScreen : View, KeyboardReadable {
                                         .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .medium, size: 26)
                                         .fontWeight(.semibold)
                                         .minimumScaleFactor(0.5)
+                                    
                                     ProgressView()
+                                        .tint(Color.EZNotesBlue)
                                 }
                                 .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .center)
                             } else if self.section == "code_input" {
@@ -1187,6 +1206,7 @@ struct SignUpScreen : View, KeyboardReadable {
                             Button(action: {
                                 if section == "main" {
                                     if self.wrongCodeAttemptsMet { self.wrongCodeAttemptsMet = false }
+                                    self.loadingSelectStateAndCollegeSection = true
                                     
                                     if self.username == "" || self.email == "" || self.password == "" {
                                         self.makeContentRed = true
@@ -1241,6 +1261,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                     ))
                                     .perform(action: check_username_req) { statusCode, resp in
                                         guard resp != nil && statusCode == 200 else {
+                                            self.loadingSelectStateAndCollegeSection = false
                                             /* MARK: Stay in the "main" section. Just set `userExists` error to true and make content red. */
                                             self.userExists = true
                                             self.makeContentRed = true
@@ -1254,6 +1275,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                             Email: self.email
                                         ))
                                         .perform(action: check_email_req) { statusCode, resp in
+                                            self.loadingSelectStateAndCollegeSection = false
+                                            
                                             guard resp != nil && statusCode == 200 else {
                                                 /* MARK: Stay in the "main" section. Just set `userExists` error to true and make content red. */
                                                 self.emailExists = true
@@ -1474,7 +1497,7 @@ struct SignUpScreen : View, KeyboardReadable {
             }
             
             self.section = getUDValue(key: "last_signup_section")//UserDefaults.standard.string(forKey: "last_signup_section")!
-            if udKeyExists(key: "temp_username") { print("YES"); self.username = getUDValue(key: "temp_username") }
+            if udKeyExists(key: "temp_username") { self.username = getUDValue(key: "temp_username") }
             if udKeyExists(key: "temp_email") { self.email = getUDValue(key: "temp_email") }
             if udKeyExists(key: "temp_password") { self.password = getUDValue(key: "temp_password") }
             if udKeyExists(key: "temp_account_id") { self.accountID = getUDValue(key: "temp_account_id") }

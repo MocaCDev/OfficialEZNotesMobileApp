@@ -289,6 +289,8 @@ struct LoginScreen: View, KeyboardReadable {
                             Password: self.password
                         )
                     ).perform(action: complete_login_req) { statusCode, resp in
+                        if let resp = resp { print(resp) }
+                        
                         guard resp != nil && statusCode == 200 else {
                             self.loginError = true
                             return
