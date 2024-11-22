@@ -1206,7 +1206,6 @@ struct SignUpScreen : View, KeyboardReadable {
                             Button(action: {
                                 if section == "main" {
                                     if self.wrongCodeAttemptsMet { self.wrongCodeAttemptsMet = false }
-                                    self.loadingSelectStateAndCollegeSection = true
                                     
                                     if self.username == "" || self.email == "" || self.password == "" {
                                         self.makeContentRed = true
@@ -1235,6 +1234,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                     
                                     /* MARK: Since the focus of the password textfield might not be set to false when the screen switches, we'll go ahead and assign the "temp_password" `UserDefault` key here as well. */
                                     assignUDKey(key: "temp_password", value: self.password)
+                                    
+                                    self.loadingSelectStateAndCollegeSection = true
                                     
                                     if !self.email.contains("@") {
                                         self.invalidEmail = true

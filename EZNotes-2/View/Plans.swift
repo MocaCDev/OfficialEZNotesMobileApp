@@ -7,15 +7,32 @@
 import SwiftUI
 import StripePayments
 
+enum PlanErrors {
+    case None
+    case CardHolderNameEmpty
+    case CardNumberEmpty
+    case CardExpMonthEmpty
+    case CardExpYearEmpty
+    case CardCVCEmpty
+}
+
+enum CardDetailsPopupType {
+    case None
+    case PrivacyPolicyPopup
+    case TermsAndConditionsPopup
+}
+
 public struct Plans: View {
+    /* MARK: Key variables needed for the struct. */
     var prop: Properties
     var email: String
     var accountID: String
     var borderBottomColor: LinearGradient
     var borderBottomColorError: LinearGradient
     var isLargerScreen: Bool
-    var action: () -> Void
+    var action: () -> Void /* TODO: Is this needed? */
     
+    /* MARK: Plan names; used to determine what plan name to display in the payment information popup. */
     private let planNames: [String: String] = [
         "basic_plan_monthly": "Monthly Basic Plan",
         "basic_plan_annually": "Annual Basic Plan",
@@ -23,6 +40,7 @@ public struct Plans: View {
         "pro_plan_annually": "Annual Pro Plan"
     ]
     
+    /* MARK: Costs of each plan; used to determine what each plan costs. Described in fine print in the payment popup, and prior to payment popup. */
     private let planCosts: [String: String] = [
         "Monthly Basic Plan": "12",
         "Annual Basic Plan": "126",
@@ -30,25 +48,32 @@ public struct Plans: View {
         "Annual Pro Plan": "170"
     ]
     
+    /* MARK: Enumerations over the overall "state" of the view. Below variables help decipher how the view looks. */
+    @State private var planError: PlanErrors = .None
+    @State private var cardDetailsPopupType: CardDetailsPopupType = .None
+    
+    /* MARK: Variables over plan selection - data such as whether or not a plan has been selected, what plan was selected etc */
     @State private var isPlanPicked: Bool = false
     @State private var planPicked: String = ""
     @State private var planName: String = "" /* MARK: The name to display at the top of the payment popover. */
     @State private var planPrice: String = ""
+    
+    /* MARK: Payment information. */
     @State private var cardHolderName: String = ""
     @State private var cardNumber: String = ""
     @State private var expMonth: String = ""
     @State private var expYear: String = ""
     @State private var cvc: String = ""
-    @State private var lastCardNumberLength: Int = 0
-    @State private var cardNumberIndex: Int = 0
-    @State private var showPrivacyPolicy: Bool = false
+    
+    /* MARK: Variables explicitly adherent to the card details view. `cardDetailsPopup` is used to determine whether or not the card details popup will have a popup show up to present the privacy policy/terms & conditions to the user. */
+    @State private var cardDetailsPopup: Bool = false
     @State private var processingPayment: Bool = false
+    
+    /* MARK: Variables over the "state" of the payment being processed. */
     @State private var paymentGood: Bool = true
     @State private var paymentDone: Bool = false
     
-    /* MARK: This is a state of this structure because there is no point of making using it as a binding. */
-    @Binding public var makeContentRed: Bool
-    
+    /* MARK: Function that sends a request to the appropriate API endpoint to create a stripe checkout, enabling the user to "purchase" the subscription they chose. */
     private func payForSubscription(_ paymentMethodId: String, comp: @escaping (String, String?) -> Void) {
         guard let url = URL(string: server)?.appendingPathComponent("/create-stripe-checkout-mobile") else {
             print("Failed")
@@ -88,6 +113,7 @@ public struct Plans: View {
         }).resume()
     }
     
+    /* MARK: Convenient function that creates the payment method that will be used in the above function. */
     private func createPaymentMethod(_ comp: @escaping (String, String?) -> Void) {
         let result = STPPaymentMethodCardParams()
         result.number = self.cardNumber
@@ -508,13 +534,32 @@ public struct Plans: View {
                                 .font(.system(size: prop.isLargerScreen ? 30 : 25, design: .rounded))
                                 .fontWeight(.heavy)
                             
-                            if !self.paymentGood {
-                                Text("An error ocurred while processing your payment. Check over the details and try again. If problems persist, contact us.")
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .foregroundStyle(.red)
-                                    .font(.system(size: 12))
-                                    .minimumScaleFactor(0.5)
-                                    .fontWeight(.light)
+                            if self.planError != .None {
+                                Text(
+                                    self.planError == .CardHolderNameEmpty
+                                        ? "Card Holder field was left empty. All fields required to proceed."
+                                        : self.planError == .CardNumberEmpty
+                                            ? "Card Number field was left empty. All fields required to proceed."
+                                            : self.planError == .CardExpMonthEmpty || self.planError == .CardExpYearEmpty
+                                                ? "Card Exp Year/Month field was left empty. All fields required to proceed"
+                                                : "CVC field was left empty. All fields required to proceed"
+                                )
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .foregroundStyle(.red)
+                                .font(.system(size: 12))
+                                .minimumScaleFactor(0.5)
+                                .fontWeight(.light)
+                                .multilineTextAlignment(.leading)
+                            } else {
+                                if !self.paymentGood {
+                                    Text("An error ocurred while processing your payment. Check over the details and try again. If problems persist, contact us.")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.red)
+                                        .font(.system(size: 12))
+                                        .minimumScaleFactor(0.5)
+                                        .fontWeight(.light)
+                                        .multilineTextAlignment(.leading)
+                                }
                             }
                             
                             Divider()
@@ -542,9 +587,9 @@ public struct Plans: View {
                                             .border(
                                                 width: 1,
                                                 edges: [.bottom],
-                                                lcolor: !self.makeContentRed
+                                                lcolor: self.planError != .CardHolderNameEmpty
                                                 ? self.borderBottomColor
-                                                : self.cardHolderName == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                : self.borderBottomColorError
                                             )
                                     )
                                     .tint(Color.EZNotesBlue)
@@ -578,9 +623,9 @@ public struct Plans: View {
                                             .border(
                                                 width: 1,
                                                 edges: [.bottom],
-                                                lcolor: !self.makeContentRed
+                                                lcolor: self.planError != .CardNumberEmpty
                                                 ? self.borderBottomColor
-                                                : self.cardNumber == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                : self.borderBottomColorError
                                             )
                                     )
                                     .tint(Color.EZNotesBlue)
@@ -626,9 +671,9 @@ public struct Plans: View {
                                                         .border(
                                                             width: 1,
                                                             edges: [.bottom],
-                                                            lcolor: !self.makeContentRed
+                                                            lcolor: self.planError != .CardExpYearEmpty
                                                             ? self.borderBottomColor
-                                                            : self.expMonth == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                            : self.borderBottomColorError
                                                         )
                                                 )
                                                 .tint(Color.EZNotesBlue)
@@ -669,9 +714,9 @@ public struct Plans: View {
                                                         .border(
                                                             width: 1,
                                                             edges: [.bottom],
-                                                            lcolor: !self.makeContentRed
+                                                            lcolor: self.planError != .CardExpYearEmpty
                                                             ? self.borderBottomColor
-                                                            : self.expYear == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                            : self.borderBottomColorError
                                                         )
                                                 )
                                                 .tint(Color.EZNotesBlue)
@@ -715,9 +760,9 @@ public struct Plans: View {
                                                     .border(
                                                         width: 1,
                                                         edges: [.bottom],
-                                                        lcolor: !self.makeContentRed
+                                                        lcolor: self.planError != .CardCVCEmpty
                                                         ? self.borderBottomColor
-                                                        : self.cvc == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                        : self.borderBottomColorError
                                                     )
                                             )
                                             .tint(Color.EZNotesBlue)
@@ -745,8 +790,8 @@ public struct Plans: View {
                                                     UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                                                 }
                                                 /*if self.cvc.count >= 3 {
-                                                    self.cvc = String(self.cvc.prefix(3))
-                                                }*/
+                                                 self.cvc = String(self.cvc.prefix(3))
+                                                 }*/
                                             }
                                     }
                                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -765,7 +810,10 @@ public struct Plans: View {
                                     .multilineTextAlignment(.leading)
                                 
                                 HStack {
-                                    Button(action: { self.showPrivacyPolicy.toggle() }) {
+                                    Button(action: {
+                                        self.cardDetailsPopupType = .PrivacyPolicyPopup
+                                        self.cardDetailsPopup.toggle()
+                                    }) {
                                         Text("Privacy & Policy")
                                             .foregroundStyle(.blue)
                                             .font(.system(size: prop.isLargerScreen ? 13 : 11))
@@ -779,7 +827,10 @@ public struct Plans: View {
                                         .background(.white)
                                         .frame(height: 15)
                                     
-                                    Button(action: { self.showPrivacyPolicy.toggle() }) {
+                                    Button(action: {
+                                        self.cardDetailsPopupType = .TermsAndConditionsPopup
+                                        self.cardDetailsPopup.toggle()
+                                    }) {
                                         Text("Terms and Conditions")
                                             .foregroundStyle(.blue)
                                             .font(.system(size: prop.isLargerScreen ? 13 : 11))
@@ -792,67 +843,16 @@ public struct Plans: View {
                                 .frame(maxWidth: .infinity, maxHeight: 26, alignment: .leading)
                                 .padding(.top, prop.isLargerScreen ? 0 : -5)
                                 
-                                if !prop.isLargerScreen {
-                                    Button(action: {
-                                        self.processingPayment = true
-                                        
-                                        self.createPaymentMethod() { status, customerId in
-                                            if status != "success" {
-                                                self.processingPayment = false
-                                                self.paymentGood = false
-                                                return
-                                            }
-                                            
-                                            self.processingPayment = false
-                                            self.paymentGood = true
-                                            self.isPlanPicked = false
-                                            self.paymentDone = true
-                                            
-                                            UserDefaults.standard.set(true, forKey: "plan_selected")
-                                            
-                                            /* Continue to account. */
-                                            //UserDefaults.standard.set(self.username, forKey: "username")
-                                            //UserDefaults.standard.set(self.email, forKey: "email")
-                                            //UserDefaults.standard.set(customerId!, forKey: "client_id")
-                                            
-                                            DispatchQueue.main.async { action() }
-                                        }
-                                    }) {
-                                        Text("Submit Payment")
-                                            .frame(
-                                                width: prop.isIpad
-                                                ? UIDevice.current.orientation.isLandscape
-                                                ? prop.size.width - 800
-                                                : prop.size.width - 450
-                                                : prop.size.width - 90,
-                                                height: 10
-                                            )
-                                            .padding([.top, .bottom])
-                                            .font(.system(size: 25, design: .rounded))
-                                            .fontWeight(.semibold)
-                                            .foregroundStyle(.black)
-                                            .contentShape(Rectangle())
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    .padding(.leading, 5)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(.white)
-                                    )
-                                }
-                            }
-                            .frame(maxWidth: prop.size.width - 80, alignment: .top)
-                            .padding(.top, 20)
-                            .ignoresSafeArea(.keyboard, edges: .bottom)
-                        }
-                        .frame(maxWidth: prop.size.width - 80, maxHeight: .infinity, alignment: .top)
-                        .ignoresSafeArea(.keyboard, edges: .bottom)
-                        
-                        //Spacer()
-                        
-                        if prop.isLargerScreen {
-                            VStack {
                                 Button(action: {
+                                    if self.cardHolderName == "" { self.planError = .CardHolderNameEmpty; return }
+                                    if self.cardNumber == "" { self.planError = .CardNumberEmpty; return }
+                                    if self.expYear == "" { self.planError = .CardExpYearEmpty; return }
+                                    if self.expMonth == "" { self.planError = .CardExpMonthEmpty; return }
+                                    if self.cvc == "" { self.planError = .CardCVCEmpty; return }
+                                    
+                                    /* MARK: If all above if statements pass, ensure the state `error` is `.None`. */
+                                    if self.planError != .None { self.planError = .None }
+                                    
                                     self.processingPayment = true
                                     
                                     self.createPaymentMethod() { status, customerId in
@@ -874,9 +874,7 @@ public struct Plans: View {
                                         //UserDefaults.standard.set(self.email, forKey: "email")
                                         //UserDefaults.standard.set(customerId!, forKey: "client_id")
                                         
-                                        //if action != nil {
-                                            DispatchQueue.main.async { action() }
-                                        //}
+                                        DispatchQueue.main.async { action() }
                                     }
                                 }) {
                                     Text("Submit Payment")
@@ -900,18 +898,28 @@ public struct Plans: View {
                                     RoundedRectangle(cornerRadius: 15)
                                         .fill(.white)
                                 )
-                                .padding(.bottom, 20)
-                                
                             }
-                            .frame(maxWidth: .infinity)
+                            .frame(maxWidth: prop.size.width - 80, alignment: .top)
+                            .padding(.top, 20)
+                            .ignoresSafeArea(.keyboard, edges: .bottom)
                         }
+                        .frame(maxWidth: prop.size.width - 80, maxHeight: .infinity, alignment: .top)
+                        .ignoresSafeArea(.keyboard, edges: .bottom)
+                        
+                        //Spacer()
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.EZNotesBlack)
-                .popover(isPresented: $showPrivacyPolicy) {
-                    WebView(url: URL(string: "https://www.eznotes.space/privacy_policy")!)
-                        .navigationBarTitle("Privacy Policy", displayMode: .inline)
+                .popover(isPresented: $cardDetailsPopup) {
+                    switch(self.cardDetailsPopupType) {
+                    case .PrivacyPolicyPopup:
+                        WebView(url: URL(string: "https://www.eznotes.space/privacy_policy")!)
+                            .navigationBarTitle("Privacy Policy", displayMode: .inline)
+                    default:
+                        WebView(url: URL(string: "https://www.eznotes.space/terms_and_conditions")!)
+                            .navigationBarTitle("Terms & Conditions", displayMode: .inline)
+                    }
                 }
                 .onAppear(perform: {
                     /* MARK: This is so stupid, but it is needed to be able to correctly display the title. */
