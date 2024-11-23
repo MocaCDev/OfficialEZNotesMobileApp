@@ -101,6 +101,8 @@ struct ReviewView: View {
 
 struct UploadReview: View {
     @ObservedObject public var images_to_upload: ImagesUploads
+    @ObservedObject public var categoryData: CategoryData
+    @Binding public var topBanner: TopBanner
     //@StateObject public var reviewActions: ReviewActions = ReviewActions()
     
     @Binding public var localUpload: Bool
@@ -109,13 +111,13 @@ struct UploadReview: View {
     @Binding public var lastSection: String
     @Binding public var errorType: String
     
-    @Binding public var newCategoriesAndSets: [String: Array<String>]
+    /*@Binding public var newCategoriesAndSets: [String: Array<String>]
     @Binding public var newSetNotes: [String: Array<[String: String]>]
     @Binding public var categoryImages: [String: UIImage]
     @Binding public var categories: Array<String>
     @Binding public var sets: Array<String>
     @Binding public var photos: Array<String>
-    @Binding public var briefDescriptions: Array<String>
+    @Binding public var briefDescriptions: Array<String>*/
     
     var prop: Properties
     
@@ -559,14 +561,19 @@ struct UploadReview: View {
                 
                 if !self.showLargerImage {
                     Button(action: {
-                        self.uploadState = "uploading" /* MARK: Show the loading screen. */
+                        //self.uploadState = "uploading" /* MARK: Show the loading screen. */
+                        self.topBanner = .LoadingUploads
+                        self.section = "upload"
                         
                         var errors: Int = 0
                         
                         if self.images_to_upload.images_to_upload.count < 10 {
                             UploadImages(imageUpload: self.images_to_upload.images_to_upload)
                                 .requestNativeImageUpload() { resp in
+                                    self.topBanner = .None
+                                    
                                     if resp.Bad != nil {
+                                        self.topBanner = .ErrorUploading
                                         print(resp.Bad!)
                                         
                                         /* MARK: If `errors` accumulates to the # of values in the array `images_to_upload`, that means none of the images uploaded had anything valuable in them. Prompt an error.
@@ -584,37 +591,53 @@ struct UploadReview: View {
                                         
                                         return
                                     } else {
-                                        self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
+                                        //self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
                                         
                                         for r in resp.Good!.Data {
-                                            self.categories.append(r.category)
-                                            self.sets.append(r.set_name)
-                                            self.briefDescriptions.append(r.brief_description)
-                                            self.photos.append(r.image_name)
+                                            self.categoryData.categories.append(r.category)
+                                            self.categoryData.sets.append(r.set_name)
+                                            self.categoryData.briefDescriptions.append(r.brief_description)
+                                            self.categoryData.photos.append(r.image_name)
                                             
-                                            if !self.categoryImages.keys.contains(r.category) {
-                                                self.categoryImages[r.category] = findImage(for: r.image_name)!
+                                            if !self.categoryData.categoryImages.keys.contains(r.category) {
+                                                self.categoryData.categoryImages[r.category] = findImage(for: r.image_name)!
                                             }
                                             
                                             /* Append the category/set_name to the `categoriesAndSets` variable
                                              * so the `Home` view gets updated.
                                              * */
-                                            if self.newCategoriesAndSets.keys.contains(r.category) {
+                                            if self.categoryData.newCategoriesAndSets.keys.contains(r.category) {
                                                 //if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
-                                                self.newCategoriesAndSets[r.category]!.append(r.set_name)
-                                                self.newSetNotes[r.category]!.append([r.set_name: r.notes])
+                                                var set_name: String = ""//self.categoryData.configureSetName(categoryName: r.category, currentSetName: r.set_name)
+                                                var number: Int = 0
+                                                
+                                                for i in self.categoryData.newCategoriesAndSets[r.category]! {
+                                                    if i.contains(r.set_name) {
+                                                        number += 1
+                                                    }
+                                                }
+                                                
+                                                if number > 0 { set_name = "\(r.set_name) \(number)" }
+                                                
+                                                self.categoryData.newCategoriesAndSets[r.category]!.append(set_name)
+                                                self.categoryData.newSetNotes[r.category]!.append([set_name: r.notes])
                                                 
                                                 //}
                                             } else {
-                                                self.newCategoriesAndSets[r.category] = [r.set_name]
-                                                self.newSetNotes[r.category] = [[r.set_name: r.notes]]
+                                                let set_name: String = self.categoryData.configureSetName(categoryName: r.category, currentSetName: r.set_name)
+                                                
+                                                self.categoryData.newCategoriesAndSets[r.category] = [set_name]
+                                                self.categoryData.newSetNotes[r.category] = [[set_name: r.notes]]
                                             }
                                         }
                                         
-                                        print(self.newSetNotes)
+                                        self.topBanner = .UploadsReadyToReview
                                         
                                         self.lastSection = self.section
-                                        self.section = "review_new_categories"
+                                        self.section = "upload"
+                                        
+                                        //self.lastSection = self.section
+                                        //self.section = "review_new_categories"
                                         return
                                     }
                                 }
@@ -633,7 +656,12 @@ struct UploadReview: View {
                                 if i == 5  || index == self.images_to_upload.images_to_upload.count - 1 {
                                     UploadImages(imageUpload: uploads)
                                         .requestNativeImageUpload() { resp in
+                                            if index == self.images_to_upload.images_to_upload.count - 1 {
+                                                self.topBanner = .None
+                                            }
+                                            
                                             if resp.Bad != nil || (resp.Bad == nil && resp.Good!.Status != "200") {
+                                                self.topBanner = .ErrorUploading
                                                 print(resp.Bad!)
                                                 
                                                 if errors == self.images_to_upload.images_to_upload.count - 1 {
@@ -649,37 +677,61 @@ struct UploadReview: View {
                                                 return
                                             } else {
                                                 totalResponses += 1
-                                                print(totalResponses, totalResponsesExpected)
+                                                //print(totalResponses, totalResponsesExpected)
                                                 //self.uploadState = "review" /* MARK: Reset the `uploadState` for another round of uploading. */
                                                 
                                                 for r in resp.Good!.Data {
-                                                    self.categories.append(r.category)
-                                                    self.sets.append(r.set_name)
-                                                    self.briefDescriptions.append(r.brief_description)
-                                                    self.photos.append(r.image_name)
+                                                    self.categoryData.categories.append(r.category)
+                                                    self.categoryData.sets.append(r.set_name)
+                                                    self.categoryData.briefDescriptions.append(r.brief_description)
+                                                    self.categoryData.photos.append(r.image_name)
                                                     
-                                                    if !self.categoryImages.keys.contains(r.category) {
-                                                        self.categoryImages[r.category] = findImage(for: r.image_name)!
+                                                    if !self.categoryData.categoryImages.keys.contains(r.category) {
+                                                        self.categoryData.categoryImages[r.category] = findImage(for: r.image_name)!
                                                     }
                                                     
                                                     /* Append the category/set_name to the `categoriesAndSets` variable
                                                      * so the `Home` view gets updated.
                                                      * */
-                                                    if self.newCategoriesAndSets.keys.contains(r.category) {
+                                                    if self.categoryData.newCategoriesAndSets.keys.contains(r.category) {
+                                                        var set_name: String = self.categoryData.configureSetName(categoryName: r.category, currentSetName: r.set_name)
+                                                        var number: Int = 0
+                                                        
+                                                        for i in self.categoryData.newCategoriesAndSets[r.category]! {
+                                                            if i.contains(r.set_name) {
+                                                                number += 1
+                                                            }
+                                                        }
+                                                        
+                                                        /* MARK: `number+1` due to the fact that if number is > 0, that means there is already a set name that exists.. therefore the next one will be number + 1. */
+                                                        if number > 0 { set_name = "\(r.set_name) \(number+1)" }
+                                                        
+                                                        self.categoryData.newCategoriesAndSets[r.category]!.append(set_name)
+                                                        self.categoryData.newSetNotes[r.category]!.append([set_name: r.notes])
+                                                        
                                                         //if !self.newCategoriesAndSets[r.category]!.contains(r.set_name) {
-                                                        self.newCategoriesAndSets[r.category]!.append(r.set_name)
-                                                        self.newSetNotes[r.category]!.append([r.set_name: r.notes])
+                                                        //self.categoryData.newCategoriesAndSets[r.category]!.append(r.set_name)
+                                                        //self.categoryData.newSetNotes[r.category]!.append([r.set_name: r.notes])
                                                         //}
                                                     } else {
-                                                        self.newCategoriesAndSets[r.category] = [r.set_name]
-                                                        self.newSetNotes[r.category] = [[r.set_name: r.notes]]
+                                                        let set_name: String = self.categoryData.configureSetName(categoryName: r.category, currentSetName: r.set_name)
+                                                        
+                                                        self.categoryData.newCategoriesAndSets[r.category] = [set_name]
+                                                        self.categoryData.newSetNotes[r.category] = [[set_name: r.notes]]
+                                                        //self.categoryData.newCategoriesAndSets[r.category] = [r.set_name]
+                                                        //self.categoryData.newSetNotes[r.category] = [[r.set_name: r.notes]]
                                                     }
                                                 }
                                                 
                                                 if totalResponses == totalResponsesExpected {
                                                     self.uploadState = "review"
+                                                    self.topBanner = .UploadsReadyToReview
+                                                    
                                                     self.lastSection = self.section
-                                                    self.section = "review_new_categories"
+                                                    self.section = "upload"
+                                                    
+                                                    //self.lastSection = self.section
+                                                    //self.section = "review_new_categories"
                                                 }
                                             }
                                         }

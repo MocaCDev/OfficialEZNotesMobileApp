@@ -43,7 +43,7 @@ struct EditableNotes: View {
     var setName: String
     
     @Binding public var notesContent: String
-    @Binding public var setAndNotes: [String: Array<[String: String]>]
+    @ObservedObject public var categoryData: CategoryData //@Binding public var setAndNotes: [String: Array<[String: String]>]
     
     @FocusState private var notePadFocus: Bool
     @State private var selectionText: TextSelection? = nil
@@ -512,22 +512,22 @@ struct EditableNotes: View {
                             self.notePadFocus = false
                             
                             /* MARK: Just testing. */
-                            for (index, value) in self.setAndNotes[self.categoryName]!.enumerated() {
+                            for (index, value) in self.categoryData.setAndNotes[self.categoryName]!.enumerated() {
                                 /* TODO: We need to make it to where the initial value (`[:]`), which gets assigned when initiating the variable, gets deleted. */
                                 if value != [:] {
                                     for key in value.keys {
                                         if key == self.setName {
                                             /* MARK: Remove the data from the dictionary. */
-                                            self.setAndNotes[self.categoryName]!.remove(at: index)
+                                            self.categoryData.setAndNotes[self.categoryName]!.remove(at: index)
                                             
                                             /* MARK: Append the new dictionary with the update text. */
-                                            self.setAndNotes[self.categoryName]!.append([key: self.notesContent])
+                                            self.categoryData.setAndNotes[self.categoryName]!.append([key: self.notesContent])
                                         }
                                     }
                                 }
                             }
                             
-                            writeSetsAndNotes(setsAndNotes: self.setAndNotes)
+                            writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
                         }) {
                             HStack {
                                 Text("Stop Editing")
@@ -697,7 +697,7 @@ struct ShowNotes: View {
     
     @Binding public var notesContent: String
     @Binding public var launchedSet: Bool
-    @Binding public var setAndNotes: [String: Array<[String: String]>]
+    @ObservedObject public var categoryData: CategoryData//@Binding public var setAndNotes: [String: Array<[String: String]>]
     
     //@FocusState private var notePadFocus: Bool
     
@@ -916,7 +916,7 @@ struct ShowNotes: View {
                         categoryName: self.categoryName,
                         setName: self.setName,
                         notesContent: $notesContent,
-                        setAndNotes: $setAndNotes,
+                        categoryData: self.categoryData,//setAndNotes: $setAndNotes,
                         noteChatDetails: self.noteChatDetails
                     )
                 case "change_font":
@@ -1670,7 +1670,7 @@ struct ShowNotes: View {
                         categoryName: self.categoryName,
                         setName: self.setName,
                         notesContent: $notesContent,
-                        setAndNotes: $setAndNotes,
+                        categoryData: self.categoryData,//setAndNotes: $setAndNotes,
                         noteChatDetails: self.noteChatDetails//aiChatOverNotesIsLive: $aiChatOverNotesIsLive
                     )
                 }
@@ -1691,22 +1691,22 @@ struct ShowNotes: View {
                 self.originalContent = self.notesContent
                 
                 /* MARK: Ensure that the content of the notes are updated accordingly. Then, write the changes to the appropriate cache file. */
-                for (index, value) in self.setAndNotes[self.categoryName]!.enumerated() {
+                for (index, value) in self.categoryData.setAndNotes[self.categoryName]!.enumerated() {
                     /* TODO: We need to make it to where the initial value (`[:]`), which gets assigned when initiating the variable, gets deleted. */
                     if value != [:] {
                         for key in value.keys {
                             if key == self.setName {
                                 /* MARK: Remove the data from the dictionary. */
-                                self.setAndNotes[self.categoryName]!.remove(at: index)
+                                self.categoryData.setAndNotes[self.categoryName]!.remove(at: index)
                                 
                                 /* MARK: Append the new dictionary with the update text. */
-                                self.setAndNotes[self.categoryName]!.append([key: self.notesContent])
+                                self.categoryData.setAndNotes[self.categoryName]!.append([key: self.notesContent])
                             }
                         }
                     }
                 }
                 
-                writeSetsAndNotes(setsAndNotes: self.setAndNotes)
+                writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
                 
                 /* MARK: Manually set the below variable to "No Changes", as once the user saves all changes are finalized. */
                 self.aiGeneratedSummaryOfChanges = "No Changes"

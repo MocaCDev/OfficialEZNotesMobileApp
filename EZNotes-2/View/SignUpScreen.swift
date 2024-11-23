@@ -1185,8 +1185,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                     borderBottomColor: self.borderBottomColor,
                                     borderBottomColorError: self.borderBottomColorError,
                                     isLargerScreen: prop.isLargerScreen,
-                                    action: setLoginStatus,
-                                    makeContentRed: $makeContentRed
+                                    action: setLoginStatus
                                 )
                             }
                         }

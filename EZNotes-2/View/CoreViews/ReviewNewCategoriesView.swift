@@ -10,8 +10,9 @@ struct ReviewNewCategories: View {
     
     @Binding public var section: String
     @ObservedObject public var images_to_upload: ImagesUploads
+    @ObservedObject public var categoryData: CategoryData
     
-    @Binding public var newCategoriesAndSets: [String: Array<String>]
+    /*@Binding public var newCategoriesAndSets: [String: Array<String>]
     @Binding public var newSetNotes: [String: Array<[String: String]>]
     @Binding public var categoriesAndSets: [String: Array<String>]
     @Binding public var setAndNotes: [String: Array<[String: String]>]
@@ -20,7 +21,7 @@ struct ReviewNewCategories: View {
     @Binding public var categories: Array<String>
     @Binding public var sets: Array<String>
     @Binding public var briefDescriptions: Array<String>
-    @Binding public var photos: Array<String>
+    @Binding public var photos: Array<String>*/
     
     @State public var indexOfSetsToRemove: Array<Int> = []
     @State public var indexOfCategoriesToRemove: Array<Int> = []
@@ -46,7 +47,7 @@ struct ReviewNewCategories: View {
         VStack {
             ScrollView(showsIndicators: false) {
                 VStack {
-                    ForEach(Array(self.photos.enumerated()), id: \.offset) { index, value in
+                    ForEach(Array(self.categoryData.photos.enumerated()), id: \.offset) { index, value in
                         VStack {
                             HStack {
                                 if let image = findImage(for: value) {
@@ -64,14 +65,14 @@ struct ReviewNewCategories: View {
                                 
                                 VStack {
                                     if !self.indexOfCategoriesToRemove.contains(index) {
-                                        Text(self.categories[index])
+                                        Text(self.categoryData.categories[index])
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .foregroundStyle(.white)
                                             .font(.system(size: 26, design: .monospaced))
                                             .minimumScaleFactor(0.5)
                                             .fontWeight(.bold)
                                     } else {
-                                        Text(self.categories[index])
+                                        Text(self.categoryData.categories[index])
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .foregroundStyle(.white)
                                             .font(.system(size: 26, design: .monospaced))
@@ -81,14 +82,14 @@ struct ReviewNewCategories: View {
                                     }
                                     
                                     if !self.indexOfCategoriesToRemove.contains(index) {
-                                        Text(self.sets[index])
+                                        Text(self.categoryData.sets[index])
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .foregroundStyle(.white)
                                             .font(.system(size: 16, design: .serif))
                                             .minimumScaleFactor(0.3)
                                             .fontWeight(.medium)
                                     } else {
-                                        Text(self.sets[index])
+                                        Text(self.categoryData.sets[index])
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .foregroundStyle(.white)
                                             .font(.system(size: 16, design: .serif))
@@ -101,11 +102,11 @@ struct ReviewNewCategories: View {
                                         Button(action: {
                                             if !self.indexOfCategoriesToRemove.contains(index) {
                                                 self.indexOfCategoriesToRemove.append(index)
-                                                self.valueOfCategoriesToRemove.append(self.categories[index])
+                                                self.valueOfCategoriesToRemove.append(self.categoryData.categories[index])
                                             }
                                             else {
                                                 self.indexOfCategoriesToRemove = self.indexOfCategoriesToRemove.filter { $0 != index }
-                                                self.valueOfCategoriesToRemove = self.valueOfCategoriesToRemove.filter { $0 != self.categories[index] }
+                                                self.valueOfCategoriesToRemove = self.valueOfCategoriesToRemove.filter { $0 != self.categoryData.categories[index] }
                                             }
                                         }) {
                                             ZStack {
@@ -156,7 +157,7 @@ struct ReviewNewCategories: View {
                                 Image("AI-Chat")
                                     .resizableImage(width: 20, height: 20)
                                 
-                                Text(self.briefDescriptions[index])
+                                Text(self.categoryData.briefDescriptions[index])
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding([.top, .bottom], 10)
                                     .padding([.leading, .trailing], 15)
@@ -172,7 +173,7 @@ struct ReviewNewCategories: View {
                             .frame(maxWidth: .infinity)
                             .padding(.top, 5)
                             
-                            if self.categoriesAndSets.keys.contains(self.categories[index]) {
+                            if self.categoryData.categoriesAndSets.keys.contains(self.categoryData.categories[index]) {
                                 Text("Category already exists.")
                                     .frame(maxWidth: .infinity, alignment: .center)
                                     .padding(.top, 8)
@@ -180,7 +181,7 @@ struct ReviewNewCategories: View {
                                     .font(.system(size: 12, weight: .medium))
                             } else {
                                 if self.categorySimilarities != [:] {
-                                    if self.categorySimilarities.keys.contains(self.categories[index]) {
+                                    if self.categorySimilarities.keys.contains(self.categoryData.categories[index]) {
                                         HStack {
                                             Text("Similar Categories:")
                                                 .frame(alignment: .leading)
@@ -190,7 +191,7 @@ struct ReviewNewCategories: View {
                                             
                                             ScrollView(.horizontal, showsIndicators: true) {
                                                 HStack {
-                                                    ForEach(self.categorySimilarities[self.categories[index]]!, id: \.self) { similarity in
+                                                    ForEach(self.categorySimilarities[self.categoryData.categories[index]]!, id: \.self) { similarity in
                                                         Text(similarity)
                                                             .frame(maxWidth: .infinity, alignment: .center)
                                                             .padding(8)
@@ -347,10 +348,10 @@ struct ReviewNewCategories: View {
                 
                 if self.indexOfCategoriesToRemove.count > 0 {
                     for (_, value) in self.valueOfCategoriesToRemove.enumerated() {
-                        for (_, value2) in self.newCategoriesAndSets.enumerated() {
+                        for (_, value2) in self.categoryData.newCategoriesAndSets.enumerated() {
                             if value2.key == value {
-                                self.newCategoriesAndSets.removeValue(forKey: value)
-                                self.newSetNotes.removeValue(forKey: value)
+                                self.categoryData.newCategoriesAndSets.removeValue(forKey: value)
+                                self.categoryData.newSetNotes.removeValue(forKey: value)
                                 break
                             }
                         }
@@ -373,68 +374,14 @@ struct ReviewNewCategories: View {
                 
                 //print("After: \(self.newCategoriesAndSets)")
                 
-                for (_, value) in self.newCategoriesAndSets.enumerated() {
-                    for (_, value2) in value.value.enumerated() {
-                        if self.categoriesAndSets.keys.contains(value.key) {
-                            var number: Int = 0
-                            
-                            for set in self.categoriesAndSets[value.key]! {
-                                if set == value2 { number += 1 }
-                            }
-                            
-                            if number > 0 { self.categoriesAndSets[value.key]!.append("\(value2) \(number)") }
-                            else { self.categoriesAndSets[value.key]!.append(value2) }
-                        } else {
-                            self.categoryCreationDates[value.key] = Date.now
-                            self.categoriesAndSets[value.key] = [value2]
-                        }
-                    }
-                }
-                
-                for (_, value) in self.newSetNotes.enumerated() {
-                    var setName: String = ""
-                    
-                    if !self.setAndNotes.keys.contains(value.key) {
-                        self.setAndNotes[value.key] = [[:]]
-                        setName = value.key
-                    }
-                    else {
-                        var number: Int = 0
-                        
-                        for key in self.setAndNotes.keys {
-                            if key == value.key { number += 1 }
-                        }
-                        
-                        self.setAndNotes["\(value.key) \(number)"] = [[:]]
-                        setName = "\(value.key) \(number)"
-                    }
-                    
-                    for (_, value2) in value.value.enumerated() {
-                        self.setAndNotes[setName]!.append(value2)
-                    }
-                }
-                self.newSetNotes.removeAll()
-                
-                //print(self.categoryCreationDates)
-                
-                /* MARK: Save the categories to a JSON file. */
-                writeCategoryData(categoryData: self.categoriesAndSets)
-                writeCategoryImages(categoryImages: self.categoryImages)
-                writeCategoryCreationDates(categoryCreationDates: categoryCreationDates)
-                writeSetsAndNotes(setsAndNotes: self.setAndNotes)
-                
-                /* Remove all upload information. */
-                self.photos.removeAll()
-                self.sets.removeAll()
-                self.categories.removeAll()
-                self.briefDescriptions.removeAll()
+                self.categoryData.saveNewCategories()
+    
                 self.images_to_upload.images_to_upload.removeAll()
                 
                 self.valueOfSetsToRemove.removeAll()
                 self.indexOfSetsToRemove.removeAll()
                 self.indexOfCategoriesToRemove.removeAll()
                 self.valueOfCategoriesToRemove.removeAll()
-                self.newCategoriesAndSets.removeAll()
                 
                 /* Go back to the "upload" screen. */
                 self.section = "upload"
@@ -457,14 +404,17 @@ struct ReviewNewCategories: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.EZNotesBlack)
         .onAppear {
+            /* MARK: Don't do anything if categories don't exist yet. */
+            if self.categoryData.categoriesAndSets.count == 0 { return }
+            
             var existingCategories: Array<String> = []
             
-            for key in self.categoriesAndSets.keys {
+            for key in self.categoryData.categoriesAndSets.keys {
                 existingCategories.append(key)
             }
             
             RequestAction<DetectPossibleSimilarCategories>(parameters: DetectPossibleSimilarCategories(
-                NewCategories: self.categories, ExistingCategories: existingCategories
+                NewCategories: self.categoryData.categories, ExistingCategories: existingCategories
             ))
             .perform(action: detect_possible_similar_categories_req) { statusCode, resp in
                 guard resp != nil && statusCode == 200 else {

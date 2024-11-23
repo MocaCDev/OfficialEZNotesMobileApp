@@ -244,6 +244,8 @@ struct UploadImages {
 
         let dataBody = MediaUpload().createDataBody(media: mediaImages, boundary: boundary)
         request.httpBody = dataBody
+        
+        request.timeoutInterval = 50000
 
         URLSession.shared.dataTask(with: request) { (data, response, error) in
             

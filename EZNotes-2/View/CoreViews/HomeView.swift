@@ -35,7 +35,8 @@ struct NoLongPressButtonStyle: ButtonStyle {
 struct HomeView: View {
     @Binding public var messages: Array<MessageDetails>
     @Binding public var section: String
-    @Binding public var categoriesAndSets: [String: Array<String>]
+    @ObservedObject public var categoryData: CategoryData
+    /*@Binding public var categoriesAndSets: [String: Array<String>]
     @Binding public var setAndNotes: [String: Array<[String: String]>]
     @Binding public var categoryImages: [String: UIImage]
     @Binding var categoryCreationDates: [String: Date]
@@ -43,7 +44,7 @@ struct HomeView: View {
     /* MARK: The below bindings are all custom to the category cards. The values below will be set via the edit popup. */
     @Binding public var categoryDescriptions: [String: String]
     @Binding public var categoryCustomColors: [String: Color]
-    @Binding public var categoryCustomTextColors: [String: Color]
+    @Binding public var categoryCustomTextColors: [String: Color]*/
     
     /* MARK: (Edit popup) changing category background image */
     @State private var photoPicker: PhotosPickerItem?
@@ -197,9 +198,10 @@ struct HomeView: View {
             VStack {
                 TopNavHome(
                     accountInfo: accountInfo,
+                    categoryData: self.categoryData,
                     prop: prop,
                     backgroundColor: Color.EZNotesLightBlack,
-                    categoriesAndSets: categoriesAndSets,
+                    //categoriesAndSets: categoriesAndSets,
                     changeNavbarColor: $show_categories_title,
                     navbarOpacity: $topNavOpacity,
                     categorySearch: $categorySearch,
@@ -211,7 +213,7 @@ struct HomeView: View {
                 )
                 
                 ZStack {
-                    if self.categoriesAndSets.count > 0 {
+                    if self.categoryData.categoriesAndSets.count > 0 {
                         if self.searchDone && self.lookedUpCategoriesAndSets.count == 0 {
                             VStack {
                                 Text("No Results")
@@ -229,7 +231,7 @@ struct HomeView: View {
                                             GeometryReader { innerGeometry in
                                                 HStack {
                                                     Text(self.lookedUpCategoriesAndSets.count == 0
-                                                         ? "Categories(\(self.categoriesAndSets.count))"
+                                                         ? "Categories(\(self.categoryData.categoriesAndSets.count))"
                                                          : "Results: \(self.lookedUpCategoriesAndSets.count)")
                                                     .foregroundStyle(.white)
                                                     .font(.system(size: 30))
@@ -261,16 +263,16 @@ struct HomeView: View {
                                         //LazyVGrid(columns: columns, spacing: 10) {
                                         VStack {
                                             ForEach(Array(self.lookedUpCategoriesAndSets.count == 0
-                                                          ? self.categoriesAndSets.keys
+                                                          ? self.categoryData.categoriesAndSets.keys
                                                           : self.lookedUpCategoriesAndSets.keys), id: \.self) { key in
                                                 HStack {
                                                     Button(action: {
                                                         self.launchCategory = true
                                                         self.categoryLaunched = key
-                                                        self.categoryDescription = self.categoryDescriptions[key]
-                                                        self.categoryTitleColor = self.categoryCustomTextColors[key]
-                                                        self.categoryBackgroundColor = self.categoryCustomColors[key]
-                                                        self.categoryBackground = self.categoryImages[key]!
+                                                        self.categoryDescription = self.categoryData.categoryDescriptions[key]
+                                                        self.categoryTitleColor = self.categoryData.categoryCustomTextColors[key]
+                                                        self.categoryBackgroundColor = self.categoryData.categoryCustomColors[key]
+                                                        self.categoryBackground = self.categoryData.categoryImages[key]!
                                                     }) {
                                                         HStack {
                                                             VStack {
@@ -278,7 +280,7 @@ struct HomeView: View {
                                                                     /* MARK: When the image is clicked, the app will open the photo gallery for the user to select a new photo for the category.
                                                                      * MARK: By default, the categories background image is the first image uploaded in which curated a set of notes within the category.
                                                                      * */
-                                                                    Image(uiImage: self.categoryImages[key]!)
+                                                                    Image(uiImage: self.categoryData.categoryImages[key]!)
                                                                         .resizable()
                                                                         .frame(width: 150.5, height: 190.5)
                                                                         .scaledToFit()
@@ -291,8 +293,8 @@ struct HomeView: View {
                                                                                 Text(key)
                                                                                     .frame(maxWidth: .infinity, alignment: .center)
                                                                                     .foregroundStyle(
-                                                                                        self.categoryCustomTextColors.keys.contains(key)
-                                                                                            ? self.categoryCustomTextColors[key]!
+                                                                                        self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                            ? self.categoryData.categoryCustomTextColors[key]!
                                                                                             : .white
                                                                                     )
                                                                                     .font(.system(size: 18.5, design: .rounded))
@@ -303,11 +305,11 @@ struct HomeView: View {
                                                                                     .frame(height: 25)
                                                                                     .overlay(.black)
                                                                                 
-                                                                                Text("Sets: \(self.categoriesAndSets[key]!.count)")
+                                                                                Text("Sets: \(self.categoryData.categoriesAndSets[key]!.count)")
                                                                                     .frame(maxWidth: 80, alignment: .trailing)
                                                                                     .foregroundStyle(
-                                                                                        self.categoryCustomTextColors.keys.contains(key)
-                                                                                            ? self.categoryCustomTextColors[key]!
+                                                                                        self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                            ? self.categoryData.categoryCustomTextColors[key]!
                                                                                             : .white
                                                                                     )
                                                                                     .font(.system(size: 18.5, design: .rounded))
@@ -319,8 +321,8 @@ struct HomeView: View {
                                                                         }
                                                                         .frame(maxWidth: .infinity, maxHeight: 40, alignment: .top)
                                                                         .background(
-                                                                            self.categoryCustomColors.keys.contains(key)
-                                                                                ? AnyView(self.categoryCustomColors[key].background(.ultraThinMaterial).environment(\.colorScheme, .light))
+                                                                            self.categoryData.categoryCustomColors.keys.contains(key)
+                                                                                ? AnyView(self.categoryData.categoryCustomColors[key].background(.ultraThinMaterial).environment(\.colorScheme, .light))
                                                                             : AnyView(Color.EZNotesOrange.background(.ultraThinMaterial).environment(\.colorScheme, .light))
                                                                         )
                                                                         .cornerRadius(15, corners: [.topRight])
@@ -329,13 +331,13 @@ struct HomeView: View {
                                                                         VStack {
                                                                             VStack {
                                                                                 VStack {
-                                                                                    if self.categoryDescriptions.count > 0 && self.categoryDescriptions.keys.contains(key) {
+                                                                                    if self.categoryData.categoryDescriptions.count > 0 && self.categoryData.categoryDescriptions.keys.contains(key) {
                                                                                         //ZStack {
-                                                                                        Text(self.categoryDescriptions[key]!)
+                                                                                        Text(self.categoryData.categoryDescriptions[key]!)
                                                                                             .frame(maxWidth: (prop.size.width - 20) - 200, maxHeight: 100, alignment: .leading)
                                                                                             .foregroundStyle(
-                                                                                                self.categoryCustomTextColors.keys.contains(key)
-                                                                                                ? self.categoryCustomTextColors[key]!
+                                                                                                self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                                ? self.categoryData.categoryCustomTextColors[key]!
                                                                                                 : .white
                                                                                             )
                                                                                             .padding([.leading], 20)
@@ -347,8 +349,8 @@ struct HomeView: View {
                                                                                         Text("No Description")
                                                                                             .frame(maxWidth: .infinity, maxHeight: 40, alignment: .leading)
                                                                                             .foregroundStyle(
-                                                                                                self.categoryCustomTextColors.keys.contains(key)
-                                                                                                    ? self.categoryCustomTextColors[key]!
+                                                                                                self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                                ? self.categoryData.categoryCustomTextColors[key]!
                                                                                                     : .white
                                                                                             )
                                                                                             .padding([.leading], 20)
@@ -358,13 +360,13 @@ struct HomeView: View {
                                                                                             .multilineTextAlignment(.leading)
                                                                                     }
                                                                                     
-                                                                                    Text("Created \(self.categoryCreationDates[key]!.formatted(date: .numeric, time: .omitted))")
+                                                                                    Text("Created \(self.categoryData.categoryCreationDates[key]!.formatted(date: .numeric, time: .omitted))")
                                                                                         .frame(maxWidth: (prop.size.width - 20) - 200, maxHeight: 20, alignment: .leading)
                                                                                         .padding([.bottom], 5)
                                                                                         .padding([.leading], 20)
                                                                                         .foregroundStyle(
-                                                                                            self.categoryCustomTextColors.keys.contains(key)
-                                                                                                ? self.categoryCustomTextColors[key]!
+                                                                                            self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                                ? self.categoryData.categoryCustomTextColors[key]!
                                                                                                 : .white
                                                                                         )
                                                                                         .fontWeight(.medium)
@@ -376,21 +378,21 @@ struct HomeView: View {
                                                                                 
                                                                                 HStack {
                                                                                     Button(action: {
-                                                                                        if self.categoryDescriptions.keys.contains(key) {
-                                                                                            self.newCategoryDescription = self.categoryDescriptions[key]!
+                                                                                        if self.categoryData.categoryDescriptions.keys.contains(key) {
+                                                                                            self.newCategoryDescription = self.categoryData.categoryDescriptions[key]!
                                                                                         } else { self.newCategoryDescription = "" }
                                                                                         
-                                                                                        if self.categoryCustomColors.keys.contains(key) {
-                                                                                            self.newCategoryDisplayColor = self.categoryCustomColors[key]!
+                                                                                        if self.categoryData.categoryCustomColors.keys.contains(key) {
+                                                                                            self.newCategoryDisplayColor = self.categoryData.categoryCustomColors[key]!
                                                                                         } else { self.newCategoryDisplayColor = Color.EZNotesOrange }
                                                                                         
-                                                                                        if self.categoryCustomTextColors.keys.contains(key) {
-                                                                                            self.newCategoryTextColor = self.categoryCustomTextColors[key]!
+                                                                                        if self.categoryData.categoryCustomTextColors.keys.contains(key) {
+                                                                                            self.newCategoryTextColor = self.categoryData.categoryCustomTextColors[key]!
                                                                                         } else { self.newCategoryTextColor = .white }
                                                                                         
-                                                                                        self.categoryBeingEditedImage = self.categoryImages[key]!
+                                                                                        self.categoryBeingEditedImage = self.categoryData.categoryImages[key]!
                                                                                         self.categoryBeingEdited = key
-                                                                                        self.categoryBeingEditedImage = self.categoryImages[key]!
+                                                                                        self.categoryBeingEditedImage = self.categoryData.categoryImages[key]!
                                                                                         self.editCategoryDetails = true
                                                                                     }) {
                                                                                         Image(systemName: "pencil")
@@ -455,30 +457,30 @@ struct HomeView: View {
                                                                         }
                                                                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                                                                         .background(
-                                                                            self.categoryCustomColors.keys.contains(key)
-                                                                                ? AnyView(self.categoryCustomColors[key])
+                                                                            self.categoryData.categoryCustomColors.keys.contains(key)
+                                                                                ? AnyView(self.categoryData.categoryCustomColors[key])
                                                                                 : AnyView(Color.EZNotesOrange)
                                                                         )
                                                                         .padding([.leading], -20)
                                                                     }
                                                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                                                                     .background(
-                                                                        self.categoryCustomColors.keys.contains(key)
-                                                                            ? AnyView(self.categoryCustomColors[key])
+                                                                        self.categoryData.categoryCustomColors.keys.contains(key)
+                                                                            ? AnyView(self.categoryData.categoryCustomColors[key])
                                                                             : AnyView(Color.EZNotesOrange)
                                                                     )
                                                                     .alert("Are you sure?", isPresented: $categoryAlert) {
                                                                         Button(action: {
-                                                                            if self.categoriesAndSets.count == 1 {
-                                                                                self.categoriesAndSets.removeAll()
-                                                                                self.setAndNotes.removeAll()
+                                                                            if self.categoryData.categoriesAndSets.count == 1 {
+                                                                                self.categoryData.categoriesAndSets.removeAll()
+                                                                                self.categoryData.setAndNotes.removeAll()
                                                                             } else {
-                                                                                self.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
-                                                                                self.setAndNotes.removeValue(forKey: self.categoryToDelete)
+                                                                                self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
+                                                                                self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
                                                                             }
                                                                             
-                                                                            writeCategoryData(categoryData: self.categoriesAndSets)
-                                                                            writeSetsAndNotes(setsAndNotes: self.setAndNotes)
+                                                                            writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                                                            writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
                                                                             
                                                                             resetAlert()
                                                                             
@@ -498,8 +500,8 @@ struct HomeView: View {
                                                             }
                                                             .frame(maxWidth: .infinity, maxHeight: 190)
                                                             .background(
-                                                                self.categoryCustomColors.keys.contains(key)
-                                                                    ? self.categoryCustomColors[key]!
+                                                                self.categoryData.categoryCustomColors.keys.contains(key)
+                                                                    ? self.categoryData.categoryCustomColors[key]!
                                                                     : Color.EZNotesOrange
                                                             )
                                                             .cornerRadius(15)
@@ -674,8 +676,8 @@ struct HomeView: View {
                                                     .frame(maxWidth: .infinity, maxHeight: 25)
                                                     
                                                     TextField(
-                                                        self.categoryDescriptions.keys.contains(self.categoryBeingEdited)
-                                                            ? self.categoryDescriptions[self.categoryBeingEdited]!
+                                                        self.categoryData.categoryDescriptions.keys.contains(self.categoryBeingEdited)
+                                                            ? self.categoryData.categoryDescriptions[self.categoryBeingEdited]!
                                                             : "Description...",
                                                         text: $newCategoryDescription,
                                                         axis: .vertical
@@ -728,9 +730,9 @@ struct HomeView: View {
                                                         
                                                         RoundedRectangle(cornerRadius: 15)
                                                             .fill(
-                                                                self.categoryCustomColors.keys.contains(self.categoryBeingEdited)
-                                                                ? self.newCategoryDisplayColor == self.categoryCustomColors[self.categoryBeingEdited]!
-                                                                    ? self.categoryCustomColors[self.categoryBeingEdited]!
+                                                                self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited)
+                                                                ? self.newCategoryDisplayColor == self.categoryData.categoryCustomColors[self.categoryBeingEdited]!
+                                                                    ? self.categoryData.categoryCustomColors[self.categoryBeingEdited]!
                                                                     : self.newCategoryDisplayColor
                                                                 : self.newCategoryDisplayColor
                                                             )
@@ -756,9 +758,9 @@ struct HomeView: View {
                                                         
                                                         RoundedRectangle(cornerRadius: 15)
                                                             .fill(
-                                                                self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
-                                                                    ? self.newCategoryTextColor == self.categoryCustomTextColors[self.categoryBeingEdited]!
-                                                                        ? self.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
+                                                                    ? self.newCategoryTextColor == self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                        ? self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!
                                                                         : self.newCategoryTextColor
                                                                     : self.newCategoryTextColor
                                                             )
@@ -791,47 +793,47 @@ struct HomeView: View {
                                                 .alert("Hang On", isPresented: $showSaveAlert) {
                                                     Button(action: {
                                                         if self.newCategoryName.count > 0 && !(self.newCategoryName == self.categoryBeingEdited) {
-                                                            let categoryData = self.categoriesAndSets[self.categoryBeingEdited]
-                                                            let categoryImageData = self.categoryImages[self.categoryBeingEdited]
-                                                            let categoryCreationDate = self.categoryCreationDates[self.categoryBeingEdited]
+                                                            let categoryData = self.categoryData.categoriesAndSets[self.categoryBeingEdited]
+                                                            let categoryImageData = self.categoryData.categoryImages[self.categoryBeingEdited]
+                                                            let categoryCreationDate = self.categoryData.categoryCreationDates[self.categoryBeingEdited]
                                                             
-                                                            self.categoriesAndSets.removeValue(forKey: self.categoryBeingEdited)
-                                                            self.categoryImages.removeValue(forKey: self.categoryBeingEdited)
-                                                            self.categoryCreationDates.removeValue(forKey: self.categoryBeingEdited)
+                                                            self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryBeingEdited)
+                                                            self.categoryData.categoryImages.removeValue(forKey: self.categoryBeingEdited)
+                                                            self.categoryData.categoryCreationDates.removeValue(forKey: self.categoryBeingEdited)
                                                             
-                                                            self.categoriesAndSets[self.newCategoryName] = categoryData
-                                                            writeCategoryData(categoryData: self.categoriesAndSets)
+                                                            self.categoryData.categoriesAndSets[self.newCategoryName] = categoryData
+                                                            writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
                                                             
-                                                            self.categoryImages[self.newCategoryName] = categoryImageData
-                                                            writeCategoryImages(categoryImages: self.categoryImages)
+                                                            self.categoryData.categoryImages[self.newCategoryName] = categoryImageData
+                                                            writeCategoryImages(categoryImages: self.categoryData.categoryImages)
                                                             
-                                                            self.categoryCreationDates[self.newCategoryName] = categoryCreationDate
-                                                            writeCategoryCreationDates(categoryCreationDates: self.categoryCreationDates)
+                                                            self.categoryData.categoryCreationDates[self.newCategoryName] = categoryCreationDate
+                                                            writeCategoryCreationDates(categoryCreationDates: self.categoryData.categoryCreationDates)
                                                             
-                                                            if self.categoryCustomColors.keys.contains(self.categoryBeingEdited) {
-                                                                self.categoryCustomColors.removeValue(forKey: self.categoryBeingEdited)
+                                                            if self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited) {
+                                                                self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryBeingEdited)
                                                             }
                                                             
-                                                            if self.categoryDescriptions.keys.contains(self.categoryBeingEdited) {
-                                                                self.categoryDescriptions.removeValue(forKey: self.categoryBeingEdited)
+                                                            if self.categoryData.categoryDescriptions.keys.contains(self.categoryBeingEdited) {
+                                                                self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryBeingEdited)
                                                             }
                                                             
-                                                            if self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) {
-                                                                self.categoryCustomTextColors.removeValue(forKey: self.categoryBeingEdited)
+                                                            if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) {
+                                                                self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryBeingEdited)
                                                             }
                                                             
                                                             self.categoryBeingEdited = self.newCategoryName
                                                         }
                                                         
                                                         if self.newCategoryDisplayColor != Color.EZNotesOrange {
-                                                            self.categoryCustomColors[self.categoryBeingEdited] = self.newCategoryDisplayColor
-                                                            writeCategoryCustomColors(categoryCustomColors: self.categoryCustomColors)
+                                                            self.categoryData.categoryCustomColors[self.categoryBeingEdited] = self.newCategoryDisplayColor
+                                                            writeCategoryCustomColors(categoryCustomColors: self.categoryData.categoryCustomColors)
                                                             //self.newCategoryDisplayColor = Color.EZNotesOrange
                                                         }
                                                         
                                                         if self.newCategoryTextColor != Color.white {
-                                                            self.categoryCustomTextColors[self.categoryBeingEdited] = self.newCategoryTextColor
-                                                            writeCategoryTextColors(categoryTextColors: self.categoryCustomTextColors)
+                                                            self.categoryData.categoryCustomTextColors[self.categoryBeingEdited] = self.newCategoryTextColor
+                                                            writeCategoryTextColors(categoryTextColors: self.categoryData.categoryCustomTextColors)
                                                             //self.newCategoryTextColor = Color.white
                                                         }
                                                         
@@ -840,12 +842,12 @@ struct HomeView: View {
                                                             
                                                             if str == "" { return }
                                                             
-                                                            self.categoryDescriptions[self.categoryBeingEdited] = self.newCategoryDescription
-                                                            writeCategoryDescriptions(categoryDescriptions: self.categoryDescriptions)
+                                                            self.categoryData.categoryDescriptions[self.categoryBeingEdited] = self.newCategoryDescription
+                                                            writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
                                                             //self.newCategoryDescription.removeAll()
                                                         } else {
-                                                            self.categoryDescriptions.removeValue(forKey: self.categoryBeingEdited)
-                                                            writeCategoryDescriptions(categoryDescriptions: self.categoryDescriptions)
+                                                            self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryBeingEdited)
+                                                            writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
                                                         }
                                                     }) {
                                                         Text("Okay")
@@ -907,12 +909,12 @@ struct HomeView: View {
                                                                     Text(self.newCategoryName.count > 0 ? self.newCategoryName : self.categoryBeingEdited)
                                                                         .frame(maxWidth: .infinity, alignment: .center)
                                                                         .foregroundStyle(
-                                                                            self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryTextColor == self.categoryCustomTextColors[self.categoryBeingEdited]!)
+                                                                            self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryTextColor == self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!)
                                                                                 ? self.newCategoryTextColor != .white
                                                                                     ? self.newCategoryTextColor
-                                                                                    : self.categoryCustomTextColors[self.categoryBeingEdited]!
-                                                                                : self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
-                                                                                    ? self.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                                    : self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                                : self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
+                                                                                    ? self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!
                                                                                     : self.newCategoryTextColor != .white
                                                                                         ? self.newCategoryTextColor
                                                                                         : .white
@@ -924,15 +926,15 @@ struct HomeView: View {
                                                                     Divider()
                                                                         .frame(height: 35)
                                                                     
-                                                                    Text("Sets: \(self.categoriesAndSets[self.categoryBeingEdited]!.count)")
+                                                                    Text("Sets: \(self.categoryData.categoriesAndSets[self.categoryBeingEdited]!.count)")
                                                                         .frame(maxWidth: 80, alignment: .trailing)
                                                                         .foregroundStyle(
-                                                                            self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryTextColor == self.categoryCustomTextColors[self.categoryBeingEdited]!)
+                                                                            self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryTextColor == self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!)
                                                                                 ? self.newCategoryTextColor != .white
                                                                                     ? self.newCategoryTextColor
-                                                                                    : self.categoryCustomTextColors[self.categoryBeingEdited]!
-                                                                                : self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
-                                                                                    ? self.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                                    : self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                                : self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
+                                                                                    ? self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!
                                                                                     : self.newCategoryTextColor != .white
                                                                                         ? self.newCategoryTextColor
                                                                                         : .white
@@ -946,12 +948,12 @@ struct HomeView: View {
                                                             }
                                                             .frame(maxWidth: .infinity, maxHeight: 40, alignment: .top)
                                                             .background(
-                                                                self.categoryCustomColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryDisplayColor == self.categoryCustomColors[self.categoryBeingEdited]!)
+                                                                self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryDisplayColor == self.categoryData.categoryCustomColors[self.categoryBeingEdited]!)
                                                                     ? self.newCategoryDisplayColor != Color.EZNotesOrange
                                                                         ? AnyView(self.newCategoryDisplayColor.background(.ultraThinMaterial).environment(\.colorScheme, .light))
-                                                                        : AnyView(self.categoryCustomColors[self.categoryBeingEdited].background(.ultraThinMaterial).environment(\.colorScheme, .light))
-                                                                    : self.categoryCustomColors.keys.contains(self.categoryBeingEdited)
-                                                                        ? AnyView(self.categoryCustomColors[self.categoryBeingEdited].background(.ultraThinMaterial).environment(\.colorScheme, .light))
+                                                                        : AnyView(self.categoryData.categoryCustomColors[self.categoryBeingEdited].background(.ultraThinMaterial).environment(\.colorScheme, .light))
+                                                                    : self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited)
+                                                                        ? AnyView(self.categoryData.categoryCustomColors[self.categoryBeingEdited].background(.ultraThinMaterial).environment(\.colorScheme, .light))
                                                                         : self.newCategoryDisplayColor != Color.EZNotesOrange
                                                                             ? AnyView(self.newCategoryDisplayColor.background(.ultraThinMaterial).environment(\.colorScheme, .light))
                                                                             : AnyView(Color.EZNotesOrange.background(.ultraThinMaterial).environment(\.colorScheme, .light))
@@ -966,12 +968,12 @@ struct HomeView: View {
                                                                             //ZStack {
                                                                             Text(self.newCategoryDescription)
                                                                                 .foregroundStyle(
-                                                                                    self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryTextColor == self.categoryCustomTextColors[self.categoryBeingEdited]!)
+                                                                                    self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryTextColor == self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!)
                                                                                         ? self.newCategoryTextColor != .white
                                                                                             ? self.newCategoryTextColor
-                                                                                            : self.categoryCustomTextColors[self.categoryBeingEdited]!
-                                                                                        : self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
-                                                                                            ? self.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                                            : self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                                        : self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
+                                                                                            ? self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!
                                                                                             : self.newCategoryTextColor != .white
                                                                                                 ? self.newCategoryTextColor
                                                                                                 : .white
@@ -984,12 +986,12 @@ struct HomeView: View {
                                                                         } else {
                                                                             Text("No Description")
                                                                                 .foregroundStyle(
-                                                                                    self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryTextColor == self.categoryCustomTextColors[self.categoryBeingEdited]!)
+                                                                                    self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryTextColor == self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!)
                                                                                         ? self.newCategoryTextColor != .white
                                                                                             ? self.newCategoryTextColor
-                                                                                            : self.categoryCustomTextColors[self.categoryBeingEdited]!
-                                                                                        : self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
-                                                                                            ? self.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                                            : self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                                        : self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
+                                                                                            ? self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!
                                                                                             : self.newCategoryTextColor != .white
                                                                                                 ? self.newCategoryTextColor
                                                                                                 : .white
@@ -1002,17 +1004,17 @@ struct HomeView: View {
                                                                                 .multilineTextAlignment(.leading)
                                                                         }
                                                                         
-                                                                        Text("Created \(self.categoryCreationDates[self.categoryBeingEdited]!.formatted(date: .numeric, time: .omitted))")
+                                                                        Text("Created \(self.categoryData.categoryCreationDates[self.categoryBeingEdited]!.formatted(date: .numeric, time: .omitted))")
                                                                             .frame(maxWidth: (prop.size.width - 20) - 200, maxHeight: 20, alignment: .leading)
                                                                             .padding([.bottom], 5)
                                                                             .padding([.leading], 20)
                                                                             .foregroundStyle(
-                                                                                self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryTextColor == self.categoryCustomTextColors[self.categoryBeingEdited]!)
+                                                                                self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryTextColor == self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!)
                                                                                     ? self.newCategoryTextColor != .white
                                                                                         ? self.newCategoryTextColor
-                                                                                        : self.categoryCustomTextColors[self.categoryBeingEdited]!
-                                                                                    : self.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
-                                                                                        ? self.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                                        : self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!
+                                                                                    : self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited)
+                                                                                        ? self.categoryData.categoryCustomTextColors[self.categoryBeingEdited]!
                                                                                         : self.newCategoryTextColor != .white
                                                                                             ? self.newCategoryTextColor
                                                                                             : .white
@@ -1083,12 +1085,12 @@ struct HomeView: View {
                                                             }
                                                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                                                             .background(
-                                                                self.categoryCustomColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryDisplayColor == self.categoryCustomColors[self.categoryBeingEdited]!)
+                                                                self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryDisplayColor == self.categoryData.categoryCustomColors[self.categoryBeingEdited]!)
                                                                     ? self.newCategoryDisplayColor != Color.EZNotesOrange
                                                                         ? self.newCategoryDisplayColor
-                                                                        : self.categoryCustomColors[self.categoryBeingEdited]!
-                                                                    : self.categoryCustomColors.keys.contains(self.categoryBeingEdited)
-                                                                        ? self.categoryCustomColors[self.categoryBeingEdited]!
+                                                                        : self.categoryData.categoryCustomColors[self.categoryBeingEdited]!
+                                                                    : self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited)
+                                                                        ? self.categoryData.categoryCustomColors[self.categoryBeingEdited]!
                                                                         : self.newCategoryDisplayColor != Color.EZNotesOrange
                                                                             ? self.newCategoryDisplayColor
                                                                             : Color.EZNotesOrange
@@ -1097,12 +1099,12 @@ struct HomeView: View {
                                                         }
                                                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                                                         .background(
-                                                            self.categoryCustomColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryDisplayColor == self.categoryCustomColors[self.categoryBeingEdited]!)
+                                                            self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryDisplayColor == self.categoryData.categoryCustomColors[self.categoryBeingEdited]!)
                                                                 ? self.newCategoryDisplayColor != Color.EZNotesOrange
                                                                     ? self.newCategoryDisplayColor
-                                                                    : self.categoryCustomColors[self.categoryBeingEdited]!
-                                                                : self.categoryCustomColors.keys.contains(self.categoryBeingEdited)
-                                                                    ? self.categoryCustomColors[self.categoryBeingEdited]!
+                                                                    : self.categoryData.categoryCustomColors[self.categoryBeingEdited]!
+                                                                : self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited)
+                                                                    ? self.categoryData.categoryCustomColors[self.categoryBeingEdited]!
                                                                     : self.newCategoryDisplayColor != Color.EZNotesOrange
                                                                         ? self.newCategoryDisplayColor
                                                                         : Color.EZNotesOrange
@@ -1112,12 +1114,12 @@ struct HomeView: View {
                                                 }
                                                 .frame(maxWidth: prop.size.width - 20, maxHeight: 190)
                                                 .background(
-                                                    self.categoryCustomColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryDisplayColor == self.categoryCustomColors[self.categoryBeingEdited]!)
+                                                    self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited) && !(self.newCategoryDisplayColor == self.categoryData.categoryCustomColors[self.categoryBeingEdited]!)
                                                         ? self.newCategoryDisplayColor != Color.EZNotesOrange
                                                             ? self.newCategoryDisplayColor
-                                                            : self.categoryCustomColors[self.categoryBeingEdited]!
-                                                        : self.categoryCustomColors.keys.contains(self.categoryBeingEdited)
-                                                            ? self.categoryCustomColors[self.categoryBeingEdited]!
+                                                            : self.categoryData.categoryCustomColors[self.categoryBeingEdited]!
+                                                        : self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited)
+                                                            ? self.categoryData.categoryCustomColors[self.categoryBeingEdited]!
                                                             : self.newCategoryDisplayColor != Color.EZNotesOrange
                                                                 ? self.newCategoryDisplayColor
                                                                 : Color.EZNotesOrange
@@ -1206,15 +1208,12 @@ struct HomeView: View {
             CategoryInternalsView(
                 prop: prop,
                 categoryName: categoryLaunched,
-                creationDate: "\(self.categoryCreationDates[self.categoryLaunched]!.formatted(date: .numeric, time: .omitted))",
-                //categoryDescription: self.categoryDescription,
+                creationDate: "\(self.categoryData.categoryCreationDates[self.categoryLaunched]!.formatted(date: .numeric, time: .omitted))",
                 categoryTitleColor: self.categoryTitleColor,
                 categoryBackgroundColor: self.categoryBackgroundColor,
-                categoriesAndSets: categoriesAndSets,
                 categoryBackground: categoryBackground,
-                setAndNotes: $setAndNotes,
-                launchCategory: $launchCategory,
-                categoryDescriptions: $categoryDescriptions
+                categoryData: self.categoryData,
+                launchCategory: $launchCategory
             )
         }
     }

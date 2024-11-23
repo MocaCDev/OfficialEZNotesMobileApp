@@ -85,6 +85,8 @@ struct ContentView: View {
     @State private var goBackToLogin: Bool = false
     @StateObject private var model: FrameHandler = FrameHandler()
     
+    @StateObject public var categoryData: CategoryData = CategoryData()
+    
     @State private var categoriesAndSets: [String: Array<String>] = getCategoryData() /* MARK: Key will be the category name, value will be the set names */
     @State private var setAndNotes: [String: Array<[String: String]>] = getSetsAndNotes()
     @State private var categoryCreationDates: [String: Date] = getCategoryCreationDates()
@@ -122,16 +124,17 @@ struct ContentView: View {
                 if self.faceIDAuthenticated {
                     ResponsiveView { prop in
                         CoreApp(
-                            model: model,
                             prop: prop,
-                            categoriesAndSets: $categoriesAndSets,
+                            categoryData: self.categoryData,
+                            accountInfo: accountInfo,
+                            model: model,
+                            /*categoriesAndSets: $categoriesAndSets,
                             setAndNotes: $setAndNotes,
                             categoryCreationDates: $categoryCreationDates,
                             categoryImages: $categoryImages,
                             categoryDescriptions: $categoryDescriptions,
                             categoryCustomColors: $categoryCustomColors,
-                            categoryCustomTextColors: $categoryCustomTextColors,
-                            accountInfo: accountInfo,
+                            categoryCustomTextColors: $categoryCustomTextColors,*/
                             userHasSignedIn: $userHasSignedIn,
                             tempChatHistory: $temporaryStoredChats,
                             messages: $messages

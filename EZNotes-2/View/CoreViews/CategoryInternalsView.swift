@@ -13,7 +13,7 @@ struct CategoryInternalsView: View {
     var creationDate: String
     var categoryTitleColor: Color?
     var categoryBackgroundColor: Color?
-    var categoriesAndSets: [String: Array<String>]
+    //var categoriesAndSets: [String: Array<String>]
     var categoryBackground: UIImage
     //var categoriesSetsAndNotes: Array<[String: String]>
     
@@ -23,9 +23,8 @@ struct CategoryInternalsView: View {
     @State private var setsYOffset: CGFloat = 0
     @State private var internalInfoOpacity: CGFloat = 0
     
-    @Binding public var setAndNotes: [String: Array<[String: String]>]
+    @ObservedObject public var categoryData: CategoryData
     @Binding public var launchCategory: Bool
-    @Binding public var categoryDescriptions: [String: String]
     
     @State private var show_category_internal_title: Bool = false
     
@@ -54,7 +53,7 @@ struct CategoryInternalsView: View {
                 TopNavCategoryView(
                     prop: prop,
                     categoryName: categoryName,
-                    totalSets: self.categoriesAndSets[self.categoryName]!.count,
+                    totalSets: self.categoryData.categoriesAndSets[self.categoryName]!.count,
                     launchCategory: $launchCategory,
                     showTitle: $show_category_internal_title
                 )
@@ -87,7 +86,7 @@ struct CategoryInternalsView: View {
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.leading, 5)
                                     .foregroundStyle(.white)
-                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 30 : 25))//.setFontSizeAndWeight(weight: .semibold, size: prop.isLargerScreen ? 35 : 30)
+                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 24 : 20))//.setFontSizeAndWeight(weight: .semibold, size: prop.isLargerScreen ? 35 : 30)
                                     .minimumScaleFactor(0.5)
                                     .multilineTextAlignment(.leading)
                             }
@@ -104,7 +103,7 @@ struct CategoryInternalsView: View {
                              .frame(maxWidth: .infinity, alignment: .leading)*/
                             
                             HStack {
-                                Text("\(self.categoriesAndSets[self.categoryName]!.count) \(self.categoriesAndSets[self.categoryName]!.count > 1 ? "Sets" : "Set")")
+                                Text("\(self.categoryData.categoriesAndSets[self.categoryName]!.count) \(self.categoryData.categoriesAndSets[self.categoryName]!.count > 1 ? "Sets" : "Set")")
                                     .frame(alignment: .leading)
                                     .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen ? 12.5 : 10.5)
                                 //.padding([.leading, .trailing], 8)
@@ -198,9 +197,9 @@ struct CategoryInternalsView: View {
                                                     return
                                                 }
                                                 
-                                                self.categoryDescriptions[self.categoryName] = resp!["Desc"] as? String
+                                                self.categoryData.categoryDescriptions[self.categoryName] = resp!["Desc"] as? String
                                                 self.categoryDescription = resp!["Desc"] as? String
-                                                writeCategoryDescriptions(categoryDescriptions: self.categoryDescriptions)
+                                                writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
                                             }
                                         }) {
                                             if #available(iOS 18.0, *) {
@@ -294,7 +293,7 @@ struct CategoryInternalsView: View {
                     
                     VStack {
                         VStack {
-                            if self.setAndNotes[self.categoryName]!.count == 0 {
+                            if self.categoryData.setAndNotes[self.categoryName]!.count == 0 {
                                 Text("No sets or notes in this category.")
                                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                                     .padding(.top)
@@ -303,7 +302,7 @@ struct CategoryInternalsView: View {
                                     .minimumScaleFactor(0.5)
                             } else {
                                 ScrollView(.vertical, showsIndicators: false) {
-                                    ForEach(Array(self.setAndNotes[self.categoryName]!.enumerated()), id: \.offset) { index, val in
+                                    ForEach(Array(self.categoryData.setAndNotes[self.categoryName]!.enumerated()), id: \.offset) { index, val in
                                         if val != [:] {
                                             ForEach(Array(val.keys), id: \.self) { key in
                                                 Button(action: {
@@ -355,7 +354,7 @@ struct CategoryInternalsView: View {
                         }
                         .frame(maxWidth: prop.size.width - 30, maxHeight: .infinity)
                     }
-                    .frame(maxWidth: prop.size.width - 30, maxHeight: .infinity)
+                    .frame(maxWidth: prop.size.width - 30, maxHeight: .infinity, alignment: .top)
                     .padding()
                     .padding(.top, 15)
                     .cornerRadius(15)
@@ -369,7 +368,7 @@ struct CategoryInternalsView: View {
             .background(Color.EZNotesBlack)
             .ignoresSafeArea(edges: [.top])
             .onAppear {
-                self.categoryDescription = self.categoryDescriptions[self.categoryName]
+                self.categoryDescription = self.categoryData.categoryDescriptions[self.categoryName]
                 self.setsYOffset = prop.size.height - 100
                 
                 /* TODO: Is this needed? Keep for now just in case. */
@@ -388,7 +387,7 @@ struct CategoryInternalsView: View {
                 originalContent: self.originalContet,
                 notesContent: $notesContent,
                 launchedSet: $launchedSet,
-                setAndNotes: $setAndNotes
+                categoryData: self.categoryData//setAndNotes: $setAndNotes
             )
         }
     }

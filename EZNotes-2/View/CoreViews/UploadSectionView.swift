@@ -7,6 +7,8 @@
 import SwiftUI
 
 struct UploadSection: View {
+    @Binding public var topBanner: TopBanner
+    
     @State private var isFocused = false
     @State private var isScaled = false
     @State private var focusLocation: CGPoint = .zero
@@ -14,7 +16,7 @@ struct UploadSection: View {
     @State private var loadingCameraView: Bool = false
     
     @ObservedObject public var images_to_upload: ImagesUploads
-    
+    @ObservedObject public var categoryData: CategoryData
     @ObservedObject public var model: FrameHandler
     
     @Binding public var lastSection: String
@@ -34,6 +36,9 @@ struct UploadSection: View {
     var body: some View {
         VStack {
             TopNavUpload(
+                topBanner: $topBanner,
+                categoryData: self.categoryData,
+                imagesToUpload: self.images_to_upload,
                 accountInfo: accountInfo,
                 section: $section,
                 lastSection: $lastSection,
@@ -48,7 +53,6 @@ struct UploadSection: View {
                 if !self.model.cameraDeviceFound {
                     VStack {
                         VStack {
-                            
                             Image(systemName: "exclamationmark.warninglight.fill")
                                 .resizable()
                                 .frame(width: 60, height: 60)
