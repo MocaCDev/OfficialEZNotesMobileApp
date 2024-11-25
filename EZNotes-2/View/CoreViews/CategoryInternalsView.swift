@@ -28,12 +28,23 @@ struct CategoryInternalsView: View {
     
     @State private var show_category_internal_title: Bool = false
     
-    @State private var categoryBeingEditedImage: UIImage! = UIImage(systemName: "plus")!
     @State private var categoryBeingEdited: String = ""
     @State private var editCategoryDetails: Bool = false
     @State private var newCategoryDescription: String = ""
     @State private var newCategoryDisplayColor: Color = Color.EZNotesOrange
     @State private var newCategoryTextColor: Color = Color.white
+    @State private var categoryAlert: Bool = false
+    @State private var alertType: AlertTypes = .None
+    @State private var categoryToDelete: String = ""
+    
+    private func resetAlert() {
+        if self.alertType == .DeleteCategoryAlert {
+            self.categoryToDelete.removeAll()
+        }
+        
+        self.categoryAlert = false
+        self.alertType = .None
+    }
     
     private func checkIfOutOfFrame(innerGeometry: GeometryProxy, outerGeometry: GeometryProxy) {
         let textFrame = innerGeometry.frame(in: .global)
@@ -135,8 +146,7 @@ struct CategoryInternalsView: View {
                             
                             HStack {
                                 HStack {
-                                    /*Button(action: {
-                                        print("HI")
+                                    Button(action: {
                                         if self.categoryData.categoryDescriptions.keys.contains(self.categoryName) {
                                             self.newCategoryDescription = self.categoryData.categoryDescriptions[self.categoryName]!
                                         } else { self.newCategoryDescription = "" }
@@ -149,28 +159,26 @@ struct CategoryInternalsView: View {
                                             self.newCategoryTextColor = self.categoryData.categoryCustomTextColors[self.categoryName]!
                                         } else { self.newCategoryTextColor = .white }
                                         
-                                        self.categoryBeingEditedImage = self.categoryData.categoryImages[self.categoryName]!
                                         self.categoryBeingEdited = self.categoryName
                                         //self.categoryBeingEditedImage = self.categoryData.categoryImages[self.categoryName]!
                                         self.editCategoryDetails = true
-                                        
-                                        print(self.editCategoryDetails)
-                                    }) {*/
-                                        HStack {
-                                            Text("Edit")
-                                                .frame(maxWidth: .infinity, alignment: .center)
-                                                .foregroundStyle(.white)
-                                                .padding(2.5)
-                                                
-                                        }
-                                        .padding(15)
-                                        .background(Color.EZNotesBlue)
-                                        .cornerRadius(15)
-                                        .onTapGesture {
-                                            print("LOL")
-                                        }
-                                    /*}
-                                    .buttonStyle(NoLongPressButtonStyle())*/
+                                    }) {
+                                        Text("Edit")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .padding(2.5)
+                                            .background(Color.EZNotesBlue)
+                                            .cornerRadius(15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .popover(isPresented: $editCategoryDetails) {
+                                        EditCategory(
+                                            prop: self.prop,
+                                            categoryBeingEditedImage: self.categoryBackground,
+                                            categoryBeingEdited: $categoryBeingEdited,
+                                            categoryData: self.categoryData
+                                        )
+                                    }
                                     
                                     Button(action: { }) {
                                         Text("Share")
@@ -180,18 +188,50 @@ struct CategoryInternalsView: View {
                                             .background(Color.EZNotesBlue)
                                             .cornerRadius(15)
                                     }
-                                    .frame(maxWidth: .infinity, alignment: .center)
                                     .buttonStyle(NoLongPressButtonStyle())
                                     
-                                    Button(action: { }) {
+                                    Button(action: {
+                                        self.categoryToDelete = self.categoryName
+                                        self.categoryAlert = true
+                                        self.alertType = .DeleteCategoryAlert
+                                    }) {
                                         Text("Delete")
                                             .frame(maxWidth: .infinity, alignment: .center)
                                             .padding(2.5)
                                             .background(Color.EZNotesRed)
                                             .cornerRadius(15)
                                     }
-                                    .frame(maxWidth: .infinity, alignment: .trailing)
                                     .buttonStyle(NoLongPressButtonStyle())
+                                    .alert("Are you sure?", isPresented: $categoryAlert) {
+                                        Button(action: {
+                                            self.launchCategory = false
+                                            
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                                if self.categoryData.categoriesAndSets.count == 1 {
+                                                    self.categoryData.categoriesAndSets.removeAll()
+                                                    self.categoryData.setAndNotes.removeAll()
+                                                } else {
+                                                    self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
+                                                    self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
+                                                }
+                                                
+                                                writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                                writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                                
+                                                resetAlert()
+                                            }
+                                            
+                                            /* TODO: Add support for actually storing category information in the database. That will, thereby, prompt us to need to send a request to the server to delete the given category from the database. */
+                                        }) {
+                                            Text("Yes")
+                                        }
+                                        
+                                        Button(action: { resetAlert() }) { Text("No") }
+                                    } message: {
+                                        Text(self.alertType == .DeleteCategoryAlert
+                                             ? "Once deleted, the category \(self.categoryToDelete) will be removed from cloud or local storage and cannot be recovered."
+                                             : "")
+                                    }
                                 }
                                 .frame(maxWidth: prop.size.width - 100, alignment: .leading)
                                 
@@ -406,14 +446,6 @@ struct CategoryInternalsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .background(Color.EZNotesBlack)
             .ignoresSafeArea(edges: [.top, .bottom])
-            .popover(isPresented: $editCategoryDetails) {
-                EditCategory(
-                    prop: self.prop,
-                    categoryBeingEditedImage: self.categoryBeingEditedImage,
-                    categoryBeingEdited: $categoryBeingEdited,
-                    categoryData: self.categoryData
-                )
-            }
             .onAppear {
                 self.categoryDescription = self.categoryData.categoryDescriptions[self.categoryName]
                 self.setsYOffset = prop.size.height - 100

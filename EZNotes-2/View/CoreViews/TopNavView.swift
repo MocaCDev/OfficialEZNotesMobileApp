@@ -3203,6 +3203,8 @@ struct TopNavCategoryView: View {
 
 struct TopNavUpload: View {
     @Binding public var topBanner: TopBanner
+    @Binding public var needsNoWifiBanner: Bool
+    @ObservedObject public var networkMonitor: NetworkMonitor
     @ObservedObject public var categoryData: CategoryData
     @ObservedObject public var imagesToUpload: ImagesUploads
     @ObservedObject public var accountInfo: AccountDetails
@@ -3227,24 +3229,8 @@ struct TopNavUpload: View {
             .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
             
             
-            if self.topBanner != .None {
-                switch(self.topBanner) {
-                case .LoadingUploads:
-                    HStack {
-                        Text("Uploading \(self.images_to_upload.images_to_upload.count) \(self.images_to_upload.images_to_upload.count > 1 ? "images" : "image")...")
-                            .foregroundStyle(.white)
-                            .font(.system(size: prop.isLargerScreen ? 16 : 13))
-                            .padding(.trailing, 5)
-                        
-                        ProgressView()
-                            .controlSize(.mini)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
-                    .background(Color.EZNotesLightBlack.opacity(0.8))
-                    .cornerRadius(15)
-                    .padding(.bottom, 20)
-                    .padding(.trailing, 10)
-                case .ErrorUploading:
+            if self.topBanner != .None || self.needsNoWifiBanner {
+                if self.needsNoWifiBanner {
                     HStack {
                         HStack {
                             Button(action: { self.topBanner = .None }) {
@@ -3257,50 +3243,20 @@ struct TopNavUpload: View {
                             }
                             .buttonStyle(NoLongPressButtonStyle())
                             
-                            Text("Error Uploading Images. Try Again")
+                            Text("No WiFi Connection")
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .foregroundStyle(Color.EZNotesRed)
                                 .font(.system(size: prop.isLargerScreen ? 16 : 13))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
-                    .background(Color.EZNotesLightBlack.opacity(0.8))
-                    .cornerRadius(15)
-                    .padding(.bottom, 20)
-                    .padding(.trailing, 10)
-                case .UploadsReadyToReview:
-                    HStack {
-                        HStack {
-                            Button(action: {
-                                self.categoryData.saveNewCategories()
-                                self.imagesToUpload.images_to_upload.removeAll()
-                                self.topBanner = .None
-                            }) {
-                                ZStack {
-                                    Image(systemName: "multiply")
-                                        .resizable()
-                                        .frame(width: 10, height: 10)
-                                        .foregroundStyle(.white)
-                                }.frame(maxWidth: 10, alignment: .leading).padding(.leading, 10)
-                            }
-                            .buttonStyle(NoLongPressButtonStyle())
-                            
-                            Text("Uploading Finished")
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .foregroundStyle(Color.EZNotesGreen)
-                                .font(.system(size: prop.isLargerScreen ? 16 : 13))
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
                         
                         Button(action: {
-                            self.lastSection = self.section
-                            self.section = "review_new_categories"
-                            
-                            self.topBanner = .None
+                            if self.networkMonitor.isConnectedToWiFi || self.networkMonitor.isConnectedToCellular {
+                                self.needsNoWifiBanner = false
+                            }
                         }) {
                             ZStack {
-                                Text("Review")
+                                Text("Retry")
                                     .frame(alignment: .trailing)
                                     .padding([.top, .bottom], 2.5)
                                     .padding([.leading, .trailing], 6.5)
@@ -3314,13 +3270,122 @@ struct TopNavUpload: View {
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
-                    .padding([.top, .bottom], 6)
                     .background(Color.EZNotesLightBlack.opacity(0.8))
                     .cornerRadius(15)
                     .padding(.bottom, 20)
                     .padding(.trailing, 10)
-                default:
-                    Spacer()
+                } else {
+                    switch(self.topBanner) {
+                    case .LoadingUploads:
+                        HStack {
+                            Text("Uploading \(self.images_to_upload.images_to_upload.count) \(self.images_to_upload.images_to_upload.count > 1 ? "images" : "image")...")
+                                .foregroundStyle(.white)
+                                .font(.system(size: prop.isLargerScreen ? 16 : 13))
+                                .padding(.trailing, 5)
+                            
+                            ProgressView()
+                                .controlSize(.mini)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
+                        .background(Color.EZNotesLightBlack.opacity(0.8))
+                        .cornerRadius(15)
+                        .padding(.bottom, 20)
+                        .padding(.trailing, 10)
+                    case .ErrorUploading:
+                        HStack {
+                            HStack {
+                                Button(action: { self.topBanner = .None }) {
+                                    ZStack {
+                                        Image(systemName: "multiply")
+                                            .resizable()
+                                            .frame(width: 10, height: 10)
+                                            .foregroundStyle(.white)
+                                    }.frame(maxWidth: 10, alignment: .leading).padding(.leading, 10)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                
+                                Text("Error Uploading. Try Again")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .foregroundStyle(Color.EZNotesRed)
+                                    .font(.system(size: prop.isLargerScreen ? 16 : 13))
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            Button(action: {
+                                print("Report Issue")
+                            }) {
+                                ZStack {
+                                    Text("Report")
+                                        .frame(alignment: .trailing)
+                                        .padding([.top, .bottom], 2.5)
+                                        .padding([.leading, .trailing], 6.5)
+                                        .background(.white)
+                                        .cornerRadius(15)
+                                        .foregroundStyle(.black)
+                                        .font(.system(size: prop.isLargerScreen ? 13.5 : 10))
+                                }
+                                .frame(alignment: .trailing)
+                                .padding(.trailing, 10)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
+                        .background(Color.EZNotesLightBlack.opacity(0.8))
+                        .cornerRadius(15)
+                        .padding(.bottom, 20)
+                        .padding(.trailing, 10)
+                    case .UploadsReadyToReview:
+                        HStack {
+                            HStack {
+                                Button(action: {
+                                    self.categoryData.saveNewCategories()
+                                    self.imagesToUpload.images_to_upload.removeAll()
+                                    self.topBanner = .None
+                                }) {
+                                    ZStack {
+                                        Image(systemName: "multiply")
+                                            .resizable()
+                                            .frame(width: 10, height: 10)
+                                            .foregroundStyle(.white)
+                                    }.frame(maxWidth: 10, alignment: .leading).padding(.leading, 10)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                
+                                Text("Uploading Finished")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .foregroundStyle(Color.EZNotesGreen)
+                                    .font(.system(size: prop.isLargerScreen ? 16 : 13))
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            Button(action: {
+                                self.lastSection = self.section
+                                self.section = "review_new_categories"
+                                
+                                self.topBanner = .None
+                            }) {
+                                ZStack {
+                                    Text("Review")
+                                        .frame(alignment: .trailing)
+                                        .padding([.top, .bottom], 2.5)
+                                        .padding([.leading, .trailing], 6.5)
+                                        .background(.white)
+                                        .cornerRadius(15)
+                                        .foregroundStyle(.black)
+                                        .font(.system(size: prop.isLargerScreen ? 13.5 : 10))
+                                }
+                                .frame(alignment: .trailing)
+                                .padding(.trailing, 10)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
+                        .padding([.top, .bottom], 6)
+                        .background(Color.EZNotesLightBlack.opacity(0.8))
+                        .cornerRadius(15)
+                        .padding(.bottom, 20)
+                        .padding(.trailing, 10)
+                    default:
+                        Spacer()
+                    }
                 }
             } else {
                 Spacer()

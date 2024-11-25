@@ -8,6 +8,8 @@ import SwiftUI
 
 struct UploadSection: View {
     @Binding public var topBanner: TopBanner
+    @Binding public var needsNoWifiBanner: Bool
+    @ObservedObject public var networkMonitor: NetworkMonitor
     
     @State private var isFocused = false
     @State private var isScaled = false
@@ -37,6 +39,8 @@ struct UploadSection: View {
         VStack {
             TopNavUpload(
                 topBanner: $topBanner,
+                needsNoWifiBanner: $needsNoWifiBanner,
+                networkMonitor: self.networkMonitor,
                 categoryData: self.categoryData,
                 imagesToUpload: self.images_to_upload,
                 accountInfo: accountInfo,

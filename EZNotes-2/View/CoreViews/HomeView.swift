@@ -353,6 +353,32 @@ struct HomeView: View {
                                                                             .padding([.trailing, .top, .bottom], 10)
                                                                         Text("Delete").foregroundStyle(.white)
                                                                     }
+                                                                    .alert("Are you sure?", isPresented: $categoryAlert) {
+                                                                        Button(action: {
+                                                                            if self.categoryData.categoriesAndSets.count == 1 {
+                                                                                self.categoryData.categoriesAndSets.removeAll()
+                                                                                self.categoryData.setAndNotes.removeAll()
+                                                                            } else {
+                                                                                self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
+                                                                                self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
+                                                                            }
+                                                                            
+                                                                            writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                                                            writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                                                            
+                                                                            resetAlert()
+                                                                            
+                                                                            /* TODO: Add support for actually storing category information in the database. That will, thereby, prompt us to need to send a request to the server to delete the given category from the database. */
+                                                                        }) {
+                                                                            Text("Yes")
+                                                                        }
+                                                                        
+                                                                        Button(action: { resetAlert() }) { Text("No") }
+                                                                    } message: {
+                                                                        Text(self.alertType == .DeleteCategoryAlert
+                                                                             ? "Once deleted, the category \(self.categoryToDelete) will be removed from cloud or local storage and cannot be recovered."
+                                                                             : "")
+                                                                    }
                                                                     
                                                                     Button(action: { print("Share") }) {
                                                                         Image(systemName: "square.and.arrow.up")

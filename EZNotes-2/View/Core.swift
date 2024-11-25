@@ -64,6 +64,7 @@ enum TopBanner {
     case LoadingUploads
     case UploadsReadyToReview
     case ErrorUploading
+    case NoWifiConnection
 }
 
 class CategoryData: ObservableObject {
@@ -158,6 +159,9 @@ class CategoryData: ObservableObject {
 
 struct CoreApp: View {
     public var prop: Properties
+    @Binding public var topBanner: TopBanner
+    @ObservedObject public var networkMonitor: NetworkMonitor
+    @Binding public var needsNoWifiBanner: Bool
     
     @ObservedObject public var categoryData: CategoryData
     @ObservedObject public var accountInfo: AccountDetails
@@ -168,7 +172,7 @@ struct CoreApp: View {
     
     @StateObject var images_to_upload: ImagesUploads = ImagesUploads()
     
-    @State private var topBanner: TopBanner = .None
+    //@State private var topBanner: TopBanner = .None
     
     @State private var images: Array<UIImage> = []
     @State private var images_to_ignore: Array<Int> = []
@@ -237,6 +241,8 @@ struct CoreApp: View {
             if self.section == "upload" {
                 UploadSection(
                     topBanner: $topBanner,
+                    needsNoWifiBanner: $needsNoWifiBanner,
+                    networkMonitor: self.networkMonitor,
                     images_to_upload: self.images_to_upload,
                     categoryData: self.categoryData,
                     model: self.model,
@@ -381,6 +387,10 @@ struct CoreApp: View {
         .onAppear(perform: {
             /* MARK: Continue asking for permission, as th*/
             if !self.model.permissionGranted { self.model.requestPermission() }
+            
+            if self.topBanner == .NoWifiConnection {
+                self.needsNoWifiBanner = true
+            }
         })
         /*.onAppear(perform: {
                 print(prop.size.height / 2.5)

@@ -112,6 +112,7 @@ extension Color {
 }
 
 struct StartupScreen: View {
+    @Binding public var needsNoWifiBanner: Bool
     @State public var screen: String = "home"
     
     @Binding public var userHasSignedIn: Bool
@@ -334,6 +335,7 @@ struct StartupScreen: View {
                         screen: $screen,
                         userNotFound: $userNotFound,
                         startupScreen: StartupScreen(
+                            needsNoWifiBanner: $needsNoWifiBanner,
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,
@@ -344,6 +346,7 @@ struct StartupScreen: View {
                     SignUpScreen(
                         prop: prop,
                         startupScreen: StartupScreen(
+                            needsNoWifiBanner: $needsNoWifiBanner,
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,
@@ -358,6 +361,7 @@ struct StartupScreen: View {
                     LoginScreen(
                         prop: prop,
                         startupScreen: StartupScreen(
+                            needsNoWifiBanner: $needsNoWifiBanner,
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,
@@ -372,6 +376,7 @@ struct StartupScreen: View {
                         screen: $screen,
                         userNotFound: $userNotFound,
                         startupScreen: StartupScreen(
+                            needsNoWifiBanner: $needsNoWifiBanner,
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,

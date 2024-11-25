@@ -105,9 +105,14 @@ struct ContentView: View {
     //private let rotationChangePublisher = NotificationCenter.default
         //.publisher(for: UIDevice.orientationDidChangeNotification)
     
+    @StateObject private var networkMonitor = NetworkMonitor()
+    @State private var topBanner: TopBanner = .None
+    @State private var needsNoWifiBanner: Bool = false
+    
     var body: some View {
         if !userHasSignedIn {
             StartupScreen(
+                needsNoWifiBanner: $needsNoWifiBanner,
                 userHasSignedIn: $userHasSignedIn,
                 userNotFound: $userNotFound,
                 goBackToLogin: $goBackToLogin,
@@ -125,6 +130,9 @@ struct ContentView: View {
                     ResponsiveView { prop in
                         CoreApp(
                             prop: prop,
+                            topBanner: $topBanner,
+                            networkMonitor: self.networkMonitor,
+                            needsNoWifiBanner: $needsNoWifiBanner,
                             categoryData: self.categoryData,
                             accountInfo: accountInfo,
                             model: model,
@@ -143,6 +151,7 @@ struct ContentView: View {
                 } else {
                     if self.goBackToLogin {
                         StartupScreen(
+                            needsNoWifiBanner: $needsNoWifiBanner,
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,
@@ -192,7 +201,43 @@ struct ContentView: View {
                     UserDefaults.standard.set(true, forKey: "requires_faceID")
                 }
             }
+            .onChange(of: self.networkMonitor.isConnectedToWiFi) {
+                if !self.networkMonitor.isConnectedToWiFi {
+                    if !self.networkMonitor.isConnectedToCellular {
+                        self.needsNoWifiBanner = true
+                        return
+                    }
+                    
+                    if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
+                }
+                
+                if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
+            }
+            .onChange(of: self.networkMonitor.isConnectedToCellular) {
+                if !self.networkMonitor.isConnectedToCellular {
+                    if !self.networkMonitor.isConnectedToWiFi {
+                        self.needsNoWifiBanner = true
+                        return
+                    }
+                    
+                    if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
+                }
+                if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
+            }
             .onAppear(perform: {
+                // else {
+                    RequestAction<ReqPlaceholder>(
+                        parameters: ReqPlaceholder()
+                    )
+                    .perform(action: check_server_active_req)
+                    { statusCode, resp in
+                        guard resp != nil && statusCode == 200 else {
+                            self.topBanner = .NoWifiConnection
+                            return
+                        }
+                    }
+                //}
+                
                 /* MARK: If this `.onAppear` runs, there should be a key `username` in `UserDefaults.standard`. If there isn't, then there is a problem.
                  * */
                 if UserDefaults.standard.object(forKey: "username") != nil {

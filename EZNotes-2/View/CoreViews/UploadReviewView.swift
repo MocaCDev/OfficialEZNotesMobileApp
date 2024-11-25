@@ -573,18 +573,18 @@ struct UploadReview: View {
                                     self.topBanner = .None
                                     
                                     if resp.Bad != nil {
-                                        self.topBanner = .ErrorUploading
                                         print(resp.Bad!)
                                         
                                         /* MARK: If `errors` accumulates to the # of values in the array `images_to_upload`, that means none of the images uploaded had anything valuable in them. Prompt an error.
                                          * */
                                         if errors == self.images_to_upload.images_to_upload.count - 1 {
+                                            self.topBanner = .ErrorUploading
                                             self.images_to_upload.images_to_upload.removeAll()
                                             
                                             self.lastSection = self.section
-                                            self.section = "upload_error"
+                                            //self.section = "upload_error"
                                             //self.errorText = resp.Bad!.Message
-                                            self.errorType = resp.Bad!.Message
+                                            //self.errorType = resp.Bad!.Message
                                         }
                                         
                                         errors += 1
@@ -661,15 +661,16 @@ struct UploadReview: View {
                                             }
                                             
                                             if resp.Bad != nil || (resp.Bad == nil && resp.Good!.Status != "200") {
-                                                self.topBanner = .ErrorUploading
+                                                //self.topBanner = .ErrorUploading
                                                 print(resp.Bad!)
                                                 
                                                 if errors == self.images_to_upload.images_to_upload.count - 1 {
+                                                    self.topBanner = .ErrorUploading
                                                     self.images_to_upload.images_to_upload.removeAll()
                                                     
                                                     self.lastSection = self.section
-                                                    self.section = "upload_error"
-                                                    self.errorType = resp.Bad!.Message
+                                                    //self.section = "upload_error"
+                                                    //self.errorType = resp.Bad!.Message
                                                 }
                                                 
                                                 errors += 1
