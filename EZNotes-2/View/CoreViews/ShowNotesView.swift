@@ -1182,7 +1182,7 @@ struct ShowNotes: View {
                             }
                         }
                         .buttonStyle(NoLongPressButtonStyle())
-                        .padding(.top, 15)
+                        .padding([.top, .bottom], 30)
                         
                         Spacer()
                     }
@@ -1361,13 +1361,33 @@ struct ShowNotes: View {
                                             VStack {
                                                 VStack {
                                                     ScrollView(.vertical, showsIndicators: true) {
-                                                        Text(self.originalContent)
-                                                            .frame(height: textHeight(for: originalContent, width: UIScreen.main.bounds.width - 32), alignment: .topLeading)//(maxWidth: prop.size.width - 60, alignment: .leading)
+                                                        Text(self.notesContent)
+                                                            .frame(maxWidth: prop.size.width - 60, alignment: .leading)
                                                             .foregroundStyle(.white)
                                                             .font(Font.custom(self.fontConfiguration.fontPicked, size: self.fontConfiguration.fontSizePicked))
                                                             .multilineTextAlignment(.leading)
+                                                            /*.scaleEffect(self.rewritingNotes
+                                                                         ? self.rewritingNotesAnimation
+                                                                            ? 1.05 : 1.0
+                                                                         : 1
+                                                            )*/
+                                                            .offset(x: self.rewritingNotes
+                                                                    ? self.rewritingNotesAnimation
+                                                                        ? CGFloat.random(in: -6...8)
+                                                                        : 0
+                                                                    : 0,
+                                                                    y: self.rewritingNotes
+                                                                    ? self.rewritingNotesAnimation
+                                                                        ? CGFloat.random(in: -6...8)
+                                                                        : 0
+                                                                    : 0
+                                                            )
+                                                            .animation(
+                                                                .easeInOut(duration: 1.0),
+                                                                value: self.rewritingNotesAnimation
+                                                            )
                                                     }
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                    .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2 - 60)
                                                     /*.frame(maxWidth: .infinity, maxHeight: textHeight(for: notesContent, width: UIScreen.main.bounds.width - 32))//prop.size.height / 2 - 60)
                                                     .scaleEffect(x: self.noteSelectedAnimation ? 1.0 : 0.0, y: self.noteSelectedAnimation ? 1.0 : 0.0, anchor: .leading) // Animate width from left to right
                                                     .animation(.easeOut(duration: 0.5), value: self.noteSelectedAnimation) // Apply animation*/
@@ -1379,6 +1399,24 @@ struct ShowNotes: View {
                                                         .fill(Color.EZNotesLightBlack)
                                                 )
                                                 .cornerRadius(15)
+                                                
+                                                Button(action: {
+                                                    self.noteSelected = "edited"
+                                                }) {
+                                                    HStack {
+                                                        Text("View Edited")
+                                                            .frame(maxWidth: .infinity, alignment: .center)
+                                                            .foregroundStyle(.black)
+                                                            .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                            .minimumScaleFactor(0.5)
+                                                    }
+                                                    .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                                    .padding([.top, .bottom], 8)
+                                                    .background(.white)
+                                                    .cornerRadius(15)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                                .padding(.top, 15)
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         case "edited":
@@ -1635,6 +1673,25 @@ struct ShowNotes: View {
                                                         .background(.white)
                                                         .cornerRadius(15)
                                                     }
+                                                    .buttonStyle(NoLongPressButtonStyle())
+                                                    
+                                                    Button(action: {
+                                                        self.noteSelected = "original"
+                                                    }) {
+                                                        HStack {
+                                                            Text("View Original")
+                                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                                .foregroundStyle(.black)
+                                                                .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                                .minimumScaleFactor(0.5)
+                                                        }
+                                                        .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                                        .padding([.top, .bottom], 8)
+                                                        .background(.white)
+                                                        .cornerRadius(15)
+                                                    }
+                                                    .buttonStyle(NoLongPressButtonStyle())
+                                                    //.padding(.top, 15)
                                                     .padding(.bottom, 35)
                                                 }
                                             }
