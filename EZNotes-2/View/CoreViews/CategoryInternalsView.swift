@@ -28,6 +28,13 @@ struct CategoryInternalsView: View {
     
     @State private var show_category_internal_title: Bool = false
     
+    @State private var categoryBeingEditedImage: UIImage! = UIImage(systemName: "plus")!
+    @State private var categoryBeingEdited: String = ""
+    @State private var editCategoryDetails: Bool = false
+    @State private var newCategoryDescription: String = ""
+    @State private var newCategoryDisplayColor: Color = Color.EZNotesOrange
+    @State private var newCategoryTextColor: Color = Color.white
+    
     private func checkIfOutOfFrame(innerGeometry: GeometryProxy, outerGeometry: GeometryProxy) {
         let textFrame = innerGeometry.frame(in: .global)
         let scrollViewFrame = outerGeometry.frame(in: .global)
@@ -53,6 +60,7 @@ struct CategoryInternalsView: View {
                 TopNavCategoryView(
                     prop: prop,
                     categoryName: categoryName,
+                    categoryBackground: self.categoryBackground,
                     totalSets: self.categoryData.categoriesAndSets[self.categoryName]!.count,
                     launchCategory: $launchCategory,
                     showTitle: $show_category_internal_title
@@ -63,7 +71,7 @@ struct CategoryInternalsView: View {
                     VStack {
                         VStack {
                             HStack {
-                                ZStack {
+                                /*ZStack {
                                     Image(uiImage: self.categoryBackground)
                                         .resizable()
                                         .frame(width: 55, height: 85)//(width: prop.isLargerScreen ? 100.5 : 90.5, height: prop.isLargerScreen ? 140.5 : 130.5)
@@ -80,13 +88,13 @@ struct CategoryInternalsView: View {
                                      .cornerRadius(15)
                                      .shadow(color: .black, radius: 2.5)*/
                                 }
-                                .frame(width: 55, height: 85)
+                                .frame(width: 55, height: 85)*/
                                 
                                 Text(self.categoryName)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.leading, 5)
+                                    .padding(.top, 10)
                                     .foregroundStyle(.white)
-                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 24 : 20))//.setFontSizeAndWeight(weight: .semibold, size: prop.isLargerScreen ? 35 : 30)
+                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 28 : 24))//.setFontSizeAndWeight(weight: .semibold, size: prop.isLargerScreen ? 35 : 30)
                                     .minimumScaleFactor(0.5)
                                     .multilineTextAlignment(.leading)
                             }
@@ -103,20 +111,23 @@ struct CategoryInternalsView: View {
                              .frame(maxWidth: .infinity, alignment: .leading)*/
                             
                             HStack {
-                                Text("\(self.categoryData.categoriesAndSets[self.categoryName]!.count) \(self.categoryData.categoriesAndSets[self.categoryName]!.count > 1 ? "Sets" : "Set")")
-                                    .frame(alignment: .leading)
-                                    .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen ? 12.5 : 10.5)
-                                //.padding([.leading, .trailing], 8)
-                                //.padding([.top, .bottom], 2.5)
-                                
-                                Divider()
-                                    .background(.white)
-                                
-                                Text("Created \(self.creationDate)")
-                                    .frame(alignment: .trailing)
-                                    .setFontSizeAndWeight(weight: .thin, size: prop.size.height / 2.5 > 300 ? 12.5 : 10.5)
-                                //.padding([.leading, .trailing], 8)
-                                //.padding([.top, .bottom], 2.5)
+                                HStack {
+                                    Text("\(self.categoryData.categoriesAndSets[self.categoryName]!.count) \(self.categoryData.categoriesAndSets[self.categoryName]!.count > 1 ? "Sets" : "Set")")
+                                        .frame(alignment: .leading)
+                                        .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen ? 12.5 : 10.5)
+                                    //.padding([.leading, .trailing], 8)
+                                    //.padding([.top, .bottom], 2.5)
+                                    
+                                    Divider()
+                                        .background(.white)
+                                    
+                                    Text("Created \(self.creationDate)")
+                                        .frame(alignment: .trailing)
+                                        .setFontSizeAndWeight(weight: .thin, size: prop.size.height / 2.5 > 300 ? 12.5 : 10.5)
+                                    //.padding([.leading, .trailing], 8)
+                                    //.padding([.top, .bottom], 2.5)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
                             .frame(maxWidth: .infinity, maxHeight: 15, alignment: .leading)
                             .padding(.top, -10)
@@ -124,16 +135,42 @@ struct CategoryInternalsView: View {
                             
                             HStack {
                                 HStack {
-                                    Button(action: { }) {
-                                        Text("Edit")
-                                            .frame(maxWidth: .infinity, alignment: .center)
-                                            .foregroundStyle(.white)
-                                            .padding(2.5)
-                                            .background(Color.EZNotesBlue)
-                                            .cornerRadius(15)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .buttonStyle(NoLongPressButtonStyle())
+                                    /*Button(action: {
+                                        print("HI")
+                                        if self.categoryData.categoryDescriptions.keys.contains(self.categoryName) {
+                                            self.newCategoryDescription = self.categoryData.categoryDescriptions[self.categoryName]!
+                                        } else { self.newCategoryDescription = "" }
+                                        
+                                        if self.categoryData.categoryCustomColors.keys.contains(self.categoryName) {
+                                            self.newCategoryDisplayColor = self.categoryData.categoryCustomColors[self.categoryName]!
+                                        } else { self.newCategoryDisplayColor = Color.EZNotesOrange }
+                                        
+                                        if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryName) {
+                                            self.newCategoryTextColor = self.categoryData.categoryCustomTextColors[self.categoryName]!
+                                        } else { self.newCategoryTextColor = .white }
+                                        
+                                        self.categoryBeingEditedImage = self.categoryData.categoryImages[self.categoryName]!
+                                        self.categoryBeingEdited = self.categoryName
+                                        //self.categoryBeingEditedImage = self.categoryData.categoryImages[self.categoryName]!
+                                        self.editCategoryDetails = true
+                                        
+                                        print(self.editCategoryDetails)
+                                    }) {*/
+                                        HStack {
+                                            Text("Edit")
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                .foregroundStyle(.white)
+                                                .padding(2.5)
+                                                
+                                        }
+                                        .padding(15)
+                                        .background(Color.EZNotesBlue)
+                                        .cornerRadius(15)
+                                        .onTapGesture {
+                                            print("LOL")
+                                        }
+                                    /*}
+                                    .buttonStyle(NoLongPressButtonStyle())*/
                                     
                                     Button(action: { }) {
                                         Text("Share")
@@ -160,7 +197,7 @@ struct CategoryInternalsView: View {
                                 
                                 Spacer()
                             }
-                            .frame(maxWidth: .infinity)
+                            .frame(maxWidth: .infinity, maxHeight: 50)
                             
                             if self.categoryDescription != nil {
                                 VStack {
@@ -290,6 +327,7 @@ struct CategoryInternalsView: View {
                     }
                     .frame(maxWidth: prop.size.width - 40, alignment: .top)
                     .padding(.top, -15)
+                    .zIndex(1)
                     
                     VStack {
                         VStack {
@@ -344,6 +382,7 @@ struct CategoryInternalsView: View {
                                                             .fill(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
                                                     )
                                                     .cornerRadius(15)
+                                                    .padding(.bottom, index == self.categoryData.setAndNotes[self.categoryName]!.count - 1 ? 25 : 0)
                                                 }
                                             }
                                         }
@@ -366,7 +405,15 @@ struct CategoryInternalsView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .background(Color.EZNotesBlack)
-            .ignoresSafeArea(edges: [.top])
+            .ignoresSafeArea(edges: [.top, .bottom])
+            .popover(isPresented: $editCategoryDetails) {
+                EditCategory(
+                    prop: self.prop,
+                    categoryBeingEditedImage: self.categoryBeingEditedImage,
+                    categoryBeingEdited: $categoryBeingEdited,
+                    categoryData: self.categoryData
+                )
+            }
             .onAppear {
                 self.categoryDescription = self.categoryData.categoryDescriptions[self.categoryName]
                 self.setsYOffset = prop.size.height - 100

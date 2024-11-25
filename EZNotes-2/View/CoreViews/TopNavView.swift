@@ -3137,56 +3137,67 @@ struct TopNavCategoryView: View {
     
     var prop: Properties
     var categoryName: String
+    var categoryBackground: UIImage
     var totalSets: Int
     
     @Binding public var launchCategory: Bool
     @Binding public var showTitle: Bool
     
     var body: some View {
-        HStack {
-            VStack {
-                Button(action: { self.launchCategory = false }) {
-                    Image(systemName: "arrow.left")
-                        .resizable()
-                        .frame(width: 20, height: 20)
-                        .tint(Color.EZNotesBlue)
+        ZStack {
+            Image(uiImage: self.categoryBackground)
+                .resizable()
+                .scaledToFill()
+                .frame(maxHeight: 115)
+                //.aspectRatio(contentMode: .fill)
+                .clipped()
+                .overlay(Color.EZNotesBlack.opacity(0.6))
+            
+            HStack {
+                VStack {
+                    Button(action: { self.launchCategory = false }) {
+                        Image(systemName: "arrow.left")
+                            .resizable()
+                            .frame(width: 20, height: 20)
+                            .tint(Color.EZNotesBlue)
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
+                    .padding([.leading], 20)
                 }
-                .buttonStyle(NoLongPressButtonStyle())
-                .padding([.leading], 20)
-            }
-            .frame(maxWidth: 50, maxHeight: .infinity, alignment: .leading)
-            .padding(.top, prop.size.height / 2.5 > 300 ? 55 : 15)
-            
-            Spacer()
-            
-            if self.showTitle {
-                Text("TITLE!")
+                .frame(maxWidth: 50, maxHeight: .infinity, alignment: .leading)
+                .padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15)
                 
                 Spacer()
-            }
-            
-            //Spacer()
-            
-            VStack {
-                Button(action: { print("POPUP!") }) {
-                    Image("AI-Chat-Icon")
-                        .resizable()
-                        .frame(
-                            width: prop.size.height / 2.5 > 300 ? 45 : 40,
-                            height: prop.size.height / 2.5 > 300 ? 45 : 40
-                        )
-                        .padding([.trailing], 20)
+                
+                if self.showTitle {
+                    Text("TITLE!")
+                    
+                    Spacer()
                 }
-                .buttonStyle(NoLongPressButtonStyle())
+                
+                //Spacer()
+                
+                VStack {
+                    Button(action: { print("POPUP!") }) {
+                        Image("AI-Chat-Icon")
+                            .resizable()
+                            .frame(
+                                width: prop.size.height / 2.5 > 300 ? 45 : 40,
+                                height: prop.size.height / 2.5 > 300 ? 45 : 40
+                            )
+                            .padding([.trailing], 20)
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
+                }
+                .frame(maxWidth: 90, maxHeight: .infinity, alignment: .trailing)
+                .padding(.top, prop.size.height / 2.5 > 300 ? 50 : 0)
             }
-            .frame(maxWidth: 90, maxHeight: .infinity, alignment: .trailing)
-            .padding(.top, prop.size.height / 2.5 > 300 ? 55 : 0)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: 100, alignment: .top)
-        .padding([.top], 5)
-        .background(Color.EZNotesBlack.opacity(0.95))
+        .padding([.top], 5)//.background(Color.EZNotesBlack.opacity(0.95))
         .ignoresSafeArea(.keyboard, edges: .bottom)
-        .zIndex(1)
+        //.zIndex(1)
     }
 }
 

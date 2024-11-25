@@ -223,7 +223,7 @@ struct EditCategory: View {
                             .frame(maxWidth: prop.size.width - 80)
                             .padding([.top, .bottom])
                             
-                            HStack {
+                            VStack {
                                 VStack {
                                     HStack {
                                         Text("Category Color")
@@ -248,7 +248,7 @@ struct EditCategory: View {
                                             : self.newCategoryDisplayColor
                                             : self.newCategoryDisplayColor
                                         )
-                                        .frame(maxWidth: .infinity, maxHeight: 100)
+                                        .frame(maxHeight: 100)
                                         .scaledToFit()
                                         .onTapGesture { self.toggleCategoryBackgroundColorPicker = true }
                                 }
@@ -278,112 +278,129 @@ struct EditCategory: View {
                                             : self.newCategoryTextColor
                                             : self.newCategoryTextColor
                                         )
-                                        .frame(maxWidth: .infinity)
+                                        .frame(maxHeight: 100)
                                         .scaledToFit()
                                         //.onTapGesture { self.toggleCategoryTextColorPicker = true }
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
-                            .frame(maxWidth: prop.size.width - 80, maxHeight: 120)
+                            .frame(maxWidth: prop.size.width - 80)
                             .padding([.top], 5)
-                            .padding([.bottom], 15)
+                            .padding([.bottom], 160)
                         }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(.bottom, -150)
                         
                         Spacer()
                         
-                        Button(action: {
-                            self.toggleCategoryTextColorPicker = false
-                            self.toggleCategoryBackgroundColorPicker = false
-                            
-                            self.showSaveAlert = true
-                        }) {
-                            Text("Save Changes")
-                                .frame(width: prop.size.width - 80, height: 25)
-                                .padding(3.5)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 22))
-                                .fontWeight(.medium)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Color.EZNotesBlack.opacity(0.85))
-                        .alert("Hang On", isPresented: $showSaveAlert) {
+                        VStack {
                             Button(action: {
-                                if self.newCategoryName.count > 0 && !(self.newCategoryName == self.categoryBeingEdited) {
-                                    let categoryData = self.categoryData.categoriesAndSets[self.categoryBeingEdited]
-                                    let categoryImageData = self.categoryData.categoryImages[self.categoryBeingEdited]
-                                    let categoryCreationDate = self.categoryData.categoryCreationDates[self.categoryBeingEdited]
-                                    
-                                    self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryBeingEdited)
-                                    self.categoryData.categoryImages.removeValue(forKey: self.categoryBeingEdited)
-                                    self.categoryData.categoryCreationDates.removeValue(forKey: self.categoryBeingEdited)
-                                    
-                                    self.categoryData.categoriesAndSets[self.newCategoryName] = categoryData
-                                    writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
-                                    
-                                    self.categoryData.categoryImages[self.newCategoryName] = categoryImageData
-                                    writeCategoryImages(categoryImages: self.categoryData.categoryImages)
-                                    
-                                    self.categoryData.categoryCreationDates[self.newCategoryName] = categoryCreationDate
-                                    writeCategoryCreationDates(categoryCreationDates: self.categoryData.categoryCreationDates)
-                                    
-                                    if self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited) {
-                                        self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryBeingEdited)
-                                    }
-                                    
-                                    if self.categoryData.categoryDescriptions.keys.contains(self.categoryBeingEdited) {
-                                        self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryBeingEdited)
-                                    }
-                                    
-                                    if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) {
-                                        self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryBeingEdited)
-                                    }
-                                    
-                                    self.categoryBeingEdited = self.newCategoryName
-                                }
+                                self.toggleCategoryTextColorPicker = false
+                                self.toggleCategoryBackgroundColorPicker = false
                                 
-                                if self.newCategoryDisplayColor != Color.EZNotesOrange {
-                                    self.categoryData.categoryCustomColors[self.categoryBeingEdited] = self.newCategoryDisplayColor
-                                    writeCategoryCustomColors(categoryCustomColors: self.categoryData.categoryCustomColors)
-                                    //self.newCategoryDisplayColor = Color.EZNotesOrange
-                                }
-                                
-                                if self.newCategoryTextColor != Color.white {
-                                    self.categoryData.categoryCustomTextColors[self.categoryBeingEdited] = self.newCategoryTextColor
-                                    writeCategoryTextColors(categoryTextColors: self.categoryData.categoryCustomTextColors)
-                                    //self.newCategoryTextColor = Color.white
-                                }
-                                
-                                if self.newCategoryDescription.count > 0 {
-                                    let str = self.newCategoryDescription.filter{!$0.isWhitespace || !$0.isNewline}
-                                    
-                                    if str == "" { return }
-                                    
-                                    self.categoryData.categoryDescriptions[self.categoryBeingEdited] = self.newCategoryDescription
-                                    writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
-                                    //self.newCategoryDescription.removeAll()
-                                } else {
-                                    self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryBeingEdited)
-                                    writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
-                                }
+                                self.showSaveAlert = true
                             }) {
-                                Text("Okay")
+                                HStack {
+                                    Text("Save Changes")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.black)
+                                        .setFontSizeAndWeight(weight: .bold, size: 18)
+                                        .minimumScaleFactor(0.5)
+                                }
+                                .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                .padding([.top, .bottom], 8)
+                                .background(.white)
+                                .cornerRadius(15)
                             }
-                            Button("Cancel", role: .cancel) { }
-                        } message: {
-                            Text("Once you save, all changes are final.")
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .alert("Hang On", isPresented: $showSaveAlert) {
+                                Button(action: {
+                                    if self.newCategoryName.count > 0 && !(self.newCategoryName == self.categoryBeingEdited) {
+                                        let categoryData = self.categoryData.categoriesAndSets[self.categoryBeingEdited]
+                                        let categoryImageData = self.categoryData.categoryImages[self.categoryBeingEdited]
+                                        let categoryCreationDate = self.categoryData.categoryCreationDates[self.categoryBeingEdited]
+                                        
+                                        self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryBeingEdited)
+                                        self.categoryData.categoryImages.removeValue(forKey: self.categoryBeingEdited)
+                                        self.categoryData.categoryCreationDates.removeValue(forKey: self.categoryBeingEdited)
+                                        
+                                        self.categoryData.categoriesAndSets[self.newCategoryName] = categoryData
+                                        writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                        
+                                        self.categoryData.categoryImages[self.newCategoryName] = categoryImageData
+                                        writeCategoryImages(categoryImages: self.categoryData.categoryImages)
+                                        
+                                        self.categoryData.categoryCreationDates[self.newCategoryName] = categoryCreationDate
+                                        writeCategoryCreationDates(categoryCreationDates: self.categoryData.categoryCreationDates)
+                                        
+                                        if self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited) {
+                                            self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryBeingEdited)
+                                        }
+                                        
+                                        if self.categoryData.categoryDescriptions.keys.contains(self.categoryBeingEdited) {
+                                            self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryBeingEdited)
+                                        }
+                                        
+                                        if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryBeingEdited) {
+                                            self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryBeingEdited)
+                                        }
+                                        
+                                        self.categoryBeingEdited = self.newCategoryName
+                                    }
+                                    
+                                    if self.newCategoryDisplayColor != Color.EZNotesOrange {
+                                        self.categoryData.categoryCustomColors[self.categoryBeingEdited] = self.newCategoryDisplayColor
+                                        writeCategoryCustomColors(categoryCustomColors: self.categoryData.categoryCustomColors)
+                                        //self.newCategoryDisplayColor = Color.EZNotesOrange
+                                    }
+                                    
+                                    if self.newCategoryTextColor != Color.white {
+                                        self.categoryData.categoryCustomTextColors[self.categoryBeingEdited] = self.newCategoryTextColor
+                                        writeCategoryTextColors(categoryTextColors: self.categoryData.categoryCustomTextColors)
+                                        //self.newCategoryTextColor = Color.white
+                                    }
+                                    
+                                    if self.newCategoryDescription.count > 0 {
+                                        let str = self.newCategoryDescription.filter{!$0.isWhitespace || !$0.isNewline}
+                                        
+                                        if str == "" { return }
+                                        
+                                        self.categoryData.categoryDescriptions[self.categoryBeingEdited] = self.newCategoryDescription
+                                        writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
+                                        //self.newCategoryDescription.removeAll()
+                                    } else {
+                                        self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryBeingEdited)
+                                        writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
+                                    }
+                                }) {
+                                    Text("Okay")
+                                }
+                                Button("Cancel", role: .cancel) { }
+                            } message: {
+                                Text("Once you save, all changes are final.")
+                            }
+                            
+                            Button(action: { print("Resetting") }) {
+                                HStack {
+                                    Text("Reset")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.black)
+                                        .setFontSizeAndWeight(weight: .bold, size: 18)
+                                }
+                                .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                .padding([.top, .bottom], 8)
+                                .background(Color.EZNotesLightBlack)
+                                .cornerRadius(15)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .padding([.bottom], 35)
                         }
-                        
-                        Button(action: { print("Resetting") }) {
-                            Text("Reset")
-                                .frame(width: prop.size.width - 80, height: 25)
-                                .padding(3.5)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 22))
-                                .fontWeight(.medium)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Color.EZNotesBlack.opacity(0.85))
-                        .padding([.bottom], 35)
+                        .frame(maxWidth: .infinity, alignment: .bottom)
+                        .background(
+                            Rectangle()
+                                .fill(Color.EZNotesBlack.opacity(0.7))
+                                .blur(radius: 10)
+                        )
                     }
                     .frame(maxWidth: prop.size.width, maxHeight: .infinity)
                     .cornerRadius(15)

@@ -193,6 +193,8 @@ struct HomeView: View {
         self.alertType = .None
     }
     
+    @State private var testPopup: Bool = false
+    
     var body: some View {
         if !self.launchCategory {
             VStack {
@@ -224,7 +226,7 @@ struct HomeView: View {
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                             .padding([.top], 50)
                         } else {
-                            VStack {
+                            ZStack {
                                 GeometryReader { geometry in
                                     ScrollView(showsIndicators: false) {
                                         VStack {
@@ -619,7 +621,7 @@ struct HomeView: View {
                                                     RoundedRectangle(cornerRadius: 15)
                                                         .fill(self.categoryData.categoryCustomColors.keys.contains(key)
                                                               ? self.categoryData.categoryCustomColors[key]!
-                                                              : Color.EZNotesOrange)//(Color.EZNotesBlack)
+                                                              : Color.EZNotesLightBlack)//(Color.EZNotesBlack)
                                                 )
                                                 .padding([.bottom], 5)
                                             }
@@ -631,6 +633,95 @@ struct HomeView: View {
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                                     //.padding([.top], 20)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                
+                                VStack {
+                                    Spacer()
+                                    
+                                    if self.testPopup {
+                                        HStack {
+                                            VStack {
+                                                
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .background(.clear)
+                                            
+                                            VStack {
+                                                Button(action: { print("Upload PDF") }) {
+                                                    HStack {
+                                                        ZStack {
+                                                            Image(systemName: "document")
+                                                                .resizable()
+                                                                .frame(width: 15, height: 20)
+                                                                .foregroundStyle(.white)
+                                                        }
+                                                        .frame(maxWidth: 20, alignment: .leading)
+                                                        .padding(.leading, 5)
+                                                        
+                                                        Text("Upload PDF")
+                                                            .frame(maxWidth: .infinity, alignment: .center)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 15 : 13))
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                }
+                                                
+                                                Divider()
+                                                    .background(.gray)
+                                                
+                                                Button(action: { print("Create new category") }) {
+                                                    HStack {
+                                                        ZStack {
+                                                            Image(systemName: "folder.badge.plus")
+                                                                .resizable()
+                                                                .frame(width: 20, height: 15)
+                                                                .foregroundStyle(.white)
+                                                        }
+                                                        .frame(maxWidth: 20, alignment: .leading)
+                                                        .padding(.leading, 5)
+                                                        
+                                                        Text("Create Category")
+                                                            .frame(maxWidth: .infinity, alignment: .center)
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 15 : 13))
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                }
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                            .padding(12)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(Color.EZNotesBlack)
+                                                    .shadow(radius: 2.5)
+                                            )
+                                            .cornerRadius(15)
+                                            .padding(.trailing, 20)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: 100)
+                                    }
+                                    
+                                    HStack {
+                                        Spacer()
+                                        
+                                        Button(action: { self.testPopup.toggle() }) {
+                                            ZStack {
+                                                Circle()
+                                                    .fill(Color.EZNotesBlue.opacity(0.8))
+                                                    .scaledToFit()
+                                                
+                                                Image(systemName: "plus")
+                                                    .resizable()
+                                                    .frame(width: 30, height: 30)
+                                                    .foregroundStyle(Color.EZNotesBlack)
+                                            }
+                                            .frame(width: 50, height: 50)
+                                            .padding(.trailing, 15)
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 60)
+                                    .padding(.bottom, 15)
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
