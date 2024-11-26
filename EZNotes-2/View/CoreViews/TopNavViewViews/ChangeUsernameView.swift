@@ -23,6 +23,23 @@ struct ChangeUsername: View {
     
     var body: some View {
         VStack {
+            HStack {
+                ZStack { }.frame(maxWidth: 10, alignment: .leading)
+                
+                ZStack {
+                    Text("Enter a new username below. You can only change your name twice a year.")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .foregroundStyle(.white)
+                        .font(.system(size: prop.isLargerScreen ? 16 : 12, weight: .light))
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                
+                ZStack { }.frame(maxWidth: 10, alignment: .trailing)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, 30)
+            
             if self.errorUpdatingUseranme || self.usernameExistsError {
                 Text(self.errorUpdatingUseranme
                      ? "Error updating username. Try again."

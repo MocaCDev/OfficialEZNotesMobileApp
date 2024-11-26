@@ -17,49 +17,61 @@ struct ChatView: View {
     
     @Binding public var userHasSignedIn: Bool
     
+    @State private var showAccount: Bool = false
+    
     var body: some View {
-        VStack {
-            TopNavChat(
-                accountInfo: accountInfo,
-                friendSearch: $friendSearch,
-                userHasSignedIn: $userHasSignedIn,
-                prop: prop,
-                backgroundColor: Color.EZNotesLightBlack
-            )
-            
+        if !self.showAccount {
             VStack {
+                TopNavChat(
+                    accountInfo: accountInfo,
+                    showAccountPopup: $showAccount,
+                    friendSearch: $friendSearch,
+                    userHasSignedIn: $userHasSignedIn,
+                    prop: prop,
+                    backgroundColor: Color.EZNotesLightBlack
+                )
                 
+                VStack {
+                    
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
+                ButtomNavbar(
+                    section: $section,
+                    backgroundColor: Color.EZNotesLightBlack ,
+                    prop: prop
+                )
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            
-            ButtomNavbar(
-                section: $section,
-                backgroundColor: Color.EZNotesLightBlack ,
-                prop: prop
-            )
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            LinearGradient(
-                gradient: Gradient(
-                    colors: [
-                        .black,//Color.EZNotesBlack,
-                        .black,//Color.EZNotesBlack,
-                        .black,//Color.EZNotesBlack,
-                        Color.EZNotesLightBlack//Color.EZNotesLightBlack
-                        //Color.EZNotesOrange,
-                        //Color.EZNotesOrange
-                    ]),
+            .background(
+                LinearGradient(
+                    gradient: Gradient(
+                        colors: [
+                            .black,//Color.EZNotesBlack,
+                            .black,//Color.EZNotesBlack,
+                            .black,//Color.EZNotesBlack,
+                            Color.EZNotesLightBlack//Color.EZNotesLightBlack
+                            //Color.EZNotesOrange,
+                            //Color.EZNotesOrange
+                        ]),
                     startPoint: .top,
                     endPoint: .bottom
+                )
             )
-        )
-        .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
-            .onEnded({ value in
-                if value.translation.width > 0 {
-                    self.section = "upload"
-                }
-            })
-        )
+            .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                .onEnded({ value in
+                    if value.translation.width > 0 {
+                        self.section = "upload"
+                    }
+                })
+            )
+        } else {
+            Account(
+                prop: self.prop,
+                showAccount: $showAccount,
+                userHasSignedIn: $userHasSignedIn,
+                accountInfo: self.accountInfo
+            )
+        }
     }
 }

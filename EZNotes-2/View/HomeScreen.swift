@@ -70,30 +70,48 @@ struct HomeScreen: View {
     @available(iOS 17.0, *)
     var body: some View {
         VStack {
-            if self.userNotFound {
+            if self.startupScreen.needsNoWifiBanner {
                 HStack {
                     ZStack { }.frame(maxWidth: 30, alignment: .leading)
                     
-                    Text("Error: User Not Found.")
+                    Text("No Wifi Connection")
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                         .padding(.top, prop.size.height / 2.5 > 300 ? 45 : 10)
                         .foregroundStyle(.white)
-                        .font(.system(size: 20))
+                        .font(.system(size: prop.isLargerScreen ? 18 : 16))
                         .minimumScaleFactor(0.5)
                         .fontWeight(.semibold)
                     
                     ZStack { }.frame(maxWidth: 30, alignment: .trailing)
                 }
-                .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 90 : 60)
+                .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 80 : 60)
                 .background(Color.EZNotesRed.opacity(0.85))
-                .onAppear {
-                    UserDefaults.standard.removeObject(forKey: "plan_selected")
-                    UserDefaults.standard.removeObject(forKey: "username")
-                    UserDefaults.standard.removeObject(forKey: "email")
-                    UserDefaults.standard.removeObject(forKey: "major_field")
-                    UserDefaults.standard.removeObject(forKey: "major_name")
-                    UserDefaults.standard.removeObject(forKey: "college_state")
-                    UserDefaults.standard.removeObject(forKey: "college_name")
+            } else {
+                if self.userNotFound {
+                    HStack {
+                        ZStack { }.frame(maxWidth: 30, alignment: .leading)
+                        
+                        Text("Error: User Not Found.")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                            .padding(.top, prop.size.height / 2.5 > 300 ? 45 : 10)
+                            .foregroundStyle(.white)
+                            .font(.system(size: prop.isLargerScreen ? 18 : 16))
+                            .minimumScaleFactor(0.5)
+                            .fontWeight(.semibold)
+                        
+                        ZStack { }.frame(maxWidth: 30, alignment: .trailing)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2.5 > 300 ? 80 : 60)
+                    .background(Color.EZNotesRed.opacity(0.85))
+                    .onAppear {
+                        UserDefaults.standard.removeObject(forKey: "plan_selected")
+                        UserDefaults.standard.removeObject(forKey: "username")
+                        UserDefaults.standard.removeObject(forKey: "email")
+                        UserDefaults.standard.removeObject(forKey: "major_field")
+                        UserDefaults.standard.removeObject(forKey: "major_name")
+                        UserDefaults.standard.removeObject(forKey: "college_state")
+                        UserDefaults.standard.removeObject(forKey: "college_name")
+                    }
                 }
             }
             
@@ -169,9 +187,9 @@ struct HomeScreen: View {
             .padding(
                 .top,
                 prop.isIpad ? -60 :
-                    prop.size.height / 2.5 > 300
-                        ? self.userNotFound ? -15 : 50
-                        : self.userNotFound ? -45 : -30
+                    prop.isLargerScreen
+                        ? self.userNotFound || self.startupScreen.needsNoWifiBanner ? -25 : 50
+                        : self.userNotFound || self.startupScreen.needsNoWifiBanner ? -25 : -30
             )
             
             Spacer()
@@ -206,9 +224,6 @@ struct HomeScreen: View {
             Color.EZNotesBlack
         )
         .edgesIgnoringSafeArea([.top, .bottom])
-        .onAppear {
-            print(prop.size.height / 2.5)
-        }
     }
 }
 

@@ -237,7 +237,7 @@ struct CategoryInternalsView: View {
                                 
                                 Spacer()
                             }
-                            .frame(maxWidth: .infinity, maxHeight: 50)
+                            .frame(maxWidth: .infinity)
                             
                             if self.categoryDescription != nil {
                                 VStack {
@@ -441,7 +441,7 @@ struct CategoryInternalsView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.top, 115)
                 //}
-                .padding(.top, -100)
+                .padding(.top, -90)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .background(Color.EZNotesBlack)

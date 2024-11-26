@@ -334,6 +334,7 @@ struct StartupScreen: View {
                         prop: prop,
                         screen: $screen,
                         userNotFound: $userNotFound,
+                        //needsNoWifiBanner: $needsNoWifiBanner,
                         startupScreen: StartupScreen(
                             needsNoWifiBanner: $needsNoWifiBanner,
                             userHasSignedIn: $userHasSignedIn,
@@ -375,6 +376,7 @@ struct StartupScreen: View {
                         prop: prop,
                         screen: $screen,
                         userNotFound: $userNotFound,
+                        //needsNoWifiBanner: $needsNoWifiBanner,
                         startupScreen: StartupScreen(
                             needsNoWifiBanner: $needsNoWifiBanner,
                             userHasSignedIn: $userHasSignedIn,

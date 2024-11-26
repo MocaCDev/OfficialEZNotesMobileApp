@@ -1877,7 +1877,7 @@ struct TopNavHome: View {
     @ObservedObject public var accountInfo: AccountDetails
     @ObservedObject public var categoryData: CategoryData
     
-    @State private var showAccountPopup: Bool = false
+    @Binding public var showAccountPopup: Bool
     @State private var aiChatPopover: Bool = false
     
     var prop: Properties
@@ -1937,7 +1937,7 @@ struct TopNavHome: View {
                 .frame(alignment: .leading)
                 .padding(.bottom, 20)//.padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15) /* MARK: Aligns icon for larger screens. */
                 //.padding(.bottom, prop.size.height / 2.5 > 300 ? 0 : 10) /* MARK: Aligns icon for smaller screens. */
-                .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
+                //.popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
                 
                 if self.showSearchBar {
                     VStack {
@@ -3148,7 +3148,7 @@ struct TopNavCategoryView: View {
             Image(uiImage: self.categoryBackground)
                 .resizable()
                 .scaledToFill()
-                .frame(maxHeight: 115)
+                .frame(maxHeight: 125)
                 //.aspectRatio(contentMode: .fill)
                 .clipped()
                 .overlay(Color.EZNotesBlack.opacity(0.6))
@@ -3165,7 +3165,7 @@ struct TopNavCategoryView: View {
                     .padding([.leading], 20)
                 }
                 .frame(maxWidth: 50, maxHeight: .infinity, alignment: .leading)
-                .padding(.top, prop.size.height / 2.5 > 300 ? 50 : 15)
+                .padding(.top, prop.size.height / 2.5 > 300 ? 55 : 15)
                 
                 Spacer()
                 
@@ -3190,7 +3190,7 @@ struct TopNavCategoryView: View {
                     .buttonStyle(NoLongPressButtonStyle())
                 }
                 .frame(maxWidth: 90, maxHeight: .infinity, alignment: .trailing)
-                .padding(.top, prop.size.height / 2.5 > 300 ? 50 : 0)
+                .padding(.top, prop.size.height / 2.5 > 300 ? 55 : 0)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -3209,7 +3209,7 @@ struct TopNavUpload: View {
     @ObservedObject public var imagesToUpload: ImagesUploads
     @ObservedObject public var accountInfo: AccountDetails
     
-    @State private var showAccountPopup: Bool = false
+    @Binding public var showAccountPopup: Bool
     
     @Binding public var section: String
     @Binding public var lastSection: String
@@ -3226,8 +3226,7 @@ struct TopNavUpload: View {
                 ProfileIconView(prop: prop, accountInfo: accountInfo, showAccountPopup: $showAccountPopup)
             }
             .padding([.bottom], 20)
-            .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
-            
+            //.popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
             
             if self.topBanner != .None || self.needsNoWifiBanner {
                 if self.needsNoWifiBanner {
@@ -3422,7 +3421,7 @@ struct TopNavChat: View {
     
     @ObservedObject public var accountInfo: AccountDetails
     
-    @State private var showAccountPopup: Bool = false
+    @Binding public var showAccountPopup: Bool
     
     @Binding public var friendSearch: String
     @Binding public var userHasSignedIn: Bool
@@ -3436,7 +3435,7 @@ struct TopNavChat: View {
                 ProfileIconView(prop: prop, accountInfo: accountInfo, showAccountPopup: $showAccountPopup)
             }
             .padding([.bottom], 20)
-            .popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
+            //.popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
             
             Spacer()
             

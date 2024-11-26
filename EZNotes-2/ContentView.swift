@@ -118,6 +118,29 @@ struct ContentView: View {
                 goBackToLogin: $goBackToLogin,
                 faceIDAuthenticated: $faceIDAuthenticated
             )
+            .onChange(of: self.networkMonitor.isConnectedToWiFi) {
+                if !self.networkMonitor.isConnectedToWiFi {
+                    if !self.networkMonitor.isConnectedToCellular {
+                        self.needsNoWifiBanner = true
+                        return
+                    }
+                    
+                    if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
+                }
+                
+                if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
+            }
+            .onChange(of: self.networkMonitor.isConnectedToCellular) {
+                if !self.networkMonitor.isConnectedToCellular {
+                    if !self.networkMonitor.isConnectedToWiFi {
+                        self.needsNoWifiBanner = true
+                        return
+                    }
+                    
+                    if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
+                }
+                if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
+            }
             .onAppear(perform: {
                 if UserDefaults.standard.object(forKey: "faceID_enabled") == nil {
                     UserDefaults.standard.set("not_enabled", forKey: "faceID_enabled")
