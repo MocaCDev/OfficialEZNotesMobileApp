@@ -522,10 +522,11 @@ struct Account: View {
                             
                             ScrollView(.vertical, showsIndicators: false) {
                                 VStack {
-                                    Text("Account & Management")
+                                    Text("Account")
+                                        .textCase(.uppercase)
                                         .frame(maxWidth: prop.size.width - 50, alignment: .leading)
                                         .foregroundStyle(.white)
-                                        .setFontSizeAndWeight(weight: .bold, size: 20)
+                                        .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .bold, size: 18)
                                         .minimumScaleFactor(0.5)
                                     
                                     VStack {
@@ -731,21 +732,23 @@ struct Account: View {
                                     //.padding([.leading, .trailing], 8)
                                     .background(
                                         RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesBlack)
-                                            .shadow(color: Color.EZNotesLightBlack, radius: 1.5)
+                                            .fill(Color.EZNotesLightBlack)
+                                            //.shadow(color: Color.EZNotesLightBlack, radius: 1.5)
                                         /*.stroke(LinearGradient(gradient: Gradient(
                                          colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
                                          ), startPoint: .leading, endPoint: .trailing), lineWidth: 1)*/
                                     )
+                                    .padding(.top, -5)
                                     //.cornerRadius(15)
                                     
                                     /* MARK: Custom `spacer`. Scrollview makes all the views within it kind of funky. */
                                     VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
                                     
                                     Text("Core Actions")
+                                        .textCase(.uppercase)
                                         .frame(maxWidth: prop.size.width - 50, alignment: .leading)
                                         .foregroundStyle(.white)
-                                        .font(.system(size: 20))
+                                        .font(.system(size: 18))
                                         .minimumScaleFactor(0.5)
                                         .fontWeight(.bold)
                                     
@@ -893,10 +896,11 @@ struct Account: View {
                                         .padding([.top, .bottom], 10)
                                     
                                     Text("Privacy & Terms")
+                                        .textCase(.uppercase)
                                         .frame(maxWidth: prop.size.width - 50, alignment: .leading)
                                         .padding(.bottom, 10)
                                         .foregroundStyle(.white)
-                                        .font(.system(size: 20))
+                                        .font(.system(size: 18))
                                         .minimumScaleFactor(0.5)
                                         .fontWeight(.bold)
                                     
@@ -904,21 +908,21 @@ struct Account: View {
                                         Button(action: { self.showPrivacyAndPolicy = true }) {
                                             HStack {
                                                 Text("Privacy & Policy")
-                                                    .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                                                     .padding(.leading, 15)
-                                                    .padding([.top, .bottom])
                                                     .foregroundStyle(.white)
-                                                    .setFontSizeAndWeight(weight: .semibold, size: 15)
+                                                    .font(.system(size: 18, design: .rounded))
                                                 
                                                 ZStack {
                                                     Image(systemName: "chevron.right")
                                                         .resizableImage(width: 10, height: 15)
                                                         .foregroundStyle(.white)
                                                 }
-                                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
                                                 .padding(.trailing, 25)
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: 40)
+                                            .padding(.bottom, 5)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                         .popover(isPresented: $showPrivacyAndPolicy) {
@@ -927,27 +931,26 @@ struct Account: View {
                                         }
                                         
                                         Divider()
-                                            .frame(width: prop.size.width - 80)
                                             .overlay(.black)
                                         
                                         Button(action: { self.showTermsAndConditions = true }) {
                                             HStack {
                                                 Text("Terms & Conditions")
-                                                    .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                                                     .padding(.leading, 15)
-                                                    .padding([.top, .bottom])
                                                     .foregroundStyle(.white)
-                                                    .setFontSizeAndWeight(weight: .semibold, size: 15)
+                                                    .font(.system(size: 18, design: .rounded))
                                                 
                                                 ZStack {
                                                     Image(systemName: "chevron.right")
                                                         .resizableImage(width: 10, height: 15)
                                                         .foregroundStyle(.white)
                                                 }
-                                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
                                                 .padding(.trailing, 25)
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: 40)
+                                            .padding(.top, 5)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                         .popover(isPresented: $showTermsAndConditions) {
@@ -956,8 +959,7 @@ struct Account: View {
                                         }
                                     }
                                     .frame(maxWidth: prop.size.width - 50)
-                                    .padding([.top, .bottom], 8)
-                                    .padding([.leading, .trailing], 8)
+                                    .padding([.top, .bottom], 14)
                                     .background(
                                         RoundedRectangle(cornerRadius: 15)
                                             .fill(Color.EZNotesLightBlack)
@@ -966,68 +968,62 @@ struct Account: View {
                                     
                                     /* MARK: More details will show the user their account ID, session ID etc. */
                                     Text("Additional")
+                                        .textCase(.uppercase)
                                         .frame(maxWidth: prop.size.width - 50, alignment: .leading)
                                         .padding([.top, .bottom], 10)
                                         .foregroundStyle(.white)
-                                        .setFontSizeAndWeight(weight: .bold, size: 20)
+                                        .setFontSizeAndWeight(weight: .bold, size: 18)
                                         .minimumScaleFactor(0.5)
                                     
                                     VStack {
                                         Button(action: { print("View More Account Details") }) {
                                             HStack {
                                                 Text("More Account Details")
-                                                    .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                                                     .padding(.leading, 15)
-                                                    .padding([.top, .bottom])
                                                     .foregroundStyle(.white)
-                                                    .setFontSizeAndWeight(weight: .semibold, size: 15)
+                                                    .font(.system(size: 18, design: .rounded))
                                                 
                                                 ZStack {
                                                     Image(systemName: "chevron.right")
                                                         .resizableImage(width: 10, height: 15)
                                                         .foregroundStyle(.white)
                                                 }
-                                                .frame(maxWidth: 20, alignment: .trailing)
+                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
                                                 .padding(.trailing, 15)
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .onTapGesture {
-                                                print("Show more account details")
-                                            }
+                                            .padding(.bottom, 5)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                         
                                         Divider()
-                                            .frame(width: prop.size.width - 80)
                                             .overlay(.black)
                                         
                                         Button(action: { print("Report An Issue") }) {
                                             HStack {
                                                 Text("Report An Issue")
-                                                    .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                                                     .padding(.leading, 15)
-                                                    .padding([.top, .bottom])
                                                     .foregroundStyle(.white)
-                                                    .setFontSizeAndWeight(weight: .semibold, size: 15)
+                                                    .font(.system(size: 18, design: .rounded))
                                                 
                                                 ZStack {
                                                     Image(systemName: "chevron.right")
                                                         .resizableImage(width: 10, height: 15)
                                                         .foregroundStyle(.white)
                                                 }
-                                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
                                                 .padding(.trailing, 15)
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .onTapGesture {
-                                                print("Report An Issue")
-                                            }
+                                            .padding(.top, 5)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                     }
                                     .frame(maxWidth: prop.size.width - 50)
-                                    .padding([.top, .bottom], 8)
-                                    .padding([.leading, .trailing], 8)
+                                    .padding([.top, .bottom], 14)
+                                    //.padding([.leading, .trailing], 8)
                                     .background(
                                         RoundedRectangle(cornerRadius: 15)
                                             .fill(Color.EZNotesLightBlack)
@@ -1035,36 +1031,36 @@ struct Account: View {
                                     .cornerRadius(15)
                                     
                                     Text("Account Actions")
+                                        .textCase(.uppercase)
                                         .frame(maxWidth: prop.size.width - 50, alignment: .leading)
                                         .padding([.top, .bottom], 10)
                                         .foregroundStyle(.white)
-                                        .setFontSizeAndWeight(weight: .bold, size: 20)
+                                        .setFontSizeAndWeight(weight: .bold, size: 18)
                                         .minimumScaleFactor(0.5)
                                     
                                     VStack {
                                         Button(action: { print("Delete Account") }) {
                                             HStack {
                                                 Text("Delete Account")
-                                                    .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                                                     .padding(.leading, 15)
-                                                    .padding([.top, .bottom])
                                                     .foregroundStyle(.white)
-                                                    .setFontSizeAndWeight(weight: .semibold, size: 15)
+                                                    .font(.system(size: 18, design: .rounded))
                                                 
                                                 ZStack {
                                                     Image(systemName: "chevron.right")
                                                         .resizableImage(width: 10, height: 15)
                                                         .foregroundStyle(.white)
                                                 }
-                                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
                                                 .padding(.trailing, 25)
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: 40)
+                                            .padding(.bottom, 5)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                         
                                         Divider()
-                                            .frame(width: prop.size.width - 80)
                                             .overlay(.black)
                                         
                                         Button(action: {
@@ -1076,27 +1072,27 @@ struct Account: View {
                                         }) {
                                             HStack {
                                                 Text("Logout")
-                                                    .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                                                     .padding(.leading, 15)
-                                                    .padding([.top, .bottom])
                                                     .foregroundStyle(.white)
-                                                    .setFontSizeAndWeight(weight: .semibold, size: 15)
+                                                    .font(.system(size: 18, design: .rounded))
                                                 
                                                 ZStack {
                                                     Image(systemName: "chevron.right")
                                                         .resizableImage(width: 10, height: 15)
                                                         .foregroundStyle(.white)
                                                 }
-                                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
                                                 .padding(.trailing, 25)
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: 40)
+                                            .padding(.top, 5)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                     }
                                     .frame(maxWidth: prop.size.width - 50)
-                                    .padding([.top, .bottom], 8)
-                                    .padding([.leading, .trailing], 8)
+                                    .padding([.top, .bottom], 14)
+                                    //.padding([.leading, .trailing], 8)
                                     .background(
                                         RoundedRectangle(cornerRadius: 15)
                                             .fill(Color.EZNotesLightBlack)
@@ -1106,7 +1102,7 @@ struct Account: View {
                                 .frame(maxWidth: prop.size.width - 20)
                                 .padding(.top, 5)
                                 .padding()
-                                .background(Color.EZNotesBlack)
+                                //.background(Color.EZNotesBlack)
                                 .cornerRadius(15)
                                 .padding(.bottom, 40)
                                 
@@ -1175,6 +1171,23 @@ struct Account: View {
                                             showReportProblemButton: true
                                         )
                                     } else {
+                                        HStack {
+                                            ZStack { }.frame(maxWidth: 10, alignment: .leading)
+                                            
+                                            ZStack {
+                                                Text("Select the college where you are actively enrolled.")
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                    .foregroundStyle(.white)
+                                                    .font(.system(size: prop.isLargerScreen ? 16 : 12, weight: .light))
+                                                    .multilineTextAlignment(.center)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            
+                                            ZStack { }.frame(maxWidth: 10, alignment: .trailing)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.bottom, 30)
+                                        
                                         ScrollView(.vertical, showsIndicators: false) {
                                             VStack {
                                                 ForEach(self.colleges, id: \.self) { college in
@@ -1215,7 +1228,7 @@ struct Account: View {
                                     }
                                 }
                                 
-                                Spacer()
+                                //Spacer()
                             }
                             .frame(maxWidth: prop.size.width - 40 , maxHeight: .infinity)
                             .alert("Are you sure?", isPresented: $updateCollegeAlert) {
@@ -1299,6 +1312,25 @@ struct Account: View {
                                             showReportProblemButton: true
                                         )
                                     } else {
+                                        HStack {
+                                            ZStack { }.frame(maxWidth: 10, alignment: .leading)
+                                            
+                                            ZStack {
+                                                Text(self.switchFieldAndMajorSection == "choose_field"
+                                                     ? "Select your field of interest in which you are majoring"
+                                                     : "Select your major within the \(temporaryMajorFieldValue) field")
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                    .foregroundStyle(.white)
+                                                    .font(.system(size: prop.isLargerScreen ? 16 : 12, weight: .light))
+                                                    .multilineTextAlignment(.center)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            
+                                            ZStack { }.frame(maxWidth: 10, alignment: .trailing)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.bottom, 30)
+                                        
                                         ScrollView(.vertical, showsIndicators: false) {
                                             VStack {
                                                 ForEach(self.switchFieldAndMajorSection == "choose_field"

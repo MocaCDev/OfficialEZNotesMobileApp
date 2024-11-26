@@ -47,8 +47,24 @@ struct UpdatePassword: View {
                     )
                 )
                 .multilineTextAlignment(.center)
+            } else {
+                HStack {
+                    ZStack { }.frame(maxWidth: 10, alignment: .leading)
+                    
+                    ZStack {
+                        Text("Enter a new password below. The new password cannot be the same as your current password.")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .foregroundStyle(.white)
+                            .font(.system(size: prop.isLargerScreen ? 16 : 12, weight: .light))
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    
+                    ZStack { }.frame(maxWidth: 10, alignment: .trailing)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 30)
             }
-
             
             if !self.passwordUpdated {
                 Text("Current Password")
