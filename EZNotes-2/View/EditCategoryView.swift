@@ -16,8 +16,8 @@ struct EditCategory: View {
     @State private var editSection: String = "edit"
     @State private var newCategoryName: String = ""
     @State private var newCategoryDescription: String = ""
-    @State private var newCategoryDisplayColor: Color = Color.EZNotesOrange
-    @State private var newCategoryTextColor: Color = Color.white
+    @Binding public var newCategoryDisplayColor: Color
+    @Binding public var newCategoryTextColor: Color
     @State private var showSaveAlert: Bool = false
     @FocusState private var newCategoryDescriptionFocus: Bool
     @State private var toggleCategoryBackgroundColorPicker: Bool = false
@@ -243,10 +243,10 @@ struct EditCategory: View {
                                     RoundedRectangle(cornerRadius: 15)
                                         .fill(
                                             self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited)
-                                            ? self.newCategoryDisplayColor == self.categoryData.categoryCustomColors[self.categoryBeingEdited]!
-                                            ? self.categoryData.categoryCustomColors[self.categoryBeingEdited]!
-                                            : self.newCategoryDisplayColor
-                                            : self.newCategoryDisplayColor
+                                                ? self.newCategoryDisplayColor == self.categoryData.categoryCustomColors[self.categoryBeingEdited]!
+                                                    ? self.categoryData.categoryCustomColors[self.categoryBeingEdited]!
+                                                    : self.newCategoryDisplayColor
+                                                : self.newCategoryDisplayColor
                                         )
                                         .frame(maxHeight: 100)
                                         .scaledToFit()

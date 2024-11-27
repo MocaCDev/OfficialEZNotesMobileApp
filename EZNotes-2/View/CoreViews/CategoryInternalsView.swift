@@ -176,7 +176,9 @@ struct CategoryInternalsView: View {
                                             prop: self.prop,
                                             categoryBeingEditedImage: self.categoryBackground,
                                             categoryBeingEdited: $categoryBeingEdited,
-                                            categoryData: self.categoryData
+                                            categoryData: self.categoryData,
+                                            newCategoryDisplayColor: $newCategoryDisplayColor,
+                                            newCategoryTextColor: $newCategoryTextColor
                                         )
                                     }
                                     

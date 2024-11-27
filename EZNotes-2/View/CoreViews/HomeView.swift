@@ -66,7 +66,7 @@ struct HomeView: View {
     /* MARK: (Edit Popup) changing category "cards" text/display colors. */
     @State private var toggleCategoryBackgroundColorPicker: Bool = false
     @State private var toggleCategoryTextColorPicker: Bool = false
-    @State private var newCategoryDisplayColor: Color = Color.EZNotesOrange
+    @State private var newCategoryDisplayColor: Color = Color.EZNotesLightBlack
     @State private var newCategoryTextColor: Color = Color.white
     
     @State private var home_section: String = "main"
@@ -331,9 +331,11 @@ struct HomeView: View {
                                                                                 self.newCategoryDescription = self.categoryData.categoryDescriptions[key]!
                                                                             } else { self.newCategoryDescription = "" }
                                                                             
+                                                                            print(key, self.categoryData.categoryCustomColors.keys.contains(key))
+                                                                            
                                                                             if self.categoryData.categoryCustomColors.keys.contains(key) {
                                                                                 self.newCategoryDisplayColor = self.categoryData.categoryCustomColors[key]!
-                                                                            } else { self.newCategoryDisplayColor = Color.EZNotesOrange }
+                                                                            } else { self.newCategoryDisplayColor = Color.EZNotesLightBlack }
                                                                             
                                                                             if self.categoryData.categoryCustomTextColors.keys.contains(key) {
                                                                                 self.newCategoryTextColor = self.categoryData.categoryCustomTextColors[key]!
@@ -730,6 +732,7 @@ struct HomeView: View {
                                                                 .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 15 : 13))
                                                         }
                                                         .frame(maxWidth: .infinity)
+                                                        .padding([.top, .bottom], 5)
                                                     }
                                                 }
                                                 .frame(maxWidth: .infinity, alignment: .trailing)
@@ -775,7 +778,9 @@ struct HomeView: View {
                                         prop: self.prop,
                                         categoryBeingEditedImage: self.categoryBeingEditedImage,
                                         categoryBeingEdited: $categoryBeingEdited,
-                                        categoryData: self.categoryData
+                                        categoryData: self.categoryData,
+                                        newCategoryDisplayColor: $newCategoryDisplayColor,
+                                        newCategoryTextColor: $newCategoryTextColor
                                     )
                                 }
                             }

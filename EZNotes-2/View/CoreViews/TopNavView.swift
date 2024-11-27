@@ -7,6 +7,7 @@
 import SwiftUI
 import PhotosUI
 import Combine
+import WebKit
 
 struct ProfileIconView: View {
     var prop: Properties
@@ -3423,6 +3424,22 @@ struct TopNavUpload: View {
     }
 }
 
+struct YouTubeVideoView: UIViewRepresentable {
+    func makeUIView(context: Context) -> WKWebView {
+            let configuration = WKWebViewConfiguration()
+            configuration.allowsInlineMediaPlayback = true // Enable inline media playback
+            
+            let webView = WKWebView(frame: .zero, configuration: configuration)
+            return webView
+        }
+    
+    func updateUIView(_ uiView: WKWebView, context: Context) {
+        guard let url = URL(string: "https://www.youtube.com/watch?v=oHg5SJYRHA0?autoplay=1&mute=0") else { return }
+        let request = URLRequest(url: url)
+        uiView.load(request)
+    }
+}
+
 struct TopNavChat: View {
     
     @ObservedObject public var accountInfo: AccountDetails
@@ -3434,6 +3451,8 @@ struct TopNavChat: View {
     
     var prop: Properties
     var backgroundColor: Color
+    
+    @State private var rickRoll: Bool = false
     
     var body: some View {
         HStack {
@@ -3447,7 +3466,7 @@ struct TopNavChat: View {
             
             HStack {
                 ZStack {
-                    Button(action: { print("Adding Friend!") }) {
+                    Button(action: { self.rickRoll = true }) {
                         Image(systemName: "person.badge.plus")//Image("Add-Friend-Icon")
                             .resizable()
                             .frame(maxWidth: 25, maxHeight: 25)
@@ -3466,6 +3485,14 @@ struct TopNavChat: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
             .padding(.bottom, 20)
+            .popover(isPresented: $rickRoll) {
+                /*WebView(url: URL(string: "https://www.youtube.com/watch?v=oHg5SJYRHA0")!)
+                    .navigationBarTitle("Get Rick Rolled, Boi", displayMode: .inline)*/
+                YouTubeVideoView() // Replace with your YouTube video ID
+                    .frame(height: 300) // Set height for the video player
+                    .cornerRadius(10)
+                    .padding()
+            }
         }
         .topNavSettings(prop: prop, backgroundColor: .clear)
         .padding([.top], 5)
