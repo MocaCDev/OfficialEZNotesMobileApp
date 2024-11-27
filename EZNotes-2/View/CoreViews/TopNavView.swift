@@ -2120,7 +2120,13 @@ struct TopNavHome: View {
         }
         /* TODO: Change from popover to an actual view. */
         .popover(isPresented: $aiChatPopover) {
-            VStack {
+            AIChat(
+                prop: self.prop,
+                accountInfo: self.accountInfo,
+                tempChatHistory: $tempChatHistory,
+                messages: $messages
+            )
+            /*VStack {
                 if self.loadingTopics {
                     VStack {
                         Text("Loading Topics")
@@ -2902,7 +2908,7 @@ struct TopNavHome: View {
                 } else {
                     print("NAH")
                 }*/
-            }
+            }*/
         }
         /*VStack {
             HStack {
