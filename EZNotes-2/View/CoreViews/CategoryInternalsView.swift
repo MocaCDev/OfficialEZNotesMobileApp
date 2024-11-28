@@ -65,13 +65,31 @@ struct CategoryInternalsView: View {
     @State private var notesContent: String = ""
     @State private var originalContet: String = "" /* MARK: This variable stores the current value of the notes. It will not be edited rather it will be used to re-assign `notesContent` in `ShowNotesView.swift` if "Undo Changes" is pressed. */
     
+    private func textHeight(for text: String, width: CGFloat) -> CGFloat {
+        /*let font = UIFont.systemFont(ofSize: 17)  // Customize this to match your font
+         let constrainedSize = CGSize(width: width - 20, height: .infinity)  // Add padding to the width
+         let boundingRect = text.boundingRect(with: constrainedSize, options: .usesLineFragmentOrigin, attributes: [.font: font], context: nil)
+         return boundingRect.height*/
+        let textView = UITextView()
+        textView.text += "\n\n"
+        textView.font = UIFont.systemFont(ofSize: 17)
+        textView.textContainerInset = UIEdgeInsets(top: 8, left: 4, bottom: 8, right: 4)
+        textView.textContainer.lineFragmentPadding = 0
+        textView.isScrollEnabled = false
+        
+        let fixedWidth = width - 16 // Account for padding
+        let size = textView.sizeThatFits(CGSize(width: fixedWidth, height: CGFloat.greatestFiniteMagnitude))
+        return max(size.height + 40, 100) // Add a buffer and ensure a minimum height
+    }
+    
     var body: some View {
         if !self.launchedSet {
             VStack {
                 TopNavCategoryView(
-                    prop: prop,
-                    categoryName: categoryName,
+                    prop: self.prop,
+                    categoryName: self.categoryName,
                     categoryBackground: self.categoryBackground,
+                    categoryBackgroundColor: self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesLightBlack,
                     totalSets: self.categoryData.categoriesAndSets[self.categoryName]!.count,
                     launchCategory: $launchCategory,
                     showTitle: $show_category_internal_title

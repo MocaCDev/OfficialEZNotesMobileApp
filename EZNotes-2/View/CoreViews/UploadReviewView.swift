@@ -19,7 +19,7 @@ struct ReviewView: View {
     
     @Binding public var longPressed: Bool
     @Binding public var showLargerImage: Bool
-    @Binding public var imageSelected: UIImage!
+    @Binding public var indexOfImageSelected: Int!
     @Binding public var uploadsSelected: Array<String>
     
     let cols4 = [
@@ -51,7 +51,7 @@ struct ReviewView: View {
                                     return
                                 }
                                 self.showLargerImage = true
-                                self.imageSelected = self.images_to_upload.images_to_upload[index][key]!
+                                self.indexOfImageSelected = index//self.images_to_upload.images_to_upload[index][key]!
                             }) {
                                 Image(uiImage: self.images_to_upload.images_to_upload[index][key]!)
                                     .resizable()
@@ -122,7 +122,7 @@ struct UploadReview: View {
     var prop: Properties
     
     @State private var uploadState: String = "review"
-    @State private var imageSelected: UIImage! = nil
+    @State private var indexOfImageSelected: Int! = nil
     @State private var showLargerImage: Bool = false
     
     let cols4 = [
@@ -168,7 +168,7 @@ struct UploadReview: View {
                         Button(action: {
                             if self.showLargerImage {
                                 self.showLargerImage = false
-                                self.imageSelected = nil
+                                self.indexOfImageSelected = nil
                                 return
                             }
                             
@@ -204,7 +204,7 @@ struct UploadReview: View {
                 
                 if self.showLargerImage {
                     VStack {
-                        Image(uiImage: self.imageSelected)
+                        Image(uiImage: self.images_to_upload.images_to_upload[self.indexOfImageSelected].first!.value)
                             .resizable()
                             .frame(width: prop.size.width - 100, height: 550)
                             .clipShape(.rect(cornerRadius: 10))
@@ -217,7 +217,7 @@ struct UploadReview: View {
                         HStack {
                             Button(action: {
                                 self.showLargerImage = false
-                                self.images_to_upload.images_to_upload.remove(at: 0)
+                                self.images_to_upload.images_to_upload.remove(at: self.indexOfImageSelected)
                             }) {
                                 Image(systemName: "trash")
                                     .resizable()
@@ -282,6 +282,10 @@ struct UploadReview: View {
                                                 
                                                 self.reviewSection = "review"
                                                 
+                                                if self.images_to_upload.images_to_upload.count == 0 {
+                                                    self.section = "upload"
+                                                }
+                                                
                                                 return
                                             }
                                         }
@@ -321,6 +325,12 @@ struct UploadReview: View {
                                         
                                         self.uploadsSelected.removeAll()
                                         self.longPressed = false
+                                        
+                                        self.reviewSection = "review"
+                                        
+                                        if self.images_to_upload.images_to_upload.count == 0 {
+                                            self.section = "upload"
+                                        }
                                     }) {
                                         HStack {
                                             Text("Remove All")
@@ -412,7 +422,7 @@ struct UploadReview: View {
                             images_to_upload: self.images_to_upload,
                             longPressed: $longPressed,
                             showLargerImage: $showLargerImage,
-                            imageSelected: $imageSelected,
+                            indexOfImageSelected: $indexOfImageSelected,
                             uploadsSelected: $uploadsSelected
                         )
                     case "configuration":
@@ -442,12 +452,6 @@ struct UploadReview: View {
                                     .minimumScaleFactor(0.5)
                                     .fontWeight(.medium)
                                     .multilineTextAlignment(.leading)
-                                /*.frame(maxWidth: prop.size.width - 100)
-                                 .foregroundStyle(Color.EZNotesLightBlack)
-                                 .font(.system(size: 14))
-                                 .italic()
-                                 .fontWeight(.bold)
-                                 .multilineTextAlignment(.center)*/
                             } else {
                                 Text("All categories will be created and stored on your device.")
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -458,12 +462,6 @@ struct UploadReview: View {
                                     .minimumScaleFactor(0.5)
                                     .fontWeight(.medium)
                                     .multilineTextAlignment(.leading)
-                                    /*.frame(maxWidth: prop.size.width - 100)
-                                    .foregroundStyle(Color.EZNotesLightBlack)
-                                    .font(.system(size: 14))
-                                    .italic()
-                                    .fontWeight(.bold)
-                                    .multilineTextAlignment(.center)*/
                             }
                             
                             VStack {
@@ -524,40 +522,11 @@ struct UploadReview: View {
                             images_to_upload: self.images_to_upload,
                             longPressed: $longPressed,
                             showLargerImage: $showLargerImage,
-                            imageSelected: $imageSelected,
+                            indexOfImageSelected: $indexOfImageSelected,
                             uploadsSelected: $uploadsSelected
                         )
                     }
                 }
-                
-                /*VStack {
-                 Toggle("Save upload to device", isOn: $localUpload)
-                 .frame(maxWidth: prop.size.width - 150)
-                 .foregroundStyle(.white)
-                 .fontWeight(.bold)
-                 .font(.system(size: 18))
-                 .toggleStyle(SwitchToggleStyle(tint: Color.EZNotesBlue))
-                 
-                 if self.localUpload == false {
-                 Text("All categories will be created and stored in the cloud.")
-                 .frame(maxWidth: prop.size.width - 100)
-                 .foregroundStyle(Color.EZNotesLightBlack)
-                 .font(.system(size: 14))
-                 .italic()
-                 .fontWeight(.bold)
-                 .multilineTextAlignment(.center)
-                 } else {
-                 Text("All categories will be created and stored on your device.")
-                 .frame(maxWidth: prop.size.width - 100)
-                 .foregroundStyle(Color.EZNotesLightBlack)
-                 .font(.system(size: 14))
-                 .italic()
-                 .fontWeight(.bold)
-                 .multilineTextAlignment(.center)
-                 }
-                 }
-                 .frame(maxWidth: .infinity)
-                 .padding([.bottom], 15)*/
                 
                 if !self.showLargerImage {
                     Button(action: {

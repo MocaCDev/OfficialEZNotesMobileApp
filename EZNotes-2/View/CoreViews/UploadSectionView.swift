@@ -342,10 +342,19 @@ struct UploadSection: View {
                 }
                 
                 if self.images_to_upload.images_to_upload.count == 0 {
-                    ButtomNavbar(
+                    /*ButtomNavbar(
                         section: $section,
                         backgroundColor: !(self.model.permissionGranted && self.model.cameraDeviceFound) ? Color.EZNotesBlack : Color.EZNotesLightBlack.opacity(0.85),
                         prop: prop
+                    )*/
+                    HStack {
+                        
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                    .background(
+                        Rectangle()
+                            .fill(Color.EZNotesLightBlack.opacity(0.5))
+                            .shadow(color: Color.black, radius: 2.5, y: -2.5)
                     )
                 } else {
                     VStack {
@@ -410,6 +419,7 @@ struct UploadSection: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .edgesIgnoringSafeArea([.bottom])
             .background(
                 self.model.permissionGranted && self.model.cameraDeviceFound
                 ? AnyView(FrameView(handler: model, image: model.frame, prop: prop, loadingCameraView: $loadingCameraView)

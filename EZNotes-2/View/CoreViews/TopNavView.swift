@@ -3145,6 +3145,7 @@ struct TopNavCategoryView: View {
     var prop: Properties
     var categoryName: String
     var categoryBackground: UIImage
+    var categoryBackgroundColor: Color
     var totalSets: Int
     
     @Binding public var launchCategory: Bool
@@ -3152,13 +3153,20 @@ struct TopNavCategoryView: View {
     
     var body: some View {
         ZStack {
-            Image(uiImage: self.categoryBackground)
-                .resizable()
-                .scaledToFill()
-                .frame(maxHeight: 125)
+            ZStack {
+                Image(uiImage: self.categoryBackground)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxHeight: 130)
                 //.aspectRatio(contentMode: .fill)
-                .clipped()
-                .overlay(Color.EZNotesBlack.opacity(0.6))
+                    .clipped()
+                    .overlay(Color.EZNotesBlack.opacity(0.6))
+            }
+            .frame(maxWidth: .infinity, maxHeight: 135)
+            .background(
+                Rectangle()
+                    .shadow(color: self.categoryBackgroundColor, radius: 2.5, y: 2.5)
+            )
             
             HStack {
                 VStack {
@@ -3172,7 +3180,7 @@ struct TopNavCategoryView: View {
                     .padding([.leading], 20)
                 }
                 .frame(maxWidth: 50, maxHeight: .infinity, alignment: .leading)
-                .padding(.top, prop.size.height / 2.5 > 300 ? 55 : 15)
+                .padding(.top, prop.isLargerScreen ? 25 : 15)
                 
                 Spacer()
                 
@@ -3196,8 +3204,8 @@ struct TopNavCategoryView: View {
                     }
                     .buttonStyle(NoLongPressButtonStyle())
                 }
-                .frame(maxWidth: 90, maxHeight: .infinity, alignment: .trailing)
-                .padding(.top, prop.size.height / 2.5 > 300 ? 55 : 0)
+                .frame(maxWidth: 50, maxHeight: .infinity, alignment: .trailing)
+                .padding(.top, prop.isLargerScreen ? 25 : 15)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }

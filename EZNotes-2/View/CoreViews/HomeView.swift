@@ -677,6 +677,7 @@ struct HomeView: View {
                                             .padding([.bottom], 10)
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        .padding(.bottom, -8) /* MARK: Move scrollview down a bit to make it look like it "scrolls under" the bottom navbar. Without this, the scrollview randomly cuts off above the bottom navbar. (this could also be `.padding(.top, 10)`)*/
                                         //.padding([.top], 20)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -801,16 +802,26 @@ struct HomeView: View {
                     
                     Spacer()
                     
-                    VStack {
+                    /*VStack {
                         ButtomNavbar(
                             section: $section,
                             backgroundColor: Color.EZNotesLightBlack,
                             prop: prop
                         )
                     }
-                    .frame(maxWidth: .infinity, maxHeight: 30, alignment: .bottom)
+                    .frame(maxWidth: .infinity, maxHeight: 30, alignment: .bottom)*/
+                    HStack {
+                        
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                    .background(
+                        Rectangle()
+                            .fill(Color.EZNotesLightBlack.opacity(0.5))
+                            .shadow(color: Color.black, radius: 2.5, y: -2.5)
+                    )
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .edgesIgnoringSafeArea([.bottom])
                 //.edgesIgnoringSafeArea(.top)
                 .background(
                     LinearGradient(
