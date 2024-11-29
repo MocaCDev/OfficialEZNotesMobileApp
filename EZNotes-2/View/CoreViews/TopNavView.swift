@@ -1127,8 +1127,6 @@ struct AccountPopup: View {
                                 prop: prop,
                                 email: self.accountInfo.email,
                                 accountID: self.accountInfo.accountID,
-                                borderBottomColor: borderBottomColor,
-                                borderBottomColorError: borderBottomColorError,
                                 isLargerScreen: prop.isLargerScreen,
                                 action: doSomething
                             )
@@ -3150,6 +3148,11 @@ struct TopNavCategoryView: View {
     
     @Binding public var launchCategory: Bool
     @Binding public var showTitle: Bool
+    @Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
+    @Binding public var messages: Array<MessageDetails>
+    @ObservedObject public var accountInfo: AccountDetails
+    
+    @State private var aiChat: Bool = false
     
     var body: some View {
         ZStack {
@@ -3173,7 +3176,7 @@ struct TopNavCategoryView: View {
                     Button(action: { self.launchCategory = false }) {
                         Image(systemName: "arrow.left")
                             .resizable()
-                            .frame(width: 20, height: 20)
+                            .frame(width: 15, height: 15)
                             .tint(Color.EZNotesBlue)
                     }
                     .buttonStyle(NoLongPressButtonStyle())
@@ -3193,12 +3196,12 @@ struct TopNavCategoryView: View {
                 //Spacer()
                 
                 VStack {
-                    Button(action: { print("POPUP!") }) {
+                    Button(action: { self.aiChat = true }) {
                         Image("AI-Chat-Icon")
                             .resizable()
                             .frame(
-                                width: prop.size.height / 2.5 > 300 ? 45 : 40,
-                                height: prop.size.height / 2.5 > 300 ? 45 : 40
+                                width: prop.isLargerScreen ? 35 : 30,
+                                height: prop.isLargerScreen ? 35 : 30
                             )
                             .padding([.trailing], 20)
                     }
@@ -3212,14 +3215,22 @@ struct TopNavCategoryView: View {
         .frame(maxWidth: .infinity, maxHeight: 100, alignment: .top)
         .padding([.top], 5)//.background(Color.EZNotesBlack.opacity(0.95))
         .ignoresSafeArea(.keyboard, edges: .bottom)
+        .popover(isPresented: $aiChat) {
+            AIChat(
+                prop: self.prop,
+                accountInfo: self.accountInfo,
+                tempChatHistory: $tempChatHistory,
+                messages: $messages
+            )
+        }
         //.zIndex(1)
     }
 }
 
 struct TopNavUpload: View {
+    @EnvironmentObject private var networkMonitor: NetworkMonitor
+    
     @Binding public var topBanner: TopBanner
-    @Binding public var needsNoWifiBanner: Bool
-    @ObservedObject public var networkMonitor: NetworkMonitor
     @ObservedObject public var categoryData: CategoryData
     @ObservedObject public var imagesToUpload: ImagesUploads
     @ObservedObject public var accountInfo: AccountDetails
@@ -3243,8 +3254,8 @@ struct TopNavUpload: View {
             .padding([.bottom], 20)
             //.popover(isPresented: $showAccountPopup) { AccountPopup(prop: prop, accountInfo: accountInfo, userHasSignedIn: $userHasSignedIn) }
             
-            if self.topBanner != .None || self.needsNoWifiBanner {
-                if self.needsNoWifiBanner {
+            if self.topBanner != .None || self.networkMonitor.needsNoWifiBanner {
+                if self.networkMonitor.needsNoWifiBanner {
                     HStack {
                         HStack {
                             Button(action: { self.topBanner = .None }) {
@@ -3265,9 +3276,8 @@ struct TopNavUpload: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         
                         Button(action: {
-                            if self.networkMonitor.isConnectedToWiFi || self.networkMonitor.isConnectedToCellular {
-                                self.needsNoWifiBanner = false
-                            }
+                            /* TODO: Is this really needed since the `NetworkMonitor` class is consistently checking? */
+                            self.networkMonitor.manualRetryCheckConnection()
                         }) {
                             ZStack {
                                 Text("Retry")
@@ -3497,7 +3507,7 @@ struct TopNavChat: View {
                 /*WebView(url: URL(string: "https://www.youtube.com/watch?v=oHg5SJYRHA0")!)
                     .navigationBarTitle("Get Rick Rolled, Boi", displayMode: .inline)*/
                 YouTubeVideoView() // Replace with your YouTube video ID
-                    .frame(height: 300) // Set height for the video player
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)//: 300) // Set height for the video player
                     .cornerRadius(10)
                     .padding()
             }

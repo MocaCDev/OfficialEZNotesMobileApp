@@ -97,21 +97,6 @@ struct SignUpScreen : View, KeyboardReadable {
         GridItem(.flexible())
     ]
     
-    var borderBottomColor: LinearGradient = LinearGradient(
-        gradient: Gradient(
-            colors: [Color.EZNotesBlue, Color.EZNotesOrange]
-        ),
-        startPoint: .leading,
-        endPoint: .trailing
-    )
-    var borderBottomColorError: LinearGradient = LinearGradient(
-        gradient: Gradient(
-            colors: [Color.EZNotesRed, Color.EZNotesRed]
-        ),
-        startPoint: .leading,
-        endPoint: .trailing
-    )
-    
     func set_image_opacity(focused: Bool)
     {
         imageOpacity = focused ? 0.0 : 1.0;
@@ -528,12 +513,10 @@ struct SignUpScreen : View, KeyboardReadable {
                                         .background(
                                             Rectangle()//RoundedRectangle(cornerRadius: 15)
                                                 .fill(.clear)
-                                                .border(
-                                                    width: 1,
-                                                    edges: [.bottom],
-                                                    lcolor: !self.makeContentRed
-                                                    ? self.userExists || self.makeUsernameFieldRed ? self.borderBottomColorError : self.borderBottomColor
-                                                    : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                .borderBottomWLColor(
+                                                    isError: !self.makeContentRed
+                                                        ? self.userExists || self.makeUsernameFieldRed
+                                                        : self.username == ""
                                                 )
                                         )
                                         .foregroundStyle(Color.EZNotesBlue)
@@ -580,12 +563,10 @@ struct SignUpScreen : View, KeyboardReadable {
                                         .background(
                                             Rectangle()//RoundedRectangle(cornerRadius: 15)
                                                 .fill(.clear)
-                                                .border(
-                                                    width: 1,
-                                                    edges: [.bottom],
-                                                    lcolor: !self.makeContentRed
-                                                    ? self.userExists || self.makeEmailFieldRed ? self.borderBottomColorError : self.borderBottomColor
-                                                    : self.email == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                .borderBottomWLColor(
+                                                    isError: !self.makeContentRed
+                                                        ? self.emailExists || self.makeEmailFieldRed
+                                                        : self.email == ""
                                                 )
                                         )
                                         .foregroundStyle(Color.EZNotesBlue)
@@ -631,12 +612,10 @@ struct SignUpScreen : View, KeyboardReadable {
                                         .background(
                                             Rectangle()//RoundedRectangle(cornerRadius: 15)
                                                 .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                                .border(
-                                                    width: 1,
-                                                    edges: [.bottom],
-                                                    lcolor: !self.makeContentRed
-                                                    ? self.makePasswordFieldRed ? self.borderBottomColorError : self.borderBottomColor
-                                                    : self.password == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                .borderBottomWLColor(
+                                                    isError: !self.makeContentRed
+                                                        ? self.makePasswordFieldRed
+                                                        : self.password == ""
                                                 )
                                         )
                                         .foregroundStyle(Color.EZNotesBlue)
@@ -994,12 +973,14 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 .background(
                                                     Rectangle()//RoundedRectangle(cornerRadius: 15)
                                                         .fill(.clear)
-                                                        .border(
-                                                            width: 1,
-                                                            edges: [.bottom],
-                                                            lcolor: !self.makeContentRed
-                                                            ? self.userExists ? self.borderBottomColorError : self.borderBottomColor
-                                                            : self.username == "" ? self.borderBottomColorError : self.borderBottomColor
+                                                        .borderBottomWLColor(
+                                                            isError: self.makeContentRed
+                                                                ? self.collegeIsOther
+                                                                    ? otherCollege == ""
+                                                                    : self.majorFieldIsOther
+                                                                        ? otherMajorField == ""
+                                                                        : otherMajor == ""
+                                                                : false
                                                         )
                                                 )
                                                 .foregroundStyle(Color.EZNotesBlue)
@@ -1012,6 +993,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                                 .keyboardType(.alphabet)
                                                 .focused($otherCollegeFocus)
                                                 .onChange(of: self.otherCollegeFocus) {
+                                                    if self.otherCollege == "" { self.makeContentRed = true; return }
+                                                    
                                                     if !self.otherCollegeFocus {
                                                         /* MARK: We will assume editing is done. */
                                                         self.showCheckCollegeAlert = true
@@ -1151,13 +1134,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                 .background(
                                     Rectangle()//RoundedRectangle(cornerRadius: 15)
                                         .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                        .border(
-                                            width: 1,
-                                            edges: [.bottom],
-                                            lcolor: !self.makeContentRed
-                                            ? self.borderBottomColor
-                                            : self.password == "" ? self.borderBottomColorError : self.borderBottomColor
-                                        )
+                                        .borderBottomWLColor(isError: self.userInputedCode == "")
                                 )
                                 .foregroundStyle(Color.EZNotesBlue)
                                 .padding(prop.isLargerScreen ? 10 : 4)
@@ -1182,8 +1159,6 @@ struct SignUpScreen : View, KeyboardReadable {
                                     prop: prop,
                                     email: self.email,
                                     accountID: self.accountID,
-                                    borderBottomColor: self.borderBottomColor,
-                                    borderBottomColorError: self.borderBottomColorError,
                                     isLargerScreen: prop.isLargerScreen,
                                     action: setLoginStatus
                                 )
@@ -1482,10 +1457,10 @@ struct SignUpScreen : View, KeyboardReadable {
             /* MARK: If the key "username" exists in `UserDefaults`, then there has been an account created on the device. */
             /* MARK: This will not work if users wipe data from the app. */
             if udKeyExists(key: "username") {
-                if udKeyExists(key: "plan_selected") {
+                /*if udKeyExists(key: "plan_selected") {
                     self.alreadySignedUp = true
                     return
-                }
+                }*/
             }
             
             self.alreadySignedUp = false

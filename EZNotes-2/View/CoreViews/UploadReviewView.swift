@@ -100,8 +100,9 @@ struct ReviewView: View {
 }
 
 struct UploadReview: View {
+    @EnvironmentObject private var categoryData: CategoryData
+    
     @ObservedObject public var images_to_upload: ImagesUploads
-    @ObservedObject public var categoryData: CategoryData
     @Binding public var topBanner: TopBanner
     //@StateObject public var reviewActions: ReviewActions = ReviewActions()
     

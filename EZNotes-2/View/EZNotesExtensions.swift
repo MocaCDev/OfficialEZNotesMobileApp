@@ -7,6 +7,32 @@
 import SwiftUI
 
 public extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
+    }
+    
+    /* MARK: `borderBottomWLColor` - Border Bottom With LinearGradient Color. */
+    func borderBottomWLColor(isError: Bool) -> some View {
+        self
+            .border(
+                width: 1,
+                edges: [.bottom],
+                lcolor: !isError ? LinearGradient(
+                    gradient: Gradient(
+                        colors: [Color.EZNotesBlue, Color.EZNotesOrange]
+                    ),
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ) : LinearGradient(
+                    gradient: Gradient(
+                        colors: [Color.EZNotesRed, Color.EZNotesRed]
+                    ),
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+    }
+    
     internal func topNavSettings(prop: Properties, backgroundColor: Color) -> some View {
         self
             .frame(

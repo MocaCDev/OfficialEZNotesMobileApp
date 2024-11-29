@@ -25,6 +25,9 @@ struct CategoryInternalsView: View {
     
     @ObservedObject public var categoryData: CategoryData
     @Binding public var launchCategory: Bool
+    @Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
+    @Binding public var messages: Array<MessageDetails>
+    @ObservedObject public var accountInfo: AccountDetails
     
     @State private var show_category_internal_title: Bool = false
     
@@ -92,7 +95,10 @@ struct CategoryInternalsView: View {
                     categoryBackgroundColor: self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesLightBlack,
                     totalSets: self.categoryData.categoriesAndSets[self.categoryName]!.count,
                     launchCategory: $launchCategory,
-                    showTitle: $show_category_internal_title
+                    showTitle: $show_category_internal_title,
+                    tempChatHistory: $tempChatHistory,
+                    messages: $messages,
+                    accountInfo: self.accountInfo
                 )
                 
                 //ScrollView(.vertical, showsIndicators: false) {
@@ -121,7 +127,7 @@ struct CategoryInternalsView: View {
                                 
                                 Text(self.categoryName)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.top, 10)
+                                    .padding(.top, 15)
                                     .foregroundStyle(.white)
                                     .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 28 : 24))//.setFontSizeAndWeight(weight: .semibold, size: prop.isLargerScreen ? 35 : 30)
                                     .minimumScaleFactor(0.5)
@@ -156,13 +162,131 @@ struct CategoryInternalsView: View {
                                     //.padding([.leading, .trailing], 8)
                                     //.padding([.top, .bottom], 2.5)
                                 }
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(alignment: .leading)
+                                .padding(.trailing, 15)
+                                
+                                HStack {
+                                    Button(action: {
+                                        self.categoryToDelete = self.categoryName
+                                        self.categoryAlert = true
+                                        self.alertType = .DeleteCategoryAlert
+                                    }) {
+                                        ZStack {
+                                            Image(systemName: "trash")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(.red)
+                                        }
+                                        .frame(alignment: .leading)
+                                        .padding(.trailing, 10)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .alert("Are you sure?", isPresented: $categoryAlert) {
+                                        Button(action: {
+                                            self.launchCategory = false
+                                            
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                                if self.categoryData.categoriesAndSets.count == 1 {
+                                                    self.categoryData.categoriesAndSets.removeAll()
+                                                    self.categoryData.setAndNotes.removeAll()
+                                                    self.categoryData.categoryCustomTextColors.removeAll()
+                                                    self.categoryData.categoryCustomColors.removeAll()
+                                                    self.categoryData.categoryDescriptions.removeAll()
+                                                } else {
+                                                    self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
+                                                    self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
+                                                    
+                                                    if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryToDelete) {
+                                                        self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryToDelete)
+                                                    }
+                                                    
+                                                    if self.categoryData.categoryCustomColors.keys.contains(self.categoryToDelete) {
+                                                        self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryToDelete)
+                                                    }
+                                                    
+                                                    if self.categoryData.categoryDescriptions.keys.contains(self.categoryToDelete) {
+                                                        self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryToDelete)
+                                                    }
+                                                }
+                                                
+                                                writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                                writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                                
+                                                resetAlert()
+                                            }
+                                            
+                                            /* TODO: Add support for actually storing category information in the database. That will, thereby, prompt us to need to send a request to the server to delete the given category from the database. */
+                                        }) {
+                                            Text("Yes")
+                                        }
+                                        
+                                        Button(action: { resetAlert() }) { Text("No") }
+                                    } message: {
+                                        Text(self.alertType == .DeleteCategoryAlert
+                                             ? "Once deleted, the category **\"\(self.categoryToDelete)\"** will be removed from cloud or local storage and cannot be recovered."
+                                             : "") /* TODO: Finish this. There will presumably be more alert types. */
+                                    }
+                                    
+                                    Button(action: {
+                                        if self.categoryData.categoryDescriptions.keys.contains(self.categoryName) {
+                                            self.newCategoryDescription = self.categoryData.categoryDescriptions[self.categoryName]!
+                                        } else { self.newCategoryDescription = "" }
+                                        
+                                        if self.categoryData.categoryCustomColors.keys.contains(self.categoryName) {
+                                            self.newCategoryDisplayColor = self.categoryData.categoryCustomColors[self.categoryName]!
+                                        } else { self.newCategoryDisplayColor = Color.EZNotesOrange }
+                                        
+                                        if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryName) {
+                                            self.newCategoryTextColor = self.categoryData.categoryCustomTextColors[self.categoryName]!
+                                        } else { self.newCategoryTextColor = .white }
+                                        
+                                        self.categoryBeingEdited = self.categoryName
+                                        //self.categoryBeingEditedImage = self.categoryData.categoryImages[self.categoryName]!
+                                        self.editCategoryDetails = true
+                                    }) {
+                                        ZStack {
+                                            Image(systemName: "pencil")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(Color.EZNotesBlue)
+                                        }
+                                        .frame(alignment: .leading)
+                                        .padding(.trailing, 10)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .popover(isPresented: $editCategoryDetails) {
+                                        EditCategory(
+                                            prop: self.prop,
+                                            categoryBeingEditedImage: self.categoryBackground,
+                                            categoryBeingEdited: $categoryBeingEdited,
+                                            categoryData: self.categoryData,
+                                            newCategoryDisplayColor: $newCategoryDisplayColor,
+                                            newCategoryTextColor: $newCategoryTextColor
+                                        )
+                                    }
+                                    
+                                    
+                                    ShareLink(
+                                        item: Image(uiImage: self.categoryBackground),
+                                        subject: Text(self.categoryName),
+                                        message: Text(
+                                            self.categoryDescription != nil
+                                                ? "\(self.categoryDescription!)\n\nCreated with the support of **EZNotes**"
+                                                : ""
+                                        ),
+                                        preview: SharePreview(self.categoryName, image: Image(uiImage: self.categoryBackground)))
+                                    {//(item: URL(string: "https://apps.apple.com/us/app/light-speedometer/id6447198696")!) {
+                                        Label("Share", systemImage: "square.and.arrow.up")
+                                            .foregroundStyle(Color.EZNotesBlue)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading) /* MARK: `maxWidth` is in this as it's the last element in the HStack, thus pushing all the other content over. */
+                                }
+                                .frame(maxWidth: .infinity, alignment: .trailing)
                             }
                             .frame(maxWidth: .infinity, maxHeight: 15, alignment: .leading)
-                            .padding(.top, -10)
-                            .padding(.bottom, 5)
+                            .padding(.top, -15)
                             
-                            HStack {
+                            /*HStack {
                                 HStack {
                                     Button(action: {
                                         if self.categoryData.categoryDescriptions.keys.contains(self.categoryName) {
@@ -230,9 +354,24 @@ struct CategoryInternalsView: View {
                                                 if self.categoryData.categoriesAndSets.count == 1 {
                                                     self.categoryData.categoriesAndSets.removeAll()
                                                     self.categoryData.setAndNotes.removeAll()
+                                                    self.categoryData.categoryCustomTextColors.removeAll()
+                                                    self.categoryData.categoryCustomColors.removeAll()
+                                                    self.categoryData.categoryDescriptions.removeAll()
                                                 } else {
                                                     self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
                                                     self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
+                                                    
+                                                    if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryToDelete) {
+                                                        self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryToDelete)
+                                                    }
+                                                    
+                                                    if self.categoryData.categoryCustomColors.keys.contains(self.categoryToDelete) {
+                                                        self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryToDelete)
+                                                    }
+                                                    
+                                                    if self.categoryData.categoryDescriptions.keys.contains(self.categoryToDelete) {
+                                                        self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryToDelete)
+                                                    }
                                                 }
                                                 
                                                 writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
@@ -249,15 +388,15 @@ struct CategoryInternalsView: View {
                                         Button(action: { resetAlert() }) { Text("No") }
                                     } message: {
                                         Text(self.alertType == .DeleteCategoryAlert
-                                             ? "Once deleted, the category \(self.categoryToDelete) will be removed from cloud or local storage and cannot be recovered."
-                                             : "")
+                                             ? "Once deleted, the category **\"\(self.categoryToDelete)\"** will be removed from cloud or local storage and cannot be recovered."
+                                             : "") /* TODO: Finish this. There will presumably be more alert types. */
                                     }
                                 }
                                 .frame(maxWidth: prop.size.width - 100, alignment: .leading)
                                 
                                 Spacer()
                             }
-                            .frame(maxWidth: .infinity)
+                            .frame(maxWidth: .infinity)*/
                             
                             if self.categoryDescription != nil {
                                 VStack {
@@ -336,7 +475,7 @@ struct CategoryInternalsView: View {
                                                     )
                                             }
                                         }
-                                        .padding(.top, 15)
+                                        .padding([.top, .bottom], 15)
                                         
                                         if self.errorGenerating {
                                             Text("Error generating description.. try again")
@@ -370,24 +509,41 @@ struct CategoryInternalsView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.top, 10)
-                        
-                        Divider()
-                            .background(MeshGradient(width: 3, height: 3, points: [
-                                .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                .init(0, 1), .init(0.5, 1), .init(1, 1)
-                            ], colors: [
-                                .indigo, .indigo, Color.EZNotesBlue,
-                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                            ]))//.background(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : .white)
                     }
                     .frame(maxWidth: prop.size.width - 40, alignment: .top)
                     .padding(.top, -15)
-                    .zIndex(1)
+                    .padding(.bottom, -15) /* MARK: Bring the below divider closer to the above content. */
+                                 
+                    /*Divider()
+                        .frame(height: 1.5)
+                        .background(MeshGradient(width: 3, height: 3, points: [
+                            .init(0, 0), .init(0.3, 0), .init(1, 0),
+                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                            .init(0, 1), .init(0.5, 1), .init(1, 1)
+                        ], colors: [
+                            .indigo, .indigo, Color.EZNotesBlue,
+                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                        ]))
+                        .frame(maxWidth: prop.size.width - 20)
+                        .padding(.top, 15)
+                        .padding(.bottom, -15) /* MARK: Move below content up to make it look like the scrollview goes under the above `Divider`. */
+                        */
+                    
+                    VStack { }.frame(maxWidth: prop.size.width - 20, maxHeight: 1.5).background(
+                        MeshGradient(width: 3, height: 3, points: [
+                            .init(0, 0), .init(0.3, 0), .init(1, 0),
+                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                            .init(0, 1), .init(0.5, 1), .init(1, 1)
+                        ], colors: [
+                            .indigo, .indigo, Color.EZNotesBlue,
+                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                        ])
+                    )
+                    .cornerRadius(20)
+                    .padding(.top, 15)
+                    .padding(.bottom, -15)
                     
                     VStack {
                         VStack {
@@ -400,55 +556,61 @@ struct CategoryInternalsView: View {
                                     .minimumScaleFactor(0.5)
                             } else {
                                 ScrollView(.vertical, showsIndicators: false) {
-                                    ForEach(Array(self.categoryData.setAndNotes[self.categoryName]!.enumerated()), id: \.offset) { index, val in
-                                        if val != [:] {
-                                            ForEach(Array(val.keys), id: \.self) { key in
-                                                Button(action: {
-                                                    self.setName = key
-                                                    self.notesContent = val[key]!
-                                                    self.originalContet = self.notesContent
-                                                    self.launchedSet = true
-                                                }) {
-                                                    VStack {
-                                                        HStack {
-                                                            Text(key)
-                                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                                .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
-                                                                .padding(.leading, 15)
-                                                                .font(Font.custom("Poppins-SemiBold", size: 18))
-                                                                .minimumScaleFactor(0.5)
-                                                                .multilineTextAlignment(.leading)
-                                                            
-                                                            ZStack {
-                                                                Image(systemName: "chevron.forward")
-                                                                    .resizable()
-                                                                    .frame(width: 10, height: 15)
-                                                                    .foregroundStyle(.gray)
+                                    LazyVGrid(columns: self.categoryData.setAndNotes[self.categoryName]!.count > 1
+                                              ? [GridItem(.flexible()), GridItem(.flexible())]
+                                              : [GridItem(.flexible())]
+                                    ) {
+                                        ForEach(Array(self.categoryData.setAndNotes[self.categoryName]!.enumerated()), id: \.offset) { index, val in
+                                            if val != [:] {
+                                                ForEach(Array(val.keys), id: \.self) { key in
+                                                    Button(action: {
+                                                        self.setName = key
+                                                        self.notesContent = val[key]!
+                                                        self.originalContet = self.notesContent
+                                                        self.launchedSet = true
+                                                    }) {
+                                                        VStack {
+                                                            HStack {
+                                                                Text(key)
+                                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                                    .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
+                                                                    .padding(.leading, 15)
+                                                                    .font(Font.custom("Poppins-SemiBold", size: 18))
+                                                                    .minimumScaleFactor(0.5)
+                                                                    .multilineTextAlignment(.leading)
+                                                                
+                                                                ZStack {
+                                                                    Image(systemName: "chevron.forward")
+                                                                        .resizable()
+                                                                        .frame(width: 10, height: 15)
+                                                                        .foregroundStyle(.gray)
+                                                                }
+                                                                .frame(maxWidth: 20, alignment: .trailing)
+                                                                .padding(.trailing, 15)
                                                             }
-                                                            .frame(maxWidth: 20, alignment: .trailing)
-                                                            .padding(.trailing, 15)
+                                                            .frame(maxWidth: .infinity, maxHeight: 190)
+                                                            .padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
+                                                                      ? [.top, .bottom, .leading, .trailing]
+                                                                      : [.top, .leading, .trailing],*/
+                                                                self.categoryData.setAndNotes[self.categoryName]!.count == 1 ? 8 : 4
+                                                            )
                                                         }
-                                                        .frame(maxWidth: .infinity, maxHeight: 190)
-                                                        .padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
-                                                                 ? [.top, .bottom, .leading, .trailing]
-                                                                 : [.top, .leading, .trailing],*/
-                                                                 8
+                                                        .frame(maxWidth: prop.size.width - 20)
+                                                        .padding(8)
+                                                        .background(
+                                                            RoundedRectangle(cornerRadius: 15)
+                                                                .fill(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
                                                         )
+                                                        .cornerRadius(15)
+                                                        .padding(.bottom, index == self.categoryData.setAndNotes[self.categoryName]!.count - 1 ? 25 : 0)
                                                     }
-                                                    .frame(maxWidth: prop.size.width - 20)
-                                                    .padding(8)
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 15)
-                                                            .fill(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
-                                                    )
-                                                    .cornerRadius(15)
-                                                    .padding(.bottom, index == self.categoryData.setAndNotes[self.categoryName]!.count - 1 ? 25 : 0)
                                                 }
                                             }
                                         }
                                     }
+                                    .padding(.top, 10)
                                 }
-                                .padding(.top, -25)
+                                .padding(.top, -23)
                             }
                         }
                         .frame(maxWidth: prop.size.width - 30, maxHeight: .infinity)

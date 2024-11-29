@@ -60,6 +60,7 @@ struct SUILabel: UIViewRepresentable {
 }
 
 struct HomeScreen: View {
+    @EnvironmentObject private var networkMonitor: NetworkMonitor
     public var prop: Properties
     
     @Binding public var screen: String
@@ -70,7 +71,7 @@ struct HomeScreen: View {
     @available(iOS 17.0, *)
     var body: some View {
         VStack {
-            if self.startupScreen.needsNoWifiBanner {
+            if self.networkMonitor.needsNoWifiBanner {
                 HStack {
                     ZStack { }.frame(maxWidth: 30, alignment: .leading)
                     
@@ -188,8 +189,8 @@ struct HomeScreen: View {
                 .top,
                 prop.isIpad ? -60 :
                     prop.isLargerScreen
-                        ? self.userNotFound || self.startupScreen.needsNoWifiBanner ? -25 : 50
-                        : self.userNotFound || self.startupScreen.needsNoWifiBanner ? -25 : -30
+                    ? self.userNotFound || self.networkMonitor.needsNoWifiBanner ? -25 : 50
+                    : self.userNotFound || self.networkMonitor.needsNoWifiBanner ? -25 : -30
             )
             
             Spacer()

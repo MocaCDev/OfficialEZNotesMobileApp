@@ -105,20 +105,18 @@ struct ContentView: View {
     //private let rotationChangePublisher = NotificationCenter.default
         //.publisher(for: UIDevice.orientationDidChangeNotification)
     
-    @StateObject private var networkMonitor = NetworkMonitor()
     @State private var topBanner: TopBanner = .None
-    @State private var needsNoWifiBanner: Bool = false
+    //@State private var needsNoWifiBanner: Bool = false
     
     var body: some View {
         if !userHasSignedIn {
             StartupScreen(
-                needsNoWifiBanner: $needsNoWifiBanner,
                 userHasSignedIn: $userHasSignedIn,
                 userNotFound: $userNotFound,
                 goBackToLogin: $goBackToLogin,
                 faceIDAuthenticated: $faceIDAuthenticated
             )
-            .onChange(of: self.networkMonitor.isConnectedToWiFi) {
+            /*.onChange(of: self.networkMonitor.isConnectedToWiFi) {
                 if !self.networkMonitor.isConnectedToWiFi {
                     if !self.networkMonitor.isConnectedToCellular {
                         self.needsNoWifiBanner = true
@@ -140,7 +138,7 @@ struct ContentView: View {
                     if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
                 }
                 if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
-            }
+            }*/
             .onAppear(perform: {
                 if UserDefaults.standard.object(forKey: "faceID_enabled") == nil {
                     UserDefaults.standard.set("not_enabled", forKey: "faceID_enabled")
@@ -154,18 +152,8 @@ struct ContentView: View {
                         CoreApp(
                             prop: prop,
                             topBanner: $topBanner,
-                            networkMonitor: self.networkMonitor,
-                            needsNoWifiBanner: $needsNoWifiBanner,
-                            categoryData: self.categoryData,
                             accountInfo: accountInfo,
                             model: model,
-                            /*categoriesAndSets: $categoriesAndSets,
-                            setAndNotes: $setAndNotes,
-                            categoryCreationDates: $categoryCreationDates,
-                            categoryImages: $categoryImages,
-                            categoryDescriptions: $categoryDescriptions,
-                            categoryCustomColors: $categoryCustomColors,
-                            categoryCustomTextColors: $categoryCustomTextColors,*/
                             userHasSignedIn: $userHasSignedIn,
                             tempChatHistory: $temporaryStoredChats,
                             messages: $messages
@@ -174,7 +162,6 @@ struct ContentView: View {
                 } else {
                     if self.goBackToLogin {
                         StartupScreen(
-                            needsNoWifiBanner: $needsNoWifiBanner,
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,
@@ -204,48 +191,11 @@ struct ContentView: View {
                         )
                     }
                 }
-                /* TODO: Add "Core.swift". */
-                //ResponsiveView { prop in
-                    //CoreApp()
-                //}
-                //.frame(maxWidth: .infinity, maxHeight: .infinity)
-                //.onReceive(rotationChangePublisher) { _ in
-                    // This is called when there is a orientation change
-                    // You can set back the orientation to the one you like even
-                    // if the user has turned around their phone to use another
-                    // orientation.
-                    //if let delegate = UIApplication.shared.delegate as? AppDelegate {
-                    //    delegate.orientationLock = .portrait
-                    //}//UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
-                //}
             }
             .onChange(of: scenePhase) {
                 if scenePhase == .inactive || scenePhase == .background {
                     UserDefaults.standard.set(true, forKey: "requires_faceID")
                 }
-            }
-            .onChange(of: self.networkMonitor.isConnectedToWiFi) {
-                if !self.networkMonitor.isConnectedToWiFi {
-                    if !self.networkMonitor.isConnectedToCellular {
-                        self.needsNoWifiBanner = true
-                        return
-                    }
-                    
-                    if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
-                }
-                
-                if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
-            }
-            .onChange(of: self.networkMonitor.isConnectedToCellular) {
-                if !self.networkMonitor.isConnectedToCellular {
-                    if !self.networkMonitor.isConnectedToWiFi {
-                        self.needsNoWifiBanner = true
-                        return
-                    }
-                    
-                    if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
-                }
-                if self.needsNoWifiBanner { self.needsNoWifiBanner = false }
             }
             .onAppear(perform: {
                 // else {

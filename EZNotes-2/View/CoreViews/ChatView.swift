@@ -43,6 +43,7 @@ struct ChatView: View {
                 )
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .edgesIgnoringSafeArea([.bottom])
             .background(
                 LinearGradient(
                     gradient: Gradient(

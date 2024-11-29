@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import StripePayments
+import StoreKit
 
 enum PlanErrors {
     case None
@@ -23,12 +24,12 @@ enum CardDetailsPopupType {
 }
 
 public struct Plans: View {
+    @EnvironmentObject private var eznotesSubscriptionManager: EZNotesSubscriptionManager
+    
     /* MARK: Key variables needed for the struct. */
     var prop: Properties
     var email: String
     var accountID: String
-    var borderBottomColor: LinearGradient
-    var borderBottomColorError: LinearGradient
     var isLargerScreen: Bool
     var action: () -> Void /* TODO: Is this needed? */
     
@@ -140,9 +141,276 @@ public struct Plans: View {
         }
     }
     
+    @State private var planView: String = "basic_plan"
+    
     public var body: some View {
         VStack {
+            /* TODO: Perhaps refactor the way the below hstack is structured. */
+            HStack {
+                Button(action: {
+                    self.planView = "basic_plan"
+                    
+                    Task {
+                        do {
+                            try await self.eznotesSubscriptionManager.loadProducts(planIDs: self.eznotesSubscriptionManager.configurePlans(isFor: self.planView))
+                        } catch {
+                            print(error)
+                        }
+                    }
+                }) {
+                    HStack {
+                        Text("Basic Plan")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .foregroundStyle(.white)
+                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 18 : 15))
+                            .padding(.bottom, 5) /* MARK: Add padding to the bottom of the text to push the below border down a bit. */
+                            .border(width: self.planView == "basic_plan" ? 1 : 0, edges: [.bottom], mgColor: MeshGradient(width: 3, height: 3, points: [
+                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                            ], colors: [
+                                .indigo, .indigo, Color.EZNotesBlue,
+                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                            ]))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.leading, 15)
+                }
+                
+                Button(action: {
+                    self.planView = "pro_plan"
+                    
+                    Task {
+                        do {
+                            try await self.eznotesSubscriptionManager.loadProducts(planIDs: self.eznotesSubscriptionManager.configurePlans(isFor: self.planView))
+                        } catch {
+                            print(error)
+                        }
+                    }
+                }) {
+                    HStack {
+                        Text("Pro Plan")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .foregroundStyle(.white)
+                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 18 : 15))
+                            .padding(.bottom, 5)
+                            .border(width: self.planView == "pro_plan" ? 1 : 0, edges: [.bottom], mgColor: MeshGradient(width: 3, height: 3, points: [
+                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                            ], colors: [
+                                .indigo, .indigo, Color.EZNotesBlue,
+                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                            ]))
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                
+                HStack {
+                    Text("Pro+ Plan")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .foregroundStyle(.gray)
+                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 18 : 15))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.trailing, 15)
+                
+                /*ZStack {
+                    
+                }
+                .frame(maxWidth: 20, alignment: .leading)
+                
+                HStack {
+                    Button(action: { self.planView = "basic_plan" }) {
+                        Text("Basic Plan")
+                            .frame(alignment: .leading)
+                            .foregroundStyle(.white)
+                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 18 : 15))
+                            .padding(.bottom, 5) /* MARK: Add padding to the bottom of the text to push the below border down a bit. */
+                            .border(width: self.planView == "basic_plan" ? 1 : 0, edges: [.bottom], mgColor: MeshGradient(width: 3, height: 3, points: [
+                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                            ], colors: [
+                                .indigo, .indigo, Color.EZNotesBlue,
+                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                            ]))
+                    }
+                    
+                    Button(action: { self.planView = "pro_plan" }) {
+                        HStack {
+                            Text("Pro Plan")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .foregroundStyle(.white)
+                                .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 18 : 15))
+                                .padding(.bottom, 5)
+                                .border(width: self.planView == "pro_plan" ? 1 : 0, edges: [.bottom], mgColor: MeshGradient(width: 3, height: 3, points: [
+                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                ], colors: [
+                                    .indigo, .indigo, Color.EZNotesBlue,
+                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                ]))
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    
+                    Text("Coming Soon")
+                        .frame(alignment: .leading)
+                        .foregroundStyle(.gray)
+                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 18 : 15))
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                
+                ZStack {
+                    
+                }
+                .frame(maxWidth: 20, alignment: .leading)*/
+            }
+            .frame(maxWidth: prop.size.width - 20)
+            
             ScrollView(.vertical, showsIndicators: false) {
+                VStack {
+                    ForEach(Array(self.eznotesSubscriptionManager.planFeatures.keys), id: \.self) { feature in
+                        ZStack {
+                            if self.eznotesSubscriptionManager.specialFeatures.contains(feature) {
+                                MeshGradient(width: 3, height: 3, points: [
+                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                ], colors: [
+                                    .indigo, .indigo, Color.EZNotesBlue,
+                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                ])
+                                .blur(radius: 10)
+                            }
+                            
+                            HStack {
+                                self.eznotesSubscriptionManager.planFeatures[feature]!
+                                
+                                Text(feature)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 18 : 16))//.font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .medium))
+                            }
+                            .frame(maxWidth: prop.size.width - 60)
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color.secondary)
+                                    .shadow(color: Color.black, radius: 2.5)
+                            )
+                            .cornerRadius(10)
+                            .padding(2.5)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .cornerRadius(10)
+                    }
+                    
+                    Divider()
+                        .background(MeshGradient(width: 3, height: 3, points: [
+                            .init(0, 0), .init(0.3, 0), .init(1, 0),
+                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                            .init(0, 1), .init(0.5, 1), .init(1, 1)
+                        ], colors: [
+                            .indigo, .indigo, Color.EZNotesBlue,
+                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                        ]))
+                        .frame(maxWidth: prop.size.width - 60)
+                    
+                    if self.eznotesSubscriptionManager.products.isEmpty {
+                        LoadingView(message: "Loading Details...")
+                    } else {
+                        VStack {
+                            ForEach(self.eznotesSubscriptionManager.products) { product in
+                                Button(action: {
+                                    Task {
+                                        do {
+                                            let success = try await self.eznotesSubscriptionManager.purchase(product)
+                                            
+                                            if !success {
+                                                /* TODO: Do something*/
+                                            }
+                                            
+                                            UserDefaults.standard.set(true, forKey: "plan_selected")
+                                            
+                                            DispatchQueue.main.async { action() }
+                                        } catch {
+                                            print(error)
+                                        }
+                                    }
+                                }) {
+                                    HStack {
+                                        Text("Subscribe for \(product.displayPrice)/\(product.displayName.contains("Monthly") ? "month" : "year")")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .foregroundStyle(.black)
+                                            .font(.system(size: prop.isLargerScreen ? 16 : 13, weight: .bold))
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.EZNotesBlue)
+                                    .cornerRadius(15)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                            }
+                        }
+                        .padding(.bottom, 30)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                /*switch(self.planView) {
+                case "basic_plan":
+                    VStack {
+                        ForEach(Array(self.basic_plan_features.keys), id: \.self) { feature in
+                            HStack {
+                                self.basic_plan_features[feature]!
+                                
+                                Text(feature)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .medium))
+                            }
+                            .padding()
+                            .background(Color.EZNotesLightBlack)
+                            .cornerRadius(10)
+                            .padding([.top, .bottom], 4)
+                        }
+                    }
+                    .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+                case "pro_plan":
+                    VStack {
+                        
+                    }
+                    .frame(maxWidth: <#T##CGFloat?#>)
+                default:
+                    VStack { }.onAppear { self.planView = "basic_plan" }
+                }*/
+                /*ForEach(self.products) { product in
+                    if product.displayName.contains("Monthly") {
+                        
+                    }
+                    Button {
+                        Task {
+                            do {
+                                try await self.purchase(product)
+                            } catch {
+                                print(error)
+                            }
+                        }
+                    } label: {
+                        Text("\(product.displayPrice) - \(product.displayName)")
+                    }
+                }*/
+            }
+            
+            /*ScrollView(.vertical, showsIndicators: false) {
                 VStack {
                     VStack {
                         VStack {
@@ -506,9 +774,19 @@ public struct Plans: View {
                     .padding(.bottom, 10)
                 }
                 .frame(maxWidth: prop.size.width - 30)
-            }
+            }*/
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .task {
+            Task {
+                /* MARK: Perform this when the view appears so that the according buttons show for the "basic_plan" plan view. */
+                do {
+                    try await self.eznotesSubscriptionManager.loadProducts(planIDs: self.eznotesSubscriptionManager.configurePlans(isFor: self.planView))
+                } catch {
+                    print(error)
+                }
+            }
+        }
         .popover(isPresented: $isPlanPicked) {
             GeometryReader { geometry in
                 VStack {
@@ -584,13 +862,7 @@ public struct Plans: View {
                                     .background(
                                         Rectangle()//RoundedRectangle(cornerRadius: 15)
                                             .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                            .border(
-                                                width: 1,
-                                                edges: [.bottom],
-                                                lcolor: self.planError != .CardHolderNameEmpty
-                                                ? self.borderBottomColor
-                                                : self.borderBottomColorError
-                                            )
+                                            .borderBottomWLColor(isError: self.planError != .CardHolderNameEmpty)
                                     )
                                     .tint(Color.EZNotesBlue)
                                     .foregroundStyle(Color.EZNotesBlue)
@@ -620,13 +892,7 @@ public struct Plans: View {
                                     .background(
                                         Rectangle()//RoundedRectangle(cornerRadius: 15)
                                             .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                            .border(
-                                                width: 1,
-                                                edges: [.bottom],
-                                                lcolor: self.planError != .CardNumberEmpty
-                                                ? self.borderBottomColor
-                                                : self.borderBottomColorError
-                                            )
+                                            .borderBottomWLColor(isError: self.planError != .CardNumberEmpty)
                                     )
                                     .tint(Color.EZNotesBlue)
                                     .foregroundStyle(Color.EZNotesBlue)
@@ -668,13 +934,7 @@ public struct Plans: View {
                                                 .background(
                                                     Rectangle()
                                                         .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                                        .border(
-                                                            width: 1,
-                                                            edges: [.bottom],
-                                                            lcolor: self.planError != .CardExpYearEmpty
-                                                            ? self.borderBottomColor
-                                                            : self.borderBottomColorError
-                                                        )
+                                                        .borderBottomWLColor(isError: self.planError != .CardExpYearEmpty)
                                                 )
                                                 .tint(Color.EZNotesBlue)
                                                 .foregroundStyle(Color.EZNotesBlue)
@@ -711,13 +971,7 @@ public struct Plans: View {
                                                 .background(
                                                     Rectangle()
                                                         .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                                        .border(
-                                                            width: 1,
-                                                            edges: [.bottom],
-                                                            lcolor: self.planError != .CardExpYearEmpty
-                                                            ? self.borderBottomColor
-                                                            : self.borderBottomColorError
-                                                        )
+                                                        .borderBottomWLColor(isError: self.planError != .CardExpYearEmpty)
                                                 )
                                                 .tint(Color.EZNotesBlue)
                                                 .foregroundStyle(Color.EZNotesBlue)
@@ -757,13 +1011,7 @@ public struct Plans: View {
                                             .background(
                                                 Rectangle()//RoundedRectangle(cornerRadius: 15)
                                                     .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                                    .border(
-                                                        width: 1,
-                                                        edges: [.bottom],
-                                                        lcolor: self.planError != .CardCVCEmpty
-                                                        ? self.borderBottomColor
-                                                        : self.borderBottomColorError
-                                                    )
+                                                    .borderBottomWLColor(isError: self.planError != .CardCVCEmpty)
                                             )
                                             .tint(Color.EZNotesBlue)
                                             .foregroundStyle(Color.EZNotesBlue)

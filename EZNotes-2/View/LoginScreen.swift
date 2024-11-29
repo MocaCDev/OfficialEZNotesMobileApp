@@ -18,20 +18,6 @@ struct LoginScreen: View, KeyboardReadable {
     @State public var keyboardActivated: Bool = false
     
     @State public var makeContentRed: Bool = false
-    var borderBottomColor: LinearGradient = LinearGradient(
-        gradient: Gradient(
-            colors: [Color.EZNotesBlue, Color.EZNotesOrange]
-        ),
-        startPoint: .leading,
-        endPoint: .trailing
-    )
-    var borderBottomColorError: LinearGradient = LinearGradient(
-        gradient: Gradient(
-            colors: [Color.EZNotesRed, Color.EZNotesRed]
-        ),
-        startPoint: .leading,
-        endPoint: .trailing
-    )
     
     @State public var username: String = ""
     @State public var password: String = ""
@@ -156,14 +142,7 @@ struct LoginScreen: View, KeyboardReadable {
                             .background(
                                 Rectangle()//RoundedRectangle(cornerRadius: 15)
                                     .fill(.clear)
-                                    .border(
-                                        width: 1,
-                                        edges: [.bottom],
-                                        lcolor: self.loginError || self.makeContentRed ? self.borderBottomColorError : self.borderBottomColor
-                                        /*!self.makeContentRed
-                                         ? self.loginError ? self.borderBottomColorError : self.borderBottomColor
-                                         : self.username == "" ? self.borderBottomColorError : self.borderBottomColor*/
-                                    )
+                                    .borderBottomWLColor(isError: self.loginError || self.makeContentRed)
                             )
                             .foregroundStyle(Color.EZNotesBlue)
                             .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
@@ -239,14 +218,7 @@ struct LoginScreen: View, KeyboardReadable {
                             .background(
                                 Rectangle()//RoundedRectangle(cornerRadius: 15)
                                     .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                    .border(
-                                        width: 1,
-                                        edges: [.bottom],
-                                        lcolor: self.loginError || self.makeContentRed ? self.borderBottomColorError : self.borderBottomColor
-                                        /*!self.makeContentRed
-                                         ? self.borderBottomColor
-                                         : self.password == "" ? self.borderBottomColorError : self.borderBottomColor*/
-                                    )
+                                    .borderBottomWLColor(isError: self.loginError || self.makeContentRed)
                             )
                             .foregroundStyle(Color.EZNotesBlue)
                             .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)

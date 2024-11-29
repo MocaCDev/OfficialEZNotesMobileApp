@@ -1,0 +1,199 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "562798A7",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "CF9D51BF",
+      "localizations" : [
+
+      ],
+      "name" : "EZNotes Subscriptions",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "12.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "3AC3C332",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Get all of the essentials needed to automate the process of taking notes.",
+              "displayName" : "EZNotes Basic Plan - Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "eznotes.basic.plan.monthly",
+          "promotionalImageID" : "6696A523",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "EZNotes Basic Plan Monthly",
+          "subscriptionGroupID" : "CF9D51BF",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "126",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "2961478A",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Get all of the essentials needed to automate the process of taking notes.",
+              "displayName" : "EZNotes Basic Plan - Annual",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "eznotes.basic.plan.annually",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "EZNotes Basic Plan Annually",
+          "subscriptionGroupID" : "CF9D51BF",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "17.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "9D1EEED8",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Get double the upload and backup storage, as well as unlock access to features that enable a more feasible schooling experience.",
+              "displayName" : "EZNotes Pro Plan - Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "eznotes.pro.plan.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "EZNotes Pro Plan Monthly",
+          "subscriptionGroupID" : "CF9D51BF",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "170",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "9F8EEB0F",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Get double the upload and backup storage, as well as unlock access to features that enable a more feasible schooling experience.",
+              "displayName" : "EZNotes Pro Plan - Annual",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "eznotes.pro.plan.annually",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "EZNotes Pro Plan Annually",
+          "subscriptionGroupID" : "CF9D51BF",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

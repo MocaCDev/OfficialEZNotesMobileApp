@@ -17,12 +17,6 @@ struct RoundedCorner: Shape {
     }
 }
 
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-}
-
 struct NoLongPressButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -33,18 +27,10 @@ struct NoLongPressButtonStyle: ButtonStyle {
 }
 
 struct HomeView: View {
+    @EnvironmentObject private var categoryData: CategoryData
+    
     @Binding public var messages: Array<MessageDetails>
     @Binding public var section: String
-    @ObservedObject public var categoryData: CategoryData
-    /*@Binding public var categoriesAndSets: [String: Array<String>]
-    @Binding public var setAndNotes: [String: Array<[String: String]>]
-    @Binding public var categoryImages: [String: UIImage]
-    @Binding var categoryCreationDates: [String: Date]
-    
-    /* MARK: The below bindings are all custom to the category cards. The values below will be set via the edit popup. */
-    @Binding public var categoryDescriptions: [String: String]
-    @Binding public var categoryCustomColors: [String: Color]
-    @Binding public var categoryCustomTextColors: [String: Color]*/
     
     /* MARK: (Edit popup) changing category background image */
     @State private var photoPicker: PhotosPickerItem?
@@ -74,8 +60,6 @@ struct HomeView: View {
     @State private var topNavOpacity: Double = 0.0
     
     @State private var scrollOffset: CGFloat = 0 // Store the scroll offset
-    //@State private var currentBackgroundOpacity: Double = 1.0 // Background opacity
-    //@State private var currentNavOpacity: Double = 1.0
     
     @State private var launchCategory: Bool = false
     @State private var categoryDescription: String? = nil
@@ -100,31 +84,6 @@ struct HomeView: View {
         GridItem(.flexible()),
         GridItem(.flexible())
     ]
-    
-    /*private func opacityForBackground(scrollOffset: CGFloat) -> Double {
-        /*let navigationBarHeight: CGFloat = 100 // Height of the navigation bar
-         let maxOffset: CGFloat = -navigationBarHeight // Max offset (when content hits the navbar)
-         let minOffset: CGFloat = 0 // Min offset (when content is at the top of the screen)
-         
-         // Calculate opacity based on scroll offset
-         //let normalizedOffset = min(max(scrollOffset, minOffset), maxOffset)
-         //return Double((maxOffset - normalizedOffset) / (maxOffset - minOffset))
-         let normalizedOffset = min(max(scrollOffset, minOffset), maxOffset)
-         
-         return Double((maxOffset - normalizedOffset) / (maxOffset - minOffset))*/
-        let navigationBarHeight: CGFloat = 0 // Height of the navigation bar
-        let maxOffset: CGFloat = -navigationBarHeight // Max offset (when content hits the navbar)
-        let minOffset: CGFloat = -300 // Extended range for more gradual change
-        
-        print("SO: \(scrollOffset)\nMIN_OFFSET: \(minOffset)\nMAX_OFFSET: \(maxOffset)")
-        
-        // Calculate opacity based on scroll offset
-        let normalizedOffset = min(max(scrollOffset, minOffset), maxOffset)
-        let opacity = (maxOffset - normalizedOffset) / (maxOffset - minOffset)
-        
-        // Clamp opacity to 0.0 - 1.0 range
-        return max(0.0, min(Double(opacity), 1.0))
-    }*/
     
     /* MARK: WIP (Work In Progress). Animations will get added overtime, they are a bit confusing in swift. */
     private func updateScrollOffset(innerGeometry: GeometryProxy) {
@@ -402,9 +361,24 @@ struct HomeView: View {
                                                                     if self.categoryData.categoriesAndSets.count == 1 {
                                                                         self.categoryData.categoriesAndSets.removeAll()
                                                                         self.categoryData.setAndNotes.removeAll()
+                                                                        self.categoryData.categoryCustomTextColors.removeAll()
+                                                                        self.categoryData.categoryCustomColors.removeAll()
+                                                                        self.categoryData.categoryDescriptions.removeAll()
                                                                     } else {
                                                                         self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
                                                                         self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
+                                                                        
+                                                                        if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryToDelete) {
+                                                                            self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryToDelete)
+                                                                        }
+                                                                        
+                                                                        if self.categoryData.categoryCustomColors.keys.contains(self.categoryToDelete) {
+                                                                            self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryToDelete)
+                                                                        }
+                                                                        
+                                                                        if self.categoryData.categoryDescriptions.keys.contains(self.categoryToDelete) {
+                                                                            self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryToDelete)
+                                                                        }
                                                                     }
                                                                     
                                                                     writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
@@ -420,7 +394,7 @@ struct HomeView: View {
                                                                 Button(action: { resetAlert() }) { Text("No") }
                                                             } message: {
                                                                 Text(self.alertType == .DeleteCategoryAlert
-                                                                     ? "Once deleted, the category \(self.categoryToDelete) will be removed from cloud or local storage and cannot be recovered."
+                                                                     ? "Once deleted, the category **\"\(self.categoryToDelete)\"** will be removed from cloud or local storage and cannot be recovered."
                                                                      : "")
                                                             }
                                                             /*HStack {
@@ -757,6 +731,7 @@ struct HomeView: View {
                                                     Circle()
                                                         .fill(Color.EZNotesBlue.opacity(0.8))
                                                         .scaledToFit()
+                                                        .shadow(color: Color.black, radius: 4.5)
                                                     
                                                     Image(systemName: "plus")
                                                         .resizable()
@@ -764,7 +739,8 @@ struct HomeView: View {
                                                         .foregroundStyle(Color.EZNotesBlack)
                                                 }
                                                 .frame(width: 50, height: 50)
-                                                .padding(.trailing, 15)
+                                                .padding(.trailing, 25)
+                                                
                                             }
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: 60)
@@ -802,23 +778,14 @@ struct HomeView: View {
                     
                     Spacer()
                     
-                    /*VStack {
+                    //VStack {
                         ButtomNavbar(
                             section: $section,
                             backgroundColor: Color.EZNotesLightBlack,
                             prop: prop
                         )
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: 30, alignment: .bottom)*/
-                    HStack {
-                        
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
-                    .background(
-                        Rectangle()
-                            .fill(Color.EZNotesLightBlack.opacity(0.5))
-                            .shadow(color: Color.black, radius: 2.5, y: -2.5)
-                    )
+                    //}
+                    //.frame(maxWidth: .infinity, maxHeight: 30, alignment: .bottom)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 .edgesIgnoringSafeArea([.bottom])
@@ -853,7 +820,10 @@ struct HomeView: View {
                     categoryBackgroundColor: self.categoryBackgroundColor,
                     categoryBackground: categoryBackground,
                     categoryData: self.categoryData,
-                    launchCategory: $launchCategory
+                    launchCategory: $launchCategory,
+                    tempChatHistory: $tempChatHistory,
+                    messages: $messages,
+                    accountInfo: self.accountInfo
                 )
             }
         } else {

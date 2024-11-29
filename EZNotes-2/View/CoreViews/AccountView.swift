@@ -9,6 +9,7 @@ import PhotosUI
 import Combine
 
 struct Account: View {
+    @EnvironmentObject private var eznotesSubscriptionManager: EZNotesSubscriptionManager
     var prop: Properties
     
     @Binding public var showAccount: Bool
@@ -16,7 +17,7 @@ struct Account: View {
     @ObservedObject public var accountInfo: AccountDetails
     
     @State private var accountPopupSection: String = "main"
-    @State private var subscriptionInfo: SubscriptionInfo = .init(
+    /*@State private var subscriptionInfo: SubscriptionInfo = .init(
         TimeCreated: nil,
         DateCreated: nil,
         CurrentPeriodStart: nil,
@@ -29,7 +30,7 @@ struct Account: View {
         PriceID: nil,
         ProductID: nil,
         CardHolderName: nil
-    )
+    )*/
     @State private var errorLoadingPlanDetailsSection: Bool = false
     @State private var loadingChangeSchoolsSection: Bool = false
     @State private var errorLoadingChangeSchoolsSection: Bool = false
@@ -94,6 +95,8 @@ struct Account: View {
     @State private var topBodyYOffset: CGFloat = 0
     
     func doSomething() { print("YES") }
+    
+    @State private var getRickRolled: Bool = false
     
     var body: some View {
         VStack {
@@ -249,25 +252,25 @@ struct Account: View {
                             Text(self.accountPopupSection == "main"
                                  ? "Account Details"
                                  : self.accountPopupSection == "planDetails"
-                                 ? self.subscriptionInfo.ProductName != nil
-                                 ? self.subscriptionInfo.ProductName!
-                                 : self.errorLoadingPlanDetailsSection ? "Plan Details" : "Select Plan"
-                                 : self.accountPopupSection == "switch_college"
-                                 ? "Switch College"
-                                 : self.accountPopupSection == "switch_field_and_major"
-                                 ? "Switch Field/Major"
-                                 : self.accountPopupSection == "switch_state"
-                                 ? "Change States"
-                                 : self.accountPopupSection == "change_username"
-                                 ? "Change Username"
-                                 : self.accountPopupSection == "update_password"
-                                 ? "Update Password"
-                                 : self.accountPopupSection == "themes"
-                                 ? "Themes"
-                                 : self.accountPopupSection == "settings"
-                                 ? "Settings"
-                                 /* MARK: Default value if all aforementioned checks fail (which should never happen). */
-                                 : "Account Details")
+                                    ? self.eznotesSubscriptionManager.userSubscriptionIDs.isEmpty
+                                        ? "Select Plan"
+                                        : "Plan Details"
+                                    : self.accountPopupSection == "switch_college"
+                                        ? "Switch College"
+                                        : self.accountPopupSection == "switch_field_and_major"
+                                            ? "Switch Field/Major"
+                                            : self.accountPopupSection == "switch_state"
+                                                ? "Change States"
+                                                : self.accountPopupSection == "change_username"
+                                                     ? "Change Username"
+                                                     : self.accountPopupSection == "update_password"
+                                                         ? "Update Password"
+                                                         : self.accountPopupSection == "themes"
+                                                             ? "Themes"
+                                                             : self.accountPopupSection == "settings"
+                                                                 ? "Settings"
+                                                                 /* MARK: Default value if all aforementioned checks fail (which should never happen). */
+                                                                 : "Account Details")
                             .frame(maxWidth: .infinity)
                             .foregroundStyle(.white)
                             .padding([.top], 15)
@@ -780,10 +783,15 @@ struct Account: View {
                                             .buttonStyle(NoLongPressButtonStyle())
                                             
                                             Button(action: {
+                                                if self.eznotesSubscriptionManager.userSubscriptionIDs.isEmpty {
+                                                    self.accountPopupSection = "setup_plan"
+                                                    return
+                                                }
+                                                
                                                 self.accountPopupSection = "planDetails"
                                                 self.loadingPlanDetailsSection = true
                                                 
-                                                RequestAction<GetSubscriptionInfoData>(parameters: GetSubscriptionInfoData(AccountID: self.accountInfo.accountID))
+                                                /*RequestAction<GetSubscriptionInfoData>(parameters: GetSubscriptionInfoData(AccountID: self.accountInfo.accountID))
                                                     .perform(action: get_subscription_info_req) { statusCode, resp in
                                                         self.loadingPlanDetailsSection = false
                                                         
@@ -835,7 +843,7 @@ struct Account: View {
                                                         
                                                         /* MARK: If the above if statement fails, there was an error obtaining the response. */
                                                         self.errorLoadingPlanDetailsSection = true
-                                                    }
+                                                    }*/
                                             }) {
                                                 VStack {
                                                     ZStack {
@@ -1122,8 +1130,6 @@ struct Account: View {
                                 prop: prop,
                                 email: self.accountInfo.email,
                                 accountID: self.accountInfo.accountID,
-                                borderBottomColor: borderBottomColor,
-                                borderBottomColorError: borderBottomColorError,
                                 isLargerScreen: prop.isLargerScreen,
                                 action: doSomething
                             )
@@ -1457,9 +1463,50 @@ struct Account: View {
                             )
                         case "planDetails":
                             VStack {
-                                if self.loadingPlanDetailsSection {
+                                if self.eznotesSubscriptionManager.userSubscriptionIDs.isEmpty {
+                                    ErrorMessage(
+                                        prop: self.prop,
+                                        placement: .center,
+                                        message: "No Active Subscriptions"
+                                    )
+                                } else {
+                                    Spacer()
+                                    
+                                    Text("Apple is stupid and won't allow me to use Stripe, so I had to completely redo how subscriptions are handled on the app. This will be implemented in Build 32. Wasted 3 hours of my life.")
+                                        .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .multilineTextAlignment(.center)
+                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 13))
+                                    
+                                    Button(action: { self.getRickRolled = true }) {
+                                        HStack {
+                                            Text("Go Back")
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: prop.isLargerScreen ? 18 : 16, weight: .bold))
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding()
+                                        .background(Color.EZNotesBlue)
+                                        .cornerRadius(15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .popover(isPresented: $getRickRolled) {
+                                        /*WebView(url: URL(string: "https://www.youtube.com/watch?v=oHg5SJYRHA0")!)
+                                         .navigationBarTitle("Get Rick Rolled, Boi", displayMode: .inline)*/
+                                        YouTubeVideoView() // Replace with your YouTube video ID
+                                            .frame(height: 300) // Set height for the video player
+                                            .cornerRadius(10)
+                                    }
+                                    
+                                    Spacer()
+                                }
+                                /*if self.eznotesSubscriptionManager.products.isEmpty {
                                     LoadingView(message: "Loading Plan Details")
                                 } else {
+                                    Text("\(self.eznotesSubscriptionManager.products)")
+                                }*/
+                                /* else {
                                     if self.errorLoadingPlanDetailsSection {
                                         ErrorMessage(
                                             prop: prop,
@@ -1862,7 +1909,7 @@ struct Account: View {
                                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         }
                                     }
-                                }
+                                }*/
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                         default:

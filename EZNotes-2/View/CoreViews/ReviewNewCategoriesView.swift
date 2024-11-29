@@ -7,21 +7,10 @@
 import SwiftUI
 
 struct ReviewNewCategories: View {
+    @EnvironmentObject private var categoryData: CategoryData
     
     @Binding public var section: String
     @ObservedObject public var images_to_upload: ImagesUploads
-    @ObservedObject public var categoryData: CategoryData
-    
-    /*@Binding public var newCategoriesAndSets: [String: Array<String>]
-    @Binding public var newSetNotes: [String: Array<[String: String]>]
-    @Binding public var categoriesAndSets: [String: Array<String>]
-    @Binding public var setAndNotes: [String: Array<[String: String]>]
-    @Binding public var categoryCreationDates: [String: Date]
-    @Binding public var categoryImages: [String: UIImage]
-    @Binding public var categories: Array<String>
-    @Binding public var sets: Array<String>
-    @Binding public var briefDescriptions: Array<String>
-    @Binding public var photos: Array<String>*/
     
     @State public var indexOfSetsToRemove: Array<Int> = []
     @State public var indexOfCategoriesToRemove: Array<Int> = []

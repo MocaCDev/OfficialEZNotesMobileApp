@@ -112,7 +112,7 @@ extension Color {
 }
 
 struct StartupScreen: View {
-    @Binding public var needsNoWifiBanner: Bool
+    @EnvironmentObject private var networkMonitor: NetworkMonitor
     @State public var screen: String = "home"
     
     @Binding public var userHasSignedIn: Bool
@@ -336,7 +336,6 @@ struct StartupScreen: View {
                         userNotFound: $userNotFound,
                         //needsNoWifiBanner: $needsNoWifiBanner,
                         startupScreen: StartupScreen(
-                            needsNoWifiBanner: $needsNoWifiBanner,
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,
@@ -347,7 +346,6 @@ struct StartupScreen: View {
                     SignUpScreen(
                         prop: prop,
                         startupScreen: StartupScreen(
-                            needsNoWifiBanner: $needsNoWifiBanner,
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,
@@ -362,7 +360,6 @@ struct StartupScreen: View {
                     LoginScreen(
                         prop: prop,
                         startupScreen: StartupScreen(
-                            needsNoWifiBanner: $needsNoWifiBanner,
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,
@@ -378,7 +375,6 @@ struct StartupScreen: View {
                         userNotFound: $userNotFound,
                         //needsNoWifiBanner: $needsNoWifiBanner,
                         startupScreen: StartupScreen(
-                            needsNoWifiBanner: $needsNoWifiBanner,
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
                             goBackToLogin: $goBackToLogin,

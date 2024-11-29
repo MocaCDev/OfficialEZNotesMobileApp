@@ -7,9 +7,11 @@
 import SwiftUI
 
 struct UploadSection: View {
+    @EnvironmentObject private var categoryData: CategoryData
+    @EnvironmentObject private var networkMonitor: NetworkMonitor
+    
+    /* MARK: `topBanner` helps the view know what to display in it's banner (located to the right of the profile icon). */
     @Binding public var topBanner: TopBanner
-    @Binding public var needsNoWifiBanner: Bool
-    @ObservedObject public var networkMonitor: NetworkMonitor
     
     @State private var isFocused = false
     @State private var isScaled = false
@@ -18,7 +20,6 @@ struct UploadSection: View {
     @State private var loadingCameraView: Bool = false
     
     @ObservedObject public var images_to_upload: ImagesUploads
-    @ObservedObject public var categoryData: CategoryData
     @ObservedObject public var model: FrameHandler
     
     @Binding public var lastSection: String
@@ -42,8 +43,6 @@ struct UploadSection: View {
             VStack {
                 TopNavUpload(
                     topBanner: $topBanner,
-                    needsNoWifiBanner: $needsNoWifiBanner,
-                    networkMonitor: self.networkMonitor,
                     categoryData: self.categoryData,
                     imagesToUpload: self.images_to_upload,
                     accountInfo: accountInfo,
@@ -100,12 +99,6 @@ struct UploadSection: View {
                                             )
                                         }
                                     }) {
-                                        /*ZStack {
-                                         Image(systemName: "circle")
-                                         .resizable()
-                                         .frame(width: 100, height: 100)
-                                         .tint(!self.loadingCameraView ? Color.EZNotesBlue : Color.gray)
-                                         }*/
                                         ZStack {
                                             Circle()
                                                 .fill(
@@ -117,9 +110,6 @@ struct UploadSection: View {
                                                         .indigo, .indigo, Color.EZNotesBlue,
                                                         Color.EZNotesBlue, Color.EZNotesBlue, .purple,
                                                         .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                        /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                         Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                         Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
                                                     ]))
                                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                                 .blur(radius: 10)
@@ -230,81 +220,6 @@ struct UploadSection: View {
                                 .padding(.trailing, self.showEntireSidePreview ? 0 : 15)
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            
-                            /*VStack {
-                             Button(action: {
-                             if !self.loadingCameraView {
-                             self.images_to_upload.images_to_upload.append(
-                             ["\(arc4random()).jpeg": UIImage(cgImage: self.model.frame!)]
-                             )
-                             }
-                             }) {
-                             /*ZStack {
-                              Image(systemName: "circle")
-                              .resizable()
-                              .frame(width: 100, height: 100)
-                              .tint(!self.loadingCameraView ? Color.EZNotesBlue : Color.gray)
-                              }*/
-                             ZStack {
-                             Circle()
-                             .fill(
-                             MeshGradient(width: 3, height: 3, points: [
-                             .init(0, 0), .init(0.3, 0), .init(1, 0),
-                             .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                             .init(0, 1), .init(0.5, 1), .init(1, 1)
-                             ], colors: [
-                             .indigo, .indigo, Color.EZNotesBlue,
-                             Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                             .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                             /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                              Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                              Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                             ]))
-                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                             .blur(radius: 10)
-                             .offset(x: targetX, y: targetY) // Offset controlled by targetX and targetY
-                             .animation(
-                             .easeInOut(duration: 0.4), // Smooth animation
-                             value: targetX
-                             )
-                             .animation(
-                             .easeInOut(duration: 0.4), // Smooth animation
-                             value: targetY
-                             )
-                             
-                             Circle()
-                             .fill(.white)
-                             .frame(width: 90, height: 90)
-                             }
-                             .frame(width: 100, height: 100)
-                             }
-                             .buttonStyle(NoLongPressButtonStyle())
-                             
-                             Text("\(String(round(self.currentZoomFactor * 10.00) / 10.00))x")
-                             .foregroundStyle(.white)
-                             .padding([.bottom], prop.size.height / 2.5 > 300 ? -10 : -40)
-                             }
-                             .frame(maxWidth: .infinity, alignment: .center)
-                             .padding([.bottom], self.images_to_upload.images_to_upload.count == 0 ? 40 : 20)*/
-                            
-                            /*VStack {
-                             if self.images_to_upload.images_to_upload.count > 0 {
-                             ScrollView(.horizontal, showsIndicators: false) {
-                             HStack {
-                             ForEach(Array(self.images_to_upload.images_to_upload.enumerated()), id: \.offset) { index, value in
-                             ForEach(Array(self.images_to_upload.images_to_upload[index].keys), id: \.self) { key in
-                             Image(uiImage: self.images_to_upload.images_to_upload[index][key]!)
-                             .resizable()
-                             .frame(width: 80, height: 40)
-                             .scaledToFit()
-                             }
-                             }
-                             }
-                             .frame(maxWidth: .infinity, alignment: .center)
-                             }
-                             .frame(maxWidth: .infinity, alignment: .center)
-                             }
-                             }.frame(maxWidth: prop.size.width - 40, alignment: .trailing)//.padding(.trailing, 15)*/
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .onAppear {
@@ -342,19 +257,10 @@ struct UploadSection: View {
                 }
                 
                 if self.images_to_upload.images_to_upload.count == 0 {
-                    /*ButtomNavbar(
+                    ButtomNavbar(
                         section: $section,
                         backgroundColor: !(self.model.permissionGranted && self.model.cameraDeviceFound) ? Color.EZNotesBlack : Color.EZNotesLightBlack.opacity(0.85),
                         prop: prop
-                    )*/
-                    HStack {
-                        
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
-                    .background(
-                        Rectangle()
-                            .fill(Color.EZNotesLightBlack.opacity(0.5))
-                            .shadow(color: Color.black, radius: 2.5, y: -2.5)
                     )
                 } else {
                     VStack {

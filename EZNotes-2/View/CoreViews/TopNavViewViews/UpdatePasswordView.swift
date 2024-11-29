@@ -99,11 +99,7 @@ struct UpdatePassword: View {
                     .background(
                         Rectangle()//RoundedRectangle(cornerRadius: 15)
                             .fill(.clear)
-                            .border(
-                                width: 1,
-                                edges: [.bottom],
-                                lcolor: self.borderBottomColor
-                            )
+                            .borderBottomWLColor(isError: false)
                     )
                     .foregroundStyle(Color.EZNotesBlue)
                     .padding(prop.isLargerScreen ? 10 : 8)
