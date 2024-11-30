@@ -656,7 +656,9 @@ struct HomeView: View {
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                                     
-                                    VStack {
+                                    PlusButton(prop: self.prop, testPopup: $testPopup)
+                                    
+                                    /*VStack {
                                         Spacer()
                                         
                                         if self.testPopup {
@@ -740,13 +742,12 @@ struct HomeView: View {
                                                 }
                                                 .frame(width: 50, height: 50)
                                                 .padding(.trailing, 25)
-                                                
                                             }
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: 60)
                                         .padding(.bottom, 15)
                                     }
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)*/
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .padding(.top, -130)
@@ -760,21 +761,30 @@ struct HomeView: View {
                                         newCategoryTextColor: $newCategoryTextColor
                                     )
                                 }
+                                .onTapGesture {
+                                    if self.testPopup { self.testPopup = false }
+                                }
                             }
                         } else {
-                            VStack {
+                            ZStack {
+                                Color.clear.edgesIgnoringSafeArea(.all)
+                                
                                 Text("No Categories")
-                                    .foregroundStyle(.secondary)
-                                    .fontWeight(.bold)
-                                    .font(.system(size: 25, design: .rounded))
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                    .foregroundStyle(.white)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
+                                    .minimumScaleFactor(0.5)
+                                
+                                PlusButton(prop: self.prop, testPopup: $testPopup)
                             }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                if self.testPopup { self.testPopup = false }
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .onTapGesture {
-                        if self.testPopup { self.testPopup = false }
-                    }
                     
                     Spacer()
                     

@@ -9,7 +9,7 @@
       }
     ]
   },
-  "identifier" : "562798A7",
+  "identifier" : "7B84CB62",
   "nonRenewingSubscriptions" : [
 
   ],
@@ -17,7 +17,10 @@
 
   ],
   "settings" : {
+    "_applicationInternalID" : "6737569574",
+    "_developerTeamID" : "2A9LMA2ACD",
     "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 754602415.61315298,
     "_locale" : "en_US",
     "_storefront" : "USA",
     "_storeKitErrors" : [
@@ -70,11 +73,11 @@
   },
   "subscriptionGroups" : [
     {
-      "id" : "CF9D51BF",
+      "id" : "21592573",
       "localizations" : [
 
       ],
-      "name" : "EZNotes Subscriptions",
+      "name" : "EZNotes Plans",
       "subscriptions" : [
         {
           "adHocOffers" : [
@@ -83,23 +86,22 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "12.99",
+          "displayPrice" : "126.99",
           "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "3AC3C332",
+          "groupNumber" : 2,
+          "internalID" : "6738790740",
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "Get all of the essentials needed to automate the process of taking notes.",
-              "displayName" : "EZNotes Basic Plan - Monthly",
+              "description" : "All basic essentials needed for automation",
+              "displayName" : "EZNotes Basic Plan - Annual",
               "locale" : "en_US"
             }
           ],
-          "productID" : "eznotes.basic.plan.monthly",
-          "promotionalImageID" : "6696A523",
-          "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : "EZNotes Basic Plan Monthly",
-          "subscriptionGroupID" : "CF9D51BF",
+          "productID" : "eznotes.basic.plan.annually",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "EZNotes Basic Plan Annually",
+          "subscriptionGroupID" : "21592573",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
 
@@ -112,22 +114,50 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "126",
+          "displayPrice" : "12.99",
           "familyShareable" : false,
           "groupNumber" : 1,
-          "internalID" : "2961478A",
+          "internalID" : "6738785315",
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "Get all of the essentials needed to automate the process of taking notes.",
-              "displayName" : "EZNotes Basic Plan - Annual",
+              "description" : "All basic essentials needed for automation",
+              "displayName" : "EZNotes Basic Plan",
               "locale" : "en_US"
             }
           ],
-          "productID" : "eznotes.basic.plan.annually",
+          "productID" : "eznotes.basic.plan.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "EZNotes Basic Plan Monthly",
+          "subscriptionGroupID" : "21592573",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "170.99",
+          "familyShareable" : false,
+          "groupNumber" : 4,
+          "internalID" : "6738847669",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Everything from Basic and more",
+              "displayName" : "EZNotes Pro Plan - Annually",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "eznotes.pro.plan.annually",
           "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "EZNotes Basic Plan Annually",
-          "subscriptionGroupID" : "CF9D51BF",
+          "referenceName" : "EZNotes Pro Plan Annually",
+          "subscriptionGroupID" : "21592573",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
 
@@ -142,12 +172,12 @@
           ],
           "displayPrice" : "17.99",
           "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "9D1EEED8",
+          "groupNumber" : 3,
+          "internalID" : "6738847528",
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "Get double the upload and backup storage, as well as unlock access to features that enable a more feasible schooling experience.",
+              "description" : "Everything from Basic and more",
               "displayName" : "EZNotes Pro Plan - Monthly",
               "locale" : "en_US"
             }
@@ -155,35 +185,7 @@
           "productID" : "eznotes.pro.plan.monthly",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "EZNotes Pro Plan Monthly",
-          "subscriptionGroupID" : "CF9D51BF",
-          "type" : "RecurringSubscription",
-          "winbackOffers" : [
-
-          ]
-        },
-        {
-          "adHocOffers" : [
-
-          ],
-          "codeOffers" : [
-
-          ],
-          "displayPrice" : "170",
-          "familyShareable" : false,
-          "groupNumber" : 1,
-          "internalID" : "9F8EEB0F",
-          "introductoryOffer" : null,
-          "localizations" : [
-            {
-              "description" : "Get double the upload and backup storage, as well as unlock access to features that enable a more feasible schooling experience.",
-              "displayName" : "EZNotes Pro Plan - Annual",
-              "locale" : "en_US"
-            }
-          ],
-          "productID" : "eznotes.pro.plan.annually",
-          "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "EZNotes Pro Plan Annually",
-          "subscriptionGroupID" : "CF9D51BF",
+          "subscriptionGroupID" : "21592573",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
 

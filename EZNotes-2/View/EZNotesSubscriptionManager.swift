@@ -122,10 +122,10 @@ class EZNotesSubscriptionManager: ObservableObject {
     
     private var updates: Task<Void, Never>? = nil
     init() {
-        self.updates = self.observeTransactionUpdates()
+        //self.updates = self.observeTransactionUpdates()
     }
     
-    deinit { updates?.cancel() }
+    //deinit { updates?.cancel() }
     
     public func configurePlans(isFor: String) -> Array<String> {
         switch(isFor) {

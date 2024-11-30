@@ -3160,7 +3160,7 @@ struct TopNavCategoryView: View {
                 Image(uiImage: self.categoryBackground)
                     .resizable()
                     .scaledToFill()
-                    .frame(maxHeight: 130)
+                    .frame(maxHeight: 125)
                 //.aspectRatio(contentMode: .fill)
                     .clipped()
                     .overlay(Color.EZNotesBlack.opacity(0.6))

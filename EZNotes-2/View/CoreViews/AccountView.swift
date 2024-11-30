@@ -204,7 +204,7 @@ struct Account: View {
                                     }
                                     
                                     /* MARK: Wait another second and ensure the status bar view is invisible. */
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                         if self.pfpUploadStatus != "none" { self.pfpUploadStatus = "none"; return }
                                         self.pfpBgUploadStatus = "none"
                                     }

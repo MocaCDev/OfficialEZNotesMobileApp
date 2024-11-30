@@ -270,9 +270,9 @@ struct UploadSection: View {
                                     HStack {
                                         Text("Remove All")
                                             .frame(alignment: .center)
-                                            .padding(8)
+                                            .padding(10)
                                             .foregroundStyle(.white)
-                                            .setFontSizeAndWeight(weight: .medium, size: 18)
+                                            .setFontSizeAndWeight(weight: .medium, size: prop.isLargerScreen ? 16 : 14)
                                             .minimumScaleFactor(0.5)
                                         
                                         Image(systemName: "trash")
@@ -283,10 +283,9 @@ struct UploadSection: View {
                                     .frame(maxWidth: .infinity, alignment: .center)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding([.top, .bottom], 5)
                                 .background(Color.EZNotesLightBlack.opacity(0.8))
                                 .cornerRadius(20)
-                                .padding(.leading, 10)
+                                .padding(.leading, 15)
                             }
                             
                             Button(action: {
@@ -297,9 +296,9 @@ struct UploadSection: View {
                                     HStack {
                                         Text("Review")
                                             .frame(alignment: .center)
-                                            .padding(8)
+                                            .padding(10)
                                             .foregroundStyle(.white)
-                                            .setFontSizeAndWeight(weight: .medium, size: 18)
+                                            .setFontSizeAndWeight(weight: .medium, size: prop.isLargerScreen ? 16 : 14)
                                             .minimumScaleFactor(0.5)
                                         
                                         Image(systemName: "chevron.forward")
@@ -310,18 +309,21 @@ struct UploadSection: View {
                                     .frame(maxWidth: .infinity, alignment: .center)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .trailing)
-                                .padding([.top, .bottom], 5)
                                 .background(Color.EZNotesLightBlack.opacity(0.8))
                                 .cornerRadius(20)
-                                .padding(.trailing, 10)
+                                .padding(.trailing, 15)
                             }
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .padding(.bottom)
-                        .padding(.top, 10)
+                        .padding(.top, 5)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: 70, alignment: .bottom)
-                    .background(Color.EZNotesBlack)
+                    .frame(maxWidth: .infinity, maxHeight: 80, alignment: .bottom)
+                    .background(
+                        Rectangle()
+                            .fill(Color.EZNotesBlack)
+                            .shadow(color: Color.black, radius: 2.5, y: -2.5)
+                    )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
