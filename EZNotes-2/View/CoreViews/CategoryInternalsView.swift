@@ -88,6 +88,8 @@ struct CategoryInternalsView: View {
     /* MARK: Variables regarding the + button on bottom right of screen. */
     @State private var testPopup: Bool = false
     @State private var createNewSet: Bool = false
+    @State private var newSetName: String = ""
+    @State private var newSetNotes: String = ""
     
     /* MARK: Variables regarding search bar. */
     @State private var setSearch: String = ""
@@ -95,6 +97,155 @@ struct CategoryInternalsView: View {
     var body: some View {
         if !self.launchedSet {
             ZStack {
+                if self.createNewSet {
+                    VStack {
+                        Spacer()
+                        
+                        VStack {
+                            ZStack {
+                                VStack {
+                                    HStack {
+                                        ZStack {
+                                            Button(action: { }) {
+                                                Image(systemName: "multiply")
+                                                    .resizable()
+                                                    .frame(
+                                                        width: 15,//prop.size.height / 2.5 > 300 ? 45 : 40,
+                                                        height: 15//prop.size.height / 2.5 > 300 ? 45 : 40
+                                                    )
+                                            }
+                                            .buttonStyle(NoLongPressButtonStyle())
+                                        }
+                                        .frame(
+                                            width: 20,//prop.size.height / 2.5 > 300 ? 45 : 40,
+                                            height: 20//prop.size.height / 2.5 > 300 ? 45 : 40
+                                        )
+                                        .padding(6)
+                                        .background(
+                                            Circle()
+                                                .fill(Color.EZNotesLightBlack.opacity(0.5))
+                                        )
+                                        .padding(.trailing, 15)
+                                        .padding(.top, 2.5)
+                                        
+                                        Spacer()
+                                    }
+                                    Spacer()
+                                }
+                                
+                                HStack {
+                                    Spacer()
+                                    
+                                    Text("Create New Set")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 28 : 24))
+                                        .multilineTextAlignment(.center)
+                                    
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: 40)
+                                .padding([.top, .bottom])
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 40, maxHeight: 60)
+                            
+                            HStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.white)
+                                .padding(.bottom, 15)
+                            
+                            Text("Set Name")
+                                .frame(
+                                    width: prop.isIpad
+                                    ? UIDevice.current.orientation.isLandscape
+                                    ? prop.size.width - 800
+                                    : prop.size.width - 450
+                                    : prop.size.width - 80,
+                                    height: 5,
+                                    alignment: .leading
+                                )
+                                .padding(.top, 10)
+                                .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 22 : 18))
+                                .foregroundStyle(.white)
+                            
+                            TextField("New Set Name...", text: $newSetName)
+                                .frame(
+                                    width: prop.isIpad
+                                    ? UIDevice.current.orientation.isLandscape
+                                        ? prop.size.width - 800
+                                        : prop.size.width - 450
+                                    : prop.size.width - 100,
+                                    height: prop.isLargerScreen ? 40 : 30
+                                )
+                                .padding([.leading], prop.isLargerScreen ? 15 : 5)
+                                .background(
+                                    Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                        .fill(.clear)
+                                        .borderBottomWLColor(
+                                            isError: false
+                                        )
+                                )
+                                .foregroundStyle(Color.EZNotesBlue)
+                                .padding(prop.isLargerScreen ? 10 : 4)
+                                .tint(Color.EZNotesBlue)
+                                .font(.system(size: 18))
+                                .fontWeight(.medium)
+                                .autocapitalization(.none)
+                                .disableAutocorrection(true)
+                                .padding(.bottom, 15)
+                                /*.focused($usernameTextfieldFocus)
+                                .onChange(of: usernameTextfieldFocus) {
+                                    if !self.usernameTextfieldFocus { assignUDKey(key: "temp_username", value: self.username) }
+                                }*/
+                            
+                            Text("Notes")
+                                .frame(
+                                    width: prop.isIpad
+                                    ? UIDevice.current.orientation.isLandscape
+                                    ? prop.size.width - 800
+                                    : prop.size.width - 450
+                                    : prop.size.width - 80,
+                                    height: 5,
+                                    alignment: .leading
+                                )
+                                .padding(.top, 10)
+                                .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 22 : 18))
+                                .foregroundStyle(.white)
+                                .padding(.bottom, 10)
+                            
+                            TextField(
+                                "Write your notes...",
+                                text: $newSetNotes,
+                                axis: .vertical
+                            )
+                            .frame(minHeight: textHeight(for: self.newSetNotes, width: UIScreen.main.bounds.width), alignment: .leading)
+                            .padding([.leading], 15)
+                            .padding(7)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(7.5)
+                            .lineLimit(5...25)
+                        }
+                        .frame(maxWidth: prop.size.width - 70)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(Color.EZNotesBlack)
+                                .shadow(color: Color.black, radius: 2.5)
+                        )
+                        .cornerRadius(15)
+                        .onTapGesture {
+                            /* MARK: Do nothing, just capture the tap gesture event so the one on the parent view doesn't get triggered and close out the entire view. */
+                            return
+                        }
+                        
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.EZNotesLightBlack.opacity(0.4))
+                    .onTapGesture {
+                        self.createNewSet = false
+                    }
+                    .zIndex(1)
+                }
+                
                 //ScrollView(.vertical, showsIndicators: false) {
                 VStack {
                     TopNavCategoryView(

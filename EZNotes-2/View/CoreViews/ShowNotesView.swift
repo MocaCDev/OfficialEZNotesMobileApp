@@ -92,15 +92,17 @@ struct EditableNotes: View {
         textView.textContainer.lineFragmentPadding = 0
         textView.isScrollEnabled = false
         
+        /* MARK: Configure the extra padding size in which will be added for each extra pixel past 16. */
+        /* TODO: The below code can be tweaked a lot more. */
         let extraPaddingSize: CGFloat = self.fontConfiguration.fontSizePicked > 16 && self.fontConfiguration.fontSizePicked < 26
         ? 18
         : self.fontConfiguration.fontSizePicked > 26 && self.fontConfiguration.fontSizePicked < 36
             ? 28
-            : self.fontConfiguration.fontSizePicked > 36 && self.fontConfiguration.fontSizePicked < 56
+            : self.fontConfiguration.fontSizePicked > 36 && self.fontConfiguration.fontSizePicked < 55
                 ? 38
                 : 44
         
-        var extraPadding: CGFloat = extraPaddingSize * (self.fontConfiguration.fontSizePicked - 16) < 0 ? 0 :  extraPaddingSize * (self.fontConfiguration.fontSizePicked - 16)
+        let extraPadding: CGFloat = extraPaddingSize * (self.fontConfiguration.fontSizePicked - 16) < 0 ? 0 :  extraPaddingSize * (self.fontConfiguration.fontSizePicked - 16)
         
         let fixedWidth = UIScreen.main.bounds.width//width - 16 // Account for padding
         let size = textView.sizeThatFits(CGSize(width: fixedWidth, height: CGFloat.greatestFiniteMagnitude))
@@ -556,14 +558,14 @@ struct EditableNotes: View {
                     .onChange(of: self.notePadFocus) {
                         if self.notePadFocus {
                             withAnimation(.easeIn(duration: 0.5)) {
-                                self.textEditorPaddingBottom = 350
+                                self.textEditorPaddingBottom += 300
                             }
                             return
                         }
                         
                         /* MARK: We can assume `notePadFocus` is hereby false. */
                         withAnimation(.easeOut(duration: 0.5)) {
-                            self.textEditorPaddingBottom = 150
+                            self.textEditorPaddingBottom -= 300
                         }
                     }
                 }
