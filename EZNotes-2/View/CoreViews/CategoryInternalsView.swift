@@ -438,7 +438,7 @@ struct CategoryInternalsView: View {
                     )
                     .padding(14)
                     .padding(.horizontal, 25)
-                    .background(Color(.systemGray6))
+                    .background(Color(.systemGray5))
                     .cornerRadius(15)
                     .padding(.horizontal, 10)
                     .overlay(
@@ -448,7 +448,7 @@ struct CategoryInternalsView: View {
                                 .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                                 .padding(.leading, 25)
                             
-                            //if self.categorySearchFocus || self.categorySearch != "" {
+                            if self.setSearch != "" {
                                 Button(action: {
                                     self.setSearch = ""
                                 }) {
@@ -456,7 +456,7 @@ struct CategoryInternalsView: View {
                                         .foregroundColor(.gray)
                                         .padding(.trailing, 25)
                                 }
-                            //}
+                            }
                         }
                     )
                     .padding(.top, 15)
@@ -480,7 +480,7 @@ struct CategoryInternalsView: View {
                         ])
                     )
                     .cornerRadius(20)
-                    .padding(.top, 5)
+                    .padding(.top, 5.5)
                     .padding(.bottom, -30)
                     
                     VStack {
@@ -526,7 +526,7 @@ struct CategoryInternalsView: View {
                                                                 .frame(maxWidth: 20, alignment: .trailing)
                                                                 .padding(.trailing, 15)
                                                             }
-                                                            .frame(maxWidth: .infinity, maxHeight: 190)
+                                                            .frame(maxWidth: .infinity)
                                                             .padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
                                                                       ? [.top, .bottom, .leading, .trailing]
                                                                       : [.top, .leading, .trailing],*/
@@ -540,15 +540,15 @@ struct CategoryInternalsView: View {
                                                                 .fill(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
                                                         )
                                                         .cornerRadius(15)
-                                                        .padding(.bottom, index == self.categoryData.setAndNotes[self.categoryName]!.count - 1 ? 25 : 0)
                                                     }
                                                 }
                                             }
                                         }
                                     }
-                                    .padding(.top, 10)
+                                    .padding(.top, 15)
+                                    .padding(.bottom, 25)
                                 }
-                                .padding(.top, -28)
+                                .padding(.top, -26.5)
                             }
                         }
                         .frame(maxWidth: prop.size.width - 30, maxHeight: .infinity)
@@ -585,7 +585,14 @@ struct CategoryInternalsView: View {
                 }
             }
             .onTapGesture {
+                /* MARK: If the user taps anywhere within the view, check the below states. We want to know if we need to hide the views the below states dictate or not. */
                 if self.testPopup { self.testPopup = false }
+                if self.setSearchFocus {
+                    self.setSearchFocus = false
+                    
+                    // MARK: Below line is not needed, but would't hurt to include in deployed build
+                    //UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }
             }
         } else {
             ShowNotes(

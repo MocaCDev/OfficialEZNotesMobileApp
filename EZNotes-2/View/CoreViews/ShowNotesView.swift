@@ -47,7 +47,7 @@ struct EditableNotes: View {
     
     @FocusState private var notePadFocus: Bool
     @State private var selectionText: TextSelection? = nil
-    @State private var textEditorPaddingBottom: CGFloat = 40
+    @State private var textEditorPaddingBottom: CGFloat = 150
     @State private var textHeight: CGFloat = 40 // Initial height
     @State private var keyboardHeight: CGFloat = 0
     
@@ -87,14 +87,25 @@ struct EditableNotes: View {
          return boundingRect.height*/
         let textView = UITextView()
         textView.text = text + "\n\n\n"
-        textView.font = UIFont.systemFont(ofSize: 17)
+        textView.font = UIFont.systemFont(ofSize: self.fontConfiguration.fontSizePicked)
         textView.textContainerInset = UIEdgeInsets(top: 8, left: 4, bottom: 8, right: 4)
         textView.textContainer.lineFragmentPadding = 0
         textView.isScrollEnabled = false
         
-        let fixedWidth = width - 16 // Account for padding
+        let extraPaddingSize: CGFloat = self.fontConfiguration.fontSizePicked > 16 && self.fontConfiguration.fontSizePicked < 26
+        ? 18
+        : self.fontConfiguration.fontSizePicked > 26 && self.fontConfiguration.fontSizePicked < 36
+            ? 28
+            : self.fontConfiguration.fontSizePicked > 36 && self.fontConfiguration.fontSizePicked < 56
+                ? 38
+                : 44
+        
+        var extraPadding: CGFloat = extraPaddingSize * (self.fontConfiguration.fontSizePicked - 16) < 0 ? 0 :  extraPaddingSize * (self.fontConfiguration.fontSizePicked - 16)
+        
+        let fixedWidth = UIScreen.main.bounds.width//width - 16 // Account for padding
         let size = textView.sizeThatFits(CGSize(width: fixedWidth, height: CGFloat.greatestFiniteMagnitude))
-        return max(size.height + self.textEditorPaddingBottom, 100) // Add a buffer and ensure a minimum height
+        
+        return max(size.height + self.textEditorPaddingBottom + extraPadding, 100) // Add a buffer and ensure a minimum height
     }
     
     /*@State private var aiChatOverNotesChatID: UUID? = nil
@@ -249,20 +260,7 @@ struct EditableNotes: View {
                                         Image(systemName: "camera")
                                             .resizable()
                                             .frame(width: 20, height: 15)
-                                            .foregroundStyle(.white)/*(
-                                                                     MeshGradient(width: 3, height: 3, points: [
-                                                                     .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                     .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                     .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                                     ], colors: [
-                                                                     Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                                                                     Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                                                                     Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                     /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                      Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                      Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                                     ])
-                                                                     )*/
+                                            .foregroundStyle(.white)
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                     //.padding(.top, 5)
@@ -374,20 +372,7 @@ struct EditableNotes: View {
                                     }) {
                                         Image(systemName: "arrow.up")
                                             .resizableImage(width: 15, height: 20)
-                                            .foregroundStyle(.white)/*(
-                                                                     MeshGradient(width: 3, height: 3, points: [
-                                                                     .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                     .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                     .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                                     ], colors: [
-                                                                     Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                                                                     Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
-                                                                     Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                     /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                      Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                      Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                                     ])
-                                                                     )*/
+                                            .foregroundStyle(.white)
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                     //.padding(.top, 5)
@@ -432,8 +417,9 @@ struct EditableNotes: View {
                 HStack {
                     HStack {
                         Text(self.fontConfiguration.fontPicked)
-                            .frame(alignment: .leading)
+                            .frame(minWidth: 20, maxWidth: prop.isLargerScreen ? 120 : 80, alignment: .leading)
                             .foregroundStyle(.white)
+                            .truncationMode(.tail)
                         
                         Divider()
                             .background(.white)
@@ -443,7 +429,7 @@ struct EditableNotes: View {
                             .frame(alignment: .leading)
                             .foregroundStyle(.white)
                     }
-                    .frame(maxWidth: (prop.size.width / 2) - 35, maxHeight: .infinity, alignment: .leading)
+                    .frame(maxHeight: .infinity, alignment: .leading)
                     .padding(.leading, 10)
                     
                     HStack {
@@ -476,9 +462,6 @@ struct EditableNotes: View {
                                         .indigo, .indigo, Color.EZNotesBlue,
                                         Color.EZNotesBlue, Color.EZNotesBlue, .purple,
                                         .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                        /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                         Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                         Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
                                     ]))
                                 
                                 Text("AI Chat")
@@ -500,9 +483,6 @@ struct EditableNotes: View {
                                         .indigo, .indigo, Color.EZNotesBlue,
                                         Color.EZNotesBlue, Color.EZNotesBlue, .purple,
                                         .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                        /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                         Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                         Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
                                     ]))
                             )
                         }
@@ -546,24 +526,6 @@ struct EditableNotes: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
                     .padding(.trailing, 10)
-                    
-                    /*HStack {
-                     Button(action: { self.notePadFocus = false }) {
-                     HStack {
-                     Text("Stop Editing")
-                     .frame(maxWidth: .infinity, alignment: .center)
-                     .foregroundStyle(.black)
-                     .padding(5)
-                     }
-                     .background(
-                     RoundedRectangle(cornerRadius: 15)
-                     .fill(Color.EZNotesBlue)
-                     )
-                     .cornerRadius(15)
-                     }
-                     }
-                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                     .padding(.trailing, 10)*/
                 }
                 .frame(maxWidth: .infinity, maxHeight: 40)
                 
@@ -575,68 +537,14 @@ struct EditableNotes: View {
                     .indigo, .indigo, Color.EZNotesBlue,
                     Color.EZNotesBlue, Color.EZNotesBlue, .purple,
                     .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
                 ]))
                 
-                /*ScrollView(.vertical, showsIndicators: true) {
-                 TextEditor(text: $notesContent, selection: $selectionText).id(0)
-                 .frame(height: self.textHeight)
-                 .scrollDisabled(true)
-                 .scrollContentBackground(.hidden)
-                 .background(Color.EZNotesBlack)
-                 .padding(4.5)
-                 .font(Font.custom(self.fontPicked, size: self.fontSizePicked))
-                 .focused($notePadFocus)
-                 .padding(.bottom, self.textEditorPaddingBottom)
-                 .overlay(
-                 GeometryReader { proxy in
-                 Color.clear.onChange(of: self.notesContent) {
-                 self.updateHeight(proxy: proxy)
-                 }
-                 }
-                 )
-                 }
-                 .onChange(of: self.notePadFocus) {
-                 /* TODO: Are animations really needed? */
-                 if self.notePadFocus {
-                 withAnimation(.easeIn(duration: 0.5)) {
-                 self.textEditorPaddingBottom = 350
-                 }
-                 } else {
-                 withAnimation(.easeOut(duration: 0.5)) {
-                 self.textEditorPaddingBottom = 100
-                 }
-                 }
-                 }*/
-                
                 ScrollView(.vertical) {
-                    /*GeometryReader { geometry in
-                     TextEditor(text: $notesContent)
-                     .frame(maxWidth: .infinity, maxHeight: max(100, textHeight(for: self.notesContent, width: geometry.size.width)))
-                     .scrollDisabled(true)
-                     }
-                     .frame(maxWidth: .infinity, maxHeight: .infinity)*/
-                    /*VStack {
-                     GeometryReader { geometry in
-                     TextEditor(text: $notesContent)
-                     .frame(
-                     maxWidth: .infinity,
-                     maxHeight: max(100, textHeight(for: notesContent, width: geometry.size.width))
-                     )
-                     .padding(4.5)
-                     .scrollDisabled(true)
-                     .scrollContentBackground(.hidden)
-                     .background(Color.EZNotesBlack)
-                     }
-                     .frame(height: textHeight(for: notesContent, width: UIScreen.main.bounds.width)) // Match calculated height
-                     }*/
                     VStack(alignment: .leading) {
                         TextEditor(text: $notesContent)
                             .frame(height: textHeight(for: notesContent, width: UIScreen.main.bounds.width), alignment: self.fontConfiguration.fontAlignment) // Calculate height dynamically
                             .foregroundStyle(self.fontConfiguration.fontColor)
-                            .padding(4.5)
+                            .padding(8.5)
                             .scrollDisabled(true)
                             .scrollContentBackground(.hidden)
                             .background(Color.EZNotesBlack)
@@ -655,7 +563,7 @@ struct EditableNotes: View {
                         
                         /* MARK: We can assume `notePadFocus` is hereby false. */
                         withAnimation(.easeOut(duration: 0.5)) {
-                            self.textEditorPaddingBottom = 80
+                            self.textEditorPaddingBottom = 150
                         }
                     }
                 }
