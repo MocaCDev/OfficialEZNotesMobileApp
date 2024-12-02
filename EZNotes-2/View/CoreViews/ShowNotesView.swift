@@ -722,7 +722,7 @@ struct ShowNotes: View {
                             .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
                     }
                     .buttonStyle(NoLongPressButtonStyle())
-                    .frame(maxWidth: 80, alignment: .leading)
+                    .frame(maxWidth: 30, alignment: .leading)
                     .padding(.leading, 15)
                     
                     Text(self.setName)
@@ -733,7 +733,7 @@ struct ShowNotes: View {
                         .minimumScaleFactor(0.5)
                         .multilineTextAlignment(.center)
                     
-                    ZStack { }.frame(maxWidth: 80, alignment: .trailing).padding(.trailing, 15)
+                    ZStack { }.frame(maxWidth: 30, alignment: .trailing).padding(.trailing, 15)
                 }
                 .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 60 : 40)
                 .background(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)//self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesBlack)

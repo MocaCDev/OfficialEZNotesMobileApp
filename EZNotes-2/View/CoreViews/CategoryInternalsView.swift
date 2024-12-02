@@ -11,8 +11,8 @@ struct CategoryInternalsView: View {
     var prop: Properties
     var categoryName: String
     var creationDate: String
-    var categoryTitleColor: Color?
-    var categoryBackgroundColor: Color?
+    @State public var categoryTitleColor: Color?
+    @State public var categoryBackgroundColor: Color?
     //var categoriesAndSets: [String: Array<String>]
     var categoryBackground: UIImage
     //var categoriesSetsAndNotes: Array<[String: String]>
@@ -94,6 +94,10 @@ struct CategoryInternalsView: View {
     /* MARK: Variables regarding search bar. */
     @State private var setSearch: String = ""
     @FocusState private var setSearchFocus: Bool
+    
+    /* MARK: Teting stuff out. */
+    @State private var longerSetNames: Array<String> = []
+    @State private var shorterSetNames: Array<String> = []
     var body: some View {
         if !self.launchedSet {
             ZStack {
@@ -102,11 +106,56 @@ struct CategoryInternalsView: View {
                         Spacer()
                         
                         VStack {
-                            ZStack {
+                            HStack {
+                                ZStack {
+                                    Button(action: {
+                                        self.newSetNotes.removeAll()
+                                        self.newSetName.removeAll()
+                                        self.createNewSet = false
+                                    }) {
+                                        Image(systemName: "multiply")
+                                            .resizable()
+                                            .frame(
+                                                width: 15,//prop.size.height / 2.5 > 300 ? 45 : 40,
+                                                height: 15//prop.size.height / 2.5 > 300 ? 45 : 40
+                                            )
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                }
+                                .frame(maxWidth: 20, maxHeight: 20)
+                                .padding(6)
+                                .background(
+                                    Circle()
+                                        .fill(Color.EZNotesLightBlack.opacity(0.5))
+                                )
+                                //.padding(.top, 2.5)
+                                
+                                HStack {
+                                    Spacer()
+                                    
+                                    Text("Create New Set")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 28 : 24))
+                                        .multilineTextAlignment(.center)
+                                    
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity)
+                                
+                                ZStack { }.frame(maxWidth: 20, alignment: .trailing)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: 30)
+                            /*ZStack {
+                                /* MARK: `VStack` exists to push the multiply to the top*/
                                 VStack {
                                     HStack {
                                         ZStack {
-                                            Button(action: { }) {
+                                            Button(action: {
+                                                self.newSetNotes.removeAll()
+                                                self.newSetName.removeAll()
+                                                self.createNewSet = false
+                                            }) {
                                                 Image(systemName: "multiply")
                                                     .resizable()
                                                     .frame(
@@ -144,10 +193,10 @@ struct CategoryInternalsView: View {
                                     
                                     Spacer()
                                 }
-                                .frame(maxWidth: .infinity, maxHeight: 40)
-                                .padding([.top, .bottom])
+                                .frame(maxWidth: .infinity)
+                                //.padding([.top, .bottom])
                             }
-                            .frame(maxWidth: .infinity, minHeight: 40, maxHeight: 60)
+                            .frame(maxWidth: .infinity, maxHeight: 30)*/
                             
                             HStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.white)
                                 .padding(.bottom, 15)
@@ -221,7 +270,34 @@ struct CategoryInternalsView: View {
                             .padding(7)
                             .background(Color(.systemGray6))
                             .cornerRadius(7.5)
-                            .lineLimit(5...25)
+                            .lineLimit(5...20)
+                            
+                            Button(action: {
+                                self.categoryData.categoriesAndSets[self.categoryName]!.append(self.newSetName)
+                                self.categoryData.setAndNotes[self.categoryName]!.append([self.newSetName: self.newSetNotes])
+                                
+                                writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                
+                                if self.newSetName.count > 15 { self.longerSetNames.append(self.newSetName) }
+                                else { self.shorterSetNames.append(self.newSetName) }
+                                
+                                self.newSetName.removeAll()
+                                self.newSetNotes.removeAll()
+                            }) {
+                                HStack {
+                                    Text("Create")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.black)
+                                        .setFontSizeAndWeight(weight: .bold, size: 18)
+                                        .minimumScaleFactor(0.5)
+                                }
+                                .padding(8)
+                                .background(.white)
+                                .cornerRadius(15)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .padding(.top, 15)
                         }
                         .frame(maxWidth: prop.size.width - 70)
                         .padding()
@@ -239,7 +315,7 @@ struct CategoryInternalsView: View {
                         Spacer()
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.EZNotesLightBlack.opacity(0.4))
+                    .background(Color.EZNotesLightBlack.opacity(0.7))
                     .onTapGesture {
                         self.createNewSet = false
                     }
@@ -264,25 +340,6 @@ struct CategoryInternalsView: View {
                     VStack {
                         VStack {
                             HStack {
-                                /*ZStack {
-                                    Image(uiImage: self.categoryBackground)
-                                        .resizable()
-                                        .frame(width: 55, height: 85)//(width: prop.isLargerScreen ? 100.5 : 90.5, height: prop.isLargerScreen ? 140.5 : 130.5)
-                                        .scaledToFit()
-                                        .zIndex(1)
-                                        .cornerRadius(5)
-                                        .shadow(color: self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange, radius: 2.5)
-                                    /*.resizable()
-                                     .aspectRatio(contentMode: .fill)
-                                     .frame(width: prop.isLargerScreen ? 180 : 140, height: prop.isLargerScreen ? 250 : 200, alignment: .center)
-                                     .minimumScaleFactor(0.3)
-                                     .foregroundStyle(.white)
-                                     .clipShape(.rect)
-                                     .cornerRadius(15)
-                                     .shadow(color: .black, radius: 2.5)*/
-                                }
-                                .frame(width: 55, height: 85)*/
-                                
                                 Text(self.categoryName)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.top, 20)
@@ -292,16 +349,6 @@ struct CategoryInternalsView: View {
                                     .multilineTextAlignment(.leading)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            /*VStack {
-                             Text(self.categoryName)
-                             .frame(maxWidth: .infinity, alignment: .leading)
-                             .foregroundStyle(self.categoryTitleColor == nil ? Color.EZNotesOrange : self.categoryTitleColor!)
-                             .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 30 : 25))//.setFontSizeAndWeight(weight: .semibold, size: prop.isLargerScreen ? 35 : 30)
-                             .minimumScaleFactor(0.5)
-                             .multilineTextAlignment(.leading)
-                             }
-                             .frame(maxWidth: .infinity, alignment: .leading)*/
                             
                             HStack {
                                 HStack {
@@ -421,6 +468,10 @@ struct CategoryInternalsView: View {
                                             newCategoryDisplayColor: $newCategoryDisplayColor,
                                             newCategoryTextColor: $newCategoryTextColor
                                         )
+                                        .onDisappear {
+                                            self.categoryBackgroundColor = self.categoryData.categoryCustomColors[self.categoryName]
+                                            self.categoryTitleColor = self.categoryData.categoryCustomTextColors[self.categoryName]
+                                        }
                                     }
                                     
                                     
@@ -645,8 +696,116 @@ struct CategoryInternalsView: View {
                                     .minimumScaleFactor(0.5)
                             } else {
                                 ScrollView(.vertical, showsIndicators: false) {
+                                    LazyVGrid(columns: [GridItem(.flexible())]) {
+                                        ForEach(self.longerSetNames, id: \.self) { longSetName in
+                                            Button(action: {
+                                                self.setName = longSetName
+                                                
+                                                for setData in self.categoryData.setAndNotes[self.categoryName]! {
+                                                    /* MARK: Each dictionary one has one key/value. Each dictionary of the array represents one set. Therefore, we only need the first value of the dictionary. */
+                                                    if setData.first!.key == longSetName {
+                                                        self.notesContent = setData[longSetName]!
+                                                        self.originalContet = self.notesContent
+                                                        break
+                                                    }
+                                                }
+                                                
+                                                self.launchedSet = true
+                                            }) {
+                                                VStack {
+                                                    HStack {
+                                                        Text(longSetName)
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
+                                                            .padding(.leading, 15)
+                                                            .font(Font.custom("Poppins-SemiBold", size: 18))
+                                                            .minimumScaleFactor(0.5)
+                                                            .multilineTextAlignment(.leading)
+                                                        
+                                                        ZStack {
+                                                            Image(systemName: "chevron.forward")
+                                                                .resizable()
+                                                                .frame(width: 10, height: 15)
+                                                                .foregroundStyle(.gray)
+                                                        }
+                                                        .frame(maxWidth: 20, alignment: .trailing)
+                                                        .padding(.trailing, 15)
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
+                                                              ? [.top, .bottom, .leading, .trailing]
+                                                              : [.top, .leading, .trailing],*/
+                                                        self.categoryData.setAndNotes[self.categoryName]!.count == 1 ? 8 : 4
+                                                    )
+                                                }
+                                                .frame(maxWidth: prop.size.width - 20)
+                                                .padding(8)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
+                                                )
+                                                .cornerRadius(15)
+                                            }
+                                            .buttonStyle(NoLongPressButtonStyle())
+                                        }
+                                    }
+                                    
+                                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
+                                        ForEach(self.shorterSetNames, id: \.self) { shortSetName in
+                                            Button(action: {
+                                                self.setName = shortSetName
+                                                
+                                                for setData in self.categoryData.setAndNotes[self.categoryName]! {
+                                                    if setData.first!.key == shortSetName {
+                                                        self.notesContent = setData[shortSetName]!
+                                                        self.originalContet = self.notesContent
+                                                        break
+                                                    }
+                                                }
+                                                
+                                                self.launchedSet = true
+                                            }) {
+                                                VStack {
+                                                    HStack {
+                                                        Text(shortSetName)
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
+                                                            .padding(.leading, 15)
+                                                            .font(Font.custom("Poppins-SemiBold", size: 18))
+                                                            .minimumScaleFactor(0.5)
+                                                            .multilineTextAlignment(.leading)
+                                                        
+                                                        ZStack {
+                                                            Image(systemName: "chevron.forward")
+                                                                .resizable()
+                                                                .frame(width: 10, height: 15)
+                                                                .foregroundStyle(.gray)
+                                                        }
+                                                        .frame(maxWidth: 20, alignment: .trailing)
+                                                        .padding(.trailing, 15)
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
+                                                              ? [.top, .bottom, .leading, .trailing]
+                                                              : [.top, .leading, .trailing],*/
+                                                        self.categoryData.setAndNotes[self.categoryName]!.count == 1 ? 8 : 4
+                                                    )
+                                                }
+                                                .frame(maxWidth: prop.size.width - 20)
+                                                .padding(8)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
+                                                )
+                                                .cornerRadius(15)
+                                            }
+                                            .buttonStyle(NoLongPressButtonStyle())
+                                        }
+                                    }
+                                }
+                                /*ScrollView(.vertical, showsIndicators: false) {
                                     LazyVGrid(columns: self.categoryData.setAndNotes[self.categoryName]!.count > 1
-                                              ? [GridItem(.flexible()), GridItem(.flexible())]
+                                              ? [GridItem(.flexible())]//[GridItem(.flexible()), GridItem(.flexible())]
                                               : [GridItem(.flexible())]
                                     ) {
                                         ForEach(Array(self.categoryData.setAndNotes[self.categoryName]!.enumerated()), id: \.offset) { index, val in
@@ -699,7 +858,7 @@ struct CategoryInternalsView: View {
                                     .padding(.top, 15)
                                     .padding(.bottom, 25)
                                 }
-                                .padding(.top, -26.5)
+                                .padding(.top, -26.5)*/
                             }
                         }
                         .frame(maxWidth: prop.size.width - 30, maxHeight: .infinity)
@@ -728,6 +887,15 @@ struct CategoryInternalsView: View {
             .onAppear {
                 self.categoryDescription = self.categoryData.categoryDescriptions[self.categoryName]
                 self.setsYOffset = prop.size.height - 100
+                
+                /* TODO: Figure out a better way to handle this. As of now, when the `CategoryInternalsView` becomes visible this runs. However, when the user goes to view the notes and comes back this `.onAppear` re-runs. */
+                self.longerSetNames.removeAll()
+                self.shorterSetNames.removeAll()
+                
+                for setData in self.categoryData.setAndNotes[self.categoryName]! {
+                    if setData.first!.key.count >= 15 { self.longerSetNames.append(setData.first!.key) }
+                    else { self.shorterSetNames.append(setData.first!.key) }
+                }
                 
                 /* TODO: Is this needed? Keep for now just in case. */
                 withAnimation(.easeIn(duration: 0.65)) {
