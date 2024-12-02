@@ -8,8 +8,10 @@ import SwiftUI
 
 struct PlusButton: View {
     var prop: Properties
+    @Binding public var createNewCategory: Bool
     
-    @Binding public var testPopup: Bool
+    //@Binding public var testPopup: Bool
+    @State private var testPopup: Bool = false
     
     var body: some View {
         VStack {
@@ -46,7 +48,7 @@ struct PlusButton: View {
                         Divider()
                             .background(.gray)
                         
-                        Button(action: { print("Create new category") }) {
+                        Button(action: { self.createNewCategory = true }) {
                             HStack {
                                 ZStack {
                                     Image(systemName: "folder.badge.plus")

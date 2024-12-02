@@ -3142,7 +3142,7 @@ struct TopNavCategoryView: View {
     
     var prop: Properties
     var categoryName: String
-    var categoryBackground: UIImage
+    var categoryBackground: Image
     var categoryBackgroundColor: Color
     var totalSets: Int
     
@@ -3157,7 +3157,7 @@ struct TopNavCategoryView: View {
     var body: some View {
         ZStack {
             ZStack {
-                Image(uiImage: self.categoryBackground)
+                self.categoryBackground
                     .resizable()
                     .scaledToFill()
                     .frame(maxHeight: 125)

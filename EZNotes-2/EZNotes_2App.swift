@@ -37,7 +37,7 @@ public func handleTransaction(_ transaction: StoreKit.Transaction) async {
 struct EZNotes_2App: App {
     @StateObject private var eznotesSubscriptionManager: EZNotesSubscriptionManager = EZNotesSubscriptionManager()
     @StateObject private var categoryData: CategoryData = CategoryData()
-    @StateObject public var accountInfo: AccountDetails = AccountDetails()
+    @StateObject private var accountInfo: AccountDetails = AccountDetails()
     @StateObject private var networkMonitor = NetworkMonitor()
     
     var body: some Scene {

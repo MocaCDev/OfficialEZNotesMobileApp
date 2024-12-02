@@ -8,7 +8,7 @@ import SwiftUI
 
 struct EditCategory: View {
     var prop: Properties
-    var categoryBeingEditedImage: UIImage
+    var categoryBeingEditedImage: Image
     
     @Binding public var categoryBeingEdited: String
     @ObservedObject public var categoryData: CategoryData
@@ -120,7 +120,7 @@ struct EditCategory: View {
             }
             .frame(maxWidth: .infinity)
             .background(
-                Image(uiImage: self.categoryBeingEditedImage)
+                self.categoryBeingEditedImage
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .overlay(
@@ -427,7 +427,7 @@ struct EditCategory: View {
                         
                         VStack {
                             HStack {
-                                Image(uiImage: self.categoryBeingEditedImage)
+                                self.categoryBeingEditedImage
                                     .resizable()
                                     .frame(width: 150.5, height: 190.5)
                                     .scaledToFit()

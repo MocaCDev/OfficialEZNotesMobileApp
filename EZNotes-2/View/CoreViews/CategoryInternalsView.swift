@@ -6,27 +6,32 @@
 //
 import SwiftUI
 
+/* MARK: `CIError` - Category Internals (CI) Error states. */
+enum CIError: Error {
+    case None
+    case NewSetNameEmpty
+    case NewSetNotesEmpty
+}
+
 struct CategoryInternalsView: View {
+    @EnvironmentObject private var categoryData: CategoryData
     
     var prop: Properties
     var categoryName: String
     var creationDate: String
     @State public var categoryTitleColor: Color?
     @State public var categoryBackgroundColor: Color?
-    //var categoriesAndSets: [String: Array<String>]
-    var categoryBackground: UIImage
-    //var categoriesSetsAndNotes: Array<[String: String]>
+    var categoryBackground: Image
     
     @State private var categoryDescription: String? = nil
     @State private var generatingDesc: Bool = false
     @State private var errorGenerating: Bool = false
     @State private var setsYOffset: CGFloat = 0
     @State private var internalInfoOpacity: CGFloat = 0
-    
-    @ObservedObject public var categoryData: CategoryData
+
     @Binding public var launchCategory: Bool
     @Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
-    @Binding public var messages: Array<MessageDetails>
+    @Binding public var messages: Array<MessageDetails> /* TODO: Add a new interface for messages. */
     @ObservedObject public var accountInfo: AccountDetails
     
     @State private var show_category_internal_title: Bool = false
@@ -90,14 +95,16 @@ struct CategoryInternalsView: View {
     @State private var createNewSet: Bool = false
     @State private var newSetName: String = ""
     @State private var newSetNotes: String = ""
+    @State private var error: CIError = .None
     
     /* MARK: Variables regarding search bar. */
     @State private var setSearch: String = ""
     @FocusState private var setSearchFocus: Bool
     
-    /* MARK: Teting stuff out. */
+    /* MARK: Variables for figuring out what set names are longer and what set names are shorter. The shorter set names will be displayed in a grid layout with 2 sets on each line. The longer set names will be displayed in a grid layout with 1 set on each line. */
     @State private var longerSetNames: Array<String> = []
     @State private var shorterSetNames: Array<String> = []
+    
     var body: some View {
         if !self.launchedSet {
             ZStack {
@@ -109,9 +116,13 @@ struct CategoryInternalsView: View {
                             HStack {
                                 ZStack {
                                     Button(action: {
+                                        /* MARK: Ensure the error states are set to .None*/
+                                        self.error = .None
+                                        
                                         self.newSetNotes.removeAll()
                                         self.newSetName.removeAll()
                                         self.createNewSet = false
+                                        self.testPopup = false
                                     }) {
                                         Image(systemName: "multiply")
                                             .resizable()
@@ -146,60 +157,26 @@ struct CategoryInternalsView: View {
                                 ZStack { }.frame(maxWidth: 20, alignment: .trailing)
                             }
                             .frame(maxWidth: .infinity, maxHeight: 30)
-                            /*ZStack {
-                                /* MARK: `VStack` exists to push the multiply to the top*/
-                                VStack {
-                                    HStack {
-                                        ZStack {
-                                            Button(action: {
-                                                self.newSetNotes.removeAll()
-                                                self.newSetName.removeAll()
-                                                self.createNewSet = false
-                                            }) {
-                                                Image(systemName: "multiply")
-                                                    .resizable()
-                                                    .frame(
-                                                        width: 15,//prop.size.height / 2.5 > 300 ? 45 : 40,
-                                                        height: 15//prop.size.height / 2.5 > 300 ? 45 : 40
-                                                    )
-                                            }
-                                            .buttonStyle(NoLongPressButtonStyle())
-                                        }
-                                        .frame(
-                                            width: 20,//prop.size.height / 2.5 > 300 ? 45 : 40,
-                                            height: 20//prop.size.height / 2.5 > 300 ? 45 : 40
-                                        )
-                                        .padding(6)
-                                        .background(
-                                            Circle()
-                                                .fill(Color.EZNotesLightBlack.opacity(0.5))
-                                        )
-                                        .padding(.trailing, 15)
-                                        .padding(.top, 2.5)
-                                        
-                                        Spacer()
-                                    }
-                                    Spacer()
-                                }
-                                
-                                HStack {
-                                    Spacer()
-                                    
-                                    Text("Create New Set")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .foregroundStyle(.white)
-                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 28 : 24))
-                                        .multilineTextAlignment(.center)
-                                    
-                                    Spacer()
-                                }
-                                .frame(maxWidth: .infinity)
-                                //.padding([.top, .bottom])
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: 30)*/
                             
                             HStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.white)
                                 .padding(.bottom, 15)
+                            
+                            if self.error == .NewSetNameEmpty || self.error == .NewSetNotesEmpty {
+                                Text(self.error == .NewSetNameEmpty
+                                     ? "The set name is empty. Ensure you apply a name to the new set."
+                                     : "The notes for the set **\(self.newSetName)** you are creating are empty.")
+                                    .frame(maxWidth: prop.size.width - 80, alignment: .center)
+                                    .foregroundStyle(Color.EZNotesRed)
+                                    .font(
+                                        .system(
+                                            size: prop.isIpad || prop.isLargerScreen
+                                            ? 15
+                                            : 13
+                                        )
+                                    )
+                                    .multilineTextAlignment(.center)
+                                    .padding(.bottom, 15)
+                            }
                             
                             Text("Set Name")
                                 .frame(
@@ -229,7 +206,7 @@ struct CategoryInternalsView: View {
                                     Rectangle()//RoundedRectangle(cornerRadius: 15)
                                         .fill(.clear)
                                         .borderBottomWLColor(
-                                            isError: false
+                                            isError: self.newSetName == "" && self.error == .NewSetNameEmpty
                                         )
                                 )
                                 .foregroundStyle(Color.EZNotesBlue)
@@ -271,8 +248,15 @@ struct CategoryInternalsView: View {
                             .background(Color(.systemGray6))
                             .cornerRadius(7.5)
                             .lineLimit(5...20)
+                            .border(width: 1, edges: [.bottom], color: self.error == .NewSetNotesEmpty ? Color.EZNotesRed : Color.clear)
+                            .cornerRadius(15, corners: [.bottomLeft, .bottomRight])
                             
                             Button(action: {
+                                if self.newSetName.isEmpty { self.error = .NewSetNameEmpty; return }
+                                if self.newSetNotes.isEmpty { self.error = .NewSetNotesEmpty; return }
+                                
+                                self.error = .None
+                                
                                 self.categoryData.categoriesAndSets[self.categoryName]!.append(self.newSetName)
                                 self.categoryData.setAndNotes[self.categoryName]!.append([self.newSetName: self.newSetNotes])
                                 
@@ -290,7 +274,6 @@ struct CategoryInternalsView: View {
                                         .frame(maxWidth: .infinity, alignment: .center)
                                         .foregroundStyle(.black)
                                         .setFontSizeAndWeight(weight: .bold, size: 18)
-                                        .minimumScaleFactor(0.5)
                                 }
                                 .padding(8)
                                 .background(.white)
@@ -352,7 +335,7 @@ struct CategoryInternalsView: View {
                             
                             HStack {
                                 HStack {
-                                    Text("\(self.categoryData.categoriesAndSets[self.categoryName]!.count) \(self.categoryData.categoriesAndSets[self.categoryName]!.count > 1 ? "Sets" : "Set")")
+                                    Text("\(self.categoryData.categoriesAndSets[self.categoryName]!.count) \(self.categoryData.categoriesAndSets[self.categoryName]!.count > 1 ? "Sets" : self.categoryData.categoriesAndSets[self.categoryName]!.count == 0 ? "Sets" : "Set")")
                                         .frame(alignment: .leading)
                                         .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen ? 12.5 : 10.5)
                                     //.padding([.leading, .trailing], 8)
@@ -476,14 +459,14 @@ struct CategoryInternalsView: View {
                                     
                                     
                                     ShareLink(
-                                        item: Image(uiImage: self.categoryBackground),
+                                        item: self.categoryBackground,
                                         subject: Text(self.categoryName),
                                         message: Text(
                                             self.categoryDescription != nil
                                                 ? "\(self.categoryDescription!)\n\nCreated with the support of **EZNotes**"
                                                 : ""
                                         ),
-                                        preview: SharePreview(self.categoryName, image: Image(uiImage: self.categoryBackground)))
+                                        preview: SharePreview(self.categoryName, image: self.categoryBackground))
                                     {//(item: URL(string: "https://apps.apple.com/us/app/light-speedometer/id6447198696")!) {
                                         Label("Share", systemImage: "square.and.arrow.up")
                                             .foregroundStyle(Color.EZNotesBlue)
@@ -909,7 +892,7 @@ struct CategoryInternalsView: View {
                 if self.setSearchFocus {
                     self.setSearchFocus = false
                     
-                    // MARK: Below line is not needed, but would't hurt to include in deployed build
+                    // MARK: Below line is not needed, but wouldn't hurt to include in deployed build
                     //UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                 }
             }
