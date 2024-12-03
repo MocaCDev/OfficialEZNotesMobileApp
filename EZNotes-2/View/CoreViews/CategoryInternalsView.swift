@@ -976,6 +976,7 @@ struct CategoryInternalsView: View {
                                             .buttonStyle(NoLongPressButtonStyle())
                                         }
                                     }
+                                    .padding(.top, 15)
                                     
                                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
                                         ForEach(self.shorterSetNames, id: \.self) { shortSetName in
@@ -1033,6 +1034,7 @@ struct CategoryInternalsView: View {
                                     /* MARK: Ensure there is spacing between the bottom of the screen and the last element in the scrollview. */
                                     VStack { }.frame(maxWidth: .infinity).padding(.bottom, 30)
                                 }
+                                .padding(.top, -27)
                                 /*ScrollView(.vertical, showsIndicators: false) {
                                     LazyVGrid(columns: self.categoryData.setAndNotes[self.categoryName]!.count > 1
                                               ? [GridItem(.flexible())]//[GridItem(.flexible()), GridItem(.flexible())]
