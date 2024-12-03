@@ -13,6 +13,7 @@ struct UploadSection: View {
     /* MARK: `topBanner` helps the view know what to display in it's banner (located to the right of the profile icon). */
     @Binding public var topBanner: TopBanner
     
+    /* TODO: Make a model (or manager) for showing/handling the camera. We have a manager for getting access, so we should have a model (or manager) that is used to actually display/handle the inputs/snapshots from the camera instead of the variables being all over. */
     @State private var isFocused = false
     @State private var isScaled = false
     @State private var focusLocation: CGPoint = .zero

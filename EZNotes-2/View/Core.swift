@@ -157,6 +157,8 @@ struct CoreApp: View {
                 )
             } else if self.section == "home" {
                 HomeView(
+                    model: self.model,
+                    images_to_upload: self.images_to_upload,
                     messages: $messages,
                     section: $section,
                     prop: prop,

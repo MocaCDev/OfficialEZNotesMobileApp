@@ -872,3 +872,68 @@ struct UploadReview: View {
         )
     }
 }
+
+struct SetUploadReview: View {
+    @EnvironmentObject private var categoryData: CategoryData
+    
+    var prop: Properties
+    
+    @ObservedObject public var images_to_upload: ImagesUploads
+    @Binding public var showUploadPreview: Bool
+    
+    var body: some View {
+        VStack {
+            HStack(spacing: 0) {
+                VStack {
+                    Button(action: {
+                        self.showUploadPreview = false
+                    }) {
+                        HStack {
+                            Image(systemName: "arrow.backward")
+                                .resizable()
+                                .frame(width: 15, height: 15)
+                                .padding([.leading], 20)
+                                .foregroundStyle(.white)
+                            //.padding([.top], prop.size.height / 2.5 > 300 ? 20 : -5)
+                        }
+                    }
+                }
+                .frame(maxWidth: 70, alignment: .leading)
+                
+                VStack {
+                    Text("Review Uploads")
+                        .foregroundStyle(.white)
+                        .font(.system(size: 25, design: .rounded))
+                        .fontWeight(.semibold)
+                        //.padding([.top], prop.isLargerScreen ? 10 : -10)
+                    //.padding([.leading], -30)
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+                
+                /* MARK: The below `ZStack` forces the above `VStack` to be in the middle. */
+                ZStack { }.frame(maxWidth: 70, alignment: .trailing)
+            }
+            .frame(maxWidth: .infinity)
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            LinearGradient(
+                gradient: Gradient(
+                    colors: [
+                        .black,
+                        .black,
+                        .black,
+                        Color.EZNotesLightBlack
+                        /*Color.EZNotesBlack,
+                        Color.EZNotesBlack,
+                        Color.EZNotesBlack,
+                        Color.EZNotesLightBlack*/
+                    ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+    }
+}

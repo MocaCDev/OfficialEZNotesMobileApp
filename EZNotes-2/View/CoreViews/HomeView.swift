@@ -36,6 +36,10 @@ enum HomeError {
 struct HomeView: View {
     @EnvironmentObject private var categoryData: CategoryData
     
+    /* MARK: Needed for `CategoryInternalsView.swift`, as there is the ability to create a set via images. */
+    @ObservedObject public var model: FrameHandler
+    @ObservedObject public var images_to_upload: ImagesUploads
+    
     @State private var error: HomeError = .None
     
     @Binding public var messages: Array<MessageDetails>
@@ -759,7 +763,7 @@ struct HomeView: View {
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         
-                                        PlusButton(prop: self.prop, createNewCategory: $createNewCategory)//, testPopup: $testPopup)
+                                        PlusButton(prop: self.prop, createNewCategory: $createNewCategory, testPopup: $testPopup)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                                     .padding(.top, -130)
@@ -787,7 +791,7 @@ struct HomeView: View {
                                         .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
                                         .minimumScaleFactor(0.5)
                                     
-                                    PlusButton(prop: self.prop, createNewCategory: $createNewCategory)//, testPopup: $testPopup)
+                                    PlusButton(prop: self.prop, createNewCategory: $createNewCategory, testPopup: $testPopup)
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .contentShape(Rectangle())
@@ -837,6 +841,8 @@ struct HomeView: View {
             } else {
                 /* MARK: Show Category Information */
                 CategoryInternalsView(
+                    model: self.model,
+                    images_to_upload: self.images_to_upload,
                     prop: prop,
                     categoryName: categoryLaunched,
                     creationDate: "\(self.categoryData.categoryCreationDates[self.categoryLaunched]!.formatted(date: .numeric, time: .omitted))",

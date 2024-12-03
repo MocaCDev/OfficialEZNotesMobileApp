@@ -16,6 +16,16 @@ enum CIError: Error {
 struct CategoryInternalsView: View {
     @EnvironmentObject private var categoryData: CategoryData
     
+    /* MARK: Needed for the "Create Set by Image". */
+    /* MARK: See `TODO` in `UploadSectionView.swift` (line 16). */
+    @ObservedObject public var model: FrameHandler
+    @State private var currentZoomFactor: CGFloat = 1.0
+    @State private var loadingCameraView: Bool = false
+    @State private var targetX: CGFloat = 0
+    @State private var targetY: CGFloat = 0
+    @ObservedObject public var images_to_upload: ImagesUploads//@State private var imageUploadsForSets: Array<[String: UIImage]> = []
+    @State private var showUploadPreview: Bool = false
+    
     var prop: Properties
     var categoryName: String
     var creationDate: String
@@ -93,6 +103,7 @@ struct CategoryInternalsView: View {
     /* MARK: Variables regarding the + button on bottom right of screen. */
     @State private var testPopup: Bool = false
     @State private var createNewSet: Bool = false
+    @State private var createNewSetByImage: Bool = false
     @State private var newSetName: String = ""
     @State private var newSetNotes: String = ""
     @State private var error: CIError = .None
@@ -303,6 +314,202 @@ struct CategoryInternalsView: View {
                         self.createNewSet = false
                     }
                     .zIndex(1)
+                } else {
+                    if self.createNewSetByImage {
+                        if !self.showUploadPreview {
+                            VStack {
+                                HStack {
+                                    Button(action: {
+                                        /* MARK: Ensure the error states are set to .None*/
+                                        self.error = .None
+                                        
+                                        self.createNewSetByImage = false
+                                    }) {
+                                        ZStack {
+                                            Image(systemName: "multiply")
+                                                .resizable()
+                                                .frame(
+                                                    width: 15,//prop.size.height / 2.5 > 300 ? 45 : 40,
+                                                    height: 15//prop.size.height / 2.5 > 300 ? 45 : 40
+                                                )
+                                        }
+                                        .frame(maxWidth: 20, maxHeight: 20)
+                                        .padding(6)
+                                        .background(
+                                            Circle()
+                                                .fill(Color.EZNotesLightBlack.opacity(0.5))
+                                        )
+                                        .padding(.leading, 15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: 30)
+                                
+                                HStack {
+                                    VStack { }.frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    VStack {
+                                        Spacer()
+                                        
+                                        Button(action: {
+                                            if !self.loadingCameraView {
+                                                self.images_to_upload.images_to_upload.append(
+                                                    ["\(arc4random()).jpeg": UIImage(cgImage: self.model.frame!)]
+                                                )
+                                            }
+                                        }) {
+                                            ZStack {
+                                                Circle()
+                                                    .fill(
+                                                        MeshGradient(width: 3, height: 3, points: [
+                                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                        ], colors: [
+                                                            .indigo, .indigo, Color.EZNotesBlue,
+                                                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                        ]))
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                    .blur(radius: 10)
+                                                    .offset(x: targetX, y: targetY) // Offset controlled by targetX and targetY
+                                                    .animation(
+                                                        .easeInOut(duration: 0.4), // Smooth animation
+                                                        value: targetX
+                                                    )
+                                                    .animation(
+                                                        .easeInOut(duration: 0.4), // Smooth animation
+                                                        value: targetY
+                                                    )
+                                                
+                                                Circle()
+                                                    .fill(.white)
+                                                    .frame(width: 90, height: 90)
+                                            }
+                                            .frame(width: 100, height: 100)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                        
+                                        Text("\(String(round(self.currentZoomFactor * 10.00) / 10.00))x")
+                                            .foregroundStyle(.white)
+                                            .padding([.bottom], prop.size.height / 2.5 > 300 ? -10 : -40)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .padding(.bottom, self.images_to_upload.images_to_upload.count > 0 ? 15 : 30)
+                                    
+                                    VStack { }.frame(maxWidth: .infinity, alignment: .trailing)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                
+                                if self.images_to_upload.images_to_upload.count > 0 {
+                                    VStack {
+                                        HStack {
+                                            Button(action: { self.images_to_upload.images_to_upload.removeAll() }) {
+                                                ZStack {
+                                                    HStack {
+                                                        Text("Remove All")
+                                                            .frame(alignment: .center)
+                                                            .padding(10)
+                                                            .foregroundStyle(.white)
+                                                            .setFontSizeAndWeight(weight: .medium, size: prop.isLargerScreen ? 16 : 14)
+                                                            .minimumScaleFactor(0.5)
+                                                        
+                                                        Image(systemName: "trash")
+                                                            .resizable()
+                                                            .frame(width: 15, height: 15)
+                                                            .foregroundStyle(.gray)
+                                                    }
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                }
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .background(Color.EZNotesLightBlack.opacity(0.8))
+                                                .cornerRadius(20)
+                                                .padding(.leading, 15)
+                                            }
+                                            
+                                            Button(action: {
+                                                self.showUploadPreview = true
+                                            }) {
+                                                HStack {
+                                                    HStack {
+                                                        Text("Review")
+                                                            .frame(alignment: .center)
+                                                            .padding(10)
+                                                            .foregroundStyle(.white)
+                                                            .setFontSizeAndWeight(weight: .medium, size: prop.isLargerScreen ? 16 : 14)
+                                                            .minimumScaleFactor(0.5)
+                                                        
+                                                        Image(systemName: "chevron.forward")
+                                                            .resizable()
+                                                            .frame(width: 10, height: 15)
+                                                            .foregroundStyle(.gray)
+                                                    }
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                }
+                                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                                .background(Color.EZNotesLightBlack.opacity(0.8))
+                                                .cornerRadius(20)
+                                                .padding(.trailing, 15)
+                                            }
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        .padding(.bottom)
+                                        .padding(.top, 5)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 80, alignment: .bottom)
+                                    .background(
+                                        Rectangle()
+                                            .fill(Color.EZNotesBlack)
+                                            .shadow(color: Color.black, radius: 2.5, y: -2.5)
+                                    )
+                                }
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(
+                                self.model.permissionGranted && self.model.cameraDeviceFound
+                                ? AnyView(FrameView(handler: model, image: model.frame, prop: prop, loadingCameraView: $loadingCameraView)
+                                    .ignoresSafeArea()
+                                    .gesture(MagnificationGesture()
+                                        .onChanged { value in
+                                            self.currentZoomFactor += value - 1.0 // Calculate the zoom factor change
+                                            self.currentZoomFactor = min(max(self.currentZoomFactor, 0.5), 20)
+                                            self.model.setScale(scale: currentZoomFactor)
+                                        }
+                                    )
+                                          /*.gesture(DragGesture(minimumDistance: 0.5, coordinateSpace: .local)
+                                           .onEnded({ value in
+                                           if value.translation.width < 0 {
+                                           self.section = "chat"
+                                           return
+                                           }
+                                           
+                                           if value.translation.width > 0 {
+                                           self.section = "home"
+                                           return
+                                           }
+                                           })
+                                           )*/
+                                )
+                                : AnyView(Color.EZNotesBlack)
+                            )
+                            .onAppear {
+                                Timer.scheduledTimer(withTimeInterval: 0.6, repeats: true) { timer in
+                                    targetX = CGFloat.random(in: -4...8) // Random X offset
+                                    targetY = CGFloat.random(in: -4...8) // Random Y offset
+                                }
+                            }
+                            .zIndex(1)
+                        } else {
+                            SetUploadReview(
+                                prop: self.prop,
+                                images_to_upload: self.images_to_upload,
+                                showUploadPreview: $showUploadPreview
+                            )
+                            .zIndex(1)
+                        }
+                    }
                 }
                 
                 //ScrollView(.vertical, showsIndicators: false) {
@@ -860,13 +1067,14 @@ struct CategoryInternalsView: View {
                 CategoryInternalsPlusButton(
                     prop: self.prop,
                     testPopup: $testPopup,
-                    createNewSet: $createNewSet
+                    createNewSet: $createNewSet,
+                    createNewSetByImage: $createNewSetByImage
                 )
                 .padding(.bottom, 20)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .background(Color.EZNotesBlack)
-            .ignoresSafeArea(edges: [.top, .bottom])
+            .ignoresSafeArea(edges: self.createNewSetByImage ? [.bottom] : [.top, .bottom])
             .onAppear {
                 self.categoryDescription = self.categoryData.categoryDescriptions[self.categoryName]
                 self.setsYOffset = prop.size.height - 100

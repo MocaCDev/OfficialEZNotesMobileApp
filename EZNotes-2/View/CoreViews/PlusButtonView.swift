@@ -8,10 +8,9 @@ import SwiftUI
 
 struct PlusButton: View {
     var prop: Properties
-    @Binding public var createNewCategory: Bool
     
-    //@Binding public var testPopup: Bool
-    @State private var testPopup: Bool = false
+    @Binding public var createNewCategory: Bool
+    @Binding public var testPopup: Bool
     
     var body: some View {
         VStack {
@@ -119,6 +118,7 @@ struct CategoryInternalsPlusButton: View {
     
     @Binding public var testPopup: Bool /* MARK: Rename this. This name is used in `HomeView.swift` as well. */
     @Binding public var createNewSet: Bool
+    @Binding public var createNewSetByImage: Bool
     
     var body: some View {
         VStack {
@@ -138,7 +138,7 @@ struct CategoryInternalsPlusButton: View {
                                 ZStack {
                                     Image(systemName: "circle.grid.2x2")
                                         .resizable()
-                                        .frame(width: 15, height: 20)
+                                        .frame(width: 15, height: 15)
                                         .foregroundStyle(.white)
                                 }
                                 .frame(maxWidth: 20, alignment: .leading)
@@ -150,6 +150,28 @@ struct CategoryInternalsPlusButton: View {
                                     .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 15 : 13))
                             }
                             .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        
+                        Divider()
+                            .background(.gray)
+                        
+                        Button(action: { self.createNewSetByImage = true }) {
+                            HStack {
+                                ZStack {
+                                    Image(systemName: "camera")
+                                        .resizable()
+                                        .frame(width: 15, height: 15)
+                                        .foregroundStyle(.white)
+                                }
+                                .frame(maxWidth: 20, alignment: .leading)
+                                .padding(.leading, 5)
+                                
+                                Text("Create Set by Image")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .foregroundStyle(.white)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 15 : 13))
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .trailing)
