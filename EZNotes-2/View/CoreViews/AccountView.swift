@@ -735,7 +735,7 @@ struct Account: View {
                                     //.padding([.leading, .trailing], 8)
                                     .background(
                                         RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesLightBlack)
+                                            .fill(Color.EZNotesBlack)
                                             //.shadow(color: Color.EZNotesLightBlack, radius: 1.5)
                                         /*.stroke(LinearGradient(gradient: Gradient(
                                          colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
@@ -751,9 +751,8 @@ struct Account: View {
                                         .textCase(.uppercase)
                                         .frame(maxWidth: prop.size.width - 50, alignment: .leading)
                                         .foregroundStyle(.white)
-                                        .font(.system(size: 18))
+                                        .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .bold, size: 18)
                                         .minimumScaleFactor(0.5)
-                                        .fontWeight(.bold)
                                     
                                     VStack {
                                         HStack {
@@ -906,11 +905,9 @@ struct Account: View {
                                     Text("Privacy & Terms")
                                         .textCase(.uppercase)
                                         .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                        .padding(.bottom, 10)
                                         .foregroundStyle(.white)
-                                        .font(.system(size: 18))
+                                        .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .bold, size: 18)
                                         .minimumScaleFactor(0.5)
-                                        .fontWeight(.bold)
                                     
                                     VStack {
                                         Button(action: { self.showPrivacyAndPolicy = true }) {
@@ -970,7 +967,7 @@ struct Account: View {
                                     .padding([.top, .bottom], 14)
                                     .background(
                                         RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesLightBlack)
+                                            .fill(Color.EZNotesBlack)
                                     )
                                     .cornerRadius(15)
                                     
@@ -978,9 +975,8 @@ struct Account: View {
                                     Text("Additional")
                                         .textCase(.uppercase)
                                         .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                        .padding([.top, .bottom], 10)
                                         .foregroundStyle(.white)
-                                        .setFontSizeAndWeight(weight: .bold, size: 18)
+                                        .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .bold, size: 18)
                                         .minimumScaleFactor(0.5)
                                     
                                     VStack {
@@ -1034,16 +1030,15 @@ struct Account: View {
                                     //.padding([.leading, .trailing], 8)
                                     .background(
                                         RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesLightBlack)
+                                            .fill(Color.EZNotesBlack)
                                     )
                                     .cornerRadius(15)
                                     
                                     Text("Account Actions")
                                         .textCase(.uppercase)
                                         .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                        .padding([.top, .bottom], 10)
                                         .foregroundStyle(.white)
-                                        .setFontSizeAndWeight(weight: .bold, size: 18)
+                                        .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .bold, size: 18)
                                         .minimumScaleFactor(0.5)
                                     
                                     VStack {
@@ -1103,7 +1098,7 @@ struct Account: View {
                                     //.padding([.leading, .trailing], 8)
                                     .background(
                                         RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesLightBlack)
+                                            .fill(Color.EZNotesBlack)
                                     )
                                     .cornerRadius(15)
                                 }

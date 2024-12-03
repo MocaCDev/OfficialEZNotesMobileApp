@@ -60,6 +60,13 @@ private func obtainJSON<T: Decodable>(type: T.Type, filename: String) throws -> 
     }
 }
 
+public func writeSettings(settings: [String: Bool]) -> Void {
+    guard let _ = try? writeJSON(data: settings, filename: "settings.json") else {
+        print("[writeSettings] -> Failed to write \(settings) to cache")
+        return
+    }
+}
+
 public func writeCategoryData(categoryData: [String: Array<String>]) -> Void {
     /* TODO: I don't think we need the below `if let`. Just during development it'll be nice. */
     guard let _ = try? writeJSON(data: categoryData, filename: "categories_data.json") else {
@@ -176,6 +183,15 @@ func writeFontConfiguration(fontConfiguration: [String: [String: String]]) -> Vo
     guard let _ = try? writeJSON(data: fontConfiguration, filename: "font_configuration.json") else {
         print("[writeSetsAndNotes] -> Failed to write \(fontConfiguration) to cache")
         return
+    }
+}
+
+public func getSettings() -> [String: Bool] {
+    if let result = try? obtainJSON(type: [String: Bool].self, filename: "settings.json") { return result }
+    else {
+        print("[getSettings] -> Failed to obtain category data from cache")
+        
+        return [:]
     }
 }
 

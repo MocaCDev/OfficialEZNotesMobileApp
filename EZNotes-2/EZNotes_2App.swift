@@ -39,6 +39,7 @@ struct EZNotes_2App: App {
     @StateObject private var categoryData: CategoryData = CategoryData()
     @StateObject private var accountInfo: AccountDetails = AccountDetails()
     @StateObject private var networkMonitor = NetworkMonitor()
+    @StateObject private var settings: SettingsConfigManager = SettingsConfigManager()
     
     var body: some Scene {
         WindowGroup {
@@ -47,6 +48,7 @@ struct EZNotes_2App: App {
                 .environmentObject(self.categoryData)
                 .environmentObject(self.accountInfo)
                 .environmentObject(self.networkMonitor)
+                .environmentObject(self.settings)
                 .onAppear {
                     Task {
                         await monitorTransactions()
@@ -56,6 +58,7 @@ struct EZNotes_2App: App {
                     Task {
                         self.categoryData.getData()
                         self.networkMonitor.startMonitoring()
+                        self.settings.loadSettings()
                         
                         await self.eznotesSubscriptionManager.obtainCurrentSubscription()
                     }
