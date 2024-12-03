@@ -3151,6 +3151,8 @@ struct TopNavCategoryView: View {
     @Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
     @Binding public var messages: Array<MessageDetails>
     @ObservedObject public var accountInfo: AccountDetails
+    @Binding public var topBanner: [String: TopBanner]
+    @ObservedObject public var images_to_upload: ImagesUploads
     
     @State private var aiChat: Bool = false
     
@@ -3185,13 +3187,26 @@ struct TopNavCategoryView: View {
                 .frame(maxWidth: 50, maxHeight: .infinity, alignment: .leading)
                 .padding(.top, prop.isLargerScreen ? 25 : 15)
                 
-                Spacer()
-                
-                if self.showTitle {
-                    Text("TITLE!")
-                    
-                    Spacer()
-                }
+                if self.topBanner.keys.contains(self.categoryName) && self.topBanner[self.categoryName]! != .None {
+                    switch(self.topBanner[self.categoryName]!) {
+                    case .LoadingUploads:
+                        HStack {
+                            Text("Uploading \(self.images_to_upload.images_to_upload.count) \(self.images_to_upload.images_to_upload.count > 1 ? "images" : "image")...")
+                                .foregroundStyle(.white)
+                                .font(.system(size: prop.isLargerScreen ? 16 : 13))
+                                .padding(.trailing, 5)
+                            
+                            ProgressView()
+                                .controlSize(.mini)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
+                        .background(Color.EZNotesLightBlack.opacity(0.8))
+                        .cornerRadius(15)
+                        .padding(.trailing, 10)
+                        .padding(.top, prop.isLargerScreen ? 25 : 15)
+                    default: VStack { }.onAppear { self.topBanner[self.categoryName] = .None }
+                    }
+                } else { Spacer() }
                 
                 //Spacer()
                 

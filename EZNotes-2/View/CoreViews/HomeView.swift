@@ -193,6 +193,10 @@ struct HomeView: View {
         return max(size.height + 40, 100) // Add a buffer and ensure a minimum height
     }
     
+    /* MARK: Not directly used in this view, rather subviews that branch off from this view. */
+    /* MARK: String will be the category name, value will be the `TopBanner` status of the category. Each cateegory can have a different `TopBanner` status. */
+    @State private var topBanner: [String: TopBanner] = [:]
+    
     var body: some View {
         if !self.showAccount {
             if !self.launchCategory {
@@ -853,7 +857,8 @@ struct HomeView: View {
                     launchCategory: $launchCategory,
                     tempChatHistory: $tempChatHistory,
                     messages: $messages,
-                    accountInfo: self.accountInfo
+                    accountInfo: self.accountInfo,
+                    topBanner: $topBanner
                 )
             }
         } else {

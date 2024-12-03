@@ -116,6 +116,8 @@ struct CategoryInternalsView: View {
     @State private var longerSetNames: Array<String> = []
     @State private var shorterSetNames: Array<String> = []
     
+    @Binding public var topBanner: [String: TopBanner]
+    
     var body: some View {
         if !self.launchedSet {
             ZStack {
@@ -343,9 +345,28 @@ struct CategoryInternalsView: View {
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                     
-                                    Spacer()
+                                    if self.topBanner.keys.contains(self.categoryName) && self.topBanner[self.categoryName]! != .None {
+                                        switch(self.topBanner[self.categoryName]!) {
+                                        case .LoadingUploads:
+                                            HStack {
+                                                Text("Uploading \(self.images_to_upload.images_to_upload.count) \(self.images_to_upload.images_to_upload.count > 1 ? "images" : "image")...")
+                                                    .foregroundStyle(.white)
+                                                    .font(.system(size: prop.isLargerScreen ? 16 : 13))
+                                                    .padding(.trailing, 5)
+                                                
+                                                ProgressView()
+                                                    .controlSize(.mini)
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: 40, alignment: .center)
+                                            .background(Color.EZNotesLightBlack.opacity(0.8))
+                                            .cornerRadius(15)
+                                            .padding(.trailing, 10)
+                                            //.padding(.top, prop.isLargerScreen ? 25 : 15)
+                                        default: VStack { }.onAppear { self.topBanner[self.categoryName] = .None }
+                                        }
+                                    } else { Spacer() }
                                 }
-                                .frame(maxWidth: .infinity, maxHeight: 30)
+                                .frame(maxWidth: .infinity, maxHeight: 40)
                                 
                                 HStack {
                                     VStack { }.frame(maxWidth: .infinity, alignment: .leading)
@@ -504,9 +525,23 @@ struct CategoryInternalsView: View {
                         } else {
                             SetUploadReview(
                                 prop: self.prop,
+                                categoryName: self.categoryName,
+                                action: { response in
+                                    self.longerSetNames.removeAll()
+                                    self.shorterSetNames.removeAll()
+                                    
+                                    for setData in response.setAndNotes[self.categoryName]! {
+                                        if setData.first!.key.count >= 15 { self.longerSetNames.append(setData.first!.key) }
+                                        else { self.shorterSetNames.append(setData.first!.key) }
+                                    }
+                                },
                                 images_to_upload: self.images_to_upload,
-                                showUploadPreview: $showUploadPreview
-                            )
+                                showUploadPreview: $showUploadPreview,
+                                topBanner: $topBanner
+                                //categoryData: self.categoryData
+                            )/* { newCategoryData in
+                                VStack { }.onAppear { self.categoryData = newCategoryData }
+                            }*/
                             .zIndex(1)
                         }
                     }
@@ -524,7 +559,9 @@ struct CategoryInternalsView: View {
                         showTitle: $show_category_internal_title,
                         tempChatHistory: $tempChatHistory,
                         messages: $messages,
-                        accountInfo: self.accountInfo
+                        accountInfo: self.accountInfo,
+                        topBanner: $topBanner,
+                        images_to_upload: self.images_to_upload
                     )
                     
                     VStack {
@@ -992,6 +1029,9 @@ struct CategoryInternalsView: View {
                                             .buttonStyle(NoLongPressButtonStyle())
                                         }
                                     }
+                                    
+                                    /* MARK: Ensure there is spacing between the bottom of the screen and the last element in the scrollview. */
+                                    VStack { }.frame(maxWidth: .infinity).padding(.bottom, 30)
                                 }
                                 /*ScrollView(.vertical, showsIndicators: false) {
                                     LazyVGrid(columns: self.categoryData.setAndNotes[self.categoryName]!.count > 1
