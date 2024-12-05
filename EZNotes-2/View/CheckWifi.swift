@@ -27,6 +27,12 @@ class NetworkMonitor: ObservableObject {
                 if path.status == .satisfied {
                     self?.isConnectedToWiFi = path.usesInterfaceType(.wifi)
                     self?.isConnectedToCellular = path.usesInterfaceType(.cellular)
+                    
+                    /* MARK: Using `guard` just in case `self` is `nil`. */
+                    guard self!.isConnectedToWiFi || self!.isConnectedToCellular else { return }
+                    
+                    /* MARK: If the above `guard` does not fail, then we need to ensure the "No WiFi" banner is not shown. */
+                    self?.needsNoWifiBanner = false
                 } else {
                     self?.isConnectedToWiFi = false
                     self?.isConnectedToCellular = false

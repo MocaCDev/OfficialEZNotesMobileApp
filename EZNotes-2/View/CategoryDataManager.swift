@@ -24,6 +24,9 @@ import SwiftUI
     @Published public var briefDescriptions: Array<String> = []
     @Published public var photos: Array<String> = []
     
+    /* MARK: Data over user-created categories. */
+    @Published public var userCreatedCategoryNames: Array<String> = []
+    
     public final func getData() {
         self.categoriesAndSets = getCategoryData()
         self.setAndNotes = getSetsAndNotes()
@@ -32,7 +35,7 @@ import SwiftUI
         self.categoryDescriptions = getCategoryDescriptions()
         self.categoryCustomColors = getCategoryCustomColors()
         self.categoryCustomTextColors = getCategoryCustomTextColors()
-        
+        self.userCreatedCategoryNames = getUserCreatedCategoryNames()
     }
     
     /* MARK: Method used to figure out whether or not a number needs to be appended to the end of a set name. */

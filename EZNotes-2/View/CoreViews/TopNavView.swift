@@ -1873,6 +1873,8 @@ struct ViewPositionKey: PreferenceKey {
 }
 
 struct TopNavHome: View {
+    @EnvironmentObject private var messageModel: MessagesModel
+    
     @ObservedObject public var accountInfo: AccountDetails
     @ObservedObject public var categoryData: CategoryData
     
@@ -1906,10 +1908,10 @@ struct TopNavHome: View {
     @State private var creatingNewChat: Bool = false
     @State private var errorGeneratingTopicsForMajor: Bool = false
     
-    @Binding public var messages: Array<MessageDetails>
+    //@Binding public var messages: Array<MessageDetails>
     @Binding public var lookedUpCategoriesAndSets: [String: Array<String>]
     @Binding public var userHasSignedIn: Bool
-    @Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
+    //@Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
     
     @State private var numberOfTheAnimationgBall = 3
     
@@ -2108,22 +2110,20 @@ struct TopNavHome: View {
                     return
                 }
                 
-                self.tempChatHistory[self.topicPicked] = [self.accountInfo.aiChatID: self.messages]
-                writeTemporaryChatHistory(chatHistory: self.tempChatHistory)
+                self.messageModel.tempStoredChats[self.topicPicked] = [self.accountInfo.aiChatID: self.messageModel.messages]
+                writeTemporaryChatHistory(chatHistory: self.messageModel.tempStoredChats)
                 
                 self.topicPicked = ""
                 self.generatedTopics.removeAll()
                 self.chatIsLive = false
-                self.messages.removeAll()
+                self.messageModel.messages.removeAll()
             }
         }
         /* TODO: Change from popover to an actual view. */
         .popover(isPresented: $aiChatPopover) {
             AIChat(
                 prop: self.prop,
-                accountInfo: self.accountInfo,
-                tempChatHistory: $tempChatHistory,
-                messages: $messages
+                accountInfo: self.accountInfo
             )
             /*VStack {
                 if self.loadingTopics {
@@ -3139,6 +3139,7 @@ struct TopNavHome: View {
 }
 
 struct TopNavCategoryView: View {
+    @EnvironmentObject private var messageModel: MessagesModel
     
     var prop: Properties
     var categoryName: String
@@ -3148,8 +3149,8 @@ struct TopNavCategoryView: View {
     
     @Binding public var launchCategory: Bool
     @Binding public var showTitle: Bool
-    @Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
-    @Binding public var messages: Array<MessageDetails>
+    //@Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
+    //@Binding public var messages: Array<MessageDetails>
     @ObservedObject public var accountInfo: AccountDetails
     @Binding public var topBanner: [String: TopBanner]
     @ObservedObject public var images_to_upload: ImagesUploads
@@ -3233,9 +3234,7 @@ struct TopNavCategoryView: View {
         .popover(isPresented: $aiChat) {
             AIChat(
                 prop: self.prop,
-                accountInfo: self.accountInfo,
-                tempChatHistory: $tempChatHistory,
-                messages: $messages
+                accountInfo: self.accountInfo
             )
         }
         //.zIndex(1)
@@ -3244,6 +3243,7 @@ struct TopNavCategoryView: View {
 
 struct TopNavUpload: View {
     @EnvironmentObject private var networkMonitor: NetworkMonitor
+    @EnvironmentObject private var settings: SettingsConfigManager
     
     @Binding public var topBanner: TopBanner
     @ObservedObject public var categoryData: CategoryData
@@ -3329,7 +3329,7 @@ struct TopNavUpload: View {
                         .background(Color.EZNotesLightBlack.opacity(0.8))
                         .cornerRadius(15)
                         .padding(.bottom, 20)
-                        .padding(.trailing, 10)
+                        .padding(.trailing, !self.settings.justNotes ? 10 : 0)
                     case .ErrorUploading:
                         HStack {
                             HStack {
@@ -3371,7 +3371,7 @@ struct TopNavUpload: View {
                         .background(Color.EZNotesLightBlack.opacity(0.8))
                         .cornerRadius(15)
                         .padding(.bottom, 20)
-                        .padding(.trailing, 10)
+                        .padding(.trailing, !self.settings.justNotes ? 10 : 0)
                     case .UploadsReadyToReview:
                         HStack {
                             HStack {
@@ -3421,13 +3421,39 @@ struct TopNavUpload: View {
                         .background(Color.EZNotesLightBlack.opacity(0.8))
                         .cornerRadius(15)
                         .padding(.bottom, 20)
-                        .padding(.trailing, 10)
+                        .padding(.trailing, !self.settings.justNotes ? 10 : 0)
                     default:
-                        Spacer()
+                        VStack { }.onAppear { self.topBanner = .None }
                     }
                 }
             } else {
                 Spacer()
+            }
+            
+            if self.settings.justNotes {
+                Menu {
+                    Button(action: { self.settings.justNotes = false }) {
+                        HStack {
+                            Image(systemName: "lightswitch.off")
+                                .resizable()
+                                .frame(width: 15, height: 20)
+                                .foregroundStyle(.white)
+                            
+                            Text("Turn Off JustNotes")
+                        }
+                    }
+                    
+                } label: {
+                    ZStack {
+                        Image(systemName: "gearshape.fill")
+                            .resizable()
+                            .frame(width: 25, height: 25)
+                            .foregroundStyle(.white)
+                    }
+                    .frame(maxWidth: 38, alignment: .trailing)
+                    .padding(.trailing, 20)
+                    .padding([.bottom], 20)
+                }
             }
             
             /*VStack {

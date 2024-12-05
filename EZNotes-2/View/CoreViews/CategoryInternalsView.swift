@@ -15,6 +15,7 @@ enum CIError: Error {
 
 struct CategoryInternalsView: View {
     @EnvironmentObject private var categoryData: CategoryData
+    @EnvironmentObject private var messageModel: MessagesModel
     
     /* MARK: Needed for the "Create Set by Image". */
     /* MARK: See `TODO` in `UploadSectionView.swift` (line 16). */
@@ -40,8 +41,8 @@ struct CategoryInternalsView: View {
     @State private var internalInfoOpacity: CGFloat = 0
 
     @Binding public var launchCategory: Bool
-    @Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
-    @Binding public var messages: Array<MessageDetails> /* TODO: Add a new interface for messages. */
+    //@Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
+    //@Binding public var messages: Array<MessageDetails> /* TODO: Add a new interface for messages. */
     @ObservedObject public var accountInfo: AccountDetails
     
     @State private var show_category_internal_title: Bool = false
@@ -157,10 +158,10 @@ struct CategoryInternalsView: View {
                                 HStack {
                                     Spacer()
                                     
-                                    Text("Create New Set")
+                                    Text("Create Set")
                                         .frame(maxWidth: .infinity, alignment: .center)
                                         .foregroundStyle(.white)
-                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 28 : 24))
+                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 26 : 22))
                                         .multilineTextAlignment(.center)
                                     
                                     Spacer()
@@ -557,8 +558,8 @@ struct CategoryInternalsView: View {
                         totalSets: self.categoryData.categoriesAndSets[self.categoryName]!.count,
                         launchCategory: $launchCategory,
                         showTitle: $show_category_internal_title,
-                        tempChatHistory: $tempChatHistory,
-                        messages: $messages,
+                        //tempChatHistory: $tempChatHistory,
+                        //messages: $messages,
                         accountInfo: self.accountInfo,
                         topBanner: $topBanner,
                         images_to_upload: self.images_to_upload
@@ -641,8 +642,12 @@ struct CategoryInternalsView: View {
                                                     }
                                                 }
                                                 
+                                                /* MARK: Ensure the cache is up to date. */
                                                 writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
                                                 writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                                writeCategoryTextColors(categoryTextColors: self.categoryData.categoryCustomTextColors)
+                                                writeCategoryCustomColors(categoryCustomColors: self.categoryData.categoryCustomColors)
+                                                writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
                                                 
                                                 resetAlert()
                                             }

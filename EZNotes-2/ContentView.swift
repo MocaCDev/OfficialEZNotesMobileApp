@@ -87,20 +87,10 @@ struct ContentView: View {
     
     @StateObject public var categoryData: CategoryData = CategoryData()
     
-    @State private var categoriesAndSets: [String: Array<String>] = getCategoryData() /* MARK: Key will be the category name, value will be the set names */
-    @State private var setAndNotes: [String: Array<[String: String]>] = getSetsAndNotes()
-    @State private var categoryCreationDates: [String: Date] = getCategoryCreationDates()
-    @State private var categoryImages: [String: UIImage] = getCategoriesImageData() /* MARK: Key will be the category name, value will be the categories image (first uploaded image for category). */
-    @State private var categoryDescriptions: [String: String] = getCategoryDescriptions()
-    @State private var categoryCustomColors: [String: Color] = getCategoryCustomColors()
-    
-    /* MARK: The below colors will apply only to text that is on the top of the right-side of the category details. */
-    @State private var categoryCustomTextColors: [String: Color] = getCategoryCustomTextColors()
-    
-    @State private var messages: Array<MessageDetails> = []
+    //@State private var messages: Array<MessageDetails> = []
     
     /* MARK: `UUID` will be the chat ID. */
-    @State private var temporaryStoredChats: [String: [UUID: Array<MessageDetails>]] = getTemporaryStoredChats()
+    //@State private var temporaryStoredChats: [String: [UUID: Array<MessageDetails>]] = getTemporaryStoredChats()
     
     //private let rotationChangePublisher = NotificationCenter.default
         //.publisher(for: UIDevice.orientationDidChangeNotification)
@@ -154,9 +144,7 @@ struct ContentView: View {
                             topBanner: $topBanner,
                             accountInfo: accountInfo,
                             model: model,
-                            userHasSignedIn: $userHasSignedIn,
-                            tempChatHistory: $temporaryStoredChats,
-                            messages: $messages
+                            userHasSignedIn: $userHasSignedIn
                         )
                     }
                 } else {

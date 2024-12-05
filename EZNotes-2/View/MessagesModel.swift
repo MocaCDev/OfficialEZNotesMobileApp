@@ -13,6 +13,13 @@ struct MessageDetails: Hashable, Encodable, Decodable {
     let dateSent: Date
 }
 
+class MessagesModel: ObservableObject {
+    @Published public var tempStoredChats: [String: [UUID: Array<MessageDetails>]] = [:]
+    @Published public var messages: Array<MessageDetails> = []
+    
+    init() { self.tempStoredChats = getTemporaryStoredChats() }
+}
+
 struct MessageView: View {
     var message: MessageDetails
     

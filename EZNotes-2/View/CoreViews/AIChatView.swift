@@ -12,14 +12,16 @@ private enum aiChatError {
 }
 
 private struct mainView: View {
+    @StateObject public var messageModel: MessagesModel
+    
     var prop: Properties
     @ObservedObject public var accountInfo: AccountDetails
     
     @Binding public var aiChatSection: String
     @Binding public var generatedTopics: Array<String>
     @Binding public var error: aiChatError
-    @Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
-    @Binding public var messages: Array<MessageDetails>
+    //@Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
+    //@Binding public var messages: Array<MessageDetails>
     @Binding public var topicPicked: String
     
     @State private var loadingTopics: Bool = false
@@ -103,7 +105,7 @@ private struct mainView: View {
                         .foregroundStyle(.white)
                         .font(.system(size: prop.isLargerScreen ? 26 : 22, weight: .medium))
                     
-                    if self.tempChatHistory.count == 0 {
+                    if self.messageModel.tempStoredChats.count == 0 {
                         Text("No Chat History")
                             .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity, alignment: .center)
                             .padding(.top)
@@ -115,14 +117,14 @@ private struct mainView: View {
                         ScrollView(.vertical, showsIndicators: false) {
                             VStack {
                                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 15) {
-                                    ForEach(Array(self.tempChatHistory.keys), id: \.self) { key in
+                                    ForEach(Array(self.messageModel.tempStoredChats.keys), id: \.self) { key in
                                         Button(action: {
                                             self.topicPicked = key
                                             
-                                            for (key, value) in self.tempChatHistory[key]! {
+                                            for (key, value) in self.messageModel.tempStoredChats[key]! {
                                                 self.accountInfo.setAIChatID(chatID: key)
                                                 
-                                                self.messages = value
+                                                self.messageModel.messages = value
                                             }
                                             
                                             self.aiChatSection = "chat"
@@ -152,12 +154,12 @@ private struct mainView: View {
                                                                 .multilineTextAlignment(.leading)
                                                                 .cornerRadius(8)
                                                         
-                                                            if self.tempChatHistory[key]!.keys.count != 0 {
+                                                            if self.messageModel.tempStoredChats[key]!.keys.count != 0 {
                                                                 Spacer()
                                                                 
-                                                                ForEach(Array(self.tempChatHistory[key]!.keys), id: \.self) { chatID in
-                                                                    if self.tempChatHistory[key]![chatID]!.count > 0 {
-                                                                        Text("Last Message On: \(self.tempChatHistory[key]![chatID]![self.tempChatHistory[key]![chatID]!.count - 1].dateSent.formatted(date: .numeric, time: .omitted))")
+                                                                ForEach(Array(self.messageModel.tempStoredChats[key]!.keys), id: \.self) { chatID in
+                                                                    if self.messageModel.tempStoredChats[key]![chatID]!.count > 0 {
+                                                                        Text("Last Message On: \(self.messageModel.tempStoredChats[key]![chatID]![self.messageModel.tempStoredChats[key]![chatID]!.count - 1].dateSent.formatted(date: .numeric, time: .omitted))")
                                                                             /*.frame(maxWidth: .infinity, alignment: .leading)
                                                                             .padding([.top, .bottom], 5)
                                                                             .foregroundStyle(.white)
@@ -187,7 +189,7 @@ private struct mainView: View {
                                                             
                                                             HStack {
                                                                 Button(action: {
-                                                                    self.tempChatHistory.removeValue(forKey: key)
+                                                                    self.messageModel.tempStoredChats.removeValue(forKey: key)
                                                                 }) {
                                                                     Image(systemName: "trash")
                                                                         .resizable()
@@ -253,17 +255,18 @@ private struct mainView: View {
 }
 
 struct AIChat: View {
+    @EnvironmentObject private var messageModel: MessagesModel
+    
     var prop: Properties
     @ObservedObject public var accountInfo: AccountDetails
-    @Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
-    @Binding public var messages: Array<MessageDetails>
+    //@Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
+    //@Binding public var messages: Array<MessageDetails>
     
     @State private var aiChatSection: String = "main"
     @State private var error: aiChatError = .None
     
     /* MARK: "States" for loading topics (when "Create Chat" button is tapped). */
     @State private var errorGeneratingTopicsForMajor: Bool = false
-    @State private var loadingTopics: Bool = false
     @State private var generatedTopics: Array<String> = []
     @State private var topicPicked: String = ""
     @State private var messageBoxTapped: Bool = false
@@ -324,10 +327,10 @@ struct AIChat: View {
                     Button(action: {
                         if self.aiChatSection == "chat" {
                             /* MARK: Save the chat history before going back to the "main" section. */
-                            self.tempChatHistory[self.topicPicked] = [self.accountInfo.aiChatID: self.messages]
-                            writeTemporaryChatHistory(chatHistory: self.tempChatHistory)
+                            self.messageModel.tempStoredChats[self.topicPicked] = [self.accountInfo.aiChatID: self.messageModel.messages]
+                            writeTemporaryChatHistory(chatHistory: self.messageModel.tempStoredChats)
                             
-                            self.messages.removeAll()
+                            self.messageModel.messages.removeAll()
                         }
                         
                         self.aiChatSection = "main"
@@ -379,13 +382,12 @@ struct AIChat: View {
                 switch(self.aiChatSection) {
                 case "main":
                     mainView(
+                        messageModel: self.messageModel,
                         prop: self.prop,
                         accountInfo: self.accountInfo,
                         aiChatSection: $aiChatSection,
                         generatedTopics: $generatedTopics,
                         error: $error,
-                        tempChatHistory: $tempChatHistory,
-                        messages: $messages,
                         topicPicked: $topicPicked
                     )
                 case "select_topic":
@@ -398,8 +400,8 @@ struct AIChat: View {
                                         
                                         var topicNumber = 0
                                         
-                                        for (topic, _) in self.tempChatHistory {
-                                            if topic.contains(self.topicPicked) { topicNumber += 1 }
+                                        for (t, _) in self.messageModel.tempStoredChats {
+                                            if t.contains(self.topicPicked) { topicNumber += 1 }
                                         }
                                         
                                         if topicNumber > 0 {
@@ -422,7 +424,7 @@ struct AIChat: View {
                                             //print(UUID(uuidString: resp!["ChatID"]! as! String)!)
                                             self.accountInfo.setAIChatID(chatID: UUID(uuidString: resp!["ChatID"]! as! String)!)
                                             //self.aiChatPopover = true
-                                            self.tempChatHistory[topic] = [UUID(uuidString: resp!["ChatID"]! as! String)!: []]
+                                            self.messageModel.tempStoredChats[self.topicPicked] = [UUID(uuidString: resp!["ChatID"]! as! String)!: []]
                                             
                                             self.aiChatSection = "chat"
                                         }
@@ -466,7 +468,7 @@ struct AIChat: View {
                             ScrollViewReader { proxy in
                                 ScrollView {
                                     LazyVStack {
-                                        ForEach(self.messages, id: \.self) { message in
+                                        ForEach(self.messageModel.messages, id: \.self) { message in
                                             MessageView(message: message, aiIsTyping: $aiIsTyping)
                                                 .id(message)
                                         }
@@ -498,9 +500,9 @@ struct AIChat: View {
                                             }
                                         }
                                     }
-                                    .onChange(of: self.messages) {
+                                    .onChange(of: self.messageModel.messages) {
                                         withAnimation {
-                                            proxy.scrollTo(self.messages.last)
+                                            proxy.scrollTo(self.messageModel.messages.last)
                                         }
                                     }
                                     /*.onChange(of: self.aiIsTyping) {
@@ -510,12 +512,12 @@ struct AIChat: View {
                                     }*/
                                     .onChange(of: self.messageBoxTapped) {
                                         withAnimation {
-                                            proxy.scrollTo(self.messages.last)
+                                            proxy.scrollTo(self.messageModel.messages.last)
                                         }
                                     }
                                     .onAppear {
                                         withAnimation {
-                                            proxy.scrollTo(self.messages.last, anchor: .bottom)
+                                            proxy.scrollTo(self.messageModel.messages.last, anchor: .bottom)
                                         }
                                     }
                                 }
@@ -673,7 +675,7 @@ struct AIChat: View {
                                     Button(action: {
                                         self.aiIsTyping = true
                                         
-                                        self.messages.append(MessageDetails(
+                                        self.messageModel.messages.append(MessageDetails(
                                             MessageID: UUID(),
                                             MessageContent: self.messageInput,
                                             userSent: true,
@@ -693,7 +695,7 @@ struct AIChat: View {
                                                 return
                                             }
                                             
-                                            self.messages.append(MessageDetails(
+                                            self.messageModel.messages.append(MessageDetails(
                                                 MessageID: UUID(),
                                                 MessageContent: resp!["AIResponse"] as! String,
                                                 userSent: false,
@@ -750,13 +752,12 @@ struct AIChat: View {
                     }
                 default:
                     mainView(
+                        messageModel: self.messageModel,
                         prop: self.prop,
                         accountInfo: self.accountInfo,
                         aiChatSection: $aiChatSection,
                         generatedTopics: $generatedTopics,
                         error: $error,
-                        tempChatHistory: $tempChatHistory,
-                        messages: $messages,
                         topicPicked: $topicPicked
                     )
                 }

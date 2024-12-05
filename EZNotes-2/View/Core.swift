@@ -78,9 +78,10 @@ struct CoreApp: View {
     
     @ObservedObject public var accountInfo: AccountDetails
     @ObservedObject public var model: FrameHandler
+    //@ObservedObject public var messageModel: MessagesModel
     
     @Binding public var userHasSignedIn: Bool
-    @Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
+    //@Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
     
     @StateObject var images_to_upload: ImagesUploads = ImagesUploads()
     
@@ -123,7 +124,7 @@ struct CoreApp: View {
     
     @State private var errorType: String = ""
     
-    @Binding public var messages: Array<MessageDetails>
+    //@Binding public var messages: Array<MessageDetails>
     
     var body: some View {
         ZStack {
@@ -159,12 +160,10 @@ struct CoreApp: View {
                 HomeView(
                     model: self.model,
                     images_to_upload: self.images_to_upload,
-                    messages: $messages,
                     section: $section,
                     prop: prop,
                     accountInfo: accountInfo,
-                    userHasSignedIn: $userHasSignedIn,
-                    tempChatHistory: $tempChatHistory
+                    userHasSignedIn: $userHasSignedIn
                 )
             } else if self.section == "chat" {
                 ChatView(

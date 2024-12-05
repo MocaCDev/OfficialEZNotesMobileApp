@@ -40,15 +40,13 @@ private func writeJSON<T: Encodable>(data: T, filename: String) throws -> Bool {
 
 /* MARK: Function used in functions obtaining JSON objects from cache. Exists to mitigate repetitive code (also to mitigate the length of the file).
  * */
-private func obtainJSON<T: Decodable>(type: T.Type, filename: String) throws -> T {
+private func obtainJSON<T: Decodable>(type: T.Type, filename: String) throws -> T? {
     do {
         let fileURL = try FileManager.default
             .url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
             .appendingPathComponent(filename)
         
-        if !FileManager.default.fileExists(atPath: fileURL.path()) {
-            return [:] as! T
-        }
+        if !FileManager.default.fileExists(atPath: fileURL.path()) { return nil }
         
         let fileData = try Data(contentsOf: fileURL)
         let data = try JSONDecoder().decode(T.self, from: fileData)
@@ -186,6 +184,13 @@ func writeFontConfiguration(fontConfiguration: [String: [String: String]]) -> Vo
     }
 }
 
+func writeUserCreatedCategoryNames(userCreatedCategoryNames: Array<String>) -> Void {
+    guard let _ = try? writeJSON(data: userCreatedCategoryNames, filename: "user_created_categories.json") else {
+        print("[writeUserCreatedCategoryNames] -> Failed to write \(userCreatedCategoryNames) to cache")
+        return
+    }
+}
+
 public func getSettings() -> [String: Bool] {
     if let result = try? obtainJSON(type: [String: Bool].self, filename: "settings.json") { return result }
     else {
@@ -196,12 +201,13 @@ public func getSettings() -> [String: Bool] {
 }
 
 public func getCategoryData() -> [String: Array<String>] {
-    if let result = try? obtainJSON(type: [String: Array<String>].self, filename: "categories_data.json") { return result }
-    else {
+    guard let result = try? obtainJSON(type: [String: Array<String>].self, filename: "categories_data.json") else  {
         print("[getCategoryData] -> Failed to obtain category data from cache")
         
         return [:]
     }
+    
+    return result
 }
 
 public func getCategoryCreationDates() -> [String: Date] {
@@ -289,6 +295,15 @@ func getFontConfiguration() -> [String: [String: String]]? {
     guard let result = try? obtainJSON(type: [String: [String: String]].self, filename: "font_configuration.json") else {
         print("[getFontConfiguration] -> Failed to get font configuration from cache")
         return nil
+    }
+    
+    return result
+}
+
+func getUserCreatedCategoryNames() -> Array<String> {
+    guard let result = try? obtainJSON(type: Array<String>.self, filename: "user_created_categories.json") else {
+        print("[getUserCreatedCategoryNames] -> Failed to get user created categories from cache")
+        return []
     }
     
     return result
