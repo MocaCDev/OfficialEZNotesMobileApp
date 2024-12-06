@@ -33,6 +33,99 @@ enum HomeError {
     case CategoryExists
 }
 
+/* MARK: The below view will be used to display "Categories(<number_of_categories>)" or "Results:". */
+private struct SearchResult: View {
+    @EnvironmentObject private var settings: SettingsConfigManager
+    @EnvironmentObject private var categoryData: CategoryData
+    
+    var prop: Properties
+    
+    @Binding public var lookedUpCategoriesAndSets: [String: Array<String>]
+    @Binding public var show_categories_title: Bool
+    @Binding public var topNavOpacity: Double
+    @Binding public var scrollOffset: CGFloat
+    public var geometry: GeometryProxy
+    
+    private func checkIfOutOfFrame(innerGeometry: GeometryProxy, outerGeometry: GeometryProxy) {
+        let textFrame = innerGeometry.frame(in: .global)
+        let scrollViewFrame = outerGeometry.frame(in: .global)
+        
+        let plusAmount: CGFloat = self.settings.displayUserCreatedCategoriesSeparatly ? -20 : 130
+        
+        // Check if the text frame is out of the bounds of the ScrollView
+        if textFrame.maxY < scrollViewFrame.minY + plusAmount || textFrame.minY > scrollViewFrame.maxY {
+            self.show_categories_title = true
+            self.topNavOpacity += 0.2
+        } else {
+            self.show_categories_title = false
+            self.topNavOpacity = 0
+        }
+    }
+    
+    private func calculateNavOpacity(scrollOffset: CGFloat) -> Double {
+        let navigationBarHeight: CGFloat = 200
+        let maxOffset: CGFloat = -navigationBarHeight
+        let minOffset: CGFloat = 0 // When content is at the top
+        
+        guard scrollOffset < maxOffset else {
+            return self.topNavOpacity
+        }
+        
+        let normalizedOffset = min(max(scrollOffset, minOffset), maxOffset)
+        let opacity = (maxOffset - normalizedOffset) / (maxOffset - minOffset)
+        return max(0.0, min(Double(opacity), 1.0))
+    }
+    
+    private func updateScrollOffset(innerGeometry: GeometryProxy) {
+        let newOffset = innerGeometry.frame(in: .global).minY
+        //let newBackgroundOpacity = calculateBackgroundOpacity(scrollOffset: newOffset)
+        let newNavOpacity = calculateNavOpacity(scrollOffset: newOffset)
+        
+        if newOffset < scrollOffset {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                self.topNavOpacity = newNavOpacity
+            }
+        }
+        
+        scrollOffset = newOffset
+    }
+    
+    var body: some View {
+        VStack {
+            GeometryReader { innerGeometry in
+                HStack {
+                    Text(self.lookedUpCategoriesAndSets.count == 0
+                         ? "Categories(\(self.categoryData.categoriesAndSets.count))"
+                         : "Results: \(self.lookedUpCategoriesAndSets.count)")
+                    .foregroundStyle(.white)
+                    .font(.system(size: 30))
+                    .fontWeight(.semibold)
+                    .padding([.leading], 15)
+                    .onChange(of: innerGeometry.frame(in: .global)) {
+                        checkIfOutOfFrame(innerGeometry: innerGeometry, outerGeometry: geometry)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: 50)
+        }
+        .frame(maxWidth: .infinity, maxHeight: 50)
+        .padding([.top], self.settings.displayUserCreatedCategoriesSeparatly ? 0 : 130)
+        .padding([.bottom], 10)
+        .background(
+            GeometryReader { innerGeometry in
+                Color.clear
+                    .onAppear {
+                        updateScrollOffset(innerGeometry: innerGeometry)
+                    }
+                    .onChange(of: innerGeometry.frame(in: .global).minY) {
+                        updateScrollOffset(innerGeometry: innerGeometry)
+                    }
+            }
+                .frame(height: 0)
+        )
+    }
+}
+
 struct HomeView: View {
     @EnvironmentObject private var categoryData: CategoryData
     @EnvironmentObject private var settings: SettingsConfigManager
@@ -144,8 +237,10 @@ struct HomeView: View {
         let textFrame = innerGeometry.frame(in: .global)
         let scrollViewFrame = outerGeometry.frame(in: .global)
         
+        let plusAmount: CGFloat = self.settings.displayUserCreatedCategoriesSeparatly ? -20 : 130
+        
         // Check if the text frame is out of the bounds of the ScrollView
-        if textFrame.maxY < scrollViewFrame.minY + 130 || textFrame.minY > scrollViewFrame.maxY {
+        if textFrame.maxY < scrollViewFrame.minY + plusAmount || textFrame.minY > scrollViewFrame.maxY {
             self.show_categories_title = true
             self.topNavOpacity += 0.2
         } else {
@@ -200,6 +295,10 @@ struct HomeView: View {
     /* MARK: Not directly used in this view, rather subviews that branch off from this view. */
     /* MARK: String will be the category name, value will be the `TopBanner` status of the category. Each cateegory can have a different `TopBanner` status. */
     @State private var topBanner: [String: TopBanner] = [:]
+    
+    /* MARK: States for if `settings.displayUserCreatedCategoriesSeparatly` is true. */
+    @State private var allUserCreatedCategories: [String: Array<String>] = [:]
+    @State private var selectedView: String = "generated" /* MARK: Two values: "Generated" - shows all categories generated by the AI; "User Created" - shows all categories created by the user. Only used if `settings.displayUserCreatedCategoriesSeparatly` is true. */
     
     var body: some View {
         if !self.showAccount {
@@ -501,275 +600,756 @@ struct HomeView: View {
                                         .padding([.top], 50)
                                     } else {
                                         ZStack {
-                                            GeometryReader { geometry in
-                                                ScrollView(showsIndicators: false) {
-                                                    VStack {
-                                                        GeometryReader { innerGeometry in
+                                            VStack {
+                                                if self.settings.displayUserCreatedCategoriesSeparatly {
+                                                    HStack {
+                                                        ScrollView(.horizontal, showsIndicators: false) {
                                                             HStack {
-                                                                Text(self.lookedUpCategoriesAndSets.count == 0
-                                                                     ? "Categories(\(self.categoryData.categoriesAndSets.count))"
-                                                                     : "Results: \(self.lookedUpCategoriesAndSets.count)")
-                                                                .foregroundStyle(.white)
-                                                                .font(.system(size: 30))
-                                                                .fontWeight(.semibold)
-                                                                .padding([.leading], 15)
-                                                                .onChange(of: innerGeometry.frame(in: .global)) {
-                                                                    checkIfOutOfFrame(innerGeometry: innerGeometry, outerGeometry: geometry)
-                                                                }
-                                                            }
-                                                        }
-                                                        .frame(maxWidth: .infinity, maxHeight: 50)
-                                                    }
-                                                    .frame(maxWidth: .infinity, maxHeight: 50)
-                                                    .padding([.top], 130)
-                                                    .padding([.bottom], 10)
-                                                    .background(
-                                                        GeometryReader { innerGeometry in
-                                                            Color.clear
-                                                                .onAppear {
-                                                                    updateScrollOffset(innerGeometry: innerGeometry)
-                                                                }
-                                                                .onChange(of: innerGeometry.frame(in: .global).minY) {
-                                                                    updateScrollOffset(innerGeometry: innerGeometry)
-                                                                }
-                                                        }
-                                                            .frame(height: 0)
-                                                    )
-                                                    
-                                                    //LazyVGrid(columns: columns, spacing: 10) {
-                                                    VStack {
-                                                        ForEach(Array(self.lookedUpCategoriesAndSets.count == 0
-                                                                      ? self.categoryData.categoriesAndSets.keys
-                                                                      : self.lookedUpCategoriesAndSets.keys), id: \.self) { key in
-                                                            HStack {
-                                                                Button(action: {
-                                                                    self.launchCategory = true
-                                                                    self.categoryLaunched = key
-                                                                    self.categoryDescription = self.categoryData.categoryDescriptions[key]
-                                                                    self.categoryTitleColor = self.categoryData.categoryCustomTextColors[key]
-                                                                    self.categoryBackgroundColor = self.categoryData.categoryCustomColors[key]
-                                                                    
-                                                                    if self.categoryData.categoryImages.keys.contains(key) {
-                                                                        self.categoryBackground = Image(uiImage: self.categoryData.categoryImages[key]!)
-                                                                    } else {
-                                                                        self.categoryBackground = Image("UCTHB")
-                                                                    }
-                                                                }) {
+                                                                Button(action: { self.selectedView = "generated" }) {
                                                                     HStack {
-                                                                        HStack {
-                                                                            ZStack {
-                                                                                if self.categoryData.categoryImages.keys.contains(key) && !self.categoryData.userCreatedCategoryNames.contains(key) {
-                                                                                    Image(uiImage: self.categoryData.categoryImages[key]!)
-                                                                                        .resizable()
-                                                                                        //.frame(minWidth: 50, maxWidth: 120)//.frame(width: prop.isLargerScreen ? 80 : 70, height: prop.isLargerScreen ? 80 : 70)
-                                                                                        .scaledToFit()
-                                                                                        .zIndex(1)
-                                                                                        .clipShape(RoundedRectangle(cornerRadius: 10))//.cornerRadius(10)
-                                                                                } else {
-                                                                                    if self.categoryData.userCreatedCategoryNames.contains(key) {
-                                                                                        Image("UserCreated")
-                                                                                            .resizable()
-                                                                                            .frame(width: 60)//.frame(width: prop.isLargerScreen ? 80 : 70, height: prop.isLargerScreen ? 80 : 70)
-                                                                                            .scaledToFit()
-                                                                                            .zIndex(1)
-                                                                                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                                                                                    } else {
-                                                                                        Image("DefaultCategoryImage")
-                                                                                            .resizable()
-                                                                                            .frame(width: 60, height: 60)
-                                                                                            .zIndex(1)
-                                                                                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                            .frame(alignment: .leading)
-                                                                            .shadow(color: .black, radius: 2.5)
-                                                                            
-                                                                            VStack {
-                                                                                Spacer()
-                                                                                
-                                                                                Text(key)
-                                                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                                                    .truncationMode(.tail)
-                                                                                    .multilineTextAlignment(.leading)
-                                                                                    .foregroundStyle(
-                                                                                        self.categoryData.categoryCustomTextColors.keys.contains(key)
-                                                                                        ? self.categoryData.categoryCustomTextColors[key]!
-                                                                                        : Color.white
-                                                                                    )
-                                                                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 20 : 16))
-                                                                                
-                                                                                Spacer()
-                                                                                
-                                                                                Text("Created \(self.categoryData.categoryCreationDates[key]!.formatted(date: .numeric, time: .omitted))")
-                                                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                                                    .font(Font.custom("Poppins-ExtraLight", size: 12))
-                                                                                    .foregroundStyle(
-                                                                                        self.categoryData.categoryCustomTextColors.keys.contains(key)
-                                                                                        ? self.categoryData.categoryCustomTextColors[key]!
-                                                                                        : Color.white
-                                                                                    )
-                                                                                
-                                                                                Spacer()
-                                                                            }
-                                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                                            .padding(.leading, 5)
-                                                                        }
-                                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                                        
-                                                                        VStack {
-                                                                            Menu {
-                                                                                Button(action: {
-                                                                                    if self.categoryData.categoryDescriptions.keys.contains(key) {
-                                                                                        self.newCategoryDescription = self.categoryData.categoryDescriptions[key]!
-                                                                                    } else { self.newCategoryDescription = "" }
-                                                                                    
-                                                                                    print(key, self.categoryData.categoryCustomColors.keys.contains(key))
-                                                                                    
-                                                                                    if self.categoryData.categoryCustomColors.keys.contains(key) {
-                                                                                        self.newCategoryDisplayColor = self.categoryData.categoryCustomColors[key]!
-                                                                                    } else { self.newCategoryDisplayColor = Color.EZNotesLightBlack }
-                                                                                    
-                                                                                    if self.categoryData.categoryCustomTextColors.keys.contains(key) {
-                                                                                        self.newCategoryTextColor = self.categoryData.categoryCustomTextColors[key]!
-                                                                                    } else { self.newCategoryTextColor = .white }
-                                                                                    
-                                                                                    if self.categoryData.categoryImages.keys.contains(key) {
-                                                                                        self.categoryBeingEditedImage = Image(uiImage: self.categoryData.categoryImages[key]!)
-                                                                                    } else {
-                                                                                        if self.categoryData.userCreatedCategoryNames.contains(key) {
-                                                                                            self.categoryBeingEditedImage = Image("UserCreated")
-                                                                                        } else {
-                                                                                            self.categoryBeingEditedImage = Image("UCTHB")
-                                                                                        }
-                                                                                    }
-                                                                                    
-                                                                                    self.categoryBeingEdited = key
-                                                                                    self.editCategoryDetails = true
-                                                                                }) {
-                                                                                    Image(systemName: "pencil")
-                                                                                        .resizable()
-                                                                                        .frame(width: 14.5, height: 14.5)
-                                                                                        .foregroundStyle(Color.EZNotesBlue)
-                                                                                        .padding([.trailing], 10)
-                                                                                    
-                                                                                    Text("Edit").foregroundStyle(.white)
-                                                                                }
-                                                                                
-                                                                                Button(action: {
-                                                                                    self.categoryToDelete = key
-                                                                                    self.categoryAlert = true
-                                                                                    self.alertType = .DeleteCategoryAlert
-                                                                                }) {
-                                                                                    Image(systemName: "trash")
-                                                                                        .resizable()
-                                                                                        .frame(width: 14.5, height: 14.5)
-                                                                                        .foregroundStyle(.red)
-                                                                                        .padding([.trailing, .top, .bottom], 10)
-                                                                                    Text("Delete").foregroundStyle(.white)
-                                                                                }
-                                                                                
-                                                                                Button(action: { print("Share") }) {
-                                                                                    Image(systemName: "square.and.arrow.up")
-                                                                                        .resizable()
-                                                                                        .frame(width: 14.5, height: 19.5)
-                                                                                        .foregroundStyle(Color.EZNotesBlue)
-                                                                                        .padding([.trailing, .bottom], 10)
-                                                                                        .padding([.top], 5)
-                                                                                    Text("Share").foregroundStyle(.white)
-                                                                                }
-                                                                            } label: {
-                                                                                /*Image(systemName: "ellipsis")
-                                                                                 .resizable()
-                                                                                 .frame(width: 20, height: 80)
-                                                                                 .rotationEffect(90)*/
-                                                                                Label("", systemImage: "ellipsis")
-                                                                                    .font(.title)
-                                                                                    .foregroundStyle(
-                                                                                        self.categoryData.categoryCustomTextColors.keys.contains(key)
-                                                                                        ? self.categoryData.categoryCustomTextColors[key]!
-                                                                                        : Color.white
-                                                                                    )
-                                                                            }
-                                                                        }
-                                                                        .frame(maxWidth: 80, alignment: .trailing)
-                                                                        
-                                                                        Spacer()
+                                                                        Text("Generated")
+                                                                            .frame(alignment: .center)
+                                                                            .padding([.top, .bottom], 4)
+                                                                            .padding([.leading, .trailing], 8.5)
+                                                                            .background(
+                                                                                RoundedRectangle(cornerRadius: 15)
+                                                                                    .fill(self.selectedView == "generated" ? Color.EZNotesBlue : .clear)
+                                                                            )
+                                                                            .foregroundStyle(self.selectedView == "generated" ? .black : .secondary)
+                                                                            .font(Font.custom("Poppins-SemiBold", size: 12))
                                                                     }
-                                                                    .frame(maxWidth: prop.size.width - 20, maxHeight: 100)
-                                                                    .padding(12.5)
-                                                                    .alert("Are you sure?", isPresented: $categoryAlert) {
-                                                                        Button(action: {
-                                                                            if self.categoryData.categoriesAndSets.count == 1 {
-                                                                                self.categoryData.categoriesAndSets.removeAll()
-                                                                                self.categoryData.setAndNotes.removeAll()
-                                                                                self.categoryData.categoryCustomTextColors.removeAll()
-                                                                                self.categoryData.categoryCustomColors.removeAll()
-                                                                                self.categoryData.categoryDescriptions.removeAll()
-                                                                            } else {
-                                                                                self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
-                                                                                self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
-                                                                                
-                                                                                if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryToDelete) {
-                                                                                    self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryToDelete)
-                                                                                }
-                                                                                
-                                                                                if self.categoryData.categoryCustomColors.keys.contains(self.categoryToDelete) {
-                                                                                    self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryToDelete)
-                                                                                }
-                                                                                
-                                                                                if self.categoryData.categoryDescriptions.keys.contains(self.categoryToDelete) {
-                                                                                    self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryToDelete)
-                                                                                }
-                                                                                
-                                                                                /* MARK: Ensure the cache is up to date. */
-                                                                                writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
-                                                                                writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
-                                                                                writeCategoryTextColors(categoryTextColors: self.categoryData.categoryCustomTextColors)
-                                                                                writeCategoryCustomColors(categoryCustomColors: self.categoryData.categoryCustomColors)
-                                                                                writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
-                                                                            }
-                                                                            
-                                                                            writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
-                                                                            writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
-                                                                            
-                                                                            resetAlert()
-                                                                            
-                                                                            /* TODO: Add support for actually storing category information in the database. That will, thereby, prompt us to need to send a request to the server to delete the given category from the database. */
-                                                                        }) {
-                                                                            Text("Yes")
-                                                                        }
-                                                                        
-                                                                        Button(action: { resetAlert() }) { Text("No") }
-                                                                    } message: {
-                                                                        Text(self.alertType == .DeleteCategoryAlert
-                                                                             ? "Once deleted, the category **\"\(self.categoryToDelete)\"** will be removed from cloud or local storage and cannot be recovered."
-                                                                             : "")
+                                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                                }
+                                                                .buttonStyle(NoLongPressButtonStyle())
+                                                                
+                                                                Button(action: { self.selectedView = "user_created" }) {
+                                                                    HStack {
+                                                                        Text("User Created")
+                                                                            .frame(alignment: .center)
+                                                                            .padding([.top, .bottom], 4)
+                                                                            .padding([.leading, .trailing], 8.5)
+                                                                            .background(
+                                                                                RoundedRectangle(cornerRadius: 15)
+                                                                                    .fill(self.selectedView == "user_created" ? Color.EZNotesBlue : .clear)
+                                                                            )
+                                                                            .foregroundStyle(self.selectedView == "user_created" ? .black : .secondary)
+                                                                            .font(Font.custom("Poppins-SemiBold", size: 12))
                                                                     }
+                                                                    .frame(maxWidth: .infinity, alignment: .leading)
                                                                 }
                                                                 .buttonStyle(NoLongPressButtonStyle())
                                                             }
-                                                            .frame(maxWidth: prop.size.width - 20)
-                                                            //.background(RoundedRectangle(cornerRadius: 15).fill(Color.EZNotesBlack.opacity(0.65)).shadow(color: Color.EZNotesBlack, radius: 4))
-                                                            .background(
-                                                                RoundedRectangle(cornerRadius: 15)
-                                                                    .fill(self.categoryData.categoryCustomColors.keys.contains(key)
-                                                                          ? self.categoryData.categoryCustomColors[key]!
-                                                                          : Color.EZNotesLightBlack)//(Color.EZNotesBlack)
-                                                            )
-                                                            .padding([.bottom], 5)
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .padding(.leading, 10)
                                                         }
-                                                                      .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                    }
+                                                    .frame(maxWidth: .infinity, minHeight: 15)
+                                                    .padding([.top], 130)
+                                                    
+                                                    VStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(MeshGradient(width: 3, height: 3, points: [
+                                                        .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                        .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                        .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                    ], colors: [
+                                                        .indigo, .indigo, Color.EZNotesBlue,
+                                                        Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                        .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                    ]))
+                                                    
+                                                    GeometryReader { geometry in
+                                                        ScrollView(.vertical, showsIndicators: false) {
+                                                            /* TODO: Make `SearchResult` compliant with the views `Generated` and `User Created`. Since the categories have been separated, they won't all be shown in one view. */
+                                                            SearchResult(
+                                                                prop: self.prop,
+                                                                lookedUpCategoriesAndSets: $lookedUpCategoriesAndSets,
+                                                                show_categories_title: $show_categories_title,
+                                                                topNavOpacity: $topNavOpacity,
+                                                                scrollOffset: $scrollOffset,
+                                                                geometry: geometry
+                                                            )
+                                                            
+                                                            VStack {
+                                                                switch(self.selectedView) {
+                                                                case "generated":
+                                                                    ForEach(Array(self.lookedUpCategoriesAndSets.count == 0
+                                                                                  ? self.categoryData.categoriesAndSets.keys
+                                                                                  : self.lookedUpCategoriesAndSets.keys), id: \.self) { key in
+                                                                        if !self.categoryData.userCreatedCategoryNames.contains(key) {
+                                                                            HStack {
+                                                                                Button(action: { }) {
+                                                                                    HStack {
+                                                                                        HStack {
+                                                                                            ZStack {
+                                                                                                if self.categoryData.categoryImages.keys.contains(key) && !self.categoryData.userCreatedCategoryNames.contains(key) {
+                                                                                                    Image(uiImage: self.categoryData.categoryImages[key]!)
+                                                                                                        .resizable()
+                                                                                                    //.frame(minWidth: 50, maxWidth: 120)//.frame(width: prop.isLargerScreen ? 80 : 70, height: prop.isLargerScreen ? 80 : 70)
+                                                                                                        .scaledToFit()
+                                                                                                        .zIndex(1)
+                                                                                                        .clipShape(RoundedRectangle(cornerRadius: 10))//.cornerRadius(10)
+                                                                                                } else {
+                                                                                                    if self.categoryData.userCreatedCategoryNames.contains(key) {
+                                                                                                        Image("UserCreated")
+                                                                                                            .resizable()
+                                                                                                            .frame(width: 60)//.frame(width: prop.isLargerScreen ? 80 : 70, height: prop.isLargerScreen ? 80 : 70)
+                                                                                                            .scaledToFit()
+                                                                                                            .zIndex(1)
+                                                                                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                                                                                    } else {
+                                                                                                        Image("DefaultCategoryImage")
+                                                                                                            .resizable()
+                                                                                                            .frame(width: 60, height: 60)
+                                                                                                            .zIndex(1)
+                                                                                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                            .frame(alignment: .leading)
+                                                                                            .shadow(color: .black, radius: 2.5)
+                                                                                            
+                                                                                            VStack {
+                                                                                                Spacer()
+                                                                                                
+                                                                                                Text(key)
+                                                                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                                    .truncationMode(.tail)
+                                                                                                    .multilineTextAlignment(.leading)
+                                                                                                    .foregroundStyle(
+                                                                                                        self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                                        ? self.categoryData.categoryCustomTextColors[key]!
+                                                                                                        : Color.white
+                                                                                                    )
+                                                                                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 20 : 16))
+                                                                                                
+                                                                                                Spacer()
+                                                                                                
+                                                                                                Text("Created \(self.categoryData.categoryCreationDates[key]!.formatted(date: .numeric, time: .omitted))")
+                                                                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                                    .font(Font.custom("Poppins-ExtraLight", size: 12))
+                                                                                                    .foregroundStyle(
+                                                                                                        self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                                        ? self.categoryData.categoryCustomTextColors[key]!
+                                                                                                        : Color.white
+                                                                                                    )
+                                                                                                
+                                                                                                Spacer()
+                                                                                            }
+                                                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                            .padding(.leading, 5)
+                                                                                        }
+                                                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                        
+                                                                                        VStack {
+                                                                                            Menu {
+                                                                                                Button(action: {
+                                                                                                    if self.categoryData.categoryDescriptions.keys.contains(key) {
+                                                                                                        self.newCategoryDescription = self.categoryData.categoryDescriptions[key]!
+                                                                                                    } else { self.newCategoryDescription = "" }
+                                                                                                    
+                                                                                                    print(key, self.categoryData.categoryCustomColors.keys.contains(key))
+                                                                                                    
+                                                                                                    if self.categoryData.categoryCustomColors.keys.contains(key) {
+                                                                                                        self.newCategoryDisplayColor = self.categoryData.categoryCustomColors[key]!
+                                                                                                    } else { self.newCategoryDisplayColor = Color.EZNotesLightBlack }
+                                                                                                    
+                                                                                                    if self.categoryData.categoryCustomTextColors.keys.contains(key) {
+                                                                                                        self.newCategoryTextColor = self.categoryData.categoryCustomTextColors[key]!
+                                                                                                    } else { self.newCategoryTextColor = .white }
+                                                                                                    
+                                                                                                    if self.categoryData.categoryImages.keys.contains(key) {
+                                                                                                        self.categoryBeingEditedImage = Image(uiImage: self.categoryData.categoryImages[key]!)
+                                                                                                    } else {
+                                                                                                        if self.categoryData.userCreatedCategoryNames.contains(key) {
+                                                                                                            self.categoryBeingEditedImage = Image("UserCreated")
+                                                                                                        } else {
+                                                                                                            self.categoryBeingEditedImage = Image("UCTHB")
+                                                                                                        }
+                                                                                                    }
+                                                                                                    
+                                                                                                    self.categoryBeingEdited = key
+                                                                                                    self.editCategoryDetails = true
+                                                                                                }) {
+                                                                                                    Image(systemName: "pencil")
+                                                                                                        .resizable()
+                                                                                                        .frame(width: 14.5, height: 14.5)
+                                                                                                        .foregroundStyle(Color.EZNotesBlue)
+                                                                                                        .padding([.trailing], 10)
+                                                                                                    
+                                                                                                    Text("Edit").foregroundStyle(.white)
+                                                                                                }
+                                                                                                
+                                                                                                Button(action: {
+                                                                                                    self.categoryToDelete = key
+                                                                                                    self.categoryAlert = true
+                                                                                                    self.alertType = .DeleteCategoryAlert
+                                                                                                }) {
+                                                                                                    Image(systemName: "trash")
+                                                                                                        .resizable()
+                                                                                                        .frame(width: 14.5, height: 14.5)
+                                                                                                        .foregroundStyle(.red)
+                                                                                                        .padding([.trailing, .top, .bottom], 10)
+                                                                                                    Text("Delete").foregroundStyle(.white)
+                                                                                                }
+                                                                                                
+                                                                                                Button(action: { print("Share") }) {
+                                                                                                    Image(systemName: "square.and.arrow.up")
+                                                                                                        .resizable()
+                                                                                                        .frame(width: 14.5, height: 19.5)
+                                                                                                        .foregroundStyle(Color.EZNotesBlue)
+                                                                                                        .padding([.trailing, .bottom], 10)
+                                                                                                        .padding([.top], 5)
+                                                                                                    Text("Share").foregroundStyle(.white)
+                                                                                                }
+                                                                                            } label: {
+                                                                                                /*Image(systemName: "ellipsis")
+                                                                                                 .resizable()
+                                                                                                 .frame(width: 20, height: 80)
+                                                                                                 .rotationEffect(90)*/
+                                                                                                Label("", systemImage: "ellipsis")
+                                                                                                    .font(.title)
+                                                                                                    .foregroundStyle(
+                                                                                                        self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                                        ? self.categoryData.categoryCustomTextColors[key]!
+                                                                                                        : Color.white
+                                                                                                    )
+                                                                                            }
+                                                                                        }
+                                                                                        .frame(maxWidth: 80, alignment: .trailing)
+                                                                                        
+                                                                                        Spacer()
+                                                                                    }
+                                                                                    .frame(maxWidth: prop.size.width - 20, maxHeight: 100)
+                                                                                    .padding(12.5)
+                                                                                    .alert("Are you sure?", isPresented: $categoryAlert) {
+                                                                                        Button(action: {
+                                                                                            if self.categoryData.categoriesAndSets.count == 1 {
+                                                                                                self.categoryData.categoriesAndSets.removeAll()
+                                                                                                self.categoryData.setAndNotes.removeAll()
+                                                                                                self.categoryData.categoryCustomTextColors.removeAll()
+                                                                                                self.categoryData.categoryCustomColors.removeAll()
+                                                                                                self.categoryData.categoryDescriptions.removeAll()
+                                                                                            } else {
+                                                                                                self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
+                                                                                                self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
+                                                                                                
+                                                                                                if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryToDelete) {
+                                                                                                    self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryToDelete)
+                                                                                                }
+                                                                                                
+                                                                                                if self.categoryData.categoryCustomColors.keys.contains(self.categoryToDelete) {
+                                                                                                    self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryToDelete)
+                                                                                                }
+                                                                                                
+                                                                                                if self.categoryData.categoryDescriptions.keys.contains(self.categoryToDelete) {
+                                                                                                    self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryToDelete)
+                                                                                                }
+                                                                                                
+                                                                                                /* MARK: Ensure the cache is up to date. */
+                                                                                                writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                                                                                writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                                                                                writeCategoryTextColors(categoryTextColors: self.categoryData.categoryCustomTextColors)
+                                                                                                writeCategoryCustomColors(categoryCustomColors: self.categoryData.categoryCustomColors)
+                                                                                                writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
+                                                                                            }
+                                                                                            
+                                                                                            writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                                                                            writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                                                                            
+                                                                                            resetAlert()
+                                                                                            
+                                                                                            /* TODO: Add support for actually storing category information in the database. That will, thereby, prompt us to need to send a request to the server to delete the given category from the database. */
+                                                                                        }) {
+                                                                                            Text("Yes")
+                                                                                        }
+                                                                                        
+                                                                                        Button(action: { resetAlert() }) { Text("No") }
+                                                                                    } message: {
+                                                                                        Text(self.alertType == .DeleteCategoryAlert
+                                                                                             ? "Once deleted, the category **\"\(self.categoryToDelete)\"** will be removed from cloud or local storage and cannot be recovered."
+                                                                                             : "")
+                                                                                    }
+                                                                                }
+                                                                                .buttonStyle(NoLongPressButtonStyle())
+                                                                            }
+                                                                            .frame(maxWidth: prop.size.width - 20)
+                                                                            //.background(RoundedRectangle(cornerRadius: 15).fill(Color.EZNotesBlack.opacity(0.65)).shadow(color: Color.EZNotesBlack, radius: 4))
+                                                                            .background(
+                                                                                RoundedRectangle(cornerRadius: 15)
+                                                                                    .fill(self.categoryData.categoryCustomColors.keys.contains(key)
+                                                                                          ? self.categoryData.categoryCustomColors[key]!
+                                                                                          : Color.EZNotesLightBlack)//(Color.EZNotesBlack)
+                                                                            )
+                                                                            .padding([.bottom], 5)
+                                                                        }
+                                                                    }
+                                                                case "user_created":
+                                                                    ForEach(Array(self.lookedUpCategoriesAndSets.count == 0
+                                                                                  ? self.allUserCreatedCategories.keys
+                                                                                  : self.lookedUpCategoriesAndSets.keys), id: \.self) { key in
+                                                                        HStack {
+                                                                            Button(action: { }) {
+                                                                                HStack {
+                                                                                    HStack {
+                                                                                        ZStack {
+                                                                                            if self.categoryData.categoryImages.keys.contains(key) && !self.categoryData.userCreatedCategoryNames.contains(key) {
+                                                                                                Image(uiImage: self.categoryData.categoryImages[key]!)
+                                                                                                    .resizable()
+                                                                                                //.frame(minWidth: 50, maxWidth: 120)//.frame(width: prop.isLargerScreen ? 80 : 70, height: prop.isLargerScreen ? 80 : 70)
+                                                                                                    .scaledToFit()
+                                                                                                    .zIndex(1)
+                                                                                                    .clipShape(RoundedRectangle(cornerRadius: 10))//.cornerRadius(10)
+                                                                                            } else {
+                                                                                                if self.categoryData.userCreatedCategoryNames.contains(key) {
+                                                                                                    Image("UserCreated")
+                                                                                                        .resizable()
+                                                                                                        .frame(width: 60)//.frame(width: prop.isLargerScreen ? 80 : 70, height: prop.isLargerScreen ? 80 : 70)
+                                                                                                        .scaledToFit()
+                                                                                                        .zIndex(1)
+                                                                                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                                                                                } else {
+                                                                                                    Image("DefaultCategoryImage")
+                                                                                                        .resizable()
+                                                                                                        .frame(width: 60, height: 60)
+                                                                                                        .zIndex(1)
+                                                                                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                        .frame(alignment: .leading)
+                                                                                        .shadow(color: .black, radius: 2.5)
+                                                                                        
+                                                                                        VStack {
+                                                                                            Spacer()
+                                                                                            
+                                                                                            Text(key)
+                                                                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                                .truncationMode(.tail)
+                                                                                                .multilineTextAlignment(.leading)
+                                                                                                .foregroundStyle(
+                                                                                                    self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                                    ? self.categoryData.categoryCustomTextColors[key]!
+                                                                                                    : Color.white
+                                                                                                )
+                                                                                                .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 20 : 16))
+                                                                                            
+                                                                                            Spacer()
+                                                                                            
+                                                                                            Text("Created \(self.categoryData.categoryCreationDates[key]!.formatted(date: .numeric, time: .omitted))")
+                                                                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                                .font(Font.custom("Poppins-ExtraLight", size: 12))
+                                                                                                .foregroundStyle(
+                                                                                                    self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                                    ? self.categoryData.categoryCustomTextColors[key]!
+                                                                                                    : Color.white
+                                                                                                )
+                                                                                            
+                                                                                            Spacer()
+                                                                                        }
+                                                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                        .padding(.leading, 5)
+                                                                                    }
+                                                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                    
+                                                                                    VStack {
+                                                                                        Menu {
+                                                                                            Button(action: {
+                                                                                                if self.categoryData.categoryDescriptions.keys.contains(key) {
+                                                                                                    self.newCategoryDescription = self.categoryData.categoryDescriptions[key]!
+                                                                                                } else { self.newCategoryDescription = "" }
+                                                                                                
+                                                                                                print(key, self.categoryData.categoryCustomColors.keys.contains(key))
+                                                                                                
+                                                                                                if self.categoryData.categoryCustomColors.keys.contains(key) {
+                                                                                                    self.newCategoryDisplayColor = self.categoryData.categoryCustomColors[key]!
+                                                                                                } else { self.newCategoryDisplayColor = Color.EZNotesLightBlack }
+                                                                                                
+                                                                                                if self.categoryData.categoryCustomTextColors.keys.contains(key) {
+                                                                                                    self.newCategoryTextColor = self.categoryData.categoryCustomTextColors[key]!
+                                                                                                } else { self.newCategoryTextColor = .white }
+                                                                                                
+                                                                                                if self.categoryData.categoryImages.keys.contains(key) {
+                                                                                                    self.categoryBeingEditedImage = Image(uiImage: self.categoryData.categoryImages[key]!)
+                                                                                                } else {
+                                                                                                    if self.categoryData.userCreatedCategoryNames.contains(key) {
+                                                                                                        self.categoryBeingEditedImage = Image("UserCreated")
+                                                                                                    } else {
+                                                                                                        self.categoryBeingEditedImage = Image("UCTHB")
+                                                                                                    }
+                                                                                                }
+                                                                                                
+                                                                                                self.categoryBeingEdited = key
+                                                                                                self.editCategoryDetails = true
+                                                                                            }) {
+                                                                                                Image(systemName: "pencil")
+                                                                                                    .resizable()
+                                                                                                    .frame(width: 14.5, height: 14.5)
+                                                                                                    .foregroundStyle(Color.EZNotesBlue)
+                                                                                                    .padding([.trailing], 10)
+                                                                                                
+                                                                                                Text("Edit").foregroundStyle(.white)
+                                                                                            }
+                                                                                            
+                                                                                            Button(action: {
+                                                                                                self.categoryToDelete = key
+                                                                                                self.categoryAlert = true
+                                                                                                self.alertType = .DeleteCategoryAlert
+                                                                                            }) {
+                                                                                                Image(systemName: "trash")
+                                                                                                    .resizable()
+                                                                                                    .frame(width: 14.5, height: 14.5)
+                                                                                                    .foregroundStyle(.red)
+                                                                                                    .padding([.trailing, .top, .bottom], 10)
+                                                                                                Text("Delete").foregroundStyle(.white)
+                                                                                            }
+                                                                                            
+                                                                                            Button(action: { print("Share") }) {
+                                                                                                Image(systemName: "square.and.arrow.up")
+                                                                                                    .resizable()
+                                                                                                    .frame(width: 14.5, height: 19.5)
+                                                                                                    .foregroundStyle(Color.EZNotesBlue)
+                                                                                                    .padding([.trailing, .bottom], 10)
+                                                                                                    .padding([.top], 5)
+                                                                                                Text("Share").foregroundStyle(.white)
+                                                                                            }
+                                                                                        } label: {
+                                                                                            /*Image(systemName: "ellipsis")
+                                                                                             .resizable()
+                                                                                             .frame(width: 20, height: 80)
+                                                                                             .rotationEffect(90)*/
+                                                                                            Label("", systemImage: "ellipsis")
+                                                                                                .font(.title)
+                                                                                                .foregroundStyle(
+                                                                                                    self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                                    ? self.categoryData.categoryCustomTextColors[key]!
+                                                                                                    : Color.white
+                                                                                                )
+                                                                                        }
+                                                                                    }
+                                                                                    .frame(maxWidth: 80, alignment: .trailing)
+                                                                                    
+                                                                                    Spacer()
+                                                                                }
+                                                                                .frame(maxWidth: prop.size.width - 20, maxHeight: 100)
+                                                                                .padding(12.5)
+                                                                                .alert("Are you sure?", isPresented: $categoryAlert) {
+                                                                                    Button(action: {
+                                                                                        if self.categoryData.categoriesAndSets.count == 1 {
+                                                                                            self.categoryData.categoriesAndSets.removeAll()
+                                                                                            self.categoryData.setAndNotes.removeAll()
+                                                                                            self.categoryData.categoryCustomTextColors.removeAll()
+                                                                                            self.categoryData.categoryCustomColors.removeAll()
+                                                                                            self.categoryData.categoryDescriptions.removeAll()
+                                                                                        } else {
+                                                                                            self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
+                                                                                            self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
+                                                                                            
+                                                                                            if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryToDelete) {
+                                                                                                self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryToDelete)
+                                                                                            }
+                                                                                            
+                                                                                            if self.categoryData.categoryCustomColors.keys.contains(self.categoryToDelete) {
+                                                                                                self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryToDelete)
+                                                                                            }
+                                                                                            
+                                                                                            if self.categoryData.categoryDescriptions.keys.contains(self.categoryToDelete) {
+                                                                                                self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryToDelete)
+                                                                                            }
+                                                                                            
+                                                                                            /* MARK: Ensure the cache is up to date. */
+                                                                                            writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                                                                            writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                                                                            writeCategoryTextColors(categoryTextColors: self.categoryData.categoryCustomTextColors)
+                                                                                            writeCategoryCustomColors(categoryCustomColors: self.categoryData.categoryCustomColors)
+                                                                                            writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
+                                                                                        }
+                                                                                        
+                                                                                        writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                                                                        writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                                                                        
+                                                                                        resetAlert()
+                                                                                        
+                                                                                        /* TODO: Add support for actually storing category information in the database. That will, thereby, prompt us to need to send a request to the server to delete the given category from the database. */
+                                                                                    }) {
+                                                                                        Text("Yes")
+                                                                                    }
+                                                                                    
+                                                                                    Button(action: { resetAlert() }) { Text("No") }
+                                                                                } message: {
+                                                                                    Text(self.alertType == .DeleteCategoryAlert
+                                                                                         ? "Once deleted, the category **\"\(self.categoryToDelete)\"** will be removed from cloud or local storage and cannot be recovered."
+                                                                                         : "")
+                                                                                }
+                                                                            }
+                                                                            .buttonStyle(NoLongPressButtonStyle())
+                                                                        }
+                                                                        .frame(maxWidth: prop.size.width - 20)
+                                                                        //.background(RoundedRectangle(cornerRadius: 15).fill(Color.EZNotesBlack.opacity(0.65)).shadow(color: Color.EZNotesBlack, radius: 4))
+                                                                        .background(
+                                                                            RoundedRectangle(cornerRadius: 15)
+                                                                                .fill(self.categoryData.categoryCustomColors.keys.contains(key)
+                                                                                      ? self.categoryData.categoryCustomColors[key]!
+                                                                                      : Color.EZNotesLightBlack)//(Color.EZNotesBlack)
+                                                                        )
+                                                                        .padding([.bottom], 5)
+                                                                        
+                                                                    }
+                                                                default: VStack { }.onAppear { self.selectedView = "generated" }
+                                                                }
+                                                            }
+                                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                            .padding([.top], 35)
+                                                            .padding([.bottom], 10)
+                                                        }
+                                                    }
+                                                } else {
+                                                    GeometryReader { geometry in
+                                                        ScrollView(showsIndicators: false) {
+                                                            SearchResult(
+                                                                prop: self.prop,
+                                                                lookedUpCategoriesAndSets: $lookedUpCategoriesAndSets,
+                                                                show_categories_title: $show_categories_title,
+                                                                topNavOpacity: $topNavOpacity,
+                                                                scrollOffset: $scrollOffset,
+                                                                geometry: geometry
+                                                            )
+                                                            
+                                                            //LazyVGrid(columns: columns, spacing: 10) {
+                                                            VStack {
+                                                                ForEach(Array(self.lookedUpCategoriesAndSets.count == 0
+                                                                              ? self.categoryData.categoriesAndSets.keys
+                                                                              : self.lookedUpCategoriesAndSets.keys), id: \.self) { key in
+                                                                    HStack {
+                                                                        Button(action: {
+                                                                            self.launchCategory = true
+                                                                            self.categoryLaunched = key
+                                                                            self.categoryDescription = self.categoryData.categoryDescriptions[key]
+                                                                            self.categoryTitleColor = self.categoryData.categoryCustomTextColors[key]
+                                                                            self.categoryBackgroundColor = self.categoryData.categoryCustomColors[key]
+                                                                            
+                                                                            if self.categoryData.categoryImages.keys.contains(key) {
+                                                                                self.categoryBackground = Image(uiImage: self.categoryData.categoryImages[key]!)
+                                                                            } else {
+                                                                                self.categoryBackground = Image("UCTHB")
+                                                                            }
+                                                                        }) {
+                                                                            HStack {
+                                                                                HStack {
+                                                                                    ZStack {
+                                                                                        if self.categoryData.categoryImages.keys.contains(key) && !self.categoryData.userCreatedCategoryNames.contains(key) {
+                                                                                            Image(uiImage: self.categoryData.categoryImages[key]!)
+                                                                                                .resizable()
+                                                                                            //.frame(minWidth: 50, maxWidth: 120)//.frame(width: prop.isLargerScreen ? 80 : 70, height: prop.isLargerScreen ? 80 : 70)
+                                                                                                .scaledToFit()
+                                                                                                .zIndex(1)
+                                                                                                .clipShape(RoundedRectangle(cornerRadius: 10))//.cornerRadius(10)
+                                                                                        } else {
+                                                                                            if self.categoryData.userCreatedCategoryNames.contains(key) {
+                                                                                                Image("UserCreated")
+                                                                                                    .resizable()
+                                                                                                    .frame(width: 60)//.frame(width: prop.isLargerScreen ? 80 : 70, height: prop.isLargerScreen ? 80 : 70)
+                                                                                                    .scaledToFit()
+                                                                                                    .zIndex(1)
+                                                                                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                                                                            } else {
+                                                                                                Image("DefaultCategoryImage")
+                                                                                                    .resizable()
+                                                                                                    .frame(width: 60, height: 60)
+                                                                                                    .zIndex(1)
+                                                                                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                    .frame(alignment: .leading)
+                                                                                    .shadow(color: .black, radius: 2.5)
+                                                                                    
+                                                                                    VStack {
+                                                                                        Spacer()
+                                                                                        
+                                                                                        Text(key)
+                                                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                            .truncationMode(.tail)
+                                                                                            .multilineTextAlignment(.leading)
+                                                                                            .foregroundStyle(
+                                                                                                self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                                ? self.categoryData.categoryCustomTextColors[key]!
+                                                                                                : Color.white
+                                                                                            )
+                                                                                            .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 20 : 16))
+                                                                                        
+                                                                                        Spacer()
+                                                                                        
+                                                                                        Text("Created \(self.categoryData.categoryCreationDates[key]!.formatted(date: .numeric, time: .omitted))")
+                                                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                            .font(Font.custom("Poppins-ExtraLight", size: 12))
+                                                                                            .foregroundStyle(
+                                                                                                self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                                ? self.categoryData.categoryCustomTextColors[key]!
+                                                                                                : Color.white
+                                                                                            )
+                                                                                        
+                                                                                        Spacer()
+                                                                                    }
+                                                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                    .padding(.leading, 5)
+                                                                                }
+                                                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                                                
+                                                                                VStack {
+                                                                                    Menu {
+                                                                                        Button(action: {
+                                                                                            if self.categoryData.categoryDescriptions.keys.contains(key) {
+                                                                                                self.newCategoryDescription = self.categoryData.categoryDescriptions[key]!
+                                                                                            } else { self.newCategoryDescription = "" }
+                                                                                            
+                                                                                            print(key, self.categoryData.categoryCustomColors.keys.contains(key))
+                                                                                            
+                                                                                            if self.categoryData.categoryCustomColors.keys.contains(key) {
+                                                                                                self.newCategoryDisplayColor = self.categoryData.categoryCustomColors[key]!
+                                                                                            } else { self.newCategoryDisplayColor = Color.EZNotesLightBlack }
+                                                                                            
+                                                                                            if self.categoryData.categoryCustomTextColors.keys.contains(key) {
+                                                                                                self.newCategoryTextColor = self.categoryData.categoryCustomTextColors[key]!
+                                                                                            } else { self.newCategoryTextColor = .white }
+                                                                                            
+                                                                                            if self.categoryData.categoryImages.keys.contains(key) {
+                                                                                                self.categoryBeingEditedImage = Image(uiImage: self.categoryData.categoryImages[key]!)
+                                                                                            } else {
+                                                                                                if self.categoryData.userCreatedCategoryNames.contains(key) {
+                                                                                                    self.categoryBeingEditedImage = Image("UserCreated")
+                                                                                                } else {
+                                                                                                    self.categoryBeingEditedImage = Image("UCTHB")
+                                                                                                }
+                                                                                            }
+                                                                                            
+                                                                                            self.categoryBeingEdited = key
+                                                                                            self.editCategoryDetails = true
+                                                                                        }) {
+                                                                                            Image(systemName: "pencil")
+                                                                                                .resizable()
+                                                                                                .frame(width: 14.5, height: 14.5)
+                                                                                                .foregroundStyle(Color.EZNotesBlue)
+                                                                                                .padding([.trailing], 10)
+                                                                                            
+                                                                                            Text("Edit").foregroundStyle(.white)
+                                                                                        }
+                                                                                        
+                                                                                        Button(action: {
+                                                                                            self.categoryToDelete = key
+                                                                                            self.categoryAlert = true
+                                                                                            self.alertType = .DeleteCategoryAlert
+                                                                                        }) {
+                                                                                            Image(systemName: "trash")
+                                                                                                .resizable()
+                                                                                                .frame(width: 14.5, height: 14.5)
+                                                                                                .foregroundStyle(.red)
+                                                                                                .padding([.trailing, .top, .bottom], 10)
+                                                                                            Text("Delete").foregroundStyle(.white)
+                                                                                        }
+                                                                                        
+                                                                                        Button(action: { print("Share") }) {
+                                                                                            Image(systemName: "square.and.arrow.up")
+                                                                                                .resizable()
+                                                                                                .frame(width: 14.5, height: 19.5)
+                                                                                                .foregroundStyle(Color.EZNotesBlue)
+                                                                                                .padding([.trailing, .bottom], 10)
+                                                                                                .padding([.top], 5)
+                                                                                            Text("Share").foregroundStyle(.white)
+                                                                                        }
+                                                                                    } label: {
+                                                                                        /*Image(systemName: "ellipsis")
+                                                                                         .resizable()
+                                                                                         .frame(width: 20, height: 80)
+                                                                                         .rotationEffect(90)*/
+                                                                                        Label("", systemImage: "ellipsis")
+                                                                                            .font(.title)
+                                                                                            .foregroundStyle(
+                                                                                                self.categoryData.categoryCustomTextColors.keys.contains(key)
+                                                                                                ? self.categoryData.categoryCustomTextColors[key]!
+                                                                                                : Color.white
+                                                                                            )
+                                                                                    }
+                                                                                }
+                                                                                .frame(maxWidth: 80, alignment: .trailing)
+                                                                                
+                                                                                Spacer()
+                                                                            }
+                                                                            .frame(maxWidth: prop.size.width - 20, maxHeight: 100)
+                                                                            .padding(12.5)
+                                                                            .alert("Are you sure?", isPresented: $categoryAlert) {
+                                                                                Button(action: {
+                                                                                    if self.categoryData.categoriesAndSets.count == 1 {
+                                                                                        self.categoryData.categoriesAndSets.removeAll()
+                                                                                        self.categoryData.setAndNotes.removeAll()
+                                                                                        self.categoryData.categoryCustomTextColors.removeAll()
+                                                                                        self.categoryData.categoryCustomColors.removeAll()
+                                                                                        self.categoryData.categoryDescriptions.removeAll()
+                                                                                    } else {
+                                                                                        self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
+                                                                                        self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
+                                                                                        
+                                                                                        if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryToDelete) {
+                                                                                            self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryToDelete)
+                                                                                        }
+                                                                                        
+                                                                                        if self.categoryData.categoryCustomColors.keys.contains(self.categoryToDelete) {
+                                                                                            self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryToDelete)
+                                                                                        }
+                                                                                        
+                                                                                        if self.categoryData.categoryDescriptions.keys.contains(self.categoryToDelete) {
+                                                                                            self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryToDelete)
+                                                                                        }
+                                                                                        
+                                                                                        /* MARK: Ensure the cache is up to date. */
+                                                                                        writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                                                                        writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                                                                        writeCategoryTextColors(categoryTextColors: self.categoryData.categoryCustomTextColors)
+                                                                                        writeCategoryCustomColors(categoryCustomColors: self.categoryData.categoryCustomColors)
+                                                                                        writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
+                                                                                    }
+                                                                                    
+                                                                                    writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                                                                    writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                                                                    
+                                                                                    resetAlert()
+                                                                                    
+                                                                                    /* TODO: Add support for actually storing category information in the database. That will, thereby, prompt us to need to send a request to the server to delete the given category from the database. */
+                                                                                }) {
+                                                                                    Text("Yes")
+                                                                                }
+                                                                                
+                                                                                Button(action: { resetAlert() }) { Text("No") }
+                                                                            } message: {
+                                                                                Text(self.alertType == .DeleteCategoryAlert
+                                                                                     ? "Once deleted, the category **\"\(self.categoryToDelete)\"** will be removed from cloud or local storage and cannot be recovered."
+                                                                                     : "")
+                                                                            }
+                                                                        }
+                                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                                    }
+                                                                    .frame(maxWidth: prop.size.width - 20)
+                                                                    //.background(RoundedRectangle(cornerRadius: 15).fill(Color.EZNotesBlack.opacity(0.65)).shadow(color: Color.EZNotesBlack, radius: 4))
+                                                                    .background(
+                                                                        RoundedRectangle(cornerRadius: 15)
+                                                                            .fill(self.categoryData.categoryCustomColors.keys.contains(key)
+                                                                                  ? self.categoryData.categoryCustomColors[key]!
+                                                                                  : Color.EZNotesLightBlack)//(Color.EZNotesBlack)
+                                                                    )
+                                                                    .padding([.bottom], 5)
+                                                                }
+                                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                            }
+                                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                            .padding([.top], 35)
+                                                            .padding([.bottom], 10)
+                                                        }
+                                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                        .padding(.top, self.settings.displayUserCreatedCategoriesSeparatly ? -6 : 0)
+                                                        .padding(.bottom, -5) /* MARK: Move scrollview down a bit to make it look like it "scrolls under" the bottom navbar. Without this, the scrollview randomly cuts off above the bottom navbar. (this could also be `.padding(.top, 10)`)*/
+                                                        //.padding([.top], 20)
                                                     }
                                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                                    .padding([.top], 35)
-                                                    .padding([.bottom], 10)
                                                 }
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                                .padding(.bottom, -8) /* MARK: Move scrollview down a bit to make it look like it "scrolls under" the bottom navbar. Without this, the scrollview randomly cuts off above the bottom navbar. (this could also be `.padding(.top, 10)`)*/
-                                                //.padding([.top], 20)
                                             }
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                                             
                                             PlusButton(prop: self.prop, createNewCategory: $createNewCategory, testPopup: $testPopup)
                                         }
@@ -825,6 +1405,15 @@ struct HomeView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     .edgesIgnoringSafeArea([.bottom])
+                    .onAppear {
+                        if self.settings.displayUserCreatedCategoriesSeparatly && !self.categoryData.userCreatedCategoryNames.isEmpty {
+                            for category in self.categoryData.categoriesAndSets.keys {
+                                if self.categoryData.userCreatedCategoryNames.contains(category) {
+                                    self.allUserCreatedCategories[category] = self.categoryData.categoriesAndSets[category]!
+                                }
+                            }
+                        }
+                    }
                     //.edgesIgnoringSafeArea(.top)
                     .background(
                         LinearGradient(
