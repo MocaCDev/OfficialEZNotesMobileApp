@@ -1607,7 +1607,10 @@ struct TopNavUpload: View {
             
             if self.settings.justNotes {
                 Menu {
-                    Button(action: { self.settings.justNotes = false }) {
+                    Button(action: {
+                        self.settings.justNotes = false
+                        self.settings.saveSettings()
+                    }) {
                         HStack {
                             Image(systemName: "lightswitch.off")
                                 .resizable()
@@ -1617,6 +1620,7 @@ struct TopNavUpload: View {
                             Text("Turn Off JustNotes")
                         }
                     }
+                    .buttonStyle(NoLongPressButtonStyle())
                     
                 } label: {
                     ZStack {
@@ -1655,6 +1659,7 @@ struct TopNavUpload: View {
         }
         .topNavSettings(prop: prop, backgroundColor: .clear)
         .padding([.top], 5)
+        .background(.clear)
     }
 }
 

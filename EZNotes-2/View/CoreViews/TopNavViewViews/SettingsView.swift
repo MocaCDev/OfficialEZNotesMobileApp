@@ -26,21 +26,6 @@ struct Settings: View {
     var body: some View {
         ZStack {
             VStack {
-                Spacer()
-                
-                VStack {
-                }
-                .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
-                .background(
-                    Image("DefaultThemeBg2")
-                        .resizable()
-                        .scaledToFill()
-                )
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .zIndex(0)
-            
-            VStack {
                 VStack {
                 }
                 .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
@@ -80,7 +65,7 @@ struct Settings: View {
                     ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                 }
                 .frame(maxWidth: .infinity, maxHeight: 30)
-                //.padding(.top, prop.isLargerScreen ? 45 : 5)
+                .padding(.top, prop.isLargerScreen ? 45 : 0)
                 
                 Spacer()
             }
@@ -187,7 +172,7 @@ struct Settings: View {
                     }
                     
                     VStack {
-                        ZStack {
+                        /*ZStack {
                             Toggle("Display short/long set names separately", isOn: $settings.seggregateShortAndLongNames)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .foregroundStyle(.white)
@@ -208,7 +193,7 @@ struct Settings: View {
                         .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 13 : 11))//(.system(size: prop.isLargerScreen ? 13 : 11))
                         .fontWeight(.medium)
                         .minimumScaleFactor(0.5)
-                        .multilineTextAlignment(.leading)
+                        .multilineTextAlignment(.leading)*/
                         
                         //Divider().background(.gray)
                         
@@ -355,7 +340,7 @@ struct Settings: View {
                 .padding(.bottom, -15)
             }
             .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-            .padding(.top, 40)
+            .padding(.top, prop.isLargerScreen ? 80 : 40)
             .zIndex(1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

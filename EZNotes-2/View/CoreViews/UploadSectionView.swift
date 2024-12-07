@@ -380,6 +380,7 @@ struct UploadSection: View {
                     )
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.black)
             }
         } else {
             Account(

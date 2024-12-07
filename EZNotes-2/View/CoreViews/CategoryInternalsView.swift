@@ -13,9 +13,142 @@ enum CIError: Error {
     case NewSetNotesEmpty
 }
 
+private struct ShowLongAndShortNameSets: View {
+    @EnvironmentObject private var categoryData: CategoryData
+    
+    var prop: Properties
+    var categoryName: String
+    var longerSetNames: Array<String>
+    var shorterSetNames: Array<String>
+    var categoryTitleColor: Color?
+    var categoryBackgroundColor: Color?
+    
+    @Binding public var setName: String
+    @Binding public var notesContent: String
+    @Binding public var originalContet: String
+    @Binding public var launchedSet: Bool
+    
+    var body: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            LazyVGrid(columns: [GridItem(.flexible())]) {
+                ForEach(self.longerSetNames, id: \.self) { longSetName in
+                    Button(action: {
+                        self.setName = longSetName
+                        
+                        for setData in self.categoryData.setAndNotes[self.categoryName]! {
+                            /* MARK: Each dictionary one has one key/value. Each dictionary of the array represents one set. Therefore, we only need the first value of the dictionary. */
+                            if setData.first!.key == longSetName {
+                                self.notesContent = setData[longSetName]!
+                                self.originalContet = self.notesContent
+                                break
+                            }
+                        }
+                        
+                        self.launchedSet = true
+                    }) {
+                        VStack {
+                            HStack {
+                                Text(longSetName)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
+                                    .padding(.leading, 15)
+                                    .font(Font.custom("Poppins-SemiBold", size: 18))
+                                    .minimumScaleFactor(0.5)
+                                    .multilineTextAlignment(.leading)
+                                
+                                ZStack {
+                                    Image(systemName: "chevron.forward")
+                                        .resizable()
+                                        .frame(width: 10, height: 15)
+                                        .foregroundStyle(.gray)
+                                }
+                                .frame(maxWidth: 20, alignment: .trailing)
+                                .padding(.trailing, 15)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
+                                      ? [.top, .bottom, .leading, .trailing]
+                                      : [.top, .leading, .trailing],*/
+                                self.categoryData.setAndNotes[self.categoryName]!.count == 1 ? 8 : 4
+                            )
+                        }
+                        .frame(maxWidth: prop.size.width - 20)
+                        .padding(8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
+                        )
+                        .cornerRadius(15)
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
+                }
+            }
+            .padding(.top, 15)
+            
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
+                ForEach(self.shorterSetNames, id: \.self) { shortSetName in
+                    Button(action: {
+                        self.setName = shortSetName
+                        
+                        for setData in self.categoryData.setAndNotes[self.categoryName]! {
+                            if setData.first!.key == shortSetName {
+                                self.notesContent = setData[shortSetName]!
+                                self.originalContet = self.notesContent
+                                break
+                            }
+                        }
+                        
+                        self.launchedSet = true
+                    }) {
+                        VStack {
+                            HStack {
+                                Text(shortSetName)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
+                                    .padding(.leading, 15)
+                                    .font(Font.custom("Poppins-SemiBold", size: 18))
+                                    .minimumScaleFactor(0.5)
+                                    .multilineTextAlignment(.leading)
+                                
+                                ZStack {
+                                    Image(systemName: "chevron.forward")
+                                        .resizable()
+                                        .frame(width: 10, height: 15)
+                                        .foregroundStyle(.gray)
+                                }
+                                .frame(maxWidth: 20, alignment: .trailing)
+                                .padding(.trailing, 15)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
+                                      ? [.top, .bottom, .leading, .trailing]
+                                      : [.top, .leading, .trailing],*/
+                                self.categoryData.setAndNotes[self.categoryName]!.count == 1 ? 8 : 4
+                            )
+                        }
+                        .frame(maxWidth: prop.size.width - 20)
+                        .padding(8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
+                        )
+                        .cornerRadius(15)
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
+                }
+            }
+            
+            /* MARK: Ensure there is spacing between the bottom of the screen and the last element in the scrollview. */
+            VStack { }.frame(maxWidth: .infinity).padding(.bottom, 30)
+        }
+        .padding(.top, -27)
+    }
+}
+
 struct CategoryInternalsView: View {
     @EnvironmentObject private var categoryData: CategoryData
     @EnvironmentObject private var messageModel: MessagesModel
+    @EnvironmentObject private var settings: SettingsConfigManager
     
     /* MARK: Needed for the "Create Set by Image". */
     /* MARK: See `TODO` in `UploadSectionView.swift` (line 16). */
@@ -120,6 +253,12 @@ struct CategoryInternalsView: View {
     @Binding public var topBanner: [String: TopBanner]
     
     @State private var showDescription: Bool = false
+    
+    /* MARK: States for if `settings.displayUserCreatedSetsSeparatly` is true. */
+    @State private var allUserCreatedSets: [String: Array<[String: String]>] = [:]
+    @State private var selectedView: String = "generated" /* MARK: Two values: "Generated" - shows all categories generated by the AI; "User Created" - shows all categories created by the user. Only used if `settings.displayUserCreatedCategoriesSeparatly` is true. */
+    @State private var userCreatedLongSetNames: Array<String> = []
+    @State private var userCreatedShortSetNames: Array<String> = []
     
     var body: some View {
         if !self.launchedSet {
@@ -359,8 +498,16 @@ struct CategoryInternalsView: View {
                                 writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
                                 writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
                                 
-                                if self.newSetName.count > 15 { self.longerSetNames.append(self.newSetName) }
-                                else { self.shorterSetNames.append(self.newSetName) }
+                                if self.settings.trackUserCreatedSets {
+                                    self.categoryData.userCreatedSetNames.append(self.newSetName)
+                                    writeUserCreatedSetNames(userCreatedSetNames: self.categoryData.userCreatedSetNames)
+                                    
+                                    if self.newSetName.count > 15 { self.userCreatedLongSetNames.append(self.newSetName) }
+                                    else { self.userCreatedShortSetNames.append(self.newSetName) }
+                                } else {
+                                    if self.newSetName.count > 15 { self.longerSetNames.append(self.newSetName) }
+                                    else { self.shorterSetNames.append(self.newSetName) }
+                                }
                                 
                                 self.newSetName.removeAll()
                                 self.newSetNotes.removeAll()
@@ -920,149 +1067,19 @@ struct CategoryInternalsView: View {
                             }
                             .frame(maxWidth: .infinity, maxHeight: 15, alignment: .leading)
                             .padding(.top, -15)
-                            
-                            /*if self.categoryDescription != nil {
-                                VStack {
-                                    Text("Brief Description:")
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding(.top, 8)
-                                        .foregroundStyle(.white)
-                                        .font(Font.custom("Poppins-SemiBold", size: 20))
-                                        .minimumScaleFactor(0.5)
-                                    
-                                    Text(self.categoryDescription!)
-                                        .frame(maxWidth: .infinity, alignment: .leading)//(maxWidth: prop.size.width - 60, alignment: .leading)
-                                        .padding([.bottom, .leading], 8) /* MARK: Pad the bottom to ensure space between the text and the sets information. Pad to the lefthand side (`.leading`) to have a indentation. */
-                                        .foregroundStyle(.white)
-                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 15 : 13))//.setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 15 : 13)
-                                        .minimumScaleFactor(0.5)
-                                        .multilineTextAlignment(.leading)
-                                        .truncationMode(.tail)
-                                }
-                                .padding([.top, .bottom], 5)
-                            } else {
-                                VStack {
-                                    if !self.generatingDesc {
-                                        Button(action: {
-                                            self.generatingDesc = true
-                                            
-                                            RequestAction<GenerateDescRequestData>(
-                                                parameters: GenerateDescRequestData(
-                                                    Subject: self.categoryName
-                                                )
-                                            ).perform(action: generate_desc_req) { statusCode, resp in
-                                                guard resp != nil && statusCode == 200 else {
-                                                    self.generatingDesc = false
-                                                    return
-                                                }
-                                                
-                                                self.categoryData.categoryDescriptions[self.categoryName] = resp!["Desc"] as? String
-                                                self.categoryDescription = resp!["Desc"] as? String
-                                                writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
-                                            }
-                                        }) {
-                                            if #available(iOS 18.0, *) {
-                                                Text("Generate Description")
-                                                    .frame(maxWidth: 200, alignment: .center)
-                                                    .padding([.top, .bottom], 5)
-                                                    .foregroundStyle(
-                                                        MeshGradient(width: 3, height: 3, points: [
-                                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                        ], colors: [
-                                                            .indigo, .indigo, Color.EZNotesBlue,
-                                                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                            /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                             Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                             Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                        ])
-                                                    )
-                                                    .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 16 : 13)
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 15)
-                                                            .fill(.white)
-                                                            .strokeBorder(.white, lineWidth: 1)
-                                                    )
-                                            } else {
-                                                Text("Generate Description")
-                                                    .frame(maxWidth: 200, alignment: .center)
-                                                    .padding([.top, .bottom], 5)
-                                                    .foregroundStyle(.black)
-                                                    .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 16 : 13)
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 15)
-                                                            .fill(.white)
-                                                            .strokeBorder(.white, lineWidth: 1)
-                                                    )
-                                            }
-                                        }
-                                        .padding([.top, .bottom], 15)
-                                        
-                                        if self.errorGenerating {
-                                            Text("Error generating description.. try again")
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                .setFontSizeAndWeight(weight: .medium, size: 16)
-                                                .minimumScaleFactor(0.5)
-                                        }
-                                    } else {
-                                        Text("Generating Description...")
-                                            .frame(maxWidth: .infinity, alignment: .center)
-                                            .padding(.top, 15)
-                                            .setFontSizeAndWeight(weight: .medium, size: 12)
-                                        
-                                        ProgressView()
-                                            .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
-                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                            ], colors: [
-                                                .indigo, .indigo, Color.EZNotesBlue,
-                                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                            ]))//(.blue)
-                                    }
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }*/
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.top, prop.isLargerScreen ? 10 : -10)
                     }
                     .frame(maxWidth: prop.size.width - 40, alignment: .top)
                     .padding(.bottom, -15) /* MARK: Bring the below divider closer to the above content. */
-                                 
-                    /*Divider()
-                        .frame(height: 1.5)
-                        .background(MeshGradient(width: 3, height: 3, points: [
-                            .init(0, 0), .init(0.3, 0), .init(1, 0),
-                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                            .init(0, 1), .init(0.5, 1), .init(1, 1)
-                        ], colors: [
-                            .indigo, .indigo, Color.EZNotesBlue,
-                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                        ]))
-                        .frame(maxWidth: prop.size.width - 20)
-                        .padding(.top, 15)
-                        .padding(.bottom, -15) /* MARK: Move below content up to make it look like the scrollview goes under the above `Divider`. */
-                        */
                     
                     TextField(
                         "Search...",
                         text: $setSearch
                     )
                     .frame(
-                        maxWidth: prop.size.width - 20/*prop.isIpad
-                                             ? UIDevice.current.orientation.isLandscape
-                                             ? prop.size.width - 800
-                                             : prop.size.width - 450
-                                             : 150,*/
-                        //maxHeight: prop.isLargerScreen ? 25 : 20
+                        maxWidth: prop.size.width - 20
                     )
                     .padding(14)
                     .padding(.horizontal, 25)
@@ -1097,6 +1114,52 @@ struct CategoryInternalsView: View {
                         self.setSearchFocus = true
                     }
                     
+                    if self.settings.displayUserCreatedSetsSeparately {
+                        HStack {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack {
+                                    Button(action: { self.selectedView = "generated" }) {
+                                        HStack {
+                                            Text("Generated")
+                                                .frame(alignment: .center)
+                                                .padding([.top, .bottom], 4)
+                                                .padding([.leading, .trailing], 8.5)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(self.selectedView == "generated" ? Color.EZNotesBlue : .clear)
+                                                )
+                                                .foregroundStyle(self.selectedView == "generated" ? .black : .secondary)
+                                                .font(Font.custom("Poppins-SemiBold", size: 12))
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Button(action: { self.selectedView = "user_created" }) {
+                                        HStack {
+                                            Text("User Created")
+                                                .frame(alignment: .center)
+                                                .padding([.top, .bottom], 4)
+                                                .padding([.leading, .trailing], 8.5)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(self.selectedView == "user_created" ? Color.EZNotesBlue : .clear)
+                                                )
+                                                .foregroundStyle(self.selectedView == "user_created" ? .black : .secondary)
+                                                .font(Font.custom("Poppins-SemiBold", size: 12))
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 10)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 15)
+                        .padding(.top, 10)
+                    }
+                    
                     VStack { }.frame(maxWidth: prop.size.width - 20, maxHeight: 1.5).background(
                         MeshGradient(width: 3, height: 3, points: [
                             .init(0, 0), .init(0.3, 0), .init(1, 0),
@@ -1114,182 +1177,57 @@ struct CategoryInternalsView: View {
                     
                     VStack {
                         VStack {
-                            if self.categoryData.setAndNotes[self.categoryName]!.count == 0 {
+                            if self.categoryData.setAndNotes[self.categoryName]!.isEmpty {
                                 Text("No sets or notes in this category.")
                                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                                     .foregroundStyle(.white)
                                     .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
                                     .minimumScaleFactor(0.5)
                             } else {
-                                ScrollView(.vertical, showsIndicators: false) {
-                                    LazyVGrid(columns: [GridItem(.flexible())]) {
-                                        ForEach(self.longerSetNames, id: \.self) { longSetName in
-                                            Button(action: {
-                                                self.setName = longSetName
-                                                
-                                                for setData in self.categoryData.setAndNotes[self.categoryName]! {
-                                                    /* MARK: Each dictionary one has one key/value. Each dictionary of the array represents one set. Therefore, we only need the first value of the dictionary. */
-                                                    if setData.first!.key == longSetName {
-                                                        self.notesContent = setData[longSetName]!
-                                                        self.originalContet = self.notesContent
-                                                        break
-                                                    }
-                                                }
-                                                
-                                                self.launchedSet = true
-                                            }) {
-                                                VStack {
-                                                    HStack {
-                                                        Text(longSetName)
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
-                                                            .padding(.leading, 15)
-                                                            .font(Font.custom("Poppins-SemiBold", size: 18))
-                                                            .minimumScaleFactor(0.5)
-                                                            .multilineTextAlignment(.leading)
-                                                        
-                                                        ZStack {
-                                                            Image(systemName: "chevron.forward")
-                                                                .resizable()
-                                                                .frame(width: 10, height: 15)
-                                                                .foregroundStyle(.gray)
-                                                        }
-                                                        .frame(maxWidth: 20, alignment: .trailing)
-                                                        .padding(.trailing, 15)
-                                                    }
-                                                    .frame(maxWidth: .infinity)
-                                                    .padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
-                                                              ? [.top, .bottom, .leading, .trailing]
-                                                              : [.top, .leading, .trailing],*/
-                                                        self.categoryData.setAndNotes[self.categoryName]!.count == 1 ? 8 : 4
-                                                    )
-                                                }
-                                                .frame(maxWidth: prop.size.width - 20)
-                                                .padding(8)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 15)
-                                                        .fill(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
-                                                )
-                                                .cornerRadius(15)
-                                            }
-                                            .buttonStyle(NoLongPressButtonStyle())
-                                        }
+                                if self.settings.displayUserCreatedSetsSeparately {
+                                    switch(self.selectedView) {
+                                    case "generated":
+                                        ShowLongAndShortNameSets(
+                                            prop: self.prop,
+                                            categoryName: self.categoryName,
+                                            longerSetNames: self.longerSetNames,
+                                            shorterSetNames: self.shorterSetNames,
+                                            categoryTitleColor: self.categoryTitleColor,
+                                            categoryBackgroundColor: self.categoryBackgroundColor,
+                                            setName: $setName,
+                                            notesContent: $notesContent,
+                                            originalContet: $originalContet,
+                                            launchedSet: $launchedSet
+                                        )
+                                    case "user_created":
+                                        ShowLongAndShortNameSets(
+                                            prop: self.prop,
+                                            categoryName: self.categoryName,
+                                            longerSetNames: self.userCreatedLongSetNames,
+                                            shorterSetNames: self.userCreatedShortSetNames,
+                                            categoryTitleColor: self.categoryTitleColor,
+                                            categoryBackgroundColor: self.categoryBackgroundColor,
+                                            setName: $setName,
+                                            notesContent: $notesContent,
+                                            originalContet: $originalContet,
+                                            launchedSet: $launchedSet
+                                        )
+                                    default: VStack { }.onAppear { self.selectedView = "generated" }
                                     }
-                                    .padding(.top, 15)
-                                    
-                                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
-                                        ForEach(self.shorterSetNames, id: \.self) { shortSetName in
-                                            Button(action: {
-                                                self.setName = shortSetName
-                                                
-                                                for setData in self.categoryData.setAndNotes[self.categoryName]! {
-                                                    if setData.first!.key == shortSetName {
-                                                        self.notesContent = setData[shortSetName]!
-                                                        self.originalContet = self.notesContent
-                                                        break
-                                                    }
-                                                }
-                                                
-                                                self.launchedSet = true
-                                            }) {
-                                                VStack {
-                                                    HStack {
-                                                        Text(shortSetName)
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
-                                                            .padding(.leading, 15)
-                                                            .font(Font.custom("Poppins-SemiBold", size: 18))
-                                                            .minimumScaleFactor(0.5)
-                                                            .multilineTextAlignment(.leading)
-                                                        
-                                                        ZStack {
-                                                            Image(systemName: "chevron.forward")
-                                                                .resizable()
-                                                                .frame(width: 10, height: 15)
-                                                                .foregroundStyle(.gray)
-                                                        }
-                                                        .frame(maxWidth: 20, alignment: .trailing)
-                                                        .padding(.trailing, 15)
-                                                    }
-                                                    .frame(maxWidth: .infinity)
-                                                    .padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
-                                                              ? [.top, .bottom, .leading, .trailing]
-                                                              : [.top, .leading, .trailing],*/
-                                                        self.categoryData.setAndNotes[self.categoryName]!.count == 1 ? 8 : 4
-                                                    )
-                                                }
-                                                .frame(maxWidth: prop.size.width - 20)
-                                                .padding(8)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 15)
-                                                        .fill(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
-                                                )
-                                                .cornerRadius(15)
-                                            }
-                                            .buttonStyle(NoLongPressButtonStyle())
-                                        }
-                                    }
-                                    
-                                    /* MARK: Ensure there is spacing between the bottom of the screen and the last element in the scrollview. */
-                                    VStack { }.frame(maxWidth: .infinity).padding(.bottom, 30)
+                                } else {
+                                    ShowLongAndShortNameSets(
+                                        prop: self.prop,
+                                        categoryName: self.categoryName,
+                                        longerSetNames: self.longerSetNames,
+                                        shorterSetNames: self.shorterSetNames,
+                                        categoryTitleColor: self.categoryTitleColor,
+                                        categoryBackgroundColor: self.categoryBackgroundColor,
+                                        setName: $setName,
+                                        notesContent: $notesContent,
+                                        originalContet: $originalContet,
+                                        launchedSet: $launchedSet
+                                    )
                                 }
-                                .padding(.top, -27)
-                                /*ScrollView(.vertical, showsIndicators: false) {
-                                    LazyVGrid(columns: self.categoryData.setAndNotes[self.categoryName]!.count > 1
-                                              ? [GridItem(.flexible())]//[GridItem(.flexible()), GridItem(.flexible())]
-                                              : [GridItem(.flexible())]
-                                    ) {
-                                        ForEach(Array(self.categoryData.setAndNotes[self.categoryName]!.enumerated()), id: \.offset) { index, val in
-                                            if val != [:] {
-                                                ForEach(Array(val.keys), id: \.self) { key in
-                                                    Button(action: {
-                                                        self.setName = key
-                                                        self.notesContent = val[key]!
-                                                        self.originalContet = self.notesContent
-                                                        self.launchedSet = true
-                                                    }) {
-                                                        VStack {
-                                                            HStack {
-                                                                Text(key)
-                                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                                    .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
-                                                                    .padding(.leading, 15)
-                                                                    .font(Font.custom("Poppins-SemiBold", size: 18))
-                                                                    .minimumScaleFactor(0.5)
-                                                                    .multilineTextAlignment(.leading)
-                                                                
-                                                                ZStack {
-                                                                    Image(systemName: "chevron.forward")
-                                                                        .resizable()
-                                                                        .frame(width: 10, height: 15)
-                                                                        .foregroundStyle(.gray)
-                                                                }
-                                                                .frame(maxWidth: 20, alignment: .trailing)
-                                                                .padding(.trailing, 15)
-                                                            }
-                                                            .frame(maxWidth: .infinity)
-                                                            .padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
-                                                                      ? [.top, .bottom, .leading, .trailing]
-                                                                      : [.top, .leading, .trailing],*/
-                                                                self.categoryData.setAndNotes[self.categoryName]!.count == 1 ? 8 : 4
-                                                            )
-                                                        }
-                                                        .frame(maxWidth: prop.size.width - 20)
-                                                        .padding(8)
-                                                        .background(
-                                                            RoundedRectangle(cornerRadius: 15)
-                                                                .fill(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
-                                                        )
-                                                        .cornerRadius(15)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    .padding(.top, 15)
-                                    .padding(.bottom, 25)
-                                }
-                                .padding(.top, -26.5)*/
                             }
                         }
                         .frame(maxWidth: prop.size.width - 30, maxHeight: .infinity)
@@ -1325,9 +1263,33 @@ struct CategoryInternalsView: View {
                 self.longerSetNames.removeAll()
                 self.shorterSetNames.removeAll()
                 
+                if self.categoryData.setAndNotes[self.categoryName]!.isEmpty { return }
+                
+                if self.settings.displayUserCreatedSetsSeparately {
+                    self.allUserCreatedSets[self.categoryName] = []
+                    
+                    self.userCreatedLongSetNames.removeAll()
+                    self.userCreatedShortSetNames.removeAll()
+                    
+                    for categorySet in self.categoryData.setAndNotes[self.categoryName]! {
+                        if self.categoryData.userCreatedSetNames.contains(categorySet.first!.key) {
+                            self.allUserCreatedSets[self.categoryName]!.append(categorySet)
+                        }
+                    }
+                    
+                    for setData in self.allUserCreatedSets[self.categoryName]! {
+                        if setData.first!.key.count >= 15 { self.userCreatedLongSetNames.append(setData.first!.key) }
+                        else { self.userCreatedShortSetNames.append(setData.first!.key) }
+                    }
+                }
+                
                 for setData in self.categoryData.setAndNotes[self.categoryName]! {
-                    if setData.first!.key.count >= 15 { self.longerSetNames.append(setData.first!.key) }
-                    else { self.shorterSetNames.append(setData.first!.key) }
+                    if setData.first!.key.count >= 15 && !self.userCreatedLongSetNames.contains(setData.first!.key) { self.longerSetNames.append(setData.first!.key) }
+                    else {
+                        if !self.userCreatedShortSetNames.contains(setData.first!.key) { self.shorterSetNames.append(setData.first!.key) }
+                    }
+                    //if setData.first!.key.count >= 15 { self.longerSetNames.append(setData.first!.key) }
+                    //else { self.shorterSetNames.append(setData.first!.key) }
                 }
                 
                 /* TODO: Is this needed? Keep for now just in case. */

@@ -28,21 +28,6 @@ struct UpdatePassword: View {
     var body: some View {
         ZStack {
             VStack {
-                Spacer()
-                
-                VStack {
-                }
-                .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
-                .background(
-                    Image("DefaultThemeBg2")
-                        .resizable()
-                        .scaledToFill()
-                )
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .zIndex(0)
-            
-            VStack {
                 VStack {
                 }
                 .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
@@ -82,7 +67,7 @@ struct UpdatePassword: View {
                     ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                 }
                 .frame(maxWidth: .infinity, maxHeight: 30)
-                //.padding(.top, prop.isLargerScreen ? 45 : 5)
+                .padding(.top, prop.isLargerScreen ? 45 : 0)
                 
                 Spacer()
             }
@@ -290,7 +275,7 @@ struct UpdatePassword: View {
                 }
             }
             .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-            .padding(.top, 40)
+            .padding(.top, prop.isLargerScreen ? 80 : 40)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .alert("Are you sure?", isPresented: $changePasswordAlert) {

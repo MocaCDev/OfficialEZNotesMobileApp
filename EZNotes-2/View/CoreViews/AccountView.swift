@@ -1072,21 +1072,6 @@ struct Account: View {
                         case "setup_plan":
                             ZStack {
                                 VStack {
-                                    Spacer()
-                                    
-                                    VStack {
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
-                                    .background(
-                                        Image("DefaultThemeBg2")
-                                            .resizable()
-                                            .scaledToFill()
-                                    )
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .zIndex(0)
-                                
-                                VStack {
                                     VStack {
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
@@ -1126,7 +1111,7 @@ struct Account: View {
                                         ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 30)
-                                    //.padding(.top, prop.isLargerScreen ? 45 : 5)
+                                    .padding(.top, prop.isLargerScreen ? 45 : 0)
                                     
                                     Spacer()
                                 }
@@ -1172,21 +1157,6 @@ struct Account: View {
                         case "switch_college":
                             ZStack {
                                 VStack {
-                                    Spacer()
-                                    
-                                    VStack {
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
-                                    .background(
-                                        Image("DefaultThemeBg2")
-                                            .resizable()
-                                            .scaledToFill()
-                                    )
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .zIndex(0)
-                                
-                                VStack {
                                     VStack {
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
@@ -1226,7 +1196,7 @@ struct Account: View {
                                         ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 30)
-                                    //.padding(.top, prop.isLargerScreen ? 45 : 5)
+                                    .padding(.top, prop.isLargerScreen ? 45 : 0)
                                     
                                     Spacer()
                                 }
@@ -1314,7 +1284,7 @@ struct Account: View {
                                     //Spacer()
                                 }
                                 .frame(maxWidth: prop.size.width - 40 , maxHeight: .infinity)
-                                .padding(.top, 40)
+                                .padding(.top, prop.isLargerScreen ? 80 : 40)
                                 .alert("Are you sure?", isPresented: $updateCollegeAlert) {
                                     Button(action: {
                                         RequestAction<UpdateCollegeNameData>(parameters: UpdateCollegeNameData(
@@ -1380,21 +1350,6 @@ struct Account: View {
                         case "switch_field_and_major":
                             ZStack {
                                 VStack {
-                                    Spacer()
-                                    
-                                    VStack {
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
-                                    .background(
-                                        Image("DefaultThemeBg2")
-                                            .resizable()
-                                            .scaledToFill()
-                                    )
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .zIndex(0)
-                                
-                                VStack {
                                     VStack {
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
@@ -1434,7 +1389,7 @@ struct Account: View {
                                         ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 30)
-                                    //.padding(.top, prop.isLargerScreen ? 45 : 5)
+                                    .padding(.top, prop.isLargerScreen ? 45 : 0)
                                     
                                     Spacer()
                                 }
@@ -1549,7 +1504,7 @@ struct Account: View {
                                     }
                                 }
                                 .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-                                .padding(.top, 40)
+                                .padding(.top, prop.isLargerScreen ? 80 : 40)
                                 .alert("Are you sure?", isPresented: $updateMajorFieldAndMajorAlert) {
                                     Button(action: {
                                         RequestAction<UpdateMajorFieldData>(parameters: UpdateMajorFieldData(
@@ -1610,454 +1565,504 @@ struct Account: View {
                                 accountPopupSection: $accountPopupSection
                             )
                         case "planDetails":
-                            VStack {
-                                if self.eznotesSubscriptionManager.userSubscriptionIDs.isEmpty {
-                                    ErrorMessage(
-                                        prop: self.prop,
-                                        placement: .center,
-                                        message: "No Active Subscriptions"
+                            ZStack {
+                                VStack {
+                                    VStack {
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                                    .background(
+                                        Image("DefaultThemeBg3")
+                                            .resizable()
+                                            .scaledToFill()
                                     )
-                                } else {
-                                    Spacer()
-                                    
-                                    Text("Apple is stupid and won't allow me to use Stripe, so I had to completely redo how subscriptions are handled on the app. This will be implemented in Build 32. Wasted 3 hours of my life.")
-                                        .frame(maxWidth: prop.size.width - 40, alignment: .center)
-                                        .foregroundStyle(.white)
-                                        .multilineTextAlignment(.center)
-                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 13))
-                                    
-                                    Button(action: { self.getRickRolled = true }) {
-                                        HStack {
-                                            Text("Go Back")
-                                                .frame(maxWidth: .infinity, alignment: .center)
-                                                .foregroundStyle(.white)
-                                                .font(.system(size: prop.isLargerScreen ? 18 : 16, weight: .bold))
-                                        }
-                                        .frame(maxWidth: prop.size.width - 40)
-                                        .padding()
-                                        .background(Color.EZNotesBlue)
-                                        .cornerRadius(15)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    .popover(isPresented: $getRickRolled) {
-                                        /*WebView(url: URL(string: "https://www.youtube.com/watch?v=oHg5SJYRHA0")!)
-                                         .navigationBarTitle("Get Rick Rolled, Boi", displayMode: .inline)*/
-                                        YouTubeVideoView() // Replace with your YouTube video ID
-                                            .frame(height: 300) // Set height for the video player
-                                            .cornerRadius(10)
-                                    }
+                                    .padding(.top, 20)
                                     
                                     Spacer()
                                 }
-                                /*if self.eznotesSubscriptionManager.products.isEmpty {
-                                    LoadingView(message: "Loading Plan Details")
-                                } else {
-                                    Text("\(self.eznotesSubscriptionManager.products)")
-                                }*/
-                                /* else {
-                                    if self.errorLoadingPlanDetailsSection {
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .zIndex(0)
+                                
+                                VStack {
+                                    HStack {
+                                        Button(action: { self.accountPopupSection = "main" }) {
+                                            ZStack {
+                                                Image(systemName: "arrow.backward")
+                                                    .resizable()
+                                                    .frame(width: 15, height: 15)
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: 20, alignment: .leading)
+                                            .padding(.top, 15)
+                                            .padding(.leading, 25)
+                                        }
+                                        
+                                        Text(self.eznotesSubscriptionManager.getSubscriptionName() != nil ? self.eznotesSubscriptionManager.getSubscriptionName()! : "Plan Details")
+                                            .frame(maxWidth: .infinity)
+                                            .foregroundStyle(.white)
+                                            .padding([.top], 15)
+                                            .setFontSizeAndWeight(weight: .bold, size: prop.isLargerScreen ? 26 : 22)
+                                            
+                                        /* MARK: "spacing" to ensure above Text stays in the middle. */
+                                        ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 30)
+                                    .padding(.top, prop.isLargerScreen ? 45 : 0)
+                                    
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                
+                                VStack {
+                                    if self.eznotesSubscriptionManager.userSubscriptionIDs.isEmpty {
                                         ErrorMessage(
-                                            prop: prop,
-                                            placement: .top,
-                                            message: "Error loading plan details"
+                                            prop: self.prop,
+                                            placement: .center,
+                                            message: "No Active Subscriptions"
                                         )
                                     } else {
-                                        ScrollView(.vertical, showsIndicators: false) {
-                                            /*Text("Overview")
-                                             .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                             .foregroundStyle(.white)
-                                             .setFontSizeAndWeight(weight: .bold, size: 24)
-                                             .minimumScaleFactor(0.5)*/
-                                            
+                                        Spacer()
+                                        
+                                        Text("Apple is stupid and won't allow me to use Stripe, so I had to completely redo how subscriptions are handled on the app. This will be implemented in Build 32. Wasted 3 hours of my life.")
+                                            .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .multilineTextAlignment(.center)
+                                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 13))
+                                        
+                                        Button(action: { self.getRickRolled = true }) {
                                             HStack {
-                                                Text("Next Payment:")
-                                                    .frame(alignment: .leading)
-                                                    .padding(.leading, 30)
+                                                Text("Go Back")
+                                                    .frame(maxWidth: .infinity, alignment: .center)
                                                     .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
-                                                    .fontWeight(.bold)
-                                                
-                                                Text("\(self.subscriptionInfo.CurrentPeriodEnd!.formatted(date: .numeric, time: .shortened))")
-                                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                                    .padding(.trailing, 30)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-ExtraLight", size: prop.isLargerScreen ? 16 : 14))
-                                                    .fontWeight(.semibold)
+                                                    .font(.system(size: prop.isLargerScreen ? 18 : 16, weight: .bold))
                                             }
-                                            .frame(maxWidth: .infinity)
-                                            
-                                            HStack {
-                                                Text("Period Started:")
-                                                    .frame(alignment: .leading)
-                                                    .padding(.leading, 30)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
-                                                    .fontWeight(.bold)
-                                                
-                                                Text("\(self.subscriptionInfo.CurrentPeriodStart!.formatted(date: .numeric, time: .shortened))")
-                                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                                    .padding(.trailing, 30)
-                                                    .foregroundStyle(.white)
-                                                    .font(Font.custom("Poppins-ExtraLight", size: prop.isLargerScreen ? 16 : 14))
-                                                    .fontWeight(.semibold)
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            
-                                            VStack {
-                                                Text("Payment")
-                                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                                    .padding(.top, 20)
-                                                    .foregroundStyle(.white)
-                                                    .setFontSizeAndWeight(weight: .bold, size: 24)
-                                                    .minimumScaleFactor(0.5)
-                                                
-                                                VStack {
-                                                    HStack {
-                                                        Text("Monthly Payment:")
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .padding(.leading, 30)
-                                                            .foregroundStyle(.white)
-                                                            .font(Font.custom("Poppins-Regular", size: 16))
-                                                            .fontWeight(.bold)
-                                                        
-                                                        Text(self.subscriptionInfo.Price!)
-                                                            .frame(maxWidth: .infinity, alignment: .trailing)
-                                                            .padding(.trailing, 30)
-                                                            .foregroundStyle(.white)
-                                                            .font(Font.custom("Poppins-ExtraLight", size: 16))
-                                                            .fontWeight(.semibold)
-                                                    }
-                                                    .frame(maxWidth: .infinity)
-                                                    .padding([.top, .bottom])
-                                                    
-                                                    HStack {
-                                                        Text("Frequency:")
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .padding(.leading, 30)
-                                                            .foregroundStyle(.white)
-                                                            .font(Font.custom("Poppins-Regular", size: 16))
-                                                            .fontWeight(.bold)
-                                                        
-                                                        Text(self.subscriptionInfo.Interval!)
-                                                            .frame(maxWidth: .infinity, alignment: .trailing)
-                                                            .padding(.trailing, 30)
-                                                            .foregroundStyle(.white)
-                                                            .font(Font.custom("Poppins-ExtraLight", size: 16))
-                                                            .fontWeight(.semibold)
-                                                    }
-                                                    .frame(maxWidth: .infinity)
-                                                    
-                                                    HStack {
-                                                        Text("Total Payments:")
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .padding(.leading, 30)
-                                                            .foregroundStyle(.white)
-                                                            .font(Font.custom("Poppins-Regular", size: 16))
-                                                            .fontWeight(.bold)
-                                                        
-                                                        Text("\(self.subscriptionInfo.Lifetime!)")
-                                                            .frame(maxWidth: .infinity, alignment: .trailing)
-                                                            .padding(.trailing, 30)
-                                                            .foregroundStyle(.white)
-                                                            .font(Font.custom("Poppins-ExtraLight", size: 16))
-                                                            .fontWeight(.semibold)
-                                                    }
-                                                    .frame(maxWidth: .infinity)
-                                                    .padding([.top, .bottom])
-                                                    
-                                                    Divider()
-                                                        .background(.white)
-                                                        .frame(maxWidth: prop.size.width - 80)
-                                                        .padding(.bottom)
-                                                    
-                                                    VStack {
-                                                        HStack {
-                                                            VStack {
-                                                                ZStack {
-                                                                    Text(self.subscriptionInfo.CardBrand!.uppercased())
-                                                                        .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                                                        .padding([.top, .leading], 20)
-                                                                        .foregroundStyle(.white)
-                                                                        .setFontSizeAndWeight(weight: .bold, size: 50)
-                                                                        .minimumScaleFactor(0.5)
-                                                                }
-                                                                .frame(maxWidth: .infinity, maxHeight: 30, alignment: .top)
-                                                                
-                                                                Spacer()
-                                                                
-                                                                VStack {
-                                                                    VStack {
-                                                                        ZStack {
-                                                                            Image("Debit-Card-Chip")
-                                                                                .resizable()
-                                                                                .frame(width: 30, height: 30)
-                                                                        }
-                                                                        .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                                                        .padding(.leading, 20)
-                                                                        
-                                                                        Text("XXXX XXXX XXXX \(self.subscriptionInfo.Last4!)")
-                                                                            .frame(maxWidth: prop.size.width - 50, minHeight: 22, alignment: .leading)
-                                                                            .padding(.leading, 20)
-                                                                            .foregroundStyle(
-                                                                                MeshGradient(width: 3, height: 3, points: [
-                                                                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                                                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                                                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                                                                ], colors: [
-                                                                                    Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
-                                                                                    .white, Color.EZNotesBlue, Color.EZNotesOrange,
-                                                                                    Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
-                                                                                    /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
-                                                                                     Color.EZNotesOrange, .mint, Color.EZNotesBlue,
-                                                                                     Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
-                                                                                ])
-                                                                            )
-                                                                            .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                                            .minimumScaleFactor(0.5)
-                                                                    }
-                                                                    .frame(alignment: .leading)
-                                                                    .padding(.top, 8)
-                                                                    
-                                                                    VStack {
-                                                                        HStack {
-                                                                            HStack {
-                                                                                Text("Valid Thru")
-                                                                                    .frame(maxWidth: 25, alignment: .leading)//(maxWidth: prop.size.width - 50, alignment: .leading)
-                                                                                    .padding(.leading, 20)
-                                                                                    .foregroundStyle(.white)
-                                                                                    .setFontSizeAndWeight(weight: .light, size: 10)
-                                                                                    .minimumScaleFactor(0.5)
-                                                                                    .multilineTextAlignment(.center)
-                                                                                
-                                                                                Text("\(self.subscriptionInfo.CardExpMonth!)/\(self.subscriptionInfo.CardExpYear!)")
-                                                                                    .frame(maxWidth: .infinity, alignment: .leading)//(maxWidth: prop.size.width - 50, alignment: .leading)
-                                                                                    .padding(.leading, 5)
-                                                                                    .foregroundStyle(.white)
-                                                                                    .setFontSizeAndWeight(weight: .medium, size: 13)
-                                                                                    .minimumScaleFactor(0.5)
-                                                                            }
-                                                                            .frame(alignment: .leading)
-                                                                        }
-                                                                        .frame(maxWidth: .infinity)
-                                                                        .padding([.top, .bottom], 8)
-                                                                        
-                                                                        Text("\(self.subscriptionInfo.CardHolderName!)")
-                                                                            .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                                                            .padding(.leading, 20)
-                                                                            .padding(.bottom, 8)
-                                                                            .foregroundStyle(.white)
-                                                                            .setFontSizeAndWeight(weight: .light, size: 15)
-                                                                            .minimumScaleFactor(0.5)
-                                                                    }
-                                                                    .frame(maxWidth: .infinity)
-                                                                }
-                                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                                .padding(.top, 20)
-                                                                
-                                                                Spacer()
-                                                                
-                                                                
-                                                            }
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            
-                                                            VStack {
-                                                                Spacer() /* MARK: Shove the "logo" to the bottom. */
-                                                                
-                                                                ZStack {
-                                                                    Image("Logo")
-                                                                        .resizable()
-                                                                        .frame(width: 60, height: 60)
-                                                                }
-                                                                .frame(maxWidth: .infinity, alignment: .trailing)
-                                                                .padding(.trailing, 10)
-                                                                .padding(.bottom, 5)
-                                                            }
-                                                            .frame(maxWidth: 60, alignment: .trailing)
-                                                        }
-                                                    }
-                                                    .frame(maxWidth: prop.size.width - 70, minHeight: 200)
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 15)
-                                                            .fill(.black)
-                                                            .shadow(color: Color.black, radius: 1.5)
-                                                    )
-                                                    .cornerRadius(15)
-                                                    
-                                                    VStack {
-                                                        Button(action: { print("Update card") }) {
-                                                            HStack {
-                                                                Text("Update Card Details")
-                                                                    .frame(maxWidth: .infinity, alignment: .center)
-                                                                    .padding([.top, .bottom], 8)
-                                                                    .foregroundStyle(.black)
-                                                                    .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                                    .minimumScaleFactor(0.5)
-                                                            }
-                                                            .frame(maxWidth: prop.size.width - 80)
-                                                            .background(
-                                                                RoundedRectangle(cornerRadius: 15)
-                                                                    .fill(.white)
-                                                            )
-                                                            .cornerRadius(15)
-                                                        }
-                                                        .buttonStyle(NoLongPressButtonStyle())
-                                                        
-                                                        Text("This is not a real debit card, this is for visual purposes only.")
-                                                            .frame(maxWidth: prop.size.width - 70, alignment: .leading)
-                                                            .padding(.leading, 10)
-                                                            .padding([.top, .bottom], 5)
-                                                            .foregroundStyle(.gray)
-                                                            .setFontSizeAndWeight(weight: .light, size: 12)
-                                                            .minimumScaleFactor(0.5)
-                                                            .multilineTextAlignment(.leading)
-                                                    }
-                                                    .frame(maxWidth: prop.size.width - 60)
-                                                    .padding(.top, 8)
-                                                }
-                                                .frame(maxWidth: prop.size.width - 40)
-                                                .padding([.top, .bottom], 14)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 15)
-                                                        .fill(Color.EZNotesBlack)
-                                                        .shadow(color: Color.black, radius: 1.5)
-                                                )
-                                                
-                                                Text("Specifics")
-                                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                                    .padding(.top, 20)
-                                                    .foregroundStyle(.white)
-                                                    .setFontSizeAndWeight(weight: .bold, size: 24)
-                                                    .minimumScaleFactor(0.5)
-                                                
-                                                VStack {
-                                                    HStack {
-                                                        Text("Subscription ID:")
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .padding(.leading, 20)
-                                                            .foregroundStyle(.white)
-                                                            .font(Font.custom("Poppins-Regular", size: 16))
-                                                            .fontWeight(.bold)
-                                                        
-                                                        Text(self.subscriptionInfo.PlanID!)
-                                                            .frame(maxWidth: .infinity, alignment: .trailing)
-                                                            .padding(.trailing, 20)
-                                                            .foregroundStyle(.white)
-                                                            .setFontSizeAndWeight(weight: .heavy, size: 16)//(Font.custom("Poppins-ExtraLight", size: 16))
-                                                        // .fontWeight(.heavy)
-                                                    }
-                                                    .frame(maxWidth: .infinity)
-                                                    .padding([.top, .bottom])
-                                                    
-                                                    HStack {
-                                                        Text("Subscription Price ID:")
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .padding(.leading, 20)
-                                                            .foregroundStyle(.white)
-                                                            .font(Font.custom("Poppins-Regular", size: 16))
-                                                            .fontWeight(.bold)
-                                                        
-                                                        Text(self.subscriptionInfo.PriceID!)
-                                                            .frame(maxWidth: .infinity, alignment: .trailing)
-                                                            .padding(.trailing, 20)
-                                                            .foregroundStyle(.white)
-                                                            .setFontSizeAndWeight(weight: .heavy, size: 16)
-                                                    }
-                                                    .frame(maxWidth: .infinity)
-                                                    .padding([.top, .bottom])
-                                                    
-                                                    HStack {
-                                                        Text("Subscription Service ID:")
-                                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                                            .padding(.leading, 20)
-                                                            .foregroundStyle(.white)
-                                                            .font(Font.custom("Poppins-Regular", size: 16))
-                                                            .fontWeight(.bold)
-                                                        
-                                                        Text(self.subscriptionInfo.ProductID!)
-                                                            .frame(maxWidth: .infinity, alignment: .trailing)
-                                                            .padding(.trailing, 20)
-                                                            .foregroundStyle(.white)
-                                                            .setFontSizeAndWeight(weight: .heavy, size: 16)
-                                                    }
-                                                    .frame(maxWidth: .infinity)
-                                                    .padding([.top, .bottom])
-                                                }
-                                                .frame(maxWidth: prop.size.width - 40)
-                                                .padding(.top, 14)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 15)
-                                                        .fill(Color.EZNotesBlack)
-                                                        .shadow(color: Color.black, radius: 1.5)
-                                                )
-                                                
-                                                Text("These IDs enable you to have a more feasible experience with our team when problems arise with payments, plan conversions or cancellations. **Do not share this data with anyone.**")
-                                                    .frame(maxWidth: prop.size.width - 70, alignment: .leading)
-                                                    .padding(.leading, 5)
-                                                    .foregroundStyle(.gray)
-                                                    .setFontSizeAndWeight(weight: .light, size: 12)
-                                                    .minimumScaleFactor(0.5)
-                                                    .multilineTextAlignment(.leading)
-                                                
-                                                Text("Actions")
-                                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                                    .padding(.top, 20)
-                                                    .foregroundStyle(.white)
-                                                    .setFontSizeAndWeight(weight: .bold, size: 24)
-                                                    .minimumScaleFactor(0.5)
-                                                
-                                                VStack {
-                                                    Button(action: {
-                                                        /* TODO: Add endpoint in backend the will remove the users subscription from stripe. */
-                                                        
-                                                        self.accountPopupSection = "setup_plan"
-                                                    }) {
-                                                        HStack {
-                                                            Text("Switch Plans")
-                                                                .frame(maxWidth: .infinity, alignment: .center)
-                                                                .padding([.top, .bottom], 8)
-                                                                .foregroundStyle(.black)
-                                                                .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                                .minimumScaleFactor(0.5)
-                                                        }
-                                                        .frame(maxWidth: .infinity)
-                                                        .background(
-                                                            RoundedRectangle(cornerRadius: 15)
-                                                                .fill(.white)
-                                                        )
-                                                        .cornerRadius(15)
-                                                    }
-                                                    .buttonStyle(NoLongPressButtonStyle())
-                                                    
-                                                    Button(action: {
-                                                        print("Deactivate Plan")
-                                                        
-                                                        /* TODO: Add endpoint that removes the users plan. Upon deactivating the plan, the account will be deleted. */
-                                                    }) {
-                                                        HStack {
-                                                            Text("Deactivate Plan")
-                                                                .frame(maxWidth: .infinity, alignment: .center)
-                                                                .padding([.top, .bottom], 8)
-                                                                .foregroundStyle(.black)
-                                                                .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                                .minimumScaleFactor(0.5)
-                                                        }
-                                                        .frame(maxWidth: .infinity)
-                                                        .background(
-                                                            RoundedRectangle(cornerRadius: 15)
-                                                                .fill(Color.EZNotesRed)
-                                                        )
-                                                        .cornerRadius(15)
-                                                    }
-                                                    .buttonStyle(NoLongPressButtonStyle())
-                                                    .padding(.top, 5)
-                                                }
-                                                .frame(maxWidth: prop.size.width - 40)
-                                                .padding(.bottom, 30)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                            .frame(maxWidth: prop.size.width - 40)
+                                            .padding()
+                                            .background(Color.EZNotesBlue)
+                                            .cornerRadius(15)
                                         }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                        .popover(isPresented: $getRickRolled) {
+                                            /*WebView(url: URL(string: "https://www.youtube.com/watch?v=oHg5SJYRHA0")!)
+                                             .navigationBarTitle("Get Rick Rolled, Boi", displayMode: .inline)*/
+                                            YouTubeVideoView() // Replace with your YouTube video ID
+                                                .frame(height: 300) // Set height for the video player
+                                                .cornerRadius(10)
+                                        }
+                                        
+                                        Spacer()
                                     }
-                                }*/
+                                    /*if self.eznotesSubscriptionManager.products.isEmpty {
+                                     LoadingView(message: "Loading Plan Details")
+                                     } else {
+                                     Text("\(self.eznotesSubscriptionManager.products)")
+                                     }*/
+                                    /* else {
+                                     if self.errorLoadingPlanDetailsSection {
+                                     ErrorMessage(
+                                     prop: prop,
+                                     placement: .top,
+                                     message: "Error loading plan details"
+                                     )
+                                     } else {
+                                     ScrollView(.vertical, showsIndicators: false) {
+                                     /*Text("Overview")
+                                      .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                      .foregroundStyle(.white)
+                                      .setFontSizeAndWeight(weight: .bold, size: 24)
+                                      .minimumScaleFactor(0.5)*/
+                                     
+                                     HStack {
+                                     Text("Next Payment:")
+                                     .frame(alignment: .leading)
+                                     .padding(.leading, 30)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                     .fontWeight(.bold)
+                                     
+                                     Text("\(self.subscriptionInfo.CurrentPeriodEnd!.formatted(date: .numeric, time: .shortened))")
+                                     .frame(maxWidth: .infinity, alignment: .trailing)
+                                     .padding(.trailing, 30)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-ExtraLight", size: prop.isLargerScreen ? 16 : 14))
+                                     .fontWeight(.semibold)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     
+                                     HStack {
+                                     Text("Period Started:")
+                                     .frame(alignment: .leading)
+                                     .padding(.leading, 30)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                     .fontWeight(.bold)
+                                     
+                                     Text("\(self.subscriptionInfo.CurrentPeriodStart!.formatted(date: .numeric, time: .shortened))")
+                                     .frame(maxWidth: .infinity, alignment: .trailing)
+                                     .padding(.trailing, 30)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-ExtraLight", size: prop.isLargerScreen ? 16 : 14))
+                                     .fontWeight(.semibold)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     
+                                     VStack {
+                                     Text("Payment")
+                                     .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                     .padding(.top, 20)
+                                     .foregroundStyle(.white)
+                                     .setFontSizeAndWeight(weight: .bold, size: 24)
+                                     .minimumScaleFactor(0.5)
+                                     
+                                     VStack {
+                                     HStack {
+                                     Text("Monthly Payment:")
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .padding(.leading, 30)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-Regular", size: 16))
+                                     .fontWeight(.bold)
+                                     
+                                     Text(self.subscriptionInfo.Price!)
+                                     .frame(maxWidth: .infinity, alignment: .trailing)
+                                     .padding(.trailing, 30)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                     .fontWeight(.semibold)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     .padding([.top, .bottom])
+                                     
+                                     HStack {
+                                     Text("Frequency:")
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .padding(.leading, 30)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-Regular", size: 16))
+                                     .fontWeight(.bold)
+                                     
+                                     Text(self.subscriptionInfo.Interval!)
+                                     .frame(maxWidth: .infinity, alignment: .trailing)
+                                     .padding(.trailing, 30)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                     .fontWeight(.semibold)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     
+                                     HStack {
+                                     Text("Total Payments:")
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .padding(.leading, 30)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-Regular", size: 16))
+                                     .fontWeight(.bold)
+                                     
+                                     Text("\(self.subscriptionInfo.Lifetime!)")
+                                     .frame(maxWidth: .infinity, alignment: .trailing)
+                                     .padding(.trailing, 30)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-ExtraLight", size: 16))
+                                     .fontWeight(.semibold)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     .padding([.top, .bottom])
+                                     
+                                     Divider()
+                                     .background(.white)
+                                     .frame(maxWidth: prop.size.width - 80)
+                                     .padding(.bottom)
+                                     
+                                     VStack {
+                                     HStack {
+                                     VStack {
+                                     ZStack {
+                                     Text(self.subscriptionInfo.CardBrand!.uppercased())
+                                     .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                     .padding([.top, .leading], 20)
+                                     .foregroundStyle(.white)
+                                     .setFontSizeAndWeight(weight: .bold, size: 50)
+                                     .minimumScaleFactor(0.5)
+                                     }
+                                     .frame(maxWidth: .infinity, maxHeight: 30, alignment: .top)
+                                     
+                                     Spacer()
+                                     
+                                     VStack {
+                                     VStack {
+                                     ZStack {
+                                     Image("Debit-Card-Chip")
+                                     .resizable()
+                                     .frame(width: 30, height: 30)
+                                     }
+                                     .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                     .padding(.leading, 20)
+                                     
+                                     Text("XXXX XXXX XXXX \(self.subscriptionInfo.Last4!)")
+                                     .frame(maxWidth: prop.size.width - 50, minHeight: 22, alignment: .leading)
+                                     .padding(.leading, 20)
+                                     .foregroundStyle(
+                                     MeshGradient(width: 3, height: 3, points: [
+                                     .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                     .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                     .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                     ], colors: [
+                                     Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesBlue,
+                                     .white, Color.EZNotesBlue, Color.EZNotesOrange,
+                                     Color.EZNotesOrange, Color.EZNotesGreen, Color.EZNotesBlue
+                                     /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                      Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                      Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                     ])
+                                     )
+                                     .setFontSizeAndWeight(weight: .bold, size: 18)
+                                     .minimumScaleFactor(0.5)
+                                     }
+                                     .frame(alignment: .leading)
+                                     .padding(.top, 8)
+                                     
+                                     VStack {
+                                     HStack {
+                                     HStack {
+                                     Text("Valid Thru")
+                                     .frame(maxWidth: 25, alignment: .leading)//(maxWidth: prop.size.width - 50, alignment: .leading)
+                                     .padding(.leading, 20)
+                                     .foregroundStyle(.white)
+                                     .setFontSizeAndWeight(weight: .light, size: 10)
+                                     .minimumScaleFactor(0.5)
+                                     .multilineTextAlignment(.center)
+                                     
+                                     Text("\(self.subscriptionInfo.CardExpMonth!)/\(self.subscriptionInfo.CardExpYear!)")
+                                     .frame(maxWidth: .infinity, alignment: .leading)//(maxWidth: prop.size.width - 50, alignment: .leading)
+                                     .padding(.leading, 5)
+                                     .foregroundStyle(.white)
+                                     .setFontSizeAndWeight(weight: .medium, size: 13)
+                                     .minimumScaleFactor(0.5)
+                                     }
+                                     .frame(alignment: .leading)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     .padding([.top, .bottom], 8)
+                                     
+                                     Text("\(self.subscriptionInfo.CardHolderName!)")
+                                     .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                     .padding(.leading, 20)
+                                     .padding(.bottom, 8)
+                                     .foregroundStyle(.white)
+                                     .setFontSizeAndWeight(weight: .light, size: 15)
+                                     .minimumScaleFactor(0.5)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     }
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .padding(.top, 20)
+                                     
+                                     Spacer()
+                                     
+                                     
+                                     }
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     
+                                     VStack {
+                                     Spacer() /* MARK: Shove the "logo" to the bottom. */
+                                     
+                                     ZStack {
+                                     Image("Logo")
+                                     .resizable()
+                                     .frame(width: 60, height: 60)
+                                     }
+                                     .frame(maxWidth: .infinity, alignment: .trailing)
+                                     .padding(.trailing, 10)
+                                     .padding(.bottom, 5)
+                                     }
+                                     .frame(maxWidth: 60, alignment: .trailing)
+                                     }
+                                     }
+                                     .frame(maxWidth: prop.size.width - 70, minHeight: 200)
+                                     .background(
+                                     RoundedRectangle(cornerRadius: 15)
+                                     .fill(.black)
+                                     .shadow(color: Color.black, radius: 1.5)
+                                     )
+                                     .cornerRadius(15)
+                                     
+                                     VStack {
+                                     Button(action: { print("Update card") }) {
+                                     HStack {
+                                     Text("Update Card Details")
+                                     .frame(maxWidth: .infinity, alignment: .center)
+                                     .padding([.top, .bottom], 8)
+                                     .foregroundStyle(.black)
+                                     .setFontSizeAndWeight(weight: .bold, size: 18)
+                                     .minimumScaleFactor(0.5)
+                                     }
+                                     .frame(maxWidth: prop.size.width - 80)
+                                     .background(
+                                     RoundedRectangle(cornerRadius: 15)
+                                     .fill(.white)
+                                     )
+                                     .cornerRadius(15)
+                                     }
+                                     .buttonStyle(NoLongPressButtonStyle())
+                                     
+                                     Text("This is not a real debit card, this is for visual purposes only.")
+                                     .frame(maxWidth: prop.size.width - 70, alignment: .leading)
+                                     .padding(.leading, 10)
+                                     .padding([.top, .bottom], 5)
+                                     .foregroundStyle(.gray)
+                                     .setFontSizeAndWeight(weight: .light, size: 12)
+                                     .minimumScaleFactor(0.5)
+                                     .multilineTextAlignment(.leading)
+                                     }
+                                     .frame(maxWidth: prop.size.width - 60)
+                                     .padding(.top, 8)
+                                     }
+                                     .frame(maxWidth: prop.size.width - 40)
+                                     .padding([.top, .bottom], 14)
+                                     .background(
+                                     RoundedRectangle(cornerRadius: 15)
+                                     .fill(Color.EZNotesBlack)
+                                     .shadow(color: Color.black, radius: 1.5)
+                                     )
+                                     
+                                     Text("Specifics")
+                                     .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                     .padding(.top, 20)
+                                     .foregroundStyle(.white)
+                                     .setFontSizeAndWeight(weight: .bold, size: 24)
+                                     .minimumScaleFactor(0.5)
+                                     
+                                     VStack {
+                                     HStack {
+                                     Text("Subscription ID:")
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .padding(.leading, 20)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-Regular", size: 16))
+                                     .fontWeight(.bold)
+                                     
+                                     Text(self.subscriptionInfo.PlanID!)
+                                     .frame(maxWidth: .infinity, alignment: .trailing)
+                                     .padding(.trailing, 20)
+                                     .foregroundStyle(.white)
+                                     .setFontSizeAndWeight(weight: .heavy, size: 16)//(Font.custom("Poppins-ExtraLight", size: 16))
+                                     // .fontWeight(.heavy)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     .padding([.top, .bottom])
+                                     
+                                     HStack {
+                                     Text("Subscription Price ID:")
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .padding(.leading, 20)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-Regular", size: 16))
+                                     .fontWeight(.bold)
+                                     
+                                     Text(self.subscriptionInfo.PriceID!)
+                                     .frame(maxWidth: .infinity, alignment: .trailing)
+                                     .padding(.trailing, 20)
+                                     .foregroundStyle(.white)
+                                     .setFontSizeAndWeight(weight: .heavy, size: 16)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     .padding([.top, .bottom])
+                                     
+                                     HStack {
+                                     Text("Subscription Service ID:")
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .padding(.leading, 20)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-Regular", size: 16))
+                                     .fontWeight(.bold)
+                                     
+                                     Text(self.subscriptionInfo.ProductID!)
+                                     .frame(maxWidth: .infinity, alignment: .trailing)
+                                     .padding(.trailing, 20)
+                                     .foregroundStyle(.white)
+                                     .setFontSizeAndWeight(weight: .heavy, size: 16)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     .padding([.top, .bottom])
+                                     }
+                                     .frame(maxWidth: prop.size.width - 40)
+                                     .padding(.top, 14)
+                                     .background(
+                                     RoundedRectangle(cornerRadius: 15)
+                                     .fill(Color.EZNotesBlack)
+                                     .shadow(color: Color.black, radius: 1.5)
+                                     )
+                                     
+                                     Text("These IDs enable you to have a more feasible experience with our team when problems arise with payments, plan conversions or cancellations. **Do not share this data with anyone.**")
+                                     .frame(maxWidth: prop.size.width - 70, alignment: .leading)
+                                     .padding(.leading, 5)
+                                     .foregroundStyle(.gray)
+                                     .setFontSizeAndWeight(weight: .light, size: 12)
+                                     .minimumScaleFactor(0.5)
+                                     .multilineTextAlignment(.leading)
+                                     
+                                     Text("Actions")
+                                     .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                     .padding(.top, 20)
+                                     .foregroundStyle(.white)
+                                     .setFontSizeAndWeight(weight: .bold, size: 24)
+                                     .minimumScaleFactor(0.5)
+                                     
+                                     VStack {
+                                     Button(action: {
+                                     /* TODO: Add endpoint in backend the will remove the users subscription from stripe. */
+                                     
+                                     self.accountPopupSection = "setup_plan"
+                                     }) {
+                                     HStack {
+                                     Text("Switch Plans")
+                                     .frame(maxWidth: .infinity, alignment: .center)
+                                     .padding([.top, .bottom], 8)
+                                     .foregroundStyle(.black)
+                                     .setFontSizeAndWeight(weight: .bold, size: 18)
+                                     .minimumScaleFactor(0.5)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     .background(
+                                     RoundedRectangle(cornerRadius: 15)
+                                     .fill(.white)
+                                     )
+                                     .cornerRadius(15)
+                                     }
+                                     .buttonStyle(NoLongPressButtonStyle())
+                                     
+                                     Button(action: {
+                                     print("Deactivate Plan")
+                                     
+                                     /* TODO: Add endpoint that removes the users plan. Upon deactivating the plan, the account will be deleted. */
+                                     }) {
+                                     HStack {
+                                     Text("Deactivate Plan")
+                                     .frame(maxWidth: .infinity, alignment: .center)
+                                     .padding([.top, .bottom], 8)
+                                     .foregroundStyle(.black)
+                                     .setFontSizeAndWeight(weight: .bold, size: 18)
+                                     .minimumScaleFactor(0.5)
+                                     }
+                                     .frame(maxWidth: .infinity)
+                                     .background(
+                                     RoundedRectangle(cornerRadius: 15)
+                                     .fill(Color.EZNotesRed)
+                                     )
+                                     .cornerRadius(15)
+                                     }
+                                     .buttonStyle(NoLongPressButtonStyle())
+                                     .padding(.top, 5)
+                                     }
+                                     .frame(maxWidth: prop.size.width - 40)
+                                     .padding(.bottom, 30)
+                                     }
+                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                     }
+                                     }
+                                     }*/
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .padding(.top, 40)
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                         default:
@@ -2082,7 +2087,10 @@ struct Account: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .edgesIgnoringSafeArea(self.accountPopupSection == "main" ? [.bottom, .top] : [.top, .bottom])
+        .edgesIgnoringSafeArea([.top, .bottom]/*self.accountPopupSection == "main"
+                               ? [.bottom, .top]
+                               : prop.isLargerScreen ? [.bottom] : [.top, .bottom]*/
+        )
         .background(.black)
     }
 }

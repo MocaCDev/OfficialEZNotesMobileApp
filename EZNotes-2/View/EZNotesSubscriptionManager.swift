@@ -127,6 +127,15 @@ class EZNotesSubscriptionManager: ObservableObject {
     
     //deinit { updates?.cancel() }
     
+    /* MARK: Figure out the name of the plan based on the ID. */
+    public func getSubscriptionName() -> String? {
+        if self.userSubscriptionIDs.isEmpty { return  nil }
+        
+        /* MARK: Return `Optional`, as the return type of the function is an optional. */
+        if self.userSubscriptionIDs.first!.contains("basic") { return Optional("Basic Plan") }
+        else { return Optional("Pro Plan") }
+    }
+    
     public func configurePlans(isFor: String) -> Array<String> {
         switch(isFor) {
         case "basic_plan":

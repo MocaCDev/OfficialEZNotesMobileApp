@@ -167,5 +167,6 @@ struct JustNotes: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.black)
     }
 }

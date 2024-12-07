@@ -547,6 +547,11 @@ struct HomeView: View {
         
         let plusAmount: CGFloat = self.settings.displayUserCreatedCategoriesSeparatly ? -20 : 130
         
+        if textFrame.maxY < 50 {
+            self.show_categories_title = true
+            return
+        }
+        
         // Check if the text frame is out of the bounds of the ScrollView
         if textFrame.maxY < scrollViewFrame.minY + plusAmount || textFrame.minY > scrollViewFrame.maxY {
             self.show_categories_title = true
@@ -1098,12 +1103,17 @@ struct HomeView: View {
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         
-                        VStack {
+                        /*VStack {
                             VStack {
                             }
                             .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
-                            .background(
+                            /*.background(
                                 Image("DefaultThemeBg3")
+                                    .resizable()
+                                    .scaledToFill()
+                            )*/
+                            .background(
+                                Image("DefaultThemeBg5")
                                     .resizable()
                                     .scaledToFill()
                             )
@@ -1111,7 +1121,7 @@ struct HomeView: View {
                             
                             Spacer()
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)*/
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     .edgesIgnoringSafeArea(self.launchCategory && !prop.isLargerScreen ? [.top, .bottom] : [.bottom])

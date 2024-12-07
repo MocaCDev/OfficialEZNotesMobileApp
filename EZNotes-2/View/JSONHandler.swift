@@ -191,6 +191,13 @@ func writeUserCreatedCategoryNames(userCreatedCategoryNames: Array<String>) -> V
     }
 }
 
+func writeUserCreatedSetNames(userCreatedSetNames: Array<String>) -> Void {
+    guard let _ = try? writeJSON(data: userCreatedSetNames, filename: "user_created_sets.json") else {
+        print("[writeUserCreatedSetNames] -> Failed to write \(userCreatedSetNames) to cache")
+        return
+    }
+}
+
 public func getSettings() -> [String: Bool] {
     if let result = try? obtainJSON(type: [String: Bool].self, filename: "settings.json") { return result }
     else {
@@ -303,6 +310,15 @@ func getFontConfiguration() -> [String: [String: String]]? {
 func getUserCreatedCategoryNames() -> Array<String> {
     guard let result = try? obtainJSON(type: Array<String>.self, filename: "user_created_categories.json") else {
         print("[getUserCreatedCategoryNames] -> Failed to get user created categories from cache")
+        return []
+    }
+    
+    return result
+}
+
+func getUserCreatedSetNames() -> Array<String> {
+    guard let result = try? obtainJSON(type: Array<String>.self, filename: "user_created_sets.json") else {
+        print("[getUserCreatedSetNames] -> Failed to get user created categories from cache")
         return []
     }
     
