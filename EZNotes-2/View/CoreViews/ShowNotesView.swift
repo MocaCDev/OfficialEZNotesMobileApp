@@ -531,15 +531,7 @@ struct EditableNotes: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: 40)
                 
-                VStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(MeshGradient(width: 3, height: 3, points: [
-                    .init(0, 0), .init(0.3, 0), .init(1, 0),
-                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                    .init(0, 1), .init(0.5, 1), .init(1, 1)
-                ], colors: [
-                    .indigo, .indigo, Color.EZNotesBlue,
-                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                ]))
+                EZNotesColoredDivider()
                 
                 ScrollView(.vertical) {
                     VStack(alignment: .leading) {
@@ -1089,12 +1081,12 @@ struct ShowNotes: View {
                                         .fill(.white)
                                 )
                                 .cornerRadius(15)
+                                
+                                /* MARK: Ensure space between bottom of screen and end of the scrollview. */
+                                VStack { }.frame(maxWidth: .infinity, maxHeight: 35)
                             }
                         }
                         .buttonStyle(NoLongPressButtonStyle())
-                        .padding([.top, .bottom], 30)
-                        
-                        Spacer()
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 case "save_changes":
@@ -1303,7 +1295,7 @@ struct ShowNotes: View {
                                                     .animation(.easeOut(duration: 0.5), value: self.noteSelectedAnimation) // Apply animation*/
                                                 }
                                                 .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-                                                .padding([.top, .leading, .trailing], 8)
+                                                .padding(12)
                                                 .background(
                                                     RoundedRectangle(cornerRadius: 15)
                                                         .fill(Color.EZNotesLightBlack)

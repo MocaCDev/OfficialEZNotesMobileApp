@@ -136,7 +136,7 @@ struct LoginScreen: View, KeyboardReadable {
                                 ? prop.size.width - 800
                                 : prop.size.width - 450
                                 : prop.size.width - 100,
-                                height: prop.isLargerScreen ? 40 : 30
+                                height: 40
                             )
                             .padding(.leading, prop.isLargerScreen ? 15 : 5)
                             .background(
@@ -212,7 +212,7 @@ struct LoginScreen: View, KeyboardReadable {
                                 ? prop.size.width - 800
                                 : prop.size.width - 450
                                 : prop.size.width - 100,
-                                height: prop.isLargerScreen ? 40 : 30
+                                height: 40
                             )
                             .padding(.leading, prop.isLargerScreen ? 15 : 5)
                             .background(
@@ -301,6 +301,7 @@ struct LoginScreen: View, KeyboardReadable {
                     }
                     .buttonStyle(NoLongPressButtonStyle())
                     .padding(.leading, 5)
+                    .padding(.bottom, prop.isLargerScreen ? 0 : 10)
                     .background(
                         RoundedRectangle(cornerRadius: 15)
                             .fill(.white)

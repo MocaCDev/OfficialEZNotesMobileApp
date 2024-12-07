@@ -105,7 +105,7 @@ struct Account: View {
                     accountInfo.profileBackgroundPicture
                         .resizable()
                         .scaledToFill()
-                        .frame(maxHeight: 135)
+                        .frame(maxHeight: prop.isLargerScreen ? 135 : 115)
                     //.aspectRatio(contentMode: .fill)
                         .clipped()
                         .overlay(Color.EZNotesBlack.opacity(0.3))
@@ -220,7 +220,7 @@ struct Account: View {
                                             .foregroundStyle(.white)
                                     }
                                     .frame(maxWidth: 20, alignment: .leading)
-                                    .padding(.top, 30)
+                                    .padding(.top, prop.isLargerScreen ? 30 : 5)
                                     .padding(.leading, 25)
                                 }
                                 .buttonStyle(NoLongPressButtonStyle())
@@ -233,7 +233,7 @@ struct Account: View {
                         }
                     }
                 } else {
-                    VStack {
+                    /*VStack {
                         HStack {
                             if self.accountPopupSection != "main" {
                                 Button(action: { self.accountPopupSection = "main" }) {
@@ -280,7 +280,7 @@ struct Account: View {
                             ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                         }
                     }
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity)*/
                 }
                 
                 /*HStack {
@@ -464,61 +464,10 @@ struct Account: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.top, -15)
+            .padding(.top, prop.isLargerScreen ? -15 : -25)
             
             VStack {
                 VStack {
-                    /*HStack {
-                        if self.accountPopupSection != "main" {
-                            Button(action: { self.accountPopupSection = "main" }) {
-                                ZStack {
-                                    Image(systemName: "arrow.backward")
-                                        .resizable()
-                                        .frame(width: 15, height: 15)
-                                        .foregroundStyle(.white)
-                                }
-                                .frame(maxWidth: 20, alignment: .leading)
-                                .padding(.top, 15)
-                                .padding(.leading, 25)
-                            }
-                        } else { ZStack { }.frame(maxWidth: 20, alignment: .leading).padding(.leading, 25) }
-                        
-                        Text(self.accountPopupSection == "main"
-                             ? "Account Details"
-                             : self.accountPopupSection == "planDetails"
-                                ? self.subscriptionInfo.ProductName != nil
-                                    ? self.subscriptionInfo.ProductName!
-                                    : self.errorLoadingPlanDetailsSection ? "Plan Details" : "Select Plan"
-                                : self.accountPopupSection == "switch_college"
-                                    ? "Switch College"
-                                    : self.accountPopupSection == "switch_field_and_major"
-                                        ? "Switch Field/Major"
-                                        : self.accountPopupSection == "switch_state"
-                                            ? "Change States"
-                                            : self.accountPopupSection == "change_username"
-                                                ? "Change Username"
-                                                : self.accountPopupSection == "update_password"
-                                                    ? "Update Password"
-                                                    : self.accountPopupSection == "themes"
-                                                        ? "Themes"
-                                                        : self.accountPopupSection == "settings"
-                                                            ? "Settings"
-                                                            /* MARK: Default value if all aforementioned checks fail (which should never happen). */
-                                                            : "Account Details")
-                        .frame(maxWidth: .infinity, maxHeight: 25)
-                        .foregroundStyle(.white)
-                        .padding([.top], 15)
-                        .setFontSizeAndWeight(weight: .bold, size: 20)
-                        
-                        /* MARK: "spacing" to ensure above Text stays in the middle. */
-                        ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
-                    }
-                    
-                    Divider()
-                        .background(.white)
-                        .frame(width: prop.size.width - 50)
-                        .padding([.top, .bottom])*/
-                    
                     if self.accountPopupSection == "main" {
                         VStack {
                             VStack { }.frame(maxWidth: .infinity, maxHeight: 5)
@@ -1121,13 +1070,81 @@ struct Account: View {
                     } else {
                         switch(self.accountPopupSection) {
                         case "setup_plan":
-                            Plans(
-                                prop: prop,
-                                email: self.accountInfo.email,
-                                accountID: self.accountInfo.accountID,
-                                isLargerScreen: prop.isLargerScreen,
-                                action: doSomething
-                            )
+                            ZStack {
+                                VStack {
+                                    Spacer()
+                                    
+                                    VStack {
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                                    .background(
+                                        Image("DefaultThemeBg2")
+                                            .resizable()
+                                            .scaledToFill()
+                                    )
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .zIndex(0)
+                                
+                                VStack {
+                                    VStack {
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                                    .background(
+                                        Image("DefaultThemeBg3")
+                                            .resizable()
+                                            .scaledToFill()
+                                    )
+                                    .padding(.top, 20)
+                                    
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .zIndex(0)
+                                
+                                VStack {
+                                    HStack {
+                                        Button(action: { self.accountPopupSection = "main" }) {
+                                            ZStack {
+                                                Image(systemName: "arrow.backward")
+                                                    .resizable()
+                                                    .frame(width: 15, height: 15)
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: 20, alignment: .leading)
+                                            .padding(.top, 15)
+                                            .padding(.leading, 25)
+                                        }
+                                        
+                                        Text("Setup Plan")
+                                            .frame(maxWidth: .infinity)
+                                            .foregroundStyle(.white)
+                                            .padding([.top], 15)
+                                            .setFontSizeAndWeight(weight: .bold, size: prop.isLargerScreen ? 26 : 22)
+                                            
+                                        /* MARK: "spacing" to ensure above Text stays in the middle. */
+                                        ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 30)
+                                    //.padding(.top, prop.isLargerScreen ? 45 : 5)
+                                    
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                
+                                VStack { /* MARK: `VStack` needed to ensure spacing between header and content of the view (`Plans`). */
+                                    Plans(
+                                        prop: prop,
+                                        email: self.accountInfo.email,
+                                        accountID: self.accountInfo.accountID,
+                                        isLargerScreen: prop.isLargerScreen,
+                                        action: doSomething
+                                    )
+                                    .padding([.top, .bottom], -15) /* MARK: Needed to make it looks like content come up from the bottom of the screen. */
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .padding(.top, 60)
+                            }
                         case "change_username":
                             /* TODO: `isLargerScreen` should be moved into a class where it becomes a published variable. */
                             ChangeUsername(
@@ -1153,308 +1170,444 @@ struct Account: View {
                                 colleges: $colleges
                             )
                         case "switch_college":
-                            VStack {
-                                if self.loadingChangeSchoolsSection {
-                                    Text("Loading colleges for \(self.accountInfo.state)")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .foregroundStyle(.white)
-                                        .setFontSizeAndWeight(weight: .medium, size: 14)
-                                        .minimumScaleFactor(0.5)
+                            ZStack {
+                                VStack {
+                                    Spacer()
                                     
-                                    ProgressView()
-                                        .tint(Color.EZNotesBlue)
-                                } else {
-                                    if self.errorLoadingChangeSchoolsSection {
-                                        ErrorMessage(
-                                            prop: prop,
-                                            placement: .top,
-                                            message: "Error obtaining colleges from \(self.accountInfo.state)",
-                                            showReportProblemButton: true
-                                        )
-                                    } else {
-                                        HStack {
-                                            ZStack { }.frame(maxWidth: 10, alignment: .leading)
-                                            
+                                    VStack {
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                                    .background(
+                                        Image("DefaultThemeBg2")
+                                            .resizable()
+                                            .scaledToFill()
+                                    )
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .zIndex(0)
+                                
+                                VStack {
+                                    VStack {
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                                    .background(
+                                        Image("DefaultThemeBg3")
+                                            .resizable()
+                                            .scaledToFill()
+                                    )
+                                    .padding(.top, 20)
+                                    
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .zIndex(0)
+                                
+                                VStack {
+                                    HStack {
+                                        Button(action: { self.accountPopupSection = "main" }) {
                                             ZStack {
-                                                Text("Select the college where you are actively enrolled.")
-                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                Image(systemName: "arrow.backward")
+                                                    .resizable()
+                                                    .frame(width: 15, height: 15)
                                                     .foregroundStyle(.white)
-                                                    .font(.system(size: prop.isLargerScreen ? 16 : 12, weight: .light))
-                                                    .multilineTextAlignment(.center)
                                             }
-                                            .frame(maxWidth: .infinity, alignment: .center)
-                                            
-                                            ZStack { }.frame(maxWidth: 10, alignment: .trailing)
+                                            .frame(maxWidth: 20, alignment: .leading)
+                                            .padding(.top, 15)
+                                            .padding(.leading, 25)
                                         }
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.bottom, 30)
                                         
-                                        ScrollView(.vertical, showsIndicators: false) {
-                                            VStack {
-                                                ForEach(self.colleges, id: \.self) { college in
-                                                    Button(action: {
-                                                        self.temporaryCollegeValue = college
-                                                        self.updateCollegeAlert = true
-                                                    }) {
-                                                        HStack {
-                                                            Text(college)
-                                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                                .padding([.leading, .top, .bottom], 10)
-                                                                .foregroundStyle(.white)
-                                                                .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
-                                                                .fontWeight(.bold)
-                                                                .minimumScaleFactor(0.5)
-                                                                .multilineTextAlignment(.leading)
-                                                            
-                                                            ZStack {
-                                                                Image(systemName: "chevron.right")
-                                                                    .resizable()
-                                                                    .frame(width: 10, height: 15)
+                                        Text("Switch College")
+                                            .frame(maxWidth: .infinity)
+                                            .foregroundStyle(.white)
+                                            .padding([.top], 15)
+                                            .setFontSizeAndWeight(weight: .bold, size: prop.isLargerScreen ? 26 : 22)
+                                            
+                                        /* MARK: "spacing" to ensure above Text stays in the middle. */
+                                        ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 30)
+                                    //.padding(.top, prop.isLargerScreen ? 45 : 5)
+                                    
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                
+                                VStack {
+                                    if self.loadingChangeSchoolsSection {
+                                        Text("Loading colleges for \(self.accountInfo.state)")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .setFontSizeAndWeight(weight: .medium, size: 14)
+                                            .minimumScaleFactor(0.5)
+                                        
+                                        ProgressView()
+                                            .tint(Color.EZNotesBlue)
+                                    } else {
+                                        if self.errorLoadingChangeSchoolsSection {
+                                            ErrorMessage(
+                                                prop: prop,
+                                                placement: .top,
+                                                message: "Error obtaining colleges from \(self.accountInfo.state)",
+                                                showReportProblemButton: true
+                                            )
+                                        } else {
+                                            HStack {
+                                                ZStack { }.frame(maxWidth: 10, alignment: .leading)
+                                                
+                                                ZStack {
+                                                    Text("Select the college where you are actively enrolled.")
+                                                        .frame(maxWidth: .infinity, alignment: .center)
+                                                        .foregroundStyle(.white)
+                                                        .font(.system(size: prop.isLargerScreen ? 16 : 12, weight: .light))
+                                                        .multilineTextAlignment(.center)
+                                                }
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                
+                                                ZStack { }.frame(maxWidth: 10, alignment: .trailing)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.bottom, 30)
+                                            
+                                            ScrollView(.vertical, showsIndicators: false) {
+                                                VStack {
+                                                    ForEach(self.colleges, id: \.self) { college in
+                                                        Button(action: {
+                                                            self.temporaryCollegeValue = college
+                                                            self.updateCollegeAlert = true
+                                                        }) {
+                                                            HStack {
+                                                                Text(college)
+                                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                                    .padding([.leading, .top, .bottom], 10)
+                                                                    .foregroundStyle(.white)
+                                                                    .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                                    .fontWeight(.bold)
+                                                                    .minimumScaleFactor(0.5)
+                                                                    .multilineTextAlignment(.leading)
+                                                                
+                                                                ZStack {
+                                                                    Image(systemName: "chevron.right")
+                                                                        .resizable()
+                                                                        .frame(width: 10, height: 15)
+                                                                }
+                                                                .frame(maxWidth: 20, alignment: .trailing)
+                                                                .foregroundStyle(.gray)
+                                                                .padding(.trailing, 10)
                                                             }
-                                                            .frame(maxWidth: 20, alignment: .trailing)
-                                                            .foregroundStyle(.gray)
-                                                            .padding(.trailing, 10)
+                                                            .frame(maxWidth: .infinity)
+                                                            .padding(10)
+                                                            .background(
+                                                                RoundedRectangle(cornerRadius: 15)
+                                                                    .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                                    .shadow(color: Color.black, radius: 1.5)
+                                                            )
                                                         }
-                                                        .frame(maxWidth: .infinity)
-                                                        .padding(10)
-                                                        .background(
-                                                            RoundedRectangle(cornerRadius: 15)
-                                                                .fill(Color.EZNotesLightBlack.opacity(0.65))
-                                                                .shadow(color: Color.black, radius: 1.5)
-                                                        )
                                                     }
                                                 }
+                                                .padding(.bottom, 30)
                                             }
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                            .padding([.top, .bottom], -15)
                                         }
                                     }
+                                    
+                                    //Spacer()
                                 }
-                                
-                                //Spacer()
-                            }
-                            .frame(maxWidth: prop.size.width - 40 , maxHeight: .infinity)
-                            .alert("Are you sure?", isPresented: $updateCollegeAlert) {
-                                Button(action: {
-                                    RequestAction<UpdateCollegeNameData>(parameters: UpdateCollegeNameData(
-                                        NewCollegeName: self.temporaryCollegeValue, AccountID: self.accountInfo.accountID
-                                    ))
-                                    .perform(action: update_college_name_req) { statusCode, resp in
-                                        guard resp != nil && statusCode == 200 else {
-                                            self.temporaryCollegeValue.removeAll()
-                                            if let resp = resp { print(resp) }
-                                            
-                                            /* TODO: Display an error message. */
-                                            
-                                            return
-                                        }
-                                        
-                                        assignUDKey(key: "college_name", value: self.temporaryCollegeValue)
-                                        self.accountInfo.setCollegeName(collegeName: self.temporaryCollegeValue)
-                                        
-                                        self.accountPopupSection = "switch_field_and_major"
-                                        self.loadingMajorFields = true
-                                        
-                                        /* MARK: Get new major fields for the school. */
-                                        RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
-                                            State: self.accountInfo.state,
-                                            College: self.temporaryCollegeValue
+                                .frame(maxWidth: prop.size.width - 40 , maxHeight: .infinity)
+                                .padding(.top, 40)
+                                .alert("Are you sure?", isPresented: $updateCollegeAlert) {
+                                    Button(action: {
+                                        RequestAction<UpdateCollegeNameData>(parameters: UpdateCollegeNameData(
+                                            NewCollegeName: self.temporaryCollegeValue, AccountID: self.accountInfo.accountID
                                         ))
-                                        .perform(action: get_custom_college_fields_req) { statusCode, resp in
-                                            self.loadingMajorFields = false
-                                            
-                                            guard
-                                                resp != nil,
-                                                statusCode == 200
-                                            else {
-                                                /* TODO: Handle errors. For now, the below works. */
-                                                //self.accountPopupSection = "main"
-                                                self.errorLoadingMajorFields = true
+                                        .perform(action: update_college_name_req) { statusCode, resp in
+                                            guard resp != nil && statusCode == 200 else {
+                                                self.temporaryCollegeValue.removeAll()
+                                                if let resp = resp { print(resp) }
+                                                
+                                                /* TODO: Display an error message. */
+                                                
                                                 return
                                             }
                                             
-                                            guard resp!.keys.contains("Fields") else {
-                                                /* TODO: Handle errors. For now the below works. */
-                                                //self.accountPopupSection = "main"
-                                                self.errorLoadingMajorFields = true
-                                                return
+                                            assignUDKey(key: "college_name", value: self.temporaryCollegeValue)
+                                            self.accountInfo.setCollegeName(collegeName: self.temporaryCollegeValue)
+                                            
+                                            self.accountPopupSection = "switch_field_and_major"
+                                            self.loadingMajorFields = true
+                                            
+                                            /* MARK: Get new major fields for the school. */
+                                            RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+                                                State: self.accountInfo.state,
+                                                College: self.temporaryCollegeValue
+                                            ))
+                                            .perform(action: get_custom_college_fields_req) { statusCode, resp in
+                                                self.loadingMajorFields = false
+                                                
+                                                guard
+                                                    resp != nil,
+                                                    statusCode == 200
+                                                else {
+                                                    /* TODO: Handle errors. For now, the below works. */
+                                                    //self.accountPopupSection = "main"
+                                                    self.errorLoadingMajorFields = true
+                                                    return
+                                                }
+                                                
+                                                guard resp!.keys.contains("Fields") else {
+                                                    /* TODO: Handle errors. For now the below works. */
+                                                    //self.accountPopupSection = "main"
+                                                    self.errorLoadingMajorFields = true
+                                                    return
+                                                }
+                                                
+                                                self.errorLoadingMajorFields = false
+                                                self.majorFields = resp!["Fields"] as! [String]
+                                                self.majorFields.append("Other")
+                                                //self.majorField = self.majorFields[0]
                                             }
                                             
-                                            self.errorLoadingMajorFields = false
-                                            self.majorFields = resp!["Fields"] as! [String]
-                                            self.majorFields.append("Other")
-                                            //self.majorField = self.majorFields[0]
+                                            /* MARK: Remove the data from the variable when we're done using it to perform the above actions. */
+                                            self.temporaryCollegeValue.removeAll()
                                         }
-                                        
-                                        /* MARK: Remove the data from the variable when we're done using it to perform the above actions. */
-                                        self.temporaryCollegeValue.removeAll()
-                                    }
-                                }) { Text("Yes") }
-                                
-                                Button("No", role: .cancel) { }
-                            } message: {
-                                Text("Proceeding with this course of action will change your school and you will have to update your major field and major. Do you want to continue?")
+                                    }) { Text("Yes") }
+                                    
+                                    Button("No", role: .cancel) { }
+                                } message: {
+                                    Text("Proceeding with this course of action will change your school and you will have to update your major field and major. Do you want to continue?")
+                                }
                             }
                         case "switch_field_and_major":
-                            VStack {
-                                if self.loadingMajorFields || self.loadingMajors {
-                                    Text(self.loadingMajorFields ? "Loading Major Fields" : "Loading Majors")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .foregroundStyle(.white)
-                                        .setFontSizeAndWeight(weight: .medium, size: 14)
-                                        .minimumScaleFactor(0.5)
+                            ZStack {
+                                VStack {
+                                    Spacer()
                                     
-                                    ProgressView()
-                                        .tint(Color.EZNotesBlue)
-                                } else {
-                                    if self.errorLoadingMajorFields || self.errorLoadingMajors {
-                                        ErrorMessage(
-                                            prop: self.prop,
-                                            placement: .top,
-                                            message: self.errorLoadingMajorFields ? "Failed to obtain major fields from \(self.accountInfo.college)" : "Failed to obtain majors for \(self.temporaryMajorFieldValue)",
-                                            showReportProblemButton: true
-                                        )
-                                    } else {
-                                        HStack {
-                                            ZStack { }.frame(maxWidth: 10, alignment: .leading)
-                                            
+                                    VStack {
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                                    .background(
+                                        Image("DefaultThemeBg2")
+                                            .resizable()
+                                            .scaledToFill()
+                                    )
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .zIndex(0)
+                                
+                                VStack {
+                                    VStack {
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                                    .background(
+                                        Image("DefaultThemeBg3")
+                                            .resizable()
+                                            .scaledToFill()
+                                    )
+                                    .padding(.top, 20)
+                                    
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .zIndex(0)
+                                
+                                VStack {
+                                    HStack {
+                                        Button(action: { self.accountPopupSection = "main" }) {
                                             ZStack {
-                                                Text(self.switchFieldAndMajorSection == "choose_field"
-                                                     ? "Select your field of interest in which you are majoring"
-                                                     : "Select your major within the \(temporaryMajorFieldValue) field")
+                                                Image(systemName: "arrow.backward")
+                                                    .resizable()
+                                                    .frame(width: 15, height: 15)
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: 20, alignment: .leading)
+                                            .padding(.top, 15)
+                                            .padding(.leading, 25)
+                                        }
+                                        
+                                        Text("Switch Field/Major")
+                                            .frame(maxWidth: .infinity)
+                                            .foregroundStyle(.white)
+                                            .padding([.top], 15)
+                                            .setFontSizeAndWeight(weight: .bold, size: prop.isLargerScreen ? 26 : 22)
+                                            
+                                        /* MARK: "spacing" to ensure above Text stays in the middle. */
+                                        ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 30)
+                                    //.padding(.top, prop.isLargerScreen ? 45 : 5)
+                                    
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                
+                                VStack {
+                                    if self.loadingMajorFields || self.loadingMajors {
+                                        Text(self.loadingMajorFields ? "Loading Major Fields" : "Loading Majors")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .setFontSizeAndWeight(weight: .medium, size: 14)
+                                            .minimumScaleFactor(0.5)
+                                        
+                                        ProgressView()
+                                            .tint(Color.EZNotesBlue)
+                                    } else {
+                                        if self.errorLoadingMajorFields || self.errorLoadingMajors {
+                                            ErrorMessage(
+                                                prop: self.prop,
+                                                placement: .top,
+                                                message: self.errorLoadingMajorFields ? "Failed to obtain major fields from \(self.accountInfo.college)" : "Failed to obtain majors for \(self.temporaryMajorFieldValue)",
+                                                showReportProblemButton: true
+                                            )
+                                        } else {
+                                            HStack {
+                                                ZStack { }.frame(maxWidth: 10, alignment: .leading)
+                                                
+                                                ZStack {
+                                                    Text(self.switchFieldAndMajorSection == "choose_field"
+                                                         ? "Select your field of interest in which you are majoring"
+                                                         : "Select your major within the \(temporaryMajorFieldValue) field")
                                                     .frame(maxWidth: .infinity, alignment: .center)
                                                     .foregroundStyle(.white)
                                                     .font(.system(size: prop.isLargerScreen ? 16 : 12, weight: .light))
                                                     .multilineTextAlignment(.center)
+                                                }
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                
+                                                ZStack { }.frame(maxWidth: 10, alignment: .trailing)
                                             }
-                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.bottom, 30)
                                             
-                                            ZStack { }.frame(maxWidth: 10, alignment: .trailing)
-                                        }
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.bottom, 30)
-                                        
-                                        ScrollView(.vertical, showsIndicators: false) {
-                                            VStack {
-                                                ForEach(self.switchFieldAndMajorSection == "choose_field"
-                                                        ? self.majorFields
-                                                        : self.majors, id: \.self) { value in
-                                                    Button(action: {
-                                                        if self.switchFieldAndMajorSection == "choose_field" {
-                                                            self.loadingMajors = true
-                                                            self.switchFieldAndMajorSection = "choose_major"
-                                                            self.temporaryMajorFieldValue = value
-                                                            
-                                                            RequestAction<GetMajorsRequestData>(
-                                                                parameters: GetMajorsRequestData(
-                                                                    College: self.accountInfo.college,
-                                                                    MajorField: value
-                                                                ))
-                                                            .perform(action: get_majors_req) { statusCode, resp in
-                                                                self.loadingMajors = false
-                                                                
-                                                                guard resp != nil && statusCode == 200 else {
-                                                                    self.errorLoadingMajors = true
-                                                                    return
-                                                                }
-                                                                
-                                                                self.majors = resp!["Majors"] as! [String]
-                                                                self.majors.append("Other")
+                                            ScrollView(.vertical, showsIndicators: false) {
+                                                VStack {
+                                                    ForEach(self.switchFieldAndMajorSection == "choose_field"
+                                                            ? self.majorFields
+                                                            : self.majors, id: \.self) { value in
+                                                        Button(action: {
+                                                            if self.switchFieldAndMajorSection == "choose_field" {
+                                                                self.loadingMajors = true
                                                                 self.switchFieldAndMajorSection = "choose_major"
-                                                                //self.major = self.majors[0]
+                                                                self.temporaryMajorFieldValue = value
+                                                                
+                                                                RequestAction<GetMajorsRequestData>(
+                                                                    parameters: GetMajorsRequestData(
+                                                                        College: self.accountInfo.college,
+                                                                        MajorField: value
+                                                                    ))
+                                                                .perform(action: get_majors_req) { statusCode, resp in
+                                                                    self.loadingMajors = false
+                                                                    
+                                                                    guard resp != nil && statusCode == 200 else {
+                                                                        self.errorLoadingMajors = true
+                                                                        return
+                                                                    }
+                                                                    
+                                                                    self.majors = resp!["Majors"] as! [String]
+                                                                    self.majors.append("Other")
+                                                                    self.switchFieldAndMajorSection = "choose_major"
+                                                                    //self.major = self.majors[0]
+                                                                }
+                                                            } else {
+                                                                self.temporaryMajorValue = value
+                                                                self.updateMajorFieldAndMajorAlert = true
                                                             }
-                                                        } else {
-                                                            self.temporaryMajorValue = value
-                                                            self.updateMajorFieldAndMajorAlert = true
-                                                        }
-                                                    }) {
-                                                        HStack {
-                                                            Text(value)
-                                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                                .padding([.leading, .top, .bottom], 10)
-                                                                .foregroundStyle(.white)
-                                                                .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
-                                                                .fontWeight(.bold)
-                                                                .minimumScaleFactor(0.5)
-                                                                .multilineTextAlignment(.leading)
-                                                            
-                                                            ZStack {
-                                                                Image(systemName: "chevron.right")
-                                                                    .resizable()
-                                                                    .frame(width: 10, height: 15)
+                                                        }) {
+                                                            HStack {
+                                                                Text(value)
+                                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                                    .padding([.leading, .top, .bottom], 10)
+                                                                    .foregroundStyle(.white)
+                                                                    .font(Font.custom("Poppins-Regular", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                                    .fontWeight(.bold)
+                                                                    .minimumScaleFactor(0.5)
+                                                                    .multilineTextAlignment(.leading)
+                                                                
+                                                                ZStack {
+                                                                    Image(systemName: "chevron.right")
+                                                                        .resizable()
+                                                                        .frame(width: 10, height: 15)
+                                                                }
+                                                                .frame(maxWidth: 20, alignment: .trailing)
+                                                                .foregroundStyle(.gray)
+                                                                .padding(.trailing, 10)
                                                             }
-                                                            .frame(maxWidth: 20, alignment: .trailing)
-                                                            .foregroundStyle(.gray)
-                                                            .padding(.trailing, 10)
+                                                            .frame(maxWidth: .infinity)
+                                                            .padding(10)
+                                                            .background(
+                                                                RoundedRectangle(cornerRadius: 15)
+                                                                    .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                                    .shadow(color: Color.black, radius: 1.5)
+                                                            )
                                                         }
-                                                        .frame(maxWidth: .infinity)
-                                                        .padding(10)
-                                                        .background(
-                                                            RoundedRectangle(cornerRadius: 15)
-                                                                .fill(Color.EZNotesLightBlack.opacity(0.65))
-                                                                .shadow(color: Color.black, radius: 1.5)
-                                                        )
                                                     }
                                                 }
+                                                .padding(.bottom, 30)
                                             }
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                            .padding([.top, .bottom], -15)
                                         }
                                     }
                                 }
-                            }
-                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-                            .alert("Are you sure?", isPresented: $updateMajorFieldAndMajorAlert) {
-                                Button(action: {
-                                    RequestAction<UpdateMajorFieldData>(parameters: UpdateMajorFieldData(
-                                        NewMajorField: self.temporaryMajorFieldValue,
-                                        AccountID: self.accountInfo.accountID
-                                    ))
-                                    .perform(action: update_major_field_req) { statusCode, resp in
-                                        guard resp != nil && statusCode == 200 else {
-                                            /* TODO: Handle errors. For now this is okay. */
-                                            self.accountPopupSection = "main"
-                                            return
-                                        }
-                                        
-                                        /* MARK: Upon the initial request being good, attempt to also update the major. */
-                                        RequestAction<UpdateMajorData>(parameters: UpdateMajorData(
-                                            NewMajor: self.temporaryMajorValue,
+                                .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+                                .padding(.top, 40)
+                                .alert("Are you sure?", isPresented: $updateMajorFieldAndMajorAlert) {
+                                    Button(action: {
+                                        RequestAction<UpdateMajorFieldData>(parameters: UpdateMajorFieldData(
+                                            NewMajorField: self.temporaryMajorFieldValue,
                                             AccountID: self.accountInfo.accountID
                                         ))
-                                        .perform(action: update_major_req) { statusCode, resp in
+                                        .perform(action: update_major_field_req) { statusCode, resp in
                                             guard resp != nil && statusCode == 200 else {
-                                                /* TODO: Handl errors. For now this is okay. */
+                                                /* TODO: Handle errors. For now this is okay. */
                                                 self.accountPopupSection = "main"
                                                 return
                                             }
                                             
-                                            /* MARK: If updating the major is good, then update the UserDefault values. */
-                                            assignUDKey(key: "major_field", value: self.temporaryMajorFieldValue)
-                                            assignUDKey(key: "major_name", value: self.temporaryMajorValue)
-                                            self.accountInfo.setMajorName(majorName: self.temporaryMajorValue)
-                                            
-                                            self.temporaryMajorFieldValue.removeAll()
-                                            self.temporaryMajorValue.removeAll()
-                                            
-                                            /* MARK: Reset the "section" of the "Switch Field/Major" view. */
-                                            self.switchFieldAndMajorSection = "choose_field"
-                                            
-                                            /* MARK: Once updating all the information after switching schools, go back to the main section. */
-                                            self.accountPopupSection = "main"
+                                            /* MARK: Upon the initial request being good, attempt to also update the major. */
+                                            RequestAction<UpdateMajorData>(parameters: UpdateMajorData(
+                                                NewMajor: self.temporaryMajorValue,
+                                                AccountID: self.accountInfo.accountID
+                                            ))
+                                            .perform(action: update_major_req) { statusCode, resp in
+                                                guard resp != nil && statusCode == 200 else {
+                                                    /* TODO: Handl errors. For now this is okay. */
+                                                    self.accountPopupSection = "main"
+                                                    return
+                                                }
+                                                
+                                                /* MARK: If updating the major is good, then update the UserDefault values. */
+                                                assignUDKey(key: "major_field", value: self.temporaryMajorFieldValue)
+                                                assignUDKey(key: "major_name", value: self.temporaryMajorValue)
+                                                self.accountInfo.setMajorName(majorName: self.temporaryMajorValue)
+                                                
+                                                self.temporaryMajorFieldValue.removeAll()
+                                                self.temporaryMajorValue.removeAll()
+                                                
+                                                /* MARK: Reset the "section" of the "Switch Field/Major" view. */
+                                                self.switchFieldAndMajorSection = "choose_field"
+                                                
+                                                /* MARK: Once updating all the information after switching schools, go back to the main section. */
+                                                self.accountPopupSection = "main"
+                                            }
                                         }
-                                    }
-                                }) { Text("Yes") }
-                                
-                                Button(action: {
-                                    self.switchFieldAndMajorSection = "choose_field"
-                                }) { Text("no") }
-                            } message: {
-                                Text("Proceeding with this course of action will change your major field and major. Do you want to continue?")
+                                    }) { Text("Yes") }
+                                    
+                                    Button(action: {
+                                        self.switchFieldAndMajorSection = "choose_field"
+                                    }) { Text("no") }
+                                } message: {
+                                    Text("Proceeding with this course of action will change your major field and major. Do you want to continue?")
+                                }
                             }
                         case "themes":
                             Themes(
-                                prop: self.prop
+                                prop: self.prop,
+                                accountPopupSection: $accountPopupSection
                             )
                         case "settings":
                             Settings(
-                                prop: self.prop
+                                prop: self.prop,
+                                accountPopupSection: $accountPopupSection
                             )
                         case "planDetails":
                             VStack {
@@ -1924,12 +2077,12 @@ struct Account: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             //.offset(y: self.bodyYOffset)
-            .padding(.top, 20)
+            .padding(.top, self.accountPopupSection == "main" ? 20 : 0)
             
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .edgesIgnoringSafeArea(self.accountPopupSection == "main" ? [.bottom, .top] : [.bottom])
+        .edgesIgnoringSafeArea(self.accountPopupSection == "main" ? [.bottom, .top] : [.top, .bottom])
         .background(.black)
     }
 }

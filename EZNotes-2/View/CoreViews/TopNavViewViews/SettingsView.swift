@@ -21,59 +21,76 @@ struct Settings: View {
     @State private var showInfoPopup: Bool = false
     @State private var infoType: InfoType = .None
     
+    @Binding public var accountPopupSection: String
+    
     var body: some View {
         ZStack {
-            if self.showInfoPopup {
-                switch(self.infoType) {
-                case .displayShortLongSetNamesSeparatelyInfo:
-                    VStack {
-                        Spacer()
-                        
-                        VStack {
-                            Text(self.settings.seggregateShortAndLongNames
-                                 ? "All short/long set names will be shown in a separate view, rather than both being combined in one view."
-                                 : "All short/long set names will be shown in one view, rather than being separated into two views.")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding([.leading, .trailing], 10)
-                            .padding(.bottom, 2)
-                            .foregroundStyle(.gray)
-                            .font(.system(size: prop.isLargerScreen ? 13 : 11))
-                            .minimumScaleFactor(0.5)
-                            .fontWeight(.medium)
-                            .multilineTextAlignment(.leading)
-                        }
-                        .frame(maxWidth: prop.size.width - 40)
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(Color.EZNotesBlack)
-                                .shadow(color: Color.white, radius: 8)
-                        )
-                        .cornerRadius(15)
-                        
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.EZNotesBlack.opacity(0.5))
-                    .onTapGesture {
-                        self.showInfoPopup = false
-                        self.infoType = .None
-                    }
-                    .zIndex(1)
-                case .trackUserCreatedSetsInfo:
-                    VStack {
-                        
-                    }
-                    .zIndex(1)
-                case .displayUserCreatedSetsSeparatelyInfo:
-                    VStack {
-                        
-                    }
-                    .zIndex(1)
-                default: VStack { }.onAppear { self.infoType = .None; self.showInfoPopup = false }
-                }
-            }
             VStack {
+                Spacer()
+                
+                VStack {
+                }
+                .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                .background(
+                    Image("DefaultThemeBg2")
+                        .resizable()
+                        .scaledToFill()
+                )
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .zIndex(0)
+            
+            VStack {
+                VStack {
+                }
+                .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                .background(
+                    Image("DefaultThemeBg3")
+                        .resizable()
+                        .scaledToFill()
+                )
+                .padding(.top, 20)
+                
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .zIndex(0)
+            
+            VStack {
+                HStack {
+                    Button(action: { self.accountPopupSection = "main" }) {
+                        ZStack {
+                            Image(systemName: "arrow.backward")
+                                .resizable()
+                                .frame(width: 15, height: 15)
+                                .foregroundStyle(.white)
+                        }
+                        .frame(maxWidth: 20, alignment: .leading)
+                        .padding(.top, 15)
+                        .padding(.leading, 25)
+                    }
+                    
+                    Text("Settings")
+                        .frame(maxWidth: .infinity)
+                        .foregroundStyle(.white)
+                        .padding([.top], 15)
+                        .setFontSizeAndWeight(weight: .bold, size: prop.isLargerScreen ? 26 : 22)
+                        
+                    /* MARK: "spacing" to ensure above Text stays in the middle. */
+                    ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
+                }
+                .frame(maxWidth: .infinity, maxHeight: 30)
+                //.padding(.top, prop.isLargerScreen ? 45 : 5)
+                
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
+            VStack {
+                //VStack {
+                //}
+                //.frame(maxWidth: .infinity)
+                
                 /* MARK: Ensure there is spacing between the header and the content of the view. */
                 VStack { }.frame(maxWidth: .infinity).padding(.top, 15)
                 
@@ -100,7 +117,6 @@ struct Settings: View {
                                 .indigo, Color.EZNotesGreen, Color.EZNotesBlue
                             ])).frame(maxWidth: .infinity)
                         }
-                        .frame(maxWidth: .infinity)
                     }
                     
                     VStack {
@@ -332,154 +348,18 @@ struct Settings: View {
                     .padding([.leading, .trailing], 2.5)
                     .padding(.bottom, 10)
                     
-                    /*HStack {
-                        ZStack {
-                            Toggle("Display short/long set names separately", isOn: $settings.seggregateShortAndLongNames)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .fontWeight(.bold)
-                                .font(.system(size: prop.isLargerScreen ? 18 : 16))
-                                .toggleStyle(SwitchToggleStyle(tint: Color.EZNotesBlue))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding([.leading, .trailing])
-                        .padding([.top, .bottom], 12)
-                        .background(Color.EZNotesLightBlack.opacity(0.8))
-                        .cornerRadius(15)
-                        
-                        Button(action: {
-                            self.infoType = .displayShortLongSetNamesSeparatelyInfo
-                            self.showInfoPopup = true
-                        }) {
-                            ZStack {
-                                Image(systemName: "questionmark")
-                                    .resizable()
-                                    .frame(width: 12, height: 18)
-                                    .foregroundStyle(Color.EZNotesBlue)
-                            }
-                            .frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 10)
-                        }
-                        .buttonStyle(NoLongPressButtonStyle())
-                    }
-                    
-                    Text(self.settings.seggregateShortAndLongNames
-                         ? "All short/long set names will be shown in a separate view, rather than both being combined in one view."
-                         : "All short/long set names will be shown in one view, rather than being separated into two views.")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding([.leading, .trailing], 10)
-                    .padding(.bottom, 2)
-                    .foregroundStyle(.gray)
-                    .font(.system(size: prop.isLargerScreen ? 13 : 11))
-                    .minimumScaleFactor(0.5)
-                    .fontWeight(.medium)
-                    .multilineTextAlignment(.leading)
-                    
-                    Text("After selecting a category, you might notice there is a single view where longer set names span across the screen and shorter set names will have two sets in a single row. The longer set names appear at the top of the view, and the shorter set names will appear at the bottom. By enabling this setting, you will seggregate the longer set names into one view and the shorter set names into another view. This setting simply enables a more feasible way to view the sets.")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding([.leading, .trailing], 10)
-                        .padding(.bottom, 2)
-                        .foregroundStyle(.gray)
-                        .font(.system(size: prop.isLargerScreen ? 13 : 11))
-                        .minimumScaleFactor(0.5)
-                        .fontWeight(.medium)
-                        .multilineTextAlignment(.leading)
-                    
-                    HStack {
-                        ZStack {
-                            Toggle("Track user created sets", isOn: $settings.trackUserCreatedSets)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .fontWeight(.bold)
-                                .font(.system(size: 18))
-                                .toggleStyle(SwitchToggleStyle(tint: Color.EZNotesBlue))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding([.leading, .trailing])
-                        .padding([.top, .bottom], 12)
-                        .background(Color.EZNotesLightBlack.opacity(0.8))
-                        .cornerRadius(15)
-                        
-                        Button(action: {
-                            self.infoType = .trackUserCreatedSetsInfo
-                            self.showInfoPopup = true
-                        }) {
-                            ZStack {
-                                Image(systemName: "questionmark")
-                                    .resizable()
-                                    .frame(width: 12, height: 18)
-                                    .foregroundStyle(Color.EZNotesBlue)
-                            }
-                            .frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 10)
-                        }
-                        .buttonStyle(NoLongPressButtonStyle())
-                    }
-                    .padding(.top)
-                    
-                    Text(self.settings.trackUserCreatedSets
-                         ? "The app will keep track of all the sets you create."
-                         : "The app will not keep track of all the sets you create. Since this setting is disabled, the below setting \"Display user created sets separately\" will not be affective.")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding([.leading, .trailing], 10)
-                    .padding(.bottom, 2)
-                    .foregroundStyle(.gray)
-                    .font(.system(size: prop.isLargerScreen ? 13 : 11))
-                    .minimumScaleFactor(0.5)
-                    .fontWeight(.medium)
-                    .multilineTextAlignment(.leading)
-                    
-                    HStack {
-                        ZStack {
-                            Toggle("Display user created sets separately", isOn: $settings.displayUserCreatedSetsSeparately)
-                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                .foregroundStyle(.white)
-                                .fontWeight(.bold)
-                                .font(.system(size: 18))
-                                .toggleStyle(SwitchToggleStyle(tint: Color.EZNotesBlue))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding([.leading, .trailing])
-                        .padding([.top, .bottom], 12)
-                        .background(Color.EZNotesLightBlack.opacity(0.8))
-                        .cornerRadius(15)
-                        
-                        Button(action: {
-                            self.infoType = .displayUserCreatedSetsSeparatelyInfo
-                            self.showInfoPopup = true
-                        }) {
-                            ZStack {
-                                Image(systemName: "questionmark")
-                                    .resizable()
-                                    .frame(width: 12, height: 18)
-                                    .foregroundStyle(Color.EZNotesBlue)
-                            }
-                            .frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 10)
-                        }
-                        .buttonStyle(NoLongPressButtonStyle())
-                    }
-                    .padding(.top)
-                    
-                    Text(self.settings.displayUserCreatedSetsSeparately
-                         ? "All sets that are created by the user will be shown in a separate view. This view will not be affected by the setting \"Display short/long set names differently\"; however, the view will show all longer set names at the top and all shorter set names at the bottom of the view."
-                         : "All sets created by the user will be merged with the rest of the sets. The user created sets will be compliant with the setting \"Display short/long set names differently\".")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding([.leading, .trailing], 10)
-                    .padding(.bottom, 2)
-                    .foregroundStyle(.gray)
-                    .font(.system(size: prop.isLargerScreen ? 13 : 11))
-                    .minimumScaleFactor(0.5)
-                    .fontWeight(.medium)
-                    .multilineTextAlignment(.leading)*/
-                    
                     /* MARK: Ensure there is padding at the end of the ScrollView. */
                     VStack { }.frame(maxWidth: .infinity, maxHeight: 40)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                
-                Spacer()
+                .padding(.bottom, -15)
             }
             .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+            .padding(.top, 40)
+            .zIndex(1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .edgesIgnoringSafeArea([.top, .bottom])
         .onDisappear {
             self.settings.saveSettings()
         }

@@ -375,8 +375,14 @@ struct AIChat: View {
                                                                       ? self.topicPicked
                                                                       :"EZNotes AI Chat", width: UIScreen.main.bounds.width), alignment: .center)
             .padding(.top, 10)
-            
-            HStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.white)
+            .background(
+                self.aiChatSection != "chat"
+                ? AnyView(Image("AIChatBg2")
+                    .resizable()
+                    .scaledToFill()
+                    .overlay(.black.opacity(0.4)))
+                : AnyView(Color.clear)
+            )
             
             if self.error == .None {
                 switch(self.aiChatSection) {
@@ -742,6 +748,11 @@ struct AIChat: View {
                         .frame(maxWidth: .infinity, maxHeight: 5)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(
+                        Image("AIChatBg3")
+                            .resizable()
+                            .scaledToFill()
+                    )
                     .onAppear {
                         // Detect keyboard notifications when the view appears
                         addKeyboardObservers()

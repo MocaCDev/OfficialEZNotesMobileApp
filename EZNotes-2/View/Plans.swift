@@ -323,10 +323,11 @@ public struct Plans: View {
                         .padding(.bottom, 30)
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .edgesIgnoringSafeArea([.bottom])
         .task {
             Task {
                 /* MARK: Perform this when the view appears so that the according buttons show for the "basic_plan" plan view. */
@@ -338,7 +339,7 @@ public struct Plans: View {
                 }
             }
         }
-        .popover(isPresented: $isPlanPicked) {
+        .popover(isPresented: $isPlanPicked) { /* TODO: Delete. I do not believe it is needed anymore. Keep for now just in case it's needed. */
             GeometryReader { geometry in
                 VStack {
                     if self.processingPayment {

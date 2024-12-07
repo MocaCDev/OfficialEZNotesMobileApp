@@ -214,7 +214,7 @@ struct CategoryInternalsPlusButton: View {
                 .buttonStyle(NoLongPressButtonStyle())
             }
             .frame(maxWidth: .infinity, maxHeight: 60)
-            .padding(.bottom, 15)
+            .padding(.bottom, prop.isLargerScreen ? 15 : 5)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
     }

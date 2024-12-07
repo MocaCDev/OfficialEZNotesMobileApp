@@ -86,9 +86,11 @@ struct ButtomNavbar: View {
         }
         .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
         .background(
-            Rectangle()
+            self.section == "upload"
+            ? AnyView(Rectangle()
                 .fill(Color.EZNotesLightBlack.opacity(0.5))
-                .shadow(color: Color.black, radius: 2.5, y: -2.5)
+                .shadow(color: Color.black, radius: 2.5, y: -2.5))
+            : AnyView(Color.clear)
         )
     }
 }

@@ -119,9 +119,91 @@ struct CategoryInternalsView: View {
     
     @Binding public var topBanner: [String: TopBanner]
     
+    @State private var showDescription: Bool = false
+    
     var body: some View {
         if !self.launchedSet {
             ZStack {
+                if self.showDescription {
+                    VStack {
+                        Spacer()
+                        
+                        VStack {
+                            HStack {
+                                ZStack {
+                                    Button(action: { self.showDescription = false}) {
+                                        Image(systemName: "multiply")
+                                            .resizable()
+                                            .frame(
+                                                width: 15,//prop.size.height / 2.5 > 300 ? 45 : 40,
+                                                height: 15//prop.size.height / 2.5 > 300 ? 45 : 40
+                                            )
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                }
+                                .frame(maxWidth: 20, maxHeight: 20)
+                                .padding(6)
+                                .background(
+                                    Circle()
+                                        .fill(Color.EZNotesLightBlack.opacity(0.5))
+                                )
+                                //.padding(.top, 2.5)
+                                
+                                HStack {
+                                    Spacer()
+                                    
+                                    Text("\(self.categoryName) Description")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 26 : 22))
+                                        .multilineTextAlignment(.center)
+                                    
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity)
+                                
+                                ZStack { }.frame(maxWidth: 20, alignment: .trailing)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 30)
+                            
+                            HStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.white)
+                                .padding(.bottom, 15)
+                            
+                            Text(self.categoryDescription!)
+                                .frame(maxWidth: .infinity, alignment: .center)//(maxWidth: prop.size.width - 60, alignment: .leading)
+                                .padding([.bottom, .leading], 8) /* MARK: Pad the bottom to ensure space between the text and the sets information. Pad to the lefthand side (`.leading`) to have a indentation. */
+                                .foregroundStyle(.white)
+                                .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 15 : 13))//.setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 15 : 13)
+                                .minimumScaleFactor(0.5)
+                                .multilineTextAlignment(.center)
+                                .truncationMode(.tail)
+                        }
+                        .frame(maxWidth: prop.size.width - 70)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(Color.EZNotesBlack)
+                                .shadow(color: Color.black, radius: 4.5)
+                        )
+                        .padding([.leading, .trailing])
+                        .padding(.top)
+                        .padding(.bottom, 40)
+                        .cornerRadius(15)
+                        .onTapGesture {
+                            /* MARK: Do nothing, just capture the tap gesture event so the one on the parent view doesn't get triggered and close out the entire view. */
+                            return
+                        }
+                        
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.EZNotesBlack.opacity(0.7))
+                    .onTapGesture {
+                        self.showDescription = false
+                    }
+                    .zIndex(1)
+                }
+                
                 if self.createNewSet {
                     VStack {
                         Spacer()
@@ -569,12 +651,121 @@ struct CategoryInternalsView: View {
                         VStack {
                             HStack {
                                 Text(self.categoryName)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.top, 20)
+                                    .frame(alignment: .leading)
+                                    .padding(.top, prop.isLargerScreen ? 20 : -24)
+                                    .padding(.bottom, prop.isLargerScreen ? 0 : 24)
                                     .foregroundStyle(.white)
-                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 28 : 24))//.setFontSizeAndWeight(weight: .semibold, size: prop.isLargerScreen ? 35 : 30)
+                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 28 : 30))//.setFontSizeAndWeight(weight: .semibold, size: prop.isLargerScreen ? 35 : 30)
                                     .minimumScaleFactor(0.5)
+                                    .lineLimit(prop.isLargerScreen ? 2 : 1)
                                     .multilineTextAlignment(.leading)
+                                
+                                if self.categoryDescription != nil {
+                                    Button(action: { self.showDescription = true }) {
+                                        Text("Show Description")
+                                            .foregroundStyle(Color.EZNotesBlue)
+                                            .font(.system(size: 13))
+                                            .underline()
+                                            .padding(6)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .padding(.top, prop.isLargerScreen ? 25 : -16)
+                                    .padding(.bottom, prop.isLargerScreen ? 0 : 24)
+                                } else {
+                                    VStack {
+                                        if !self.generatingDesc {
+                                            Button(action: {
+                                                self.generatingDesc = true
+                                                
+                                                RequestAction<GenerateDescRequestData>(
+                                                    parameters: GenerateDescRequestData(
+                                                        Subject: self.categoryName
+                                                    )
+                                                ).perform(action: generate_desc_req) { statusCode, resp in
+                                                    guard resp != nil && statusCode == 200 else {
+                                                        self.generatingDesc = false
+                                                        return
+                                                    }
+                                                    
+                                                    self.categoryData.categoryDescriptions[self.categoryName] = resp!["Desc"] as? String
+                                                    self.categoryDescription = resp!["Desc"] as? String
+                                                    writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
+                                                }
+                                            }) {
+                                                if #available(iOS 18.0, *) {
+                                                    Text("Generate Description")
+                                                        .frame(maxWidth: 200, alignment: .center)
+                                                        .padding([.top, .bottom], 5)
+                                                        .foregroundStyle(
+                                                            MeshGradient(width: 3, height: 3, points: [
+                                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                            ], colors: [
+                                                                .indigo, .indigo, Color.EZNotesBlue,
+                                                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                            ])
+                                                        )
+                                                        .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 13 : 13)
+                                                        .background(
+                                                            RoundedRectangle(cornerRadius: 15)
+                                                                .fill(.white)
+                                                                .strokeBorder(.white, lineWidth: 1)
+                                                        )
+                                                } else {
+                                                    Text("Generate Description")
+                                                        .frame(maxWidth: 200, alignment: .center)
+                                                        .padding([.top, .bottom], 5)
+                                                        .foregroundStyle(.black)
+                                                        .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 13 : 13)
+                                                        .background(
+                                                            RoundedRectangle(cornerRadius: 15)
+                                                                .fill(.white)
+                                                                .strokeBorder(.white, lineWidth: 1)
+                                                        )
+                                                }
+                                            }
+                                            .padding([.top, .bottom], 15)
+                                            
+                                            if self.errorGenerating {
+                                                Text("Error generating description.. try again")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .setFontSizeAndWeight(weight: .medium, size: 16)
+                                                    .minimumScaleFactor(0.5)
+                                            }
+                                        } else {
+                                            VStack {
+                                                Text("Generating Description...")
+                                                    .frame(alignment: .center)
+                                                    .foregroundStyle(.white)
+                                                    .setFontSizeAndWeight(weight: .medium, size: 12)
+                                                
+                                                ProgressView()
+                                                    .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
+                                                        .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                        .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                        .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                                    ], colors: [
+                                                        .indigo, .indigo, Color.EZNotesBlue,
+                                                        Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                        .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                        /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                         Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                         Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                                    ]))//(.blue)
+                                            }
+                                        }
+                                    }
+                                    .padding(.top, prop.isLargerScreen ? 25 : -22)
+                                    .padding(.bottom, prop.isLargerScreen ? 0 : 24)
+                                    .padding(.leading, 15)
+                                }
+                                
+                                Spacer()
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             
@@ -582,6 +773,7 @@ struct CategoryInternalsView: View {
                                 HStack {
                                     Text("\(self.categoryData.categoriesAndSets[self.categoryName]!.count) \(self.categoryData.categoriesAndSets[self.categoryName]!.count > 1 ? "Sets" : self.categoryData.categoriesAndSets[self.categoryName]!.count == 0 ? "Sets" : "Set")")
                                         .frame(alignment: .leading)
+                                        .foregroundStyle(.white)
                                         .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen ? 12.5 : 10.5)
                                     //.padding([.leading, .trailing], 8)
                                     //.padding([.top, .bottom], 2.5)
@@ -591,12 +783,13 @@ struct CategoryInternalsView: View {
                                     
                                     Text("Created \(self.creationDate)")
                                         .frame(alignment: .trailing)
+                                        .foregroundStyle(.white)
                                         .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen ? 12.5 : 10.5)
                                     //.padding([.leading, .trailing], 8)
                                     //.padding([.top, .bottom], 2.5)
                                 }
                                 .frame(alignment: .leading)
-                                .padding(.trailing, 15)
+                                //.padding(.trailing, 15)
                                 
                                 HStack {
                                     Button(action: {
@@ -722,12 +915,13 @@ struct CategoryInternalsView: View {
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading) /* MARK: `maxWidth` is in this as it's the last element in the HStack, thus pushing all the other content over. */
                                 }
-                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .frame(alignment: .trailing)
+                                .padding(.leading, prop.isLargerScreen ? 10 : 0)
                             }
                             .frame(maxWidth: .infinity, maxHeight: 15, alignment: .leading)
                             .padding(.top, -15)
                             
-                            if self.categoryDescription != nil {
+                            /*if self.categoryDescription != nil {
                                 VStack {
                                     Text("Brief Description:")
                                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -834,10 +1028,10 @@ struct CategoryInternalsView: View {
                                     }
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            }
+                            }*/
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.top, 10)
+                        .padding(.top, prop.isLargerScreen ? 10 : -10)
                     }
                     .frame(maxWidth: prop.size.width - 40, alignment: .top)
                     .padding(.bottom, -15) /* MARK: Bring the below divider closer to the above content. */
@@ -873,6 +1067,7 @@ struct CategoryInternalsView: View {
                     .padding(14)
                     .padding(.horizontal, 25)
                     .background(Color(.systemGray5))
+                    .foregroundStyle(.white)
                     .cornerRadius(15)
                     .padding(.horizontal, 10)
                     .overlay(
@@ -893,7 +1088,7 @@ struct CategoryInternalsView: View {
                             }
                         }
                     )
-                    .padding(.top, 15)
+                    .padding(.top, 25)
                     .onSubmit {
                         
                     }
@@ -922,9 +1117,8 @@ struct CategoryInternalsView: View {
                             if self.categoryData.setAndNotes[self.categoryName]!.count == 0 {
                                 Text("No sets or notes in this category.")
                                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                    .padding(.top)
                                     .foregroundStyle(.white)
-                                    .font(Font.custom("Poppins-Regular", size: 20))
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
                                     .minimumScaleFactor(0.5)
                             } else {
                                 ScrollView(.vertical, showsIndicators: false) {
@@ -1107,7 +1301,7 @@ struct CategoryInternalsView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea(edges: [.top, .bottom])
-                .padding(.top, 115)
+                .padding(.top, prop.isLargerScreen ? 115 : 110)
                 //}
                 .padding(.top, -90)
                 
@@ -1121,6 +1315,7 @@ struct CategoryInternalsView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .background(Color.EZNotesBlack)
+            .edgesIgnoringSafeArea([.top])
             .ignoresSafeArea(edges: self.createNewSetByImage ? [.bottom] : [.top, .bottom])
             .onAppear {
                 self.categoryDescription = self.categoryData.categoryDescriptions[self.categoryName]

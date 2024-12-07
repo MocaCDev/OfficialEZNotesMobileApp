@@ -403,12 +403,12 @@ struct EditCategory: View {
                         )
                     }
                     .frame(maxWidth: prop.size.width, maxHeight: .infinity)
-                    .cornerRadius(15)
                     .background(
-                        RoundedRectangle(cornerRadius: 15)
+                        Rectangle()
                             .fill(.black)
                             .shadow(color: .black, radius: 6.5)
                     )
+                    .cornerRadius(15, corners: [.topLeft, .topRight])
                     .edgesIgnoringSafeArea(.bottom)
                     .onTapGesture {
                         self.toggleCategoryTextColorPicker = false
@@ -661,12 +661,12 @@ struct EditCategory: View {
                         Spacer()
                     }
                     .frame(maxWidth: prop.size.width, maxHeight: .infinity)
-                    .cornerRadius(15)
                     .background(
                         RoundedRectangle(cornerRadius: 15)
                             .fill(.black)
                             .shadow(color: .black, radius: 6.5)
                     )
+                    .cornerRadius(15)
                     .edgesIgnoringSafeArea(.bottom)
                 }
             }

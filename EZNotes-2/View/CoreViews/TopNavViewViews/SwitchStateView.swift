@@ -33,92 +33,160 @@ struct SwitchState: View {
     ]
     
     var body: some View {
-        VStack {
-            if self.errorUpdatingStateName {
-                Image(systemName: "exclamationmark.warninglight.fill")
-                    .resizable()
-                    .frame(width: 45, height: 40)
-                    .padding([.top, .bottom], 15)
-                    .foregroundStyle(Color.EZNotesRed)
+        ZStack {
+            VStack {
+                Spacer()
                 
-                Text("Error updating state")
-                    .frame(maxWidth: prop.size.width - 60, alignment: .center)
-                    .foregroundColor(.white)
-                    .setFontSizeAndWeight(weight: .medium, size: 20)
-                    .minimumScaleFactor(0.5)
-                    .multilineTextAlignment(.center)
-                
-                Button(action: { print("Report Problem") }) {
-                    HStack {
-                        Text("Report a Problem")
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .padding([.top, .bottom], 8)
-                            .foregroundStyle(.black)
-                            .setFontSizeAndWeight(weight: .bold, size: 18)
-                            .minimumScaleFactor(0.5)
-                    }
-                    .frame(maxWidth: prop.size.width - 80)
-                    .background(
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(.white)
-                    )
-                    .cornerRadius(15)
+                VStack {
                 }
-                .buttonStyle(NoLongPressButtonStyle())
-                .padding(.top, 15)
+                .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                .background(
+                    Image("DefaultThemeBg2")
+                        .resizable()
+                        .scaledToFill()
+                )
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .zIndex(0)
+            
+            VStack {
+                VStack {
+                }
+                .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                .background(
+                    Image("DefaultThemeBg3")
+                        .resizable()
+                        .scaledToFill()
+                )
+                .padding(.top, 20)
                 
                 Spacer()
-            } else {
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .zIndex(0)
+            
+            VStack {
                 HStack {
-                    ZStack { }.frame(maxWidth: 10, alignment: .leading)
-                    
-                    ZStack {
-                        Text("Select the state where you currently reside, or where your college is located.")
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .foregroundStyle(.white)
-                            .font(.system(size: prop.isLargerScreen ? 16 : 12, weight: .light))
-                            .multilineTextAlignment(.center)
+                    Button(action: { self.accountPopupSection = "main" }) {
+                        ZStack {
+                            Image(systemName: "arrow.backward")
+                                .resizable()
+                                .frame(width: 15, height: 15)
+                                .foregroundStyle(.white)
+                        }
+                        .frame(maxWidth: 20, alignment: .leading)
+                        .padding(.top, 15)
+                        .padding(.leading, 25)
                     }
-                    .frame(maxWidth: .infinity, alignment: .center)
                     
-                    ZStack { }.frame(maxWidth: 10, alignment: .trailing)
+                    Text("Switch State")
+                        .frame(maxWidth: .infinity)
+                        .foregroundStyle(.white)
+                        .padding([.top], 15)
+                        .setFontSizeAndWeight(weight: .bold, size: prop.isLargerScreen ? 26 : 22)
+                        
+                    /* MARK: "spacing" to ensure above Text stays in the middle. */
+                    ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.bottom, 30)
+                .frame(maxWidth: .infinity, maxHeight: 30)
+                //.padding(.top, prop.isLargerScreen ? 45 : 5)
                 
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack {
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
-                            ForEach(self.states, id: \.self) { state in
-                                Button(action: {
-                                    self.temporaryStateValue = state
-                                    self.updateStateAlert = true
-                                }) {
-                                    HStack {
-                                        Text(state)
-                                            .frame(maxWidth: .infinity, alignment: .center)
-                                            .padding([.leading, .top, .bottom], 5)
-                                            .foregroundStyle(.white)
-                                            .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
-                                            .fontWeight(.bold)
-                                            .minimumScaleFactor(0.5)
-                                            .multilineTextAlignment(.leading)
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            
+            VStack {
+                if self.errorUpdatingStateName {
+                    Image(systemName: "exclamationmark.warninglight.fill")
+                        .resizable()
+                        .frame(width: 45, height: 40)
+                        .padding([.top, .bottom], 15)
+                        .foregroundStyle(Color.EZNotesRed)
+                    
+                    Text("Error updating state")
+                        .frame(maxWidth: prop.size.width - 60, alignment: .center)
+                        .foregroundColor(.white)
+                        .setFontSizeAndWeight(weight: .medium, size: 20)
+                        .minimumScaleFactor(0.5)
+                        .multilineTextAlignment(.center)
+                    
+                    Button(action: { print("Report Problem") }) {
+                        HStack {
+                            Text("Report a Problem")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding([.top, .bottom], 8)
+                                .foregroundStyle(.black)
+                                .setFontSizeAndWeight(weight: .bold, size: 18)
+                                .minimumScaleFactor(0.5)
+                        }
+                        .frame(maxWidth: prop.size.width - 80)
+                        .background(
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(.white)
+                        )
+                        .cornerRadius(15)
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
+                    .padding(.top, 15)
+                    
+                    Spacer()
+                } else {
+                    HStack {
+                        ZStack { }.frame(maxWidth: 10, alignment: .leading)
+                        
+                        ZStack {
+                            Text("Select the state where you currently reside, or where your college is located.")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .foregroundStyle(.white)
+                                .font(.system(size: prop.isLargerScreen ? 16 : 12, weight: .light))
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        
+                        ZStack { }.frame(maxWidth: 10, alignment: .trailing)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.bottom, 30)
+                    
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack {
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())]) {
+                                ForEach(self.states, id: \.self) { state in
+                                    Button(action: {
+                                        self.temporaryStateValue = state
+                                        self.updateStateAlert = true
+                                    }) {
+                                        HStack {
+                                            Text(state)
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                .padding([.leading, .top, .bottom], 5)
+                                                .foregroundStyle(.white)
+                                                .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                .fontWeight(.bold)
+                                                .minimumScaleFactor(0.5)
+                                                .multilineTextAlignment(.leading)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(10)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                .shadow(color: Color.black, radius: 1.5)
+                                        )
                                     }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(10)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesLightBlack.opacity(0.65))
-                                            .shadow(color: Color.black, radius: 1.5)
-                                    )
                                 }
                             }
                         }
+                        .padding(.bottom, 30)
                     }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding([.top, .bottom], -15)
                 }
             }
+            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+            .padding(.top, 40)
         }
-        .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .alert("Did you switch colleges?", isPresented: $updateStateAlert) {
             Button(action: {
                 RequestAction<UpdateStateData>(parameters: UpdateStateData(
