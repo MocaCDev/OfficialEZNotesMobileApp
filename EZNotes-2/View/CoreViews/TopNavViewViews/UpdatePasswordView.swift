@@ -36,7 +36,7 @@ struct UpdatePassword: View {
                         .resizable()
                         .scaledToFill()
                 )
-                .padding(.top, 20)
+                .padding(.top, 70)
                 
                 Spacer()
             }
@@ -111,6 +111,7 @@ struct UpdatePassword: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.bottom, 30)
+                    .padding(.top, 10)
                 }
                 
                 if !self.passwordUpdated {

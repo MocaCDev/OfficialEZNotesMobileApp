@@ -43,7 +43,7 @@ struct SwitchState: View {
                         .resizable()
                         .scaledToFill()
                 )
-                .padding(.top, 20)
+                .padding(.top, 70)
                 
                 Spacer()
             }
@@ -132,6 +132,7 @@ struct SwitchState: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.bottom, 30)
+                    .padding(.top, 10)
                     
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack {
@@ -162,7 +163,7 @@ struct SwitchState: View {
                                 }
                             }
                         }
-                        .padding(.bottom, 30)
+                        .padding(.bottom, 60)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding([.top, .bottom], -15)

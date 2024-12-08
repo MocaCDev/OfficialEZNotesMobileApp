@@ -1,12 +1,12 @@
 //
-//  ThemesView.swift
+//  MoreAccountDetailsView.swift
 //  EZNotes-2
 //
-//  Created by Aidan White on 11/13/24.
+//  Created by Aidan White on 12/7/24.
 //
 import SwiftUI
 
-struct Themes: View {
+struct MoreAccountDetails: View {
     var prop: Properties
     
     @Binding public var accountPopupSection: String
@@ -43,7 +43,7 @@ struct Themes: View {
                         .padding(.leading, 25)
                     }
                     
-                    Text("Switch Themes")
+                    Text("Account Details")
                         .frame(maxWidth: .infinity)
                         .foregroundStyle(.white)
                         .padding([.top], 15)

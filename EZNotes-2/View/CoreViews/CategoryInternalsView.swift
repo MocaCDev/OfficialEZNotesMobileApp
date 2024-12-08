@@ -1253,7 +1253,7 @@ struct CategoryInternalsView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .background(Color.EZNotesBlack)
-            .edgesIgnoringSafeArea([.top])
+            //.edgesIgnoringSafeArea([.top])
             .ignoresSafeArea(edges: self.createNewSetByImage ? [.bottom] : [.top, .bottom])
             .onAppear {
                 self.categoryDescription = self.categoryData.categoryDescriptions[self.categoryName]

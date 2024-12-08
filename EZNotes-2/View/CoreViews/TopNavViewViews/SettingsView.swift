@@ -34,7 +34,7 @@ struct Settings: View {
                         .resizable()
                         .scaledToFill()
                 )
-                .padding(.top, 20)
+                .padding(.top, 70)
                 
                 Spacer()
             }
@@ -331,10 +331,7 @@ struct Settings: View {
                             .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
                     )
                     .padding([.leading, .trailing], 2.5)
-                    .padding(.bottom, 10)
-                    
-                    /* MARK: Ensure there is padding at the end of the ScrollView. */
-                    VStack { }.frame(maxWidth: .infinity, maxHeight: 40)
+                    .padding(.bottom, 60)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.bottom, -15)

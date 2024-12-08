@@ -98,6 +98,10 @@ struct Account: View {
     
     @State private var getRickRolled: Bool = false
     
+    /* MARK: States for triggering alerts about logging out/deleting account. */
+    @State private var logoutAlert: Bool = false
+    @State private var deleteAccountAlert: Bool = false
+    
     var body: some View {
         VStack {
             ZStack {
@@ -232,71 +236,7 @@ struct Account: View {
                             }
                         }
                     }
-                } else {
-                    /*VStack {
-                        HStack {
-                            if self.accountPopupSection != "main" {
-                                Button(action: { self.accountPopupSection = "main" }) {
-                                    ZStack {
-                                        Image(systemName: "arrow.backward")
-                                            .resizable()
-                                            .frame(width: 15, height: 15)
-                                            .foregroundStyle(.white)
-                                    }
-                                    .frame(maxWidth: 20, alignment: .leading)
-                                    .padding(.top, 15)
-                                    .padding(.leading, 25)
-                                }
-                            } else { ZStack { }.frame(maxWidth: 20, alignment: .leading).padding(.leading, 25) }
-                            
-                            Text(self.accountPopupSection == "main"
-                                 ? "Account Details"
-                                 : self.accountPopupSection == "planDetails"
-                                    ? self.eznotesSubscriptionManager.userSubscriptionIDs.isEmpty
-                                        ? "Select Plan"
-                                        : "Plan Details"
-                                    : self.accountPopupSection == "switch_college"
-                                        ? "Switch College"
-                                        : self.accountPopupSection == "switch_field_and_major"
-                                            ? "Switch Field/Major"
-                                            : self.accountPopupSection == "switch_state"
-                                                ? "Change States"
-                                                : self.accountPopupSection == "change_username"
-                                                     ? "Change Username"
-                                                     : self.accountPopupSection == "update_password"
-                                                         ? "Update Password"
-                                                         : self.accountPopupSection == "themes"
-                                                             ? "Themes"
-                                                             : self.accountPopupSection == "settings"
-                                                                 ? "Settings"
-                                                                 /* MARK: Default value if all aforementioned checks fail (which should never happen). */
-                                                                 : "Account Details")
-                            .frame(maxWidth: .infinity)
-                            .foregroundStyle(.white)
-                            .padding([.top], 15)
-                            .setFontSizeAndWeight(weight: .bold, size: prop.isLargerScreen ? 26 : 22)
-                            
-                            /* MARK: "spacing" to ensure above Text stays in the middle. */
-                            ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)*/
                 }
-                
-                /*HStack {
-                    VStack {
-                        Spacer()
-                        
-                        Circle()
-                            .fill(.black)
-                            .scaledToFit()
-                    }
-                    .frame(maxWidth: 100, maxHeight: .infinity)
-                    .padding(.top, 30)
-                    
-                    ZStack { }.frame(maxWidth: .infinity, alignment: .trailing)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)*/
             }
             .frame(maxWidth: .infinity, maxHeight: self.accountPopupSection != "main" ? 15 : 100)
             
@@ -929,7 +869,7 @@ struct Account: View {
                                         .minimumScaleFactor(0.5)
                                     
                                     VStack {
-                                        Button(action: { print("View More Account Details") }) {
+                                        Button(action: { self.accountPopupSection = "moreAccountDetails" }) {
                                             HStack {
                                                 Text("More Account Details")
                                                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -953,7 +893,7 @@ struct Account: View {
                                         Divider()
                                             .overlay(.black)
                                         
-                                        Button(action: { print("Report An Issue") }) {
+                                        Button(action: { self.accountPopupSection = "reportIssue" }) {
                                             HStack {
                                                 Text("Report An Issue")
                                                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -991,7 +931,7 @@ struct Account: View {
                                         .minimumScaleFactor(0.5)
                                     
                                     VStack {
-                                        Button(action: { print("Delete Account") }) {
+                                        Button(action: { self.deleteAccountAlert = true }) {
                                             HStack {
                                                 Text("Delete Account")
                                                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -1011,17 +951,16 @@ struct Account: View {
                                             .padding(.bottom, 5)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
+                                        .alert("AYO!", isPresented: $deleteAccountAlert) {
+                                            Button("Mmmm.. okay", role: .cancel) { }
+                                        } message: {
+                                            Text("Why do you even wanna do such a thing? Not like the app is North Korea dude🙄")
+                                        }
                                         
                                         Divider()
                                             .overlay(.black)
                                         
-                                        Button(action: {
-                                            assignUDKey(key: "logged_in", value: false)
-                                            self.userHasSignedIn = false
-                                            self.accountInfo.reset()
-                                            
-                                            udRemoveAllAccountInfoKeys()
-                                        }) {
+                                        Button(action: { self.logoutAlert = true }) {
                                             HStack {
                                                 Text("Logout")
                                                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -1041,6 +980,19 @@ struct Account: View {
                                             .padding(.top, 5)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
+                                        .alert("Are You Sure?", isPresented: $logoutAlert) {
+                                            Button(action: {
+                                                assignUDKey(key: "logged_in", value: false)
+                                                self.userHasSignedIn = false
+                                                self.accountInfo.reset()
+                                                
+                                                udRemoveAllAccountInfoKeys()
+                                            }) { Text("Yes") }
+                                            
+                                            Button("No", role: .cancel) { }
+                                        } message: {
+                                            Text("By selecting yes, you will effectively be logged out. Are you sure?")
+                                        }
                                     }
                                     .frame(maxWidth: prop.size.width - 50)
                                     .padding([.top, .bottom], 14)
@@ -1069,6 +1021,16 @@ struct Account: View {
                         .padding(.top, -20)
                     } else {
                         switch(self.accountPopupSection) {
+                        case "moreAccountDetails":
+                            MoreAccountDetails(
+                                prop: self.prop,
+                                accountPopupSection: $accountPopupSection
+                            )
+                        case "reportIssue":
+                            ReportIssue(
+                                prop: self.prop,
+                                accountPopupSection: $accountPopupSection
+                            )
                         case "setup_plan":
                             ZStack {
                                 VStack {
@@ -1080,7 +1042,7 @@ struct Account: View {
                                             .resizable()
                                             .scaledToFill()
                                     )
-                                    .padding(.top, 20)
+                                    .padding(.top, 70)
                                     
                                     Spacer()
                                 }
@@ -1165,7 +1127,7 @@ struct Account: View {
                                             .resizable()
                                             .scaledToFill()
                                     )
-                                    .padding(.top, 20)
+                                    .padding(.top, 70)
                                     
                                     Spacer()
                                 }
@@ -1237,6 +1199,7 @@ struct Account: View {
                                             }
                                             .frame(maxWidth: .infinity)
                                             .padding(.bottom, 30)
+                                            .padding(.top, 10)
                                             
                                             ScrollView(.vertical, showsIndicators: false) {
                                                 VStack {
@@ -1274,7 +1237,7 @@ struct Account: View {
                                                         }
                                                     }
                                                 }
-                                                .padding(.bottom, 30)
+                                                .padding(.bottom, 60)
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                                             .padding([.top, .bottom], -15)
@@ -1358,7 +1321,7 @@ struct Account: View {
                                             .resizable()
                                             .scaledToFill()
                                     )
-                                    .padding(.top, 20)
+                                    .padding(.top, 70)
                                     
                                     Spacer()
                                 }
@@ -1432,6 +1395,7 @@ struct Account: View {
                                             }
                                             .frame(maxWidth: .infinity)
                                             .padding(.bottom, 30)
+                                            .padding(.top, 10)
                                             
                                             ScrollView(.vertical, showsIndicators: false) {
                                                 VStack {
@@ -1496,7 +1460,7 @@ struct Account: View {
                                                         }
                                                     }
                                                 }
-                                                .padding(.bottom, 30)
+                                                .padding(.bottom, 60)
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                                             .padding([.top, .bottom], -15)
@@ -1575,7 +1539,7 @@ struct Account: View {
                                             .resizable()
                                             .scaledToFill()
                                     )
-                                    .padding(.top, 20)
+                                    .padding(.top, 70)
                                     
                                     Spacer()
                                 }

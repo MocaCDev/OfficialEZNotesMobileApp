@@ -32,7 +32,7 @@ struct ChangeUsername: View {
                         .resizable()
                         .scaledToFill()
                 )
-                .padding(.top, 20)
+                .padding(.top, 70)
                 
                 Spacer()
             }
@@ -86,6 +86,7 @@ struct ChangeUsername: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.bottom, 30)
+                .padding(.top, 10)
                 
                 if self.errorUpdatingUseranme || self.usernameExistsError {
                     Text(self.errorUpdatingUseranme
