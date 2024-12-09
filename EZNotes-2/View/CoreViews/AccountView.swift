@@ -152,7 +152,7 @@ struct Account: View {
                             }
                         }
                         .frame(maxWidth: .infinity, maxHeight: 55)
-                        .background(Color.EZNotesGreen.opacity(0.8))
+                        .background(Color.EZNotesRed.opacity(0.8))
                         .offset(y: self.statusBarYOffset)
                         .onAppear {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
