@@ -576,7 +576,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                         .fontWeight(.medium)
                                         .autocapitalization(.none)
                                         .disableAutocorrection(true)
-                                    //.keyboardType(.emailAddress)
+                                        .keyboardType(.emailAddress)
                                         .focused($emailTextfieldFocus)
                                         .onChange(of: emailTextfieldFocus) { if !self.emailTextfieldFocus { assignUDKey(key: "temp_email", value: self.email) } }
                                     
@@ -898,7 +898,8 @@ struct SignUpScreen : View, KeyboardReadable {
                                                             College: college,
                                                             State: state,
                                                             Field: majorField,
-                                                            Major: major
+                                                            Major: major,
+                                                            IP: getLocalIPAddress()
                                                         )
                                                     ).perform(action: complete_signup1_req) { statusCode, resp in
                                                         guard resp != nil && statusCode == 200 else {

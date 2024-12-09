@@ -511,6 +511,10 @@ struct CategoryInternalsView: View {
                                 
                                 self.newSetName.removeAll()
                                 self.newSetNotes.removeAll()
+                                
+                                /* MARK: Ensure the popup goes away. */
+                                self.createNewSet = false
+                                self.testPopup = false
                             }) {
                                 HStack {
                                     Text("Create")

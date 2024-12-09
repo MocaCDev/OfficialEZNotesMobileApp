@@ -7,6 +7,7 @@
 
 import SwiftUI
 import StoreKit
+import Foundation
 
 /* TODO: Should the below code go into `EZNotesSubscriptionManager`? */
 public func monitorTransactions() async {
@@ -31,6 +32,46 @@ public func handleTransaction(_ transaction: StoreKit.Transaction) async {
 
     // Mark the transaction as finished
     await transaction.finish()
+}
+
+public func getLocalIPAddress() -> String? {
+    var ifaddr: UnsafeMutablePointer<ifaddrs>?
+    var localAddress: String?
+    
+    // Retrieve the current interfaces
+    guard getifaddrs(&ifaddr) == 0, let firstAddr = ifaddr else { return nil }
+    
+    // Iterate through each interface
+    for ptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
+        let interface = ptr.pointee
+        
+        // Check for IPv4 or IPv6
+        let addrFamily = interface.ifa_addr.pointee.sa_family
+        if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
+            // Convert interface address to a human-readable string
+            var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+            getnameinfo(
+                interface.ifa_addr,
+                socklen_t(interface.ifa_addr.pointee.sa_len),
+                &hostname,
+                socklen_t(hostname.count),
+                nil,
+                0,
+                NI_NUMERICHOST
+            )
+            
+            let address = String(cString: hostname)
+            
+            // Filter out loopback and link-local addresses
+            if address != "127.0.0.1" && address != "::1" && !address.contains("%") {
+                localAddress = address
+                break
+            }
+        }
+    }
+    freeifaddrs(ifaddr)
+    
+    return localAddress
 }
 
 @main

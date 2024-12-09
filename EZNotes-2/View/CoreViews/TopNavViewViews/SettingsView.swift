@@ -141,9 +141,9 @@ struct Settings: View {
                     .background(
                         RoundedRectangle(cornerRadius: 15)
                             .fill(.black)
-                            .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                            .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
                     )
-                    .padding([.leading, .trailing], 2.5)
+                    .padding([.leading, .trailing], 4.5)
                     .padding(.bottom, 10)
                     
                     HStack {
@@ -206,6 +206,7 @@ struct Settings: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.trailing, 4)
+                        .padding(.top, 12)
                         .padding(.bottom, 8)
                         
                         Text(self.settings.trackUserCreatedSets
@@ -247,9 +248,9 @@ struct Settings: View {
                     .background(
                         RoundedRectangle(cornerRadius: 15)
                             .fill(.black)
-                            .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                            .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
                     )
-                    .padding([.leading, .trailing], 2.5)
+                    .padding([.leading, .trailing], 4.5)
                     .padding(.bottom, 10)
                     
                     HStack {
@@ -328,10 +329,10 @@ struct Settings: View {
                     .background(
                         RoundedRectangle(cornerRadius: 15)
                             .fill(.black)
-                            .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                            .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
                     )
-                    .padding([.leading, .trailing], 2.5)
-                    .padding(.bottom, 60)
+                    .padding([.leading, .trailing], 4.5)
+                    .padding(.bottom, 10)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.bottom, -15)
