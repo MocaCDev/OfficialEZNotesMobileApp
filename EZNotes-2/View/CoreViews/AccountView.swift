@@ -126,34 +126,34 @@ struct Account: View {
                             .frame(maxWidth: 25, alignment: .leading)
                             
                             if self.errorUploadingPFP {
-                                Text("Error saving PFP. Try Again.")
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                    .foregroundStyle(.black)
-                                    .font(Font.custom("Poppins-Regular", size: 12))
-                                    .minimumScaleFactor(0.5)
-                            } else {
-                                Text("Error saving PFP Background. Try Again.")
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                    .foregroundStyle(.black)
-                                    .font(Font.custom("Poppins-Regular", size: 12))
-                                    .minimumScaleFactor(0.5)
-                            }
-                            
-                            ZStack {
-                                Button(action: { self.pfpUploadStatus = "none" }) {
-                                    Image(systemName: "multiply")
-                                        .resizable()
-                                        .frame(width: 12, height: 12)
+                                VStack {
+                                    Spacer()
+                                    
+                                    Text("Error saving PFP. Try Again.")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                    //.padding(.top, 8)
+                                        .foregroundStyle(.black)
+                                        .font(Font.custom("Poppins-Regular", size: 16))
                                         .minimumScaleFactor(0.5)
-                                        .foregroundStyle(.white)
+                                        .padding(.bottom, 4)
                                 }
-                                .buttonStyle(NoLongPressButtonStyle())
+                            } else {
+                                VStack {
+                                    Spacer()
+                                    
+                                    Text("Error saving PFP Background. Try Again.")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                    //.padding(.top, 8)
+                                        .foregroundStyle(.black)
+                                        .font(Font.custom("Poppins-Regular", size: 16))
+                                        .minimumScaleFactor(0.5)
+                                        .padding(.bottom, 4)
+                                }
                             }
-                            .frame(maxWidth: 25, maxHeight: .infinity, alignment: .trailing)
-                            .padding(.trailing, 10)
                         }
-                        .frame(maxWidth: .infinity, maxHeight: 30)
-                        .background(Color.EZNotesRed)
+                        .frame(maxWidth: .infinity, maxHeight: 55)
+                        .background(Color.EZNotesGreen.opacity(0.8))
+                        .offset(y: self.statusBarYOffset)
                         .onAppear {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                                 withAnimation(.easeOut(duration: 3)) {
@@ -161,7 +161,7 @@ struct Account: View {
                                 }
                                 
                                 /* MARK: Wait another second and ensure the status bar view is invisible. */
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                     if self.pfpUploadStatus != "none" { self.pfpUploadStatus = "none"; return }
                                     self.pfpBgUploadStatus = "none"
                                 }
@@ -328,12 +328,6 @@ struct Account: View {
                                 }
                                 .onChange(of: self.pfpBackgroundPhotoPicked) {
                                     Task {
-                                        if let data = try? await pfpBackgroundPhotoPicked!.loadTransferable(type: Data.self) {
-                                            if let uiimage = UIImage(data: data) {
-                                                print(uiimage.size.width, uiimage.size.height)//if uiimage.size.width !=
-                                            }
-                                        }
-                                        
                                         if let image = try? await pfpBackgroundPhotoPicked!.loadTransferable(type: Image.self) {
                                             PFP(pfpBg: image, accountID: self.accountInfo.accountID)
                                                 .requestSavePFPBg() { statusCode, resp in
