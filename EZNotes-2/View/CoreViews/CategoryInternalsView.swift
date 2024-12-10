@@ -291,11 +291,18 @@ struct CategoryInternalsView: View {
                                 HStack {
                                     Spacer()
                                     
-                                    Text("\(self.categoryName) Description")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .foregroundStyle(.white)
-                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 26 : 22))
-                                        .multilineTextAlignment(.center)
+                                    VStack {
+                                        Text("Description For")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .font(.system(size: 13, weight: .light))
+                                            .foregroundStyle(.white)
+                                        
+                                        Text("\(self.categoryName)")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 26 : 22))
+                                            .multilineTextAlignment(.center)
+                                    }
                                     
                                     Spacer()
                                 }
@@ -316,6 +323,50 @@ struct CategoryInternalsView: View {
                                 .minimumScaleFactor(0.5)
                                 .multilineTextAlignment(.center)
                                 .truncationMode(.tail)
+                                .padding()
+                            
+                            HStack {
+                                Button(action: { }) {
+                                    Text("Generate Description")
+                                        .frame(maxWidth: 200, alignment: .center)
+                                        .padding([.top, .bottom], 5)
+                                        .foregroundStyle(
+                                            MeshGradient(width: 3, height: 3, points: [
+                                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                            ], colors: [
+                                                .indigo, .indigo, Color.EZNotesBlue,
+                                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                                            ])
+                                        )
+                                        .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 13 : 13)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(.white)
+                                                .strokeBorder(.white, lineWidth: 1)
+                                        )
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                
+                                Button(action: { }) {
+                                    Text("Edit Description")
+                                        .frame(maxWidth: 200, alignment: .center)
+                                        .padding([.top, .bottom], 5)
+                                        .foregroundStyle(.black)
+                                        .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 13 : 13)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(.white)
+                                                .strokeBorder(.white, lineWidth: 1)
+                                        )
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                            }
                         }
                         .frame(maxWidth: prop.size.width - 70)
                         .padding()
@@ -1181,16 +1232,17 @@ struct CategoryInternalsView: View {
                     
                     VStack {
                         VStack {
-                            if self.categoryData.setAndNotes[self.categoryName]!.isEmpty {
-                                Text("No sets or notes in this category.")
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                    .foregroundStyle(.white)
-                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
-                                    .minimumScaleFactor(0.5)
-                            } else {
-                                if self.settings.displayUserCreatedSetsSeparately {
-                                    switch(self.selectedView) {
-                                    case "generated":
+                            if self.settings.displayUserCreatedSetsSeparately {
+                                switch(self.selectedView) {
+                                case "generated":
+                                    if self.longerSetNames.isEmpty && self.shorterSetNames.isEmpty {
+                                        Text("No AI-generated sets or notes in this category.")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                            .minimumScaleFactor(0.5)
+                                            .multilineTextAlignment(.center)
+                                    } else {
                                         ShowLongAndShortNameSets(
                                             prop: self.prop,
                                             categoryName: self.categoryName,
@@ -1203,7 +1255,16 @@ struct CategoryInternalsView: View {
                                             originalContet: $originalContet,
                                             launchedSet: $launchedSet
                                         )
-                                    case "user_created":
+                                    }
+                                case "user_created":
+                                    if self.userCreatedLongSetNames.isEmpty && self.userCreatedShortSetNames.isEmpty {
+                                        Text("No user created sets or notes in this category.")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                            .minimumScaleFactor(0.5)
+                                            .multilineTextAlignment(.center)
+                                    } else {
                                         ShowLongAndShortNameSets(
                                             prop: self.prop,
                                             categoryName: self.categoryName,
@@ -1216,8 +1277,17 @@ struct CategoryInternalsView: View {
                                             originalContet: $originalContet,
                                             launchedSet: $launchedSet
                                         )
-                                    default: VStack { }.onAppear { self.selectedView = "generated" }
                                     }
+                                default: VStack { }.onAppear { self.selectedView = "generated" }
+                                }
+                            } else {
+                                if self.categoryData.setAndNotes[self.categoryName]!.isEmpty {
+                                    Text("No sets or notes in this category.")
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .font(Font.custom("Poppins-Regular", size: 16))
+                                        .minimumScaleFactor(0.5)
+                                        .multilineTextAlignment(.center)
                                 } else {
                                     ShowLongAndShortNameSets(
                                         prop: self.prop,

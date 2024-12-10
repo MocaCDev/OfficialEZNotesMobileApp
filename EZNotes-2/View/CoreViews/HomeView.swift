@@ -39,6 +39,14 @@ private struct SearchResult: View {
     @EnvironmentObject private var categoryData: CategoryData
     
     var prop: Properties
+    @Binding public var toDisplay: [String: Array<String>]
+    var showingUserCreated: Bool = false
+    var showingGenerated: Bool = false
+    var showAllTogether: Bool = true
+    
+    /* MARK: States that will be used if `showAllTogether` is false; if `showAllTogether` is false, either `showingUserCreated` or `showingGenerated` has to be true. */
+    @State private var userCreatedCategories: Array<String> = []
+    @State private var generatedCategories: Array<String> = []
     
     @Binding public var lookedUpCategoriesAndSets: [String: Array<String>]
     @Binding public var show_categories_title: Bool
@@ -90,16 +98,37 @@ private struct SearchResult: View {
         scrollOffset = newOffset
     }
     
+    private func populateArrays() {
+        /* MARK: Needed to ensure we don't over-populate the array. This function is called in a `.onChange` modifier. */
+        self.generatedCategories.removeAll()
+        self.userCreatedCategories.removeAll()
+        
+        if !self.showAllTogether {
+            if self.showingGenerated {
+                for key in self.toDisplay.keys {
+                    if !self.categoryData.userCreatedCategoryNames.contains(key) { self.generatedCategories.append(key) }
+                }
+            } else {
+                for key in self.toDisplay.keys {
+                    if self.categoryData.userCreatedCategoryNames.contains(key) { self.userCreatedCategories.append(key) }
+                }
+            }
+        }
+    }
+    
     var body: some View {
         VStack {
             GeometryReader { innerGeometry in
                 HStack {
                     Text(self.lookedUpCategoriesAndSets.count == 0
-                         ? "Categories(\(self.categoryData.categoriesAndSets.count))"
+                         ? self.showAllTogether
+                            ? "Categories(\(self.toDisplay.count))"
+                            : self.showingUserCreated
+                                ? "User Created(\(self.userCreatedCategories.count))"
+                                : "Generated(\(self.generatedCategories.count))"
                          : "Results: \(self.lookedUpCategoriesAndSets.count)")
                     .foregroundStyle(.white)
-                    .font(.system(size: 30))
-                    .fontWeight(.semibold)
+                    .font(.system(size: 30, weight: .bold))
                     .padding([.leading], 15)
                     .onChange(of: innerGeometry.frame(in: .global)) {
                         checkIfOutOfFrame(innerGeometry: innerGeometry, outerGeometry: geometry)
@@ -109,7 +138,7 @@ private struct SearchResult: View {
             .frame(maxWidth: .infinity, maxHeight: 50)
         }
         .frame(maxWidth: .infinity, maxHeight: 50)
-        .padding([.top], self.settings.displayUserCreatedCategoriesSeparatly ? 0 : 130)
+        .padding([.top], self.settings.displayUserCreatedCategoriesSeparatly ? 10 : 130)
         .padding([.bottom], 10)
         .background(
             GeometryReader { innerGeometry in
@@ -123,6 +152,12 @@ private struct SearchResult: View {
             }
                 .frame(height: 0)
         )
+        .onAppear {
+            populateArrays()
+        }
+        .onChange(of: self.toDisplay) {
+            populateArrays()
+        }
     }
 }
 
@@ -179,6 +214,10 @@ private struct CategoryScrollview: View {
             ScrollView(.vertical, showsIndicators: false) {
                 SearchResult(
                     prop: self.prop,
+                    toDisplay: $toDisplay,
+                    showingUserCreated: self.onlyShowUserCreated,
+                    showingGenerated: self.skipUserCreated,
+                    showAllTogether: self.skipUserCreated == false && self.onlyShowUserCreated == false,
                     lookedUpCategoriesAndSets: $lookedUpCategoriesAndSets,
                     show_categories_title: $show_categories_title,
                     topNavOpacity: $topNavOpacity,
