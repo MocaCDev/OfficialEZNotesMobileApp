@@ -185,7 +185,7 @@ struct ContentView: View {
                     UserDefaults.standard.set(true, forKey: "requires_faceID")
                 }
             }
-            .onAppear(perform: {
+            .onAppear(perform: { /* MARK: The below code is placed in the `.onAppear`, regardless if the user logged in, signed up or just re-launched the app. All of the users data, unless further noticed, will be stored in `UserDefaults`. */
                 // else {
                     RequestAction<ReqPlaceholder>(
                         parameters: ReqPlaceholder()
@@ -201,28 +201,32 @@ struct ContentView: View {
                 
                 /* MARK: If this `.onAppear` runs, there should be a key `username` in `UserDefaults.standard`. If there isn't, then there is a problem.
                  * */
-                if UserDefaults.standard.object(forKey: "username") != nil {
-                    accountInfo.setUsername(username: UserDefaults.standard.string(forKey: "username")!)
+                if udKeyExists(key: "usecase") {
+                    accountInfo.setUsage(usage: getUDValue(key: "usecase"))
                 }
                 
-                if UserDefaults.standard.object(forKey: "email") != nil {
-                    accountInfo.setEmail(email: UserDefaults.standard.string(forKey: "email")!)
+                if udKeyExists(key: "username") {
+                    accountInfo.setUsername(username: getUDValue(key: "username"))
                 }
                 
-                if UserDefaults.standard.object(forKey: "college_name") != nil {
-                    accountInfo.setCollegeName(collegeName: UserDefaults.standard.string(forKey: "college_name")!)
+                if udKeyExists(key: "email") {
+                    accountInfo.setEmail(email: getUDValue(key: "email"))
                 }
                 
-                if UserDefaults.standard.object(forKey: "major_name") != nil {
-                    accountInfo.setMajorName(majorName: UserDefaults.standard.string(forKey: "major_name")!)
+                if udKeyExists(key: "college_name") {
+                    accountInfo.setCollegeName(collegeName: getUDValue(key: "college_name"))
                 }
                 
-                if UserDefaults.standard.object(forKey: "college_state") != nil {
-                    accountInfo.setCollegeState(collegeState: UserDefaults.standard.string(forKey: "college_state")!)
+                if udKeyExists(key: "major_name") {
+                    accountInfo.setMajorName(majorName: getUDValue(key: "major_name"))
                 }
                 
-                if UserDefaults.standard.object(forKey: "account_id") != nil {
-                    accountInfo.setAccountID(accountID: UserDefaults.standard.string(forKey: "account_id")!)
+                if udKeyExists(key: "college_state") {
+                    accountInfo.setCollegeState(collegeState: getUDValue(key: "college_state"))
+                }
+                
+                if udKeyExists(key: "account_id") {
+                    accountInfo.setAccountID(accountID: getUDValue(key: "account_id"))
                     
                     PFP(accountID: UserDefaults.standard.string(forKey: "account_id"))
                         .requestGetPFP() { statusCode, pfp, resp in
@@ -231,11 +235,9 @@ struct ContentView: View {
                                 
                                 /* MARK: If `ErrorCode` is 0x6966 means the user was not found in the database. */
                                 if resp!["ErrorCode"] as! Int == 0x6966 {
-                                    UserDefaults.standard.removeObject(forKey: "username")
-                                    UserDefaults.standard.removeObject(forKey: "email")
-                                    UserDefaults.standard.removeObject(forKey: "client_id")
-                                    UserDefaults.standard.removeObject(forKey: "account_id")
-                                    UserDefaults.standard.set(false, forKey: "logged_in")
+                                    /* MARK: If the error code is `0x6966`, remove all the data over the user from `UserDefaults`, ensure the "User Not Found" banner will show and "redirect" the user back to the home screen. */
+                                    udRemoveAllAccountInfoKeys()
+                                    
                                     self.userHasSignedIn = false
                                     self.userNotFound = true
                                 }

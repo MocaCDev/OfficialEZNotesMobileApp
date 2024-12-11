@@ -391,14 +391,25 @@ struct Account: View {
                         .minimumScaleFactor(0.5)
                     
                     HStack {
-                        Text("Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.leading, 20)
-                            .padding(.top, 10)
-                            .foregroundStyle(.white)
-                            .font(Font.custom("Poppins-Regular", size: 12))
-                            .minimumScaleFactor(0.5)
-                            .multilineTextAlignment(.leading)
+                        if self.accountInfo.usage == "school" {
+                            Text("Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 20)
+                                .padding(.top, 10)
+                                .foregroundStyle(.white)
+                                .font(Font.custom("Poppins-Regular", size: 12))
+                                .minimumScaleFactor(0.5)
+                                .multilineTextAlignment(.leading)
+                        } else {
+                            Text("No Description")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 20)
+                                .padding(.top, 10)
+                                .foregroundStyle(.gray)
+                                .font(Font.custom("Poppins-Regular", size: 12))
+                                .minimumScaleFactor(0.5)
+                                .multilineTextAlignment(.leading)
+                        }
                         
                         ZStack { }.frame(maxWidth: prop.isLargerScreen ? 80 : 60, alignment: .trailing)
                     }

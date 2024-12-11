@@ -7,10 +7,28 @@
 import SwiftUI
 import Combine
 
+enum SignUpScreenErrors {
+    case None
+    case TooShortUsername
+    case TooShortPassword
+    case InvalidEmail
+    case UserExists
+    case EmailExists
+    case ServerError
+    case WrongCode
+}
+
 struct SignUpScreen : View, KeyboardReadable {
     @Environment(\.presentationMode) var presentationMode
     
     public var prop: Properties
+    
+    /* MARK: State/functions regarding errors that can occurr in `SignUpScreen.swift`. */
+    @State private var error: SignUpScreenErrors = .None
+    
+    private func credentialsAreGood() -> Bool { /* MARK: Ensure the credentials entered are all good. */
+        return self.error != .TooShortUsername && self.error != .InvalidEmail && self.error != .TooShortPassword
+    }
     
     @State private var showPopup: Bool = false
     
@@ -20,6 +38,7 @@ struct SignUpScreen : View, KeyboardReadable {
     @Binding public var userHasSignedIn: Bool
     @Binding public var serverError: Bool
     @Binding public var supportedStates: Array<String>
+    
     @State public var supportedColleges: Array<String> = []
     
     @State public var keyboardActivated: Bool = false
@@ -129,7 +148,7 @@ struct SignUpScreen : View, KeyboardReadable {
                     resp!.keys.contains("Colleges"),
                     statusCode == 200
                 else {
-                    self.serverError = true
+                    self.error = .ServerError//self.error = .ServerError // self.serverError = true
                     return
                 }
                 
@@ -162,12 +181,12 @@ struct SignUpScreen : View, KeyboardReadable {
                 statusCode == 200
             else {
                 guard let resp = resp else {
-                    self.serverError = true
+                    self.error = .ServerError // self.serverError = true
                     return
                 }
                 
                 guard resp.keys.contains("Message") else {
-                    self.serverError = true
+                    self.error = .ServerError // self.serverError = true
                     return
                 }
                 
@@ -176,12 +195,12 @@ struct SignUpScreen : View, KeyboardReadable {
                     return
                 }
                 
-                self.serverError = true
+                self.error = .ServerError // self.serverError = true
                 return
             }
             
             guard resp!.keys.contains("Fields") else {
-                self.serverError = true
+                self.error = .ServerError // self.serverError = true
                 return
             }
             
@@ -206,7 +225,7 @@ struct SignUpScreen : View, KeyboardReadable {
             self.loadingCollegeInfoSection = false
             
             guard resp != nil && statusCode == 200 else {
-                self.serverError = true
+                self.error = .ServerError // self.serverError = true
                 return
             }
             
@@ -258,7 +277,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         guard resp != nil && statusCode == 200 else {
                                                             /* MARK: There should never be an error when deleting the process in the backend. */
                                                             if let resp = resp { print(resp) }
-                                                            self.serverError = true
+                                                            self.error = .ServerError // self.serverError = true
                                                             return
                                                         }
                                                         
@@ -287,7 +306,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         guard resp != nil && statusCode == 200 else {
                                                             /* MARK: There should never be an error when deleting the process in the backend. */
                                                             if let resp = resp { print(resp) }
-                                                            self.serverError = true
+                                                            self.error = .ServerError // self.serverError = true
                                                             return
                                                         }
                                                         
@@ -337,6 +356,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                     
                                     ZStack {
                                         Menu {
+                                            if self.error == .ServerError {
+                                                Button(action: { print("Report Problem") }) {
+                                                    Label("Report Problem", systemImage: "sun.max.trianglebadge.exclamationmark")
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                            }
+                                            
                                             if self.section == "code_input" {
                                                 Button(action: {
                                                     self.state.removeAll()
@@ -390,28 +416,10 @@ struct SignUpScreen : View, KeyboardReadable {
                             }
                             .frame(maxWidth: .infinity)
                             
-                            /* TODO: Perhaps restructure the code? I feel like this is bad design. */
-                            if !self.tooShortUsername && !self.invalidEmail && !self.tooShortPassword {
-                                if self.section != "loading_code" {
-                                    Text(
-                                        self.wrongCode
-                                        ? "Wrong code. \(3 - self.wrongCodeAttempts) attempts left. Try again"
-                                        : self.userExists
-                                            ? "A user with the username you provided already exists"
-                                            : self.emailExists
-                                                ? "A user with the email you provided already exists"
-                                                : self.section == "main"
-                                                    ? "What are you using **EZNotes** for?"
-                                                    : self.section == "credentials"
-                                                        ? "Sign up with a unique username, your email and a unique password"
-                                                        : self.section == "select_state_and_college"
-                                                            ? "Tell us about your college and your degree :)"
-                                                            : self.section == "code_input"
-                                                                ? "A code has been sent to your email. Input the code below"
-                                                                : "Select a plan that best suits you"
-                                    )
+                            if self.error == .ServerError {
+                                Text("There was an internal server error. Please try again.")
                                     .frame(maxWidth: prop.size.width - 50, alignment: .center)
-                                    .foregroundStyle(self.wrongCode || self.userExists || self.emailExists ? Color.EZNotesRed : Color.white)
+                                    .foregroundStyle(Color.EZNotesRed)
                                     .font(
                                         .system(
                                             size: prop.isIpad || prop.isLargerScreen
@@ -420,12 +428,30 @@ struct SignUpScreen : View, KeyboardReadable {
                                         )
                                     )
                                     .multilineTextAlignment(.center)
-                                }
+                                    .onAppear { self.section = "main" } /* MARK: If there is a server error, default to the "main" section of the sign up view. */
                             } else {
-                                if self.tooShortUsername {
-                                    Text("The username provided is too short. It must be 4 or more characters long.")
-                                        .frame(maxWidth: prop.size.width - 30, alignment: .center)
-                                        .foregroundStyle(Color.EZNotesRed)
+                                /* TODO: Perhaps restructure the code? I feel like this is bad design. */
+                                if self.credentialsAreGood() {
+                                    if self.section != "loading_code" {
+                                        Text(
+                                            self.error == .WrongCode
+                                            ? "Wrong code. \(3 - self.wrongCodeAttempts) attempts left. Try again"
+                                            : self.error == .UserExists
+                                            ? "A user with the username you provided already exists"
+                                            : self.error == .EmailExists
+                                            ? "A user with the email you provided already exists"
+                                            : self.section == "main"
+                                            ? "What are you using **EZNotes** for?"
+                                            : self.section == "credentials"
+                                            ? "Sign up with a unique username, your email and a unique password"
+                                            : self.section == "select_state_and_college"
+                                            ? "Tell us about your college and your degree :)"
+                                            : self.section == "code_input"
+                                            ? "A code has been sent to your email. Input the code below"
+                                            : "Select a plan that best suits you"
+                                        )
+                                        .frame(maxWidth: prop.size.width - 50, alignment: .center)
+                                        .foregroundStyle(self.error != .None ? Color.EZNotesRed : Color.white)
                                         .font(
                                             .system(
                                                 size: prop.isIpad || prop.isLargerScreen
@@ -434,30 +460,47 @@ struct SignUpScreen : View, KeyboardReadable {
                                             )
                                         )
                                         .multilineTextAlignment(.center)
-                                } else if self.invalidEmail {
-                                    Text("The email provided is missing the domain, or has an invalid domain.")
-                                        .frame(maxWidth: prop.size.width - 30, alignment: .center)
-                                        .foregroundStyle(Color.EZNotesRed)
-                                        .font(
-                                            .system(
-                                                size: prop.isIpad || prop.isLargerScreen
-                                                ? 15
-                                                : 13
-                                            )
-                                        )
-                                        .multilineTextAlignment(.center)
+                                    }
                                 } else {
-                                    Text("The password provided is too short. It must be 8 or more characters long.")
-                                        .frame(maxWidth: prop.size.width - 30, alignment: .center)
-                                        .foregroundStyle(Color.EZNotesRed)
-                                        .font(
-                                            .system(
-                                                size: prop.isIpad || prop.isLargerScreen
-                                                ? 15
-                                                : 13
+                                    switch self.error {
+                                    case .TooShortUsername:
+                                        Text("The username provided is too short. It must be 4 or more characters long.")
+                                            .frame(maxWidth: prop.size.width - 30, alignment: .center)
+                                            .foregroundStyle(Color.EZNotesRed)
+                                            .font(
+                                                .system(
+                                                    size: prop.isIpad || prop.isLargerScreen
+                                                    ? 15
+                                                    : 13
+                                                )
                                             )
-                                        )
-                                        .multilineTextAlignment(.center)
+                                            .multilineTextAlignment(.center)
+                                    case .InvalidEmail:
+                                        Text("The email provided is missing the domain, or has an invalid domain.")
+                                            .frame(maxWidth: prop.size.width - 30, alignment: .center)
+                                            .foregroundStyle(Color.EZNotesRed)
+                                            .font(
+                                                .system(
+                                                    size: prop.isIpad || prop.isLargerScreen
+                                                    ? 15
+                                                    : 13
+                                                )
+                                            )
+                                            .multilineTextAlignment(.center)
+                                    case .TooShortPassword:
+                                        Text("The password provided is too short. It must be 8 or more characters long.")
+                                            .frame(maxWidth: prop.size.width - 30, alignment: .center)
+                                            .foregroundStyle(Color.EZNotesRed)
+                                            .font(
+                                                .system(
+                                                    size: prop.isIpad || prop.isLargerScreen
+                                                    ? 15
+                                                    : 13
+                                                )
+                                            )
+                                            .multilineTextAlignment(.center)
+                                    default: VStack { }.onAppear { self.error = .None }
+                                    }
                                 }
                             }
                         }
@@ -1051,7 +1094,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                 }
                                                             }
                                                             
-                                                            self.serverError = true
+                                                            self.error = .ServerError // self.serverError = true
                                                             return
                                                         }
                                                         
@@ -1155,12 +1198,12 @@ struct SignUpScreen : View, KeyboardReadable {
                                                             .perform(action: check_college_exists_in_state_req) { statusCode, resp in
                                                                 guard resp != nil && statusCode == 200 else {
                                                                     guard let resp = resp else {
-                                                                        self.serverError = true
+                                                                        self.error = .ServerError // self.serverError = true
                                                                         return
                                                                     }
                                                                     
                                                                     guard resp.keys.contains("Message") else {
-                                                                        self.serverError = true
+                                                                        self.error = .ServerError // self.serverError = true
                                                                         return
                                                                     }
                                                                     
@@ -1168,7 +1211,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                                                         self.noSuchCollege = true
                                                                         return
                                                                     }
-                                                                    self.serverError = true
+                                                                    self.error = .ServerError // self.serverError = true
                                                                     return
                                                                 }
                                                                 
@@ -1322,54 +1365,47 @@ struct SignUpScreen : View, KeyboardReadable {
                                 if section == "credentials" {
                                     if self.wrongCodeAttemptsMet { self.wrongCodeAttemptsMet = false }
                                     
-                                    if self.username == "" || self.email == "" || self.password == "" {
+                                    /* MARK: Only set `makeContentRed` to true if all of the fields are empty. */
+                                    if self.username == "" && self.email == "" && self.password == "" {
                                         self.makeContentRed = true
                                         return
                                     }
                                     
                                     if self.username.count < 4 {
-                                        self.tooShortUsername = true
+                                        self.error = .TooShortUsername//self.tooShortUsername = true
                                         self.makeUsernameFieldRed = true
                                         return
-                                    } else {
-                                        /* MARK: Ensure both above variables are false. */
-                                        self.tooShortUsername = false
-                                        self.makeUsernameFieldRed = false
-                                    }
-                                    
-                                    if self.password.count < 8 {
-                                        self.tooShortPassword = true
-                                        self.makePasswordFieldRed = true
-                                        return
-                                    } else {
-                                        /* MARK: Ensure both above variables are false. */
-                                        self.tooShortPassword = false
-                                        self.makePasswordFieldRed = false
-                                    }
-                                    
-                                    /* MARK: Since the focus of the password textfield might not be set to false when the screen switches, we'll go ahead and assign the "temp_password" `UserDefault` key here as well. */
-                                    assignUDKey(key: "temp_password", value: self.password)
-                                    
-                                    self.loadingSelectStateAndCollegeSection = true
+                                    } else { self.makeUsernameFieldRed = false }
                                     
                                     if !self.email.contains("@") {
-                                        self.invalidEmail = true
+                                        self.error = .InvalidEmail//self.invalidEmail = true
                                         self.makeEmailFieldRed = true
                                         return
-                                    } else {
-                                        self.invalidEmail = false
-                                        self.makeEmailFieldRed = false
-                                    }
+                                    } else { self.makeEmailFieldRed = false }
                                     
                                     let emailDomain = self.email.split(separator: ".").map { String($0) }
                                     
                                     if !emailDomains.contains(".\(emailDomain[emailDomain.count - 1])") {
-                                        self.invalidEmail = true
+                                        self.error = .InvalidEmail//self.invalidEmail = true
                                         self.makeEmailFieldRed = true
                                         return
+                                    } else { self.makeEmailFieldRed = false }
+                                    
+                                    if self.password.count < 8 {
+                                        self.error = .TooShortPassword//self.tooShortPassword = true
+                                        self.makePasswordFieldRed = true
+                                        return
+                                    } else { self.makePasswordFieldRed = false }
+                                    
+                                    /* MARK: Since the focus of the password textfield might not be set to false when the screen switches, we'll go ahead and assign the "temp_password" `UserDefault` key here as well. */
+                                    assignUDKey(key: "temp_password", value: self.password)
+                                    
+                                    self.error = .None /* MARK: Just ensure it is `.None`. */
+                                    
+                                    if getUDValue(key: "usecase") == "school" {
+                                        self.loadingSelectStateAndCollegeSection = true
                                     } else {
-                                        self.invalidEmail = false
-                                        self.makeEmailFieldRed = false
+                                        self.section = "loading_code" /* MARK: If the usecase is not "school", the app jump straight to the "Input Code" view. Display "Registering Account..." view. */
                                     }
                                     
                                     RequestAction<CheckUsernameRequestData>(parameters: CheckUsernameRequestData(
@@ -1377,14 +1413,14 @@ struct SignUpScreen : View, KeyboardReadable {
                                     ))
                                     .perform(action: check_username_req) { statusCode, resp in
                                         guard resp != nil && statusCode == 200 else {
-                                            self.loadingSelectStateAndCollegeSection = false
+                                            self.section = "credentials"
                                             /* MARK: Stay in the "main" section. Just set `userExists` error to true and make content red. */
-                                            self.userExists = true
+                                            self.error = .UserExists//self.userExists = true
                                             self.makeContentRed = true
                                             return
                                         }
                                         
-                                        if self.userExists { self.userExists = false }
+                                        if self.error != .None { self.error = .None }
                                         if self.makeContentRed { self.makeContentRed = false }
                                         
                                         RequestAction<CheckEmailRequestData>(parameters: CheckEmailRequestData(
@@ -1392,20 +1428,19 @@ struct SignUpScreen : View, KeyboardReadable {
                                         ))
                                         .perform(action: check_email_req) { statusCode, resp in
                                             guard resp != nil && statusCode == 200 else {
+                                                self.section = "credentials"
                                                 /* MARK: Stay in the "main" section. Just set `userExists` error to true and make content red. */
-                                                self.emailExists = true
+                                                self.error = .EmailExists//self.emailExists = true
                                                 self.makeContentRed = true
                                                 return
                                             }
                                             
-                                            if self.emailExists { self.emailExists = false }
+                                            if self.error != .None { self.error = .None }
                                             if self.makeContentRed { self.makeContentRed = false }
                                             
                                             /* MARK: Check what the user is using the app for. If they selected "School" for their use case, proceed onto the state/college/field/major selection view.. else jump straight to the code input view. */
                                             /* TODO: If they select "Work" or "General", perhaps we can have a section where we ask for a bit more information over what the user does to ensure the AI can be tailored a little bit more to what they'll be using the app for. */
                                             if getUDValue(key: "usecase") == "school" {
-                                                self.loadingSelectStateAndCollegeSection = false
-                                                
                                                 self.section = "select_state_and_college"
                                                 
                                                 /* MARK: Set the last section. */
@@ -1426,22 +1461,24 @@ struct SignUpScreen : View, KeyboardReadable {
                                                         Usecase: getUDValue(key: "usecase")
                                                     )
                                                 ).perform(action: complete_signup1_req) { statusCode, resp in
-                                                    self.loadingSelectStateAndCollegeSection = false
-                                                    
                                                     guard resp != nil && statusCode == 200 else {
                                                         if let resp = resp {
                                                             if resp["ErrorCode"] as! Int == 0x6970 {
-                                                                self.section = "main"
-                                                                self.userExists = true
+                                                                self.section = "credentials"
+                                                                self.error = .UserExists//self.userExists = true
+                                                                return
+                                                            }
+                                                            if resp["ErrorCode"] as! Int == 0x7877 {
+                                                                self.error = .ServerError
                                                                 return
                                                             }
                                                         }
                                                         
-                                                        self.serverError = true
+                                                        self.error = .ServerError//self.error = .ServerError // self.serverError = true
                                                         return
                                                     }
                                                     
-                                                    if self.userExists { self.userExists = false }
+                                                    if self.error != .None { self.error = .None }
                                                     if self.makeContentRed { self.makeContentRed = false }
                                                     
                                                     self.accountID = resp!["Message"] as! String
@@ -1511,11 +1548,11 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     /* MARK: Reset code attemp information. */
                                                     self.wrongCodeAttempts = 0
                                                     self.wrongCodeAttemptsMet = true
-                                                    self.wrongCode = false
+                                                    self.error = .None//self.wrongCode = false
                                                     return
                                                 }
                                                 
-                                                self.wrongCode = true
+                                                self.error = .WrongCode//self.wrongCode = true
                                                 return
                                             }
                                             
@@ -1529,7 +1566,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             assignUDKey(key: "college_name", value: self.college)
                                             
                                             if self.makeContentRed { self.makeContentRed = false }
-                                            if self.wrongCode { self.wrongCode = false }
+                                            if self.error != .None { self.error = .None }
                                             
                                             assignUDKey(key: "last_signup_section", value: "select_plan")
                                             self.section = "select_plan"
@@ -1723,7 +1760,7 @@ struct SignUpScreen : View, KeyboardReadable {
                             }
                         }
                         
-                        self.serverError = true
+                        self.error = .ServerError // self.serverError = true
                         return
                     }
                     

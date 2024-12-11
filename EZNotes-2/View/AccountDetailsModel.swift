@@ -13,6 +13,7 @@ class AccountDetails: ObservableObject {
     @Published var major: String
     @Published var state: String
     @Published var accountID: String
+    @Published var usage: String
     @Published var subID: String
     @Published var aiChatID: UUID
     
@@ -29,10 +30,11 @@ class AccountDetails: ObservableObject {
         major = ""
         state = ""
         accountID = ""
+        usage = ""
         subID = ""
         aiChatID = UUID()
-        profilePicture = Image(systemName: "person.crop.circle.fill")
-        profileBackgroundPicture = Image("Pfp-Default-Bg")
+        profilePicture = Image(systemName: "person.crop.circle.fill") /* MARK: Default PFP icon. */
+        profileBackgroundPicture = Image("Pfp-Default-Bg") /* MARK: Default PFP BG. */
     }
     
     final public func reset() {
@@ -53,6 +55,7 @@ class AccountDetails: ObservableObject {
     final public func setCollegeName(collegeName: String) { self.college = collegeName }
     final public func setMajorName(majorName: String) { self.major = majorName }
     final public func setAccountID(accountID: String) { self.accountID = accountID }
+    final public func setUsage(usage: String) { self.usage = usage }
     final public func setClientSubID(subID: String) { self.subID = subID }
     final public func setAIChatID(chatID: UUID) { self.aiChatID = chatID }
     final public func setCollegeState(collegeState: String) { self.state = collegeState }
