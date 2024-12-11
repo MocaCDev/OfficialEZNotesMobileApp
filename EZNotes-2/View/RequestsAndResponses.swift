@@ -113,6 +113,7 @@ struct SignUpRequestData {
     let Field: String
     let Major: String
     let IP: String?
+    let Usecase: String
 }
 
 struct SignUp2RequestData {

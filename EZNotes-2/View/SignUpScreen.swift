@@ -240,9 +240,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     self.screen = "home"
                                                     assignUDKey(key: "last_signup_section", value: "main")
                                                     break
-                                                case "select_state_and_college":
+                                                case "credentials":
                                                     self.section = "main"
                                                     assignUDKey(key: "last_signup_section", value: "main")
+                                                    break
+                                                case "select_state_and_college":
+                                                    self.section = "credentials"
+                                                    assignUDKey(key: "last_signup_section", value: "credentials")
                                                     break
                                                 case "code_input":
                                                     RequestAction<DeleteSignupProcessData>(
@@ -258,14 +262,19 @@ struct SignUpScreen : View, KeyboardReadable {
                                                             return
                                                         }
                                                         
-                                                        self.section = "select_state_and_college"
-                                                        assignUDKey(key: "last_signup_section", value: self.section)
+                                                        if getUDValue(key: "usecase") == "school" {
+                                                            self.section = "select_state_and_college"
+                                                            
+                                                            /* MARK: When "going back" from the code input section, the app will redirect to the "select major" part of "select_state_and_college".. as that was the last screen shown before the "code_input" one. Since that is the case, we have to remove the "temp_major" key from `UserDefaults` as well as remove any sort of content from `major` and `majors`. */
+                                                            removeUDKey(key: "temp_major")
+                                                            self.major.removeAll()
+                                                            self.majors.removeAll()
+                                                            self.get_majors()
+                                                        } else {
+                                                            self.section = "credentials"
+                                                        }
                                                         
-                                                        /* MARK: When "going back" from the code input section, the app will redirect to the "select major" part of "select_state_and_college".. as that was the last screen shown before the "code_input" one. Since that is the case, we have to remove the "temp_major" key from `UserDefaults` as well as remove any sort of content from `major` and `majors`. */
-                                                        removeUDKey(key: "temp_major")
-                                                        self.major.removeAll()
-                                                        self.majors.removeAll()
-                                                        self.get_majors()
+                                                        assignUDKey(key: "last_signup_section", value: self.section)
                                                     }
                                                 case "select_plan":
                                                     /* MARK: Delete the signup process in the backend. */
@@ -306,7 +315,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                         .frame(maxWidth: 20, alignment: .leading)
                                     } else { ZStack { }.frame(maxWidth: 20, alignment: .leading) }
                                     
-                                    Text(self.section == "main"
+                                    Text(self.section == "main" || self.section == "credentials"
                                          ? "Sign Up"
                                          : self.section == "code_input"
                                          ? "Input Code"
@@ -388,16 +397,18 @@ struct SignUpScreen : View, KeyboardReadable {
                                         self.wrongCode
                                         ? "Wrong code. \(3 - self.wrongCodeAttempts) attempts left. Try again"
                                         : self.userExists
-                                        ? "A user with the username you provided already exists"
-                                        : self.emailExists
-                                        ? "A user with the email you provided already exists"
-                                        : self.section == "main"
-                                        ? "Sign up with a unique username, your email and a unique password"
-                                        : self.section == "select_state_and_college"
-                                        ? "Tell us about your college and your degree :)"
-                                        : self.section == "code_input"
-                                        ? "A code has been sent to your email. Input the code below"
-                                        : "Select a plan that best suits you"
+                                            ? "A user with the username you provided already exists"
+                                            : self.emailExists
+                                                ? "A user with the email you provided already exists"
+                                                : self.section == "main"
+                                                    ? "What are you using **EZNotes** for?"
+                                                    : self.section == "credentials"
+                                                        ? "Sign up with a unique username, your email and a unique password"
+                                                        : self.section == "select_state_and_college"
+                                                            ? "Tell us about your college and your degree :)"
+                                                            : self.section == "code_input"
+                                                                ? "A code has been sent to your email. Input the code below"
+                                                                : "Select a plan that best suits you"
                                     )
                                     .frame(maxWidth: prop.size.width - 50, alignment: .center)
                                     .foregroundStyle(self.wrongCode || self.userExists || self.emailExists ? Color.EZNotesRed : Color.white)
@@ -466,7 +477,124 @@ struct SignUpScreen : View, KeyboardReadable {
                         }
                         
                         VStack {
+                            /* TODO: Convert the `if-else if-else` BS to `switch`. */
                             if self.section == "main" {
+                                VStack {
+                                    Button(action: {
+                                        assignUDKey(key: "usecase", value: "school")
+                                        self.section = "credentials"
+                                        assignUDKey(key: "last_signup_section", value: self.section)
+                                    }) {
+                                        HStack {
+                                            VStack {
+                                                Text("School")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 24 : 20))
+                                                    .foregroundStyle(.white)
+                                                
+                                                Text("Tailored to your school needs.")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 8)
+                                            .padding([.top, .bottom])
+                                            
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 20)
+                                                .foregroundStyle(.white)
+                                                .padding(.trailing, 15)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding()
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesLightBlack)
+                                        )
+                                        .cornerRadius(15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Button(action: {
+                                        assignUDKey(key: "usecase", value: "work")
+                                        self.section = "credentials"
+                                        assignUDKey(key: "last_signup_section", value: self.section)
+                                    }) {
+                                        HStack {
+                                            VStack {
+                                                Text("Work")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 24 : 20))
+                                                    .foregroundStyle(.white)
+                                                
+                                                Text("Tailored to your everyday needs.")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 8)
+                                            .padding([.top, .bottom])
+                                            
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 20)
+                                                .foregroundStyle(.white)
+                                                .padding(.trailing, 15)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding()
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesLightBlack)
+                                        )
+                                        .cornerRadius(15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Button(action: {
+                                        assignUDKey(key: "usecase", value: "general")
+                                        self.section = "credentials"
+                                        assignUDKey(key: "last_signup_section", value: self.section)
+                                    }) {
+                                        HStack {
+                                            VStack {
+                                                Text("General")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 24 : 20))
+                                                    .foregroundStyle(.white)
+                                                
+                                                Text("Tailored to anything you may need help with.")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 8)
+                                            .padding([.top, .bottom])
+                                            
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 20)
+                                                .foregroundStyle(.white)
+                                                .padding(.trailing, 15)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding()
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesLightBlack)
+                                        )
+                                        .cornerRadius(15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            } else if self.section == "credentials" {
                                 if self.loadingSelectStateAndCollegeSection {
                                     VStack {
                                         Text("Hang Tight...")
@@ -507,7 +635,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             ? prop.size.width - 800
                                             : prop.size.width - 450
                                             : prop.size.width - 100,
-                                            height: prop.isLargerScreen ? 40 : 30
+                                            height: 40
                                         )
                                         .padding([.leading], prop.isLargerScreen ? 15 : 5)
                                         .background(
@@ -557,7 +685,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             ? prop.size.width - 800
                                             : prop.size.width - 450
                                             : prop.size.width - 100,
-                                            height: prop.isLargerScreen ? 40 : 30
+                                            height: 40
                                         )
                                         .padding([.leading], prop.isLargerScreen ? 15 : 5)
                                         .background(
@@ -606,7 +734,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                             ? prop.size.width - 800
                                             : prop.size.width - 450
                                             : prop.size.width - 100,
-                                            height: prop.isLargerScreen ? 40 : 30
+                                            height: 40
                                         )
                                         .padding([.leading], prop.isLargerScreen ? 15 : 5)
                                         .background(
@@ -888,18 +1016,30 @@ struct SignUpScreen : View, KeyboardReadable {
                                                     
                                                     self.section = "loading_code"
                                                     
-                                                    print(self.college, self.majorField, self.major, self.password)
+                                                    //print(self.college, self.majorField, self.major, self.password)
+                                                    print(
+                                                        getUDValue(key: "temp_username"),
+                                                        getUDValue(key: "temp_email"),
+                                                        getUDValue(key: "temp_password"),
+                                                        getUDValue(key: "temp_college"),
+                                                        getUDValue(key: "temp_state"),
+                                                        getUDValue(key: "temp_field"),
+                                                        getUDValue(key: "temp_major"),
+                                                        getUDValue(key: "usecase")
+                                                    )
                                                     
+                                                    /* TODO: Instead of using states to store credential information, should we go ahead and just use `UserDefaults`? */
                                                     RequestAction<SignUpRequestData>(
                                                         parameters: SignUpRequestData(
-                                                            Username: username,
-                                                            Email: email,
-                                                            Password: password,
-                                                            College: college,
-                                                            State: state,
-                                                            Field: majorField,
-                                                            Major: major,
-                                                            IP: getLocalIPAddress()
+                                                            Username: getUDValue(key: "temp_username"),//username,
+                                                            Email: getUDValue(key: "temp_email"),//email,
+                                                            Password: getUDValue(key: "temp_password"),//password,
+                                                            College: getUDValue(key: "temp_college"),//college,
+                                                            State: getUDValue(key: "temp_state"),//state,
+                                                            Field: getUDValue(key: "temp_field"),//majorField,
+                                                            Major: getUDValue(key: "temp_major"),//major,
+                                                            IP: getLocalIPAddress(),
+                                                            Usecase: getUDValue(key: "usecase")
                                                         )
                                                     ).perform(action: complete_signup1_req) { statusCode, resp in
                                                         guard resp != nil && statusCode == 200 else {
@@ -1176,10 +1316,10 @@ struct SignUpScreen : View, KeyboardReadable {
                     
                     //Spacer()
                     
-                    if self.section != "select_plan" && self.section != "select_state_and_college" && self.section != "loading_code" {
+                    if self.section != "main" && self.section != "select_plan" && self.section != "select_state_and_college" && self.section != "loading_code" {
                         VStack {
                             Button(action: {
-                                if section == "main" {
+                                if section == "credentials" {
                                     if self.wrongCodeAttemptsMet { self.wrongCodeAttemptsMet = false }
                                     
                                     if self.username == "" || self.email == "" || self.password == "" {
@@ -1251,8 +1391,6 @@ struct SignUpScreen : View, KeyboardReadable {
                                             Email: self.email
                                         ))
                                         .perform(action: check_email_req) { statusCode, resp in
-                                            self.loadingSelectStateAndCollegeSection = false
-                                            
                                             guard resp != nil && statusCode == 200 else {
                                                 /* MARK: Stay in the "main" section. Just set `userExists` error to true and make content red. */
                                                 self.emailExists = true
@@ -1263,11 +1401,57 @@ struct SignUpScreen : View, KeyboardReadable {
                                             if self.emailExists { self.emailExists = false }
                                             if self.makeContentRed { self.makeContentRed = false }
                                             
-                                            /* MARK: If this request is good (status returned is 200), proceed with the sign up process. */
-                                            self.section = "select_state_and_college"
-                                            
-                                            /* MARK: Set the last section. */
-                                            assignUDKey(key: "last_signup_section", value: "select_state_and_college")
+                                            /* MARK: Check what the user is using the app for. If they selected "School" for their use case, proceed onto the state/college/field/major selection view.. else jump straight to the code input view. */
+                                            /* TODO: If they select "Work" or "General", perhaps we can have a section where we ask for a bit more information over what the user does to ensure the AI can be tailored a little bit more to what they'll be using the app for. */
+                                            if getUDValue(key: "usecase") == "school" {
+                                                self.loadingSelectStateAndCollegeSection = false
+                                                
+                                                self.section = "select_state_and_college"
+                                                
+                                                /* MARK: Set the last section. */
+                                                assignUDKey(key: "last_signup_section", value: "select_state_and_college")
+                                            } else {
+                                                /* MARK: Since the app is not being used for schooling, the college, state, field and major details are not needed. */
+                                                /* TODO: Make it to where the server backend is compatible with the fact the mobile app can be used for other purposes besides schooling. */
+                                                RequestAction<SignUpRequestData>(
+                                                    parameters: SignUpRequestData(
+                                                        Username: getUDValue(key: "temp_username"),//username,
+                                                        Email: getUDValue(key: "temp_email"),//email,
+                                                        Password: getUDValue(key: "temp_password"),//password,
+                                                        College: "N/A",//college,
+                                                        State: "N/A",//state,
+                                                        Field: "N/A",//majorField,
+                                                        Major: "N/A",//major,
+                                                        IP: getLocalIPAddress(),
+                                                        Usecase: getUDValue(key: "usecase")
+                                                    )
+                                                ).perform(action: complete_signup1_req) { statusCode, resp in
+                                                    self.loadingSelectStateAndCollegeSection = false
+                                                    
+                                                    guard resp != nil && statusCode == 200 else {
+                                                        if let resp = resp {
+                                                            if resp["ErrorCode"] as! Int == 0x6970 {
+                                                                self.section = "main"
+                                                                self.userExists = true
+                                                                return
+                                                            }
+                                                        }
+                                                        
+                                                        self.serverError = true
+                                                        return
+                                                    }
+                                                    
+                                                    if self.userExists { self.userExists = false }
+                                                    if self.makeContentRed { self.makeContentRed = false }
+                                                    
+                                                    self.accountID = resp!["Message"] as! String
+                                                    assignUDKey(key: "temp_account_id", value: self.accountID)
+                                                    
+                                                    self.section = "code_input"
+                                                    
+                                                    assignUDKey(key: "last_signup_section", value: "code_input")
+                                                }
+                                            }
                                             
                                             /* MARK: Ensure to (temporarily) store username, email and password (just in case they leave the app and come back). */
                                             //assignUDKey(key: "temp_username", value: self.username)
@@ -1354,7 +1538,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                     }
                                 }
                             }) {
-                                Text(section == "main"
+                                Text(section == "credentials"
                                      ? "Continue"
                                      : section == "select_state_and_college"
                                      ? "Submit"

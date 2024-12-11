@@ -331,7 +331,8 @@ struct RequestAction<T> {
                 request.addValue(params.Field, forHTTPHeaderField: "N-Field")
                 request.addValue(params.Major, forHTTPHeaderField: "N-Major")
                 request.addValue("", forHTTPHeaderField: "N-Bgimg")
-                request.addValue(params.IP != nil ? params.IP! : "", forHTTPHeaderField: "N-Cip")
+                request.addValue(params.IP != nil ? params.IP! : "::1", forHTTPHeaderField: "N-Cip") /* MARK: `::1` is localhost, essentially. */
+                request.addValue(params.Usecase, forHTTPHeaderField: "Usage")
                 break
             case is SignUp2RequestData.Type:
                 guard let params: SignUp2RequestData = (parameters as? SignUp2RequestData) else { return }
