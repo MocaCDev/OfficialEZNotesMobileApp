@@ -10,11 +10,13 @@ import Combine
 
 struct Account: View {
     @EnvironmentObject private var eznotesSubscriptionManager: EZNotesSubscriptionManager
+    @EnvironmentObject private var accountInfo: AccountDetails
+    
     var prop: Properties
     
     @Binding public var showAccount: Bool
     @Binding public var userHasSignedIn: Bool
-    @ObservedObject public var accountInfo: AccountDetails
+    //@ObservedObject public var accountInfo: AccountDetails
     
     @State private var accountPopupSection: String = "main"
     /*@State private var subscriptionInfo: SubscriptionInfo = .init(
@@ -103,6 +105,11 @@ struct Account: View {
     @State private var deleteAccountAlert: Bool = false
     
     @State private var testImage: Image?
+    
+    /* MARK: States for editing description of account. */
+    @State private var editDescription: Bool = false
+    @State private var newAccountDescription: String = ""
+    @State private var accountDescription: String = "No Description"
     
     var body: some View {
         VStack {
@@ -388,12 +395,11 @@ struct Account: View {
                         .padding(.top, 10)
                         .foregroundStyle(.white)
                         .setFontSizeAndWeight(weight: .medium, size: 14)
-                        .minimumScaleFactor(0.5)
                     
                     HStack {
                         if self.accountInfo.usage == "school" {
                             Text("Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**")
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .frame(alignment: .leading)
                                 .padding(.leading, 20)
                                 .padding(.top, 10)
                                 .foregroundStyle(.white)
@@ -401,17 +407,111 @@ struct Account: View {
                                 .minimumScaleFactor(0.5)
                                 .multilineTextAlignment(.leading)
                         } else {
-                            Text("No Description")
+                            if !self.editDescription {
+                                Text(self.accountDescription)
+                                    .frame(alignment: .leading)
+                                    .padding(.leading, 20)
+                                    .padding(.top, 10)
+                                    .foregroundStyle(self.accountDescription == "No Description" ? .gray : .white)
+                                    .font(Font.custom("Poppins-Regular", size: 12))
+                                    .minimumScaleFactor(0.5)
+                                    .multilineTextAlignment(.leading)
+                            } else {
+                                VStack {
+                                    TextField(
+                                        "Account description...",
+                                        text: $newAccountDescription,
+                                        axis: .vertical
+                                    )
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .lineLimit(2...4)
+                                    .font(Font.custom("Poppins-Regular", size: 12))
+                                    .padding(10)
+                                    .background(Color.EZNotesLightBlack)//(Color(.systemGray6))
+                                    .cornerRadius(15)
+                                    .foregroundStyle(.white)
+                                    .padding(.leading, 20)
+                                    .onChange(of: self.newAccountDescription) {
+                                        if self.newAccountDescription.count > 80 {
+                                            self.newAccountDescription = String(self.newAccountDescription.prefix(80))
+                                        }
+                                    }
+                                    
+                                    Text("\(self.newAccountDescription.count) out of 80 characters")
+                                        .frame(maxWidth: .infinity, maxHeight: 15, alignment: .leading)
+                                        .padding([.leading], 20)
+                                        .foregroundStyle(
+                                            self.newAccountDescription.count < 80
+                                                ? self.newAccountDescription.count > 70 && self.newAccountDescription.count < 80
+                                                    ? .yellow
+                                                    : Color.gray
+                                                : .red
+                                        )
+                                        .font(.system(size: 10, design: .rounded))
+                                        .fontWeight(.medium)
+                                        .padding(.bottom, 15)
+                                }
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.leading, 20)
-                                .padding(.top, 10)
-                                .foregroundStyle(.gray)
-                                .font(Font.custom("Poppins-Regular", size: 12))
-                                .minimumScaleFactor(0.5)
-                                .multilineTextAlignment(.leading)
+                                .padding(.top, 15)
+                            }
                         }
                         
-                        ZStack { }.frame(maxWidth: prop.isLargerScreen ? 80 : 60, alignment: .trailing)
+                        if !self.editDescription {
+                            Button(action: {
+                                self.editDescription = true
+                                
+                                if self.accountDescription != "No Description" { self.newAccountDescription = self.accountDescription }
+                            }) {
+                                ZStack {
+                                    Image(systemName: "pencil")
+                                        .resizable()
+                                        .frame(width: 15, height: 15)
+                                        .foregroundStyle(.white)
+                                }
+                                .frame(maxWidth: prop.isLargerScreen ? 80 : 60, alignment: .trailing)
+                                .padding(.trailing, 20)
+                                .padding(.top, 10)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                        } else {
+                            VStack {
+                                Button(action: {
+                                    /* TODO: Add `account_description` to database; add API endpoint to server that will be used to update the `account_description` column for the given user. For now, storing the account description in `UserDefaults` works. */
+                                    assignUDKey(key: "account_description", value: self.newAccountDescription)
+                                    
+                                    self.accountDescription = self.newAccountDescription
+                                    self.newAccountDescription.removeAll()
+                                    
+                                    self.editDescription = false
+                                }) {
+                                    Text("Save")
+                                        .frame(maxWidth: prop.isLargerScreen ? 80 : 60, alignment: .center)
+                                        .padding(4)
+                                        .font(Font.custom("Poppins-Regular", size: 14))
+                                        .background(.white)
+                                        .cornerRadius(15)
+                                        .foregroundStyle(.black)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                
+                                Button(action: {
+                                    self.newAccountDescription.removeAll()
+                                    
+                                    self.editDescription = false
+                                }) {
+                                    Text("Cancel")
+                                        .frame(maxWidth: prop.isLargerScreen ? 80 : 60, alignment: .center)
+                                        .padding(4)
+                                        .font(Font.custom("Poppins-Regular", size: 14))
+                                        .background(Color.EZNotesRed)
+                                        .cornerRadius(15)
+                                        .foregroundStyle(.black)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                            }
+                        }
+                        
+                        Spacer()
                     }
                     .frame(maxWidth: .infinity)
                     
@@ -423,53 +523,55 @@ struct Account: View {
                     
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack {
-                            HStack {
-                                Text(self.accountInfo.college)
-                                    .frame(alignment: .center)
-                                    .padding([.top, .bottom], 4)
-                                    .padding([.leading, .trailing], 8.5)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
+                            if self.accountInfo.usage == "school" {
+                                HStack {
+                                    Text(self.accountInfo.college)
+                                        .frame(alignment: .center)
+                                        .padding([.top, .bottom], 4)
+                                        .padding([.leading, .trailing], 8.5)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesLightBlack.opacity(0.8))
                                             //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
-                                    )
-                                    .font(Font.custom("Poppins-SemiBold", size: 14))
-                                    .foregroundStyle(.white)
-                                    .padding([.top, .bottom], 1.5)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            HStack {
-                                Text(self.accountInfo.major)
-                                    .frame(alignment: .center)
-                                    .padding([.top, .bottom], 4)
-                                    .padding([.leading, .trailing], 8.5)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
+                                        )
+                                        .font(Font.custom("Poppins-SemiBold", size: 14))
+                                        .foregroundStyle(.white)
+                                        .padding([.top, .bottom], 1.5)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                HStack {
+                                    Text(self.accountInfo.major)
+                                        .frame(alignment: .center)
+                                        .padding([.top, .bottom], 4)
+                                        .padding([.leading, .trailing], 8.5)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesLightBlack.opacity(0.8))
                                             //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
-                                    )
-                                    .font(Font.custom("Poppins-SemiBold", size: 14))
-                                    .foregroundStyle(.white)
-                                    .padding([.top, .bottom], 1.5)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            HStack {
-                                Text(self.accountInfo.state)
-                                    .frame(alignment: .center)
-                                    .padding([.top, .bottom], 4)
-                                    .padding([.leading, .trailing], 8.5)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
+                                        )
+                                        .font(Font.custom("Poppins-SemiBold", size: 14))
+                                        .foregroundStyle(.white)
+                                        .padding([.top, .bottom], 1.5)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                HStack {
+                                    Text(self.accountInfo.state)
+                                        .frame(alignment: .center)
+                                        .padding([.top, .bottom], 4)
+                                        .padding([.leading, .trailing], 8.5)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesLightBlack.opacity(0.8))
                                             //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
-                                    )
-                                    .font(Font.custom("Poppins-SemiBold", size: 14))
-                                    .foregroundStyle(.white)
-                                    .padding([.top, .bottom], 1.5)
+                                        )
+                                        .font(Font.custom("Poppins-SemiBold", size: 14))
+                                        .foregroundStyle(.white)
+                                        .padding([.top, .bottom], 1.5)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
                             
                             Button(action: { print("Add More Tags") }) {
                                 HStack {
@@ -477,9 +579,14 @@ struct Account: View {
                                         .resizable()
                                         .frame(width: 15, height: 15)
                                         .foregroundStyle(.white)
-                                        .padding([.leading, .trailing], 8.5)
+                                    
+                                    Text("Add Tag")
+                                        .frame(alignment: .center)
+                                        .font(Font.custom("Poppins-SemiBold", size: 14))
+                                        .foregroundStyle(.white)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding([.leading, .trailing], 8.5)
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -511,21 +618,16 @@ struct Account: View {
                                         self.accountPopupSection = "change_username"
                                     }) {
                                         HStack {
-                                            /*Text("Change Username")
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding(.leading, 15)
-                                                .foregroundStyle(.white)
-                                                .font(.system(size: 18, design: .rounded))*/
                                             VStack {
                                                 Text("Change Username")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .font(.system(size: 18, design: .rounded))
                                                     .foregroundStyle(Color.white)
                                                 
-                                                Text(self.accountInfo.username)
+                                                /*Text("\(self.accountInfo.username)")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .font(Font.custom("Poppins-Regular", size: 14))
-                                                    .foregroundStyle(Color.white)
+                                                    .foregroundStyle(Color.white)*/
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                                             .padding(.leading, 15)
@@ -572,163 +674,198 @@ struct Account: View {
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                     
-                                    Divider()
-                                        .overlay(Color(.systemGray4))
-                                        .padding([.leading, .trailing], 15)
-                                    
-                                    Button(action: {
-                                        if self.accountInfo.state == "" {
-                                            self.accountPopupSection = "swich_state"
-                                            return
-                                        }
+                                    if self.accountInfo.usage == "school" {
+                                        Divider()
+                                            .overlay(Color(.systemGray4))
+                                            .padding([.leading, .trailing], 15)
                                         
-                                        self.accountPopupSection = "switch_college"
-                                        self.loadingChangeSchoolsSection = true
-                                        
-                                        RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(State: self.accountInfo.state))
-                                            .perform(action: get_colleges) { statusCode, resp in
-                                                self.loadingChangeSchoolsSection = false
+                                        Button(action: {
+                                            if self.accountInfo.state == "" {
+                                                self.accountPopupSection = "swich_state"
+                                                return
+                                            }
+                                            
+                                            self.accountPopupSection = "switch_college"
+                                            self.loadingChangeSchoolsSection = true
+                                            
+                                            RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(State: self.accountInfo.state))
+                                                .perform(action: get_colleges) { statusCode, resp in
+                                                    self.loadingChangeSchoolsSection = false
+                                                    
+                                                    /* TODO: Add loading screen while college names load. */
+                                                    guard
+                                                        resp != nil,
+                                                        resp!.keys.contains("Colleges"),
+                                                        statusCode == 200
+                                                    else {
+                                                        self.errorLoadingChangeSchoolsSection = true
+                                                        
+                                                        /* TODO: Add some sort of error checking. We can use the banner-thing that is used to signify a success or failure when updating PFP/PFP BG image. */
+                                                        /* TODO: As has been aforementioned - lets go ahead and ensure the banner message can be used across the board, not just with update success/failures of PFP/PFP BG image. */
+                                                        //self.serverError = true
+                                                        if let resp = resp { print(resp) }
+                                                        return
+                                                    }
+                                                    
+                                                    let respColleges = resp!["Colleges"] as! [String]
+                                                    
+                                                    /* MARK: Ensure the `colleges` array is empty. */
+                                                    self.colleges.removeAll()
+                                                    
+                                                    for c in respColleges {
+                                                        if !self.colleges.contains(c) { self.colleges.append(c) }
+                                                    }
+                                                    
+                                                    self.colleges.append("Other")
+                                                    self.errorLoadingChangeSchoolsSection = false
+                                                    //self.college = self.colleges[0]
+                                                }
+                                        }) {
+                                            HStack {
+                                                VStack {
+                                                    Text("Change Schools")
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .font(.system(size: 18, design: .rounded))
+                                                        .foregroundStyle(Color.white)
+                                                    
+                                                    /*Text(self.accountInfo.college)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .font(Font.custom("Poppins-Regular", size: 14))
+                                                        .foregroundStyle(Color.white)*/
+                                                }
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                                .padding(.leading, 15)
                                                 
-                                                /* TODO: Add loading screen while college names load. */
+                                                ZStack {
+                                                    Image(systemName: "chevron.right")
+                                                        .resizable()
+                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
+                                                        .foregroundStyle(.gray)
+                                                }
+                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                                .padding(.trailing, 25)
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: 40)
+                                            .padding([.top, .bottom], 5)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                        
+                                        Divider()
+                                            .overlay(Color(.systemGray4))
+                                            .padding([.leading, .trailing], 15)
+                                        
+                                        Button(action: { self.accountPopupSection = "switch_state" }) {
+                                            HStack {
+                                                VStack {
+                                                    Text("Change States")
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .font(.system(size: 18, design: .rounded))
+                                                        .foregroundStyle(Color.white)
+                                                    
+                                                    /*Text(self.accountInfo.state)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .font(Font.custom("Poppins-Regular", size: 14))
+                                                        .foregroundStyle(Color.white)*/
+                                                }
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                
+                                                ZStack {
+                                                    Image(systemName: "chevron.right")
+                                                        .resizable()
+                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
+                                                        .foregroundStyle(.gray)
+                                                }
+                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                                .padding(.trailing, 25)
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: 40)
+                                            .padding([.top, .bottom], 5)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                        
+                                        Divider()
+                                            .overlay(Color(.systemGray4))
+                                            .padding([.leading, .trailing], 15)
+                                        
+                                        Button(action: {
+                                            self.accountPopupSection = "switch_field_and_major"
+                                            self.loadingMajorFields = true
+                                            
+                                            RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+                                                State: self.accountInfo.state,
+                                                College: self.accountInfo.college
+                                            ))
+                                            .perform(action: get_custom_college_fields_req) { statusCode, resp in
+                                                self.loadingMajorFields = false
+                                                
                                                 guard
                                                     resp != nil,
-                                                    resp!.keys.contains("Colleges"),
                                                     statusCode == 200
                                                 else {
-                                                    self.errorLoadingChangeSchoolsSection = true
-                                                    
-                                                    /* TODO: Add some sort of error checking. We can use the banner-thing that is used to signify a success or failure when updating PFP/PFP BG image. */
-                                                    /* TODO: As has been aforementioned - lets go ahead and ensure the banner message can be used across the board, not just with update success/failures of PFP/PFP BG image. */
-                                                    //self.serverError = true
-                                                    if let resp = resp { print(resp) }
+                                                    /* TODO: Handle errors. For now, the below works. */
+                                                    self.errorLoadingMajorFields = true
                                                     return
                                                 }
                                                 
-                                                let respColleges = resp!["Colleges"] as! [String]
-                                                
-                                                /* MARK: Ensure the `colleges` array is empty. */
-                                                self.colleges.removeAll()
-                                                
-                                                for c in respColleges {
-                                                    if !self.colleges.contains(c) { self.colleges.append(c) }
+                                                guard resp!.keys.contains("Fields") else {
+                                                    /* TODO: Handle errors. For now the below works. */
+                                                    //self.accountPopupSection = "main"
+                                                    self.errorLoadingMajorFields = true
+                                                    return
                                                 }
                                                 
-                                                self.colleges.append("Other")
-                                                self.errorLoadingChangeSchoolsSection = false
-                                                //self.college = self.colleges[0]
-                                            }
-                                    }) {
-                                        HStack {
-                                            VStack {
-                                                Text("Change Schools")
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(Color.white)
+                                                self.errorLoadingMajorFields = false
                                                 
-                                                Text(self.accountInfo.college)
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .font(Font.custom("Poppins-Regular", size: 14))
-                                                    .foregroundStyle(Color.white)
+                                                /* MARK: Ensure the array is empty before populating it. */
+                                                self.majorFields.removeAll()
+                                                
+                                                self.majorFields = resp!["Fields"] as! [String]
+                                                self.majorFields.append("Other")
                                             }
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                            .padding(.leading, 15)
-                                            
-                                            ZStack {
-                                                Image(systemName: "chevron.right")
-                                                    .resizable()
-                                                    .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                    .foregroundStyle(.gray)
+                                        }) {
+                                            HStack {
+                                                VStack {
+                                                    Text("Change Field/Major")
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .font(.system(size: 18, design: .rounded))
+                                                        .foregroundStyle(Color.white)
+                                                    
+                                                    /*Text(self.accountInfo.major)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .font(Font.custom("Poppins-Regular", size: 14))
+                                                        .foregroundStyle(Color.white)*/
+                                                }
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                                .padding(.leading, 15)
+                                                
+                                                ZStack {
+                                                    Image(systemName: "chevron.right")
+                                                        .resizableImage(width: 10, height: 15)
+                                                        .foregroundStyle(.gray)
+                                                }
+                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                                .padding(.trailing, 25)
                                             }
-                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                            .padding(.trailing, 25)
+                                            .frame(maxWidth: .infinity, maxHeight: 40)
+                                            .padding(.top, 5)
                                         }
-                                        .frame(maxWidth: .infinity, maxHeight: 40)
-                                        .padding([.top, .bottom], 5)
+                                        .buttonStyle(NoLongPressButtonStyle())
                                     }
-                                    .buttonStyle(NoLongPressButtonStyle())
                                     
-                                    Divider()
+                                    /*Divider()
                                         .overlay(Color(.systemGray4))
                                         .padding([.leading, .trailing], 15)
                                     
-                                    Button(action: { self.accountPopupSection = "switch_state" }) {
+                                    Button(action: { print("Change Usage") }) {
                                         HStack {
                                             VStack {
-                                                Text("Change States")
+                                                Text("Change Usage")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .font(.system(size: 18, design: .rounded))
                                                     .foregroundStyle(Color.white)
                                                 
-                                                Text(self.accountInfo.state)
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .font(Font.custom("Poppins-Regular", size: 14))
-                                                    .foregroundStyle(Color.white)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                            .padding(.leading, 15)
-                                            
-                                            ZStack {
-                                                Image(systemName: "chevron.right")
-                                                    .resizable()
-                                                    .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                    .foregroundStyle(.gray)
-                                            }
-                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                            .padding(.trailing, 25)
-                                        }
-                                        .frame(maxWidth: .infinity, maxHeight: 40)
-                                        .padding([.top, .bottom], 5)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    
-                                    Divider()
-                                        .overlay(Color(.systemGray4))
-                                        .padding([.leading, .trailing], 15)
-                                    
-                                    Button(action: {
-                                        self.accountPopupSection = "switch_field_and_major"
-                                        self.loadingMajorFields = true
-                                        
-                                        RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
-                                            State: self.accountInfo.state,
-                                            College: self.accountInfo.college
-                                        ))
-                                        .perform(action: get_custom_college_fields_req) { statusCode, resp in
-                                            self.loadingMajorFields = false
-                                            
-                                            guard
-                                                resp != nil,
-                                                statusCode == 200
-                                            else {
-                                                /* TODO: Handle errors. For now, the below works. */
-                                                self.errorLoadingMajorFields = true
-                                                return
-                                            }
-                                            
-                                            guard resp!.keys.contains("Fields") else {
-                                                /* TODO: Handle errors. For now the below works. */
-                                                //self.accountPopupSection = "main"
-                                                self.errorLoadingMajorFields = true
-                                                return
-                                            }
-                                            
-                                            self.errorLoadingMajorFields = false
-                                            
-                                            /* MARK: Ensure the array is empty before populating it. */
-                                            self.majorFields.removeAll()
-                                            
-                                            self.majorFields = resp!["Fields"] as! [String]
-                                            self.majorFields.append("Other")
-                                        }
-                                    }) {
-                                        HStack {
-                                            VStack {
-                                                Text("Change Field/Major")
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(Color.white)
-                                                
-                                                Text(self.accountInfo.major)
+                                                Text(self.accountInfo.usage)
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .font(Font.custom("Poppins-Regular", size: 14))
                                                     .foregroundStyle(Color.white)
@@ -747,9 +884,9 @@ struct Account: View {
                                         .frame(maxWidth: .infinity, maxHeight: 40)
                                         .padding(.top, 5)
                                     }
-                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .buttonStyle(NoLongPressButtonStyle())*/
                                 }
-                                .frame(maxWidth: prop.size.width - 50)
+                                .frame(maxWidth: prop.size.width - 50, maxHeight: .infinity)
                                 .padding([.top, .bottom], 14)
                                 //.padding([.leading, .trailing], 8)
                                 .background(
@@ -1851,7 +1988,7 @@ struct Account: View {
                                     .setFontSizeAndWeight(weight: .medium)
                             }
                         }
-                        .frame(maxWidth: prop.size.width - 20, maxHeight: .infinity)
+                        .frame(maxWidth: prop.size.width - 20)
                         .padding(.top, -20)
                     } else {
                         switch(self.accountPopupSection) {
@@ -1931,20 +2068,17 @@ struct Account: View {
                             ChangeUsername(
                                 prop: prop,
                                 borderBottomColor: self.borderBottomColor,
-                                accountInfo: self.accountInfo,
                                 accountPopupSection: $accountPopupSection
                             )
                         case "update_password":
                             UpdatePassword(
                                 prop: self.prop,
                                 borderBottomColor: self.borderBottomColor,
-                                accountInfo: self.accountInfo,
                                 accountPopupSection: $accountPopupSection
                             )
                         case "switch_state":
                             SwitchState(
                                 prop: self.prop,
-                                accountInfo: self.accountInfo,
                                 accountPopupSection: $accountPopupSection,
                                 loadingChangeSchoolsSection: $loadingChangeSchoolsSection,
                                 errorLoadingChangeSchoolsSection: $errorLoadingChangeSchoolsSection,
@@ -2890,5 +3024,10 @@ struct Account: View {
                                : prop.isLargerScreen ? [.bottom] : [.top, .bottom]*/
         )
         .background(.black)
+        .onAppear {
+            if udKeyExists(key: "account_description") {
+                self.accountDescription = getUDValue(key: "account_description")
+            }
+        }
     }
 }

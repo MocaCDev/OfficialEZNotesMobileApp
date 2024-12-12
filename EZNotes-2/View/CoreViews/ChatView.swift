@@ -85,8 +85,7 @@ struct ChatView: View {
             Account(
                 prop: self.prop,
                 showAccount: $showAccount,
-                userHasSignedIn: $userHasSignedIn,
-                accountInfo: self.accountInfo
+                userHasSignedIn: $userHasSignedIn
             )
         }
     }

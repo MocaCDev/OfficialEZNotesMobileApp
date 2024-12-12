@@ -9,7 +9,7 @@ import SwiftUI
 
 /* MARK: URLs used for requests. */
 //let server = "https://www.eznotes.space"
-let server = "http://192.168.0.23:8088"
+let server = "http://192.168.1.109:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
@@ -397,4 +397,20 @@ let detect_possible_similar_categories_req: CSIARequest = CSIARequest(
     url: "\(server)/detect_possible_similar_categories",
     method: "post",
     reqData: DetectPossibleSimilarCategories.self
+)
+
+let get_user_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_user",
+    method: "get",
+    reqData: ReqPlaceholder.self
+)
+
+struct GetUsersAccountIdData {
+    let Username: String
+}
+
+let get_users_account_id_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_users_account_id",
+    method: "get",
+    reqData: GetUsersAccountIdData.self
 )

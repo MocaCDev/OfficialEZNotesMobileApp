@@ -7,11 +7,12 @@
 import SwiftUI
 
 struct ChangeUsername: View {
+    @EnvironmentObject private var accountInfo: AccountDetails
+    
     /* TODO: Add loading screen for when "Update" is pressed. */
     var prop: Properties
     var borderBottomColor: LinearGradient
     
-    @ObservedObject public var accountInfo: AccountDetails
     @Binding public var accountPopupSection: String
     
     @State private var newUsername: String = ""

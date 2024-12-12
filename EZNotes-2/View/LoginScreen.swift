@@ -281,6 +281,7 @@ struct LoginScreen: View, KeyboardReadable {
                             assignUDKey(key: "college_name", value: resp!["College"] as! String)
                             assignUDKey(key: "major_name", value: resp!["Major"] as! String)
                             assignUDKey(key: "college_state", value: resp!["State"] as! String)
+                            assignUDKey(key: "usecase", value: "general")
                             self.setLoginStatus()
                         }
                     }) {

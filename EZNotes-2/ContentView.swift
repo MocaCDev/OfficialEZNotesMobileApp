@@ -38,11 +38,13 @@ extension KeyboardReadable {
 }
 
 struct ContentView: View {
+    @EnvironmentObject private var accountInfo: AccountDetails
+    
     @State private var faceIDAuthenticated: Bool = false
     @Environment(\.scenePhase) private var scenePhase
     
     @State public var reAuthReqFromLogin: Bool = false
-    @StateObject public var accountInfo: AccountDetails = AccountDetails()
+    //@StateObject public var accountInfo: AccountDetails = AccountDetails()
     
     init() {
         StripeAPI.defaultPublishableKey = "pk_test_51OdoXSDNLx34I7Pu22ELrZac5NUd5lrs8EXqK96SFOUJM6wZqOe8HQxyH0f3CR8emsCAVwQiqStwTWyGhCj1wRtM00T1fR9V2D"

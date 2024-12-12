@@ -7,12 +7,12 @@
 import SwiftUI
 
 struct UpdatePassword: View {
+    @EnvironmentObject private var accountInfo: AccountDetails
     /* TODO: Add loading screen for when "Update" is pressed. */
     
     var prop: Properties
     var borderBottomColor: LinearGradient
     
-    @ObservedObject public var accountInfo: AccountDetails
     @Binding public var accountPopupSection: String
     
     @State private var newPassword: String = ""

@@ -1692,6 +1692,13 @@ struct TopNavChat: View {
     var backgroundColor: Color
     
     @State private var rickRoll: Bool = false
+    @State private var userSearched: String = ""
+    @FocusState private var userSearchBarFocused: Bool
+    @State private var usersSearched: [String: Image] = [:]
+    @State private var launchUserPreview: Bool = false
+    @State private var launchedForUser: String = ""
+    @State private var usersPfpBg: Image = Image("Pfp-Default-Bg")
+    @State private var usersPfp: Image = Image(systemName: "person.crop.circle.fill")
     
     var body: some View {
         HStack {
@@ -1725,12 +1732,392 @@ struct TopNavChat: View {
             .frame(maxWidth: .infinity, alignment: .trailing)
             .padding(.bottom, 20)
             .popover(isPresented: $rickRoll) {
+                VStack {
+                    HStack {
+                        Button(action: { self.rickRoll = false }) {
+                            ZStack {
+                                Image(systemName: "chevron.down")
+                                    .resizable()
+                                    .frame(width: 18, height: 10)
+                                    .foregroundStyle(.white)
+                            }
+                            .frame(maxWidth: 30, alignment: .leading)
+                            .padding(.leading, 15)
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        
+                        Text("Add Friend")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .font(.system(size: prop.isLargerScreen ? 24 : 22, weight: .bold))
+                            .foregroundStyle(.white)
+                        
+                        ZStack { }.frame(maxWidth: 30, alignment: .trailing).padding(.trailing, 15)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: 30)
+                    .padding([.leading, .top, .trailing], 8)
+                    
+                    HStack {
+                        TextField(
+                            "",
+                            text: $userSearched
+                        )
+                        .frame(
+                            maxWidth: .infinity
+                        )
+                        .padding(8)
+                        .padding(.horizontal, 25)
+                        .background(Color.EZNotesLightBlack)//(Color(.systemGray5))
+                        .foregroundStyle(.white)
+                        .cornerRadius(15)
+                        .padding(.horizontal, 10)
+                        .focused($userSearchBarFocused)
+                        .overlay(
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.gray)
+                                    .frame(minWidth: 0, alignment: .leading)
+                                    .padding(.leading, 20)
+                                
+                                if self.userSearched.isEmpty && !self.userSearchBarFocused {
+                                    Text("Search...")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .foregroundStyle(.white)
+                                } else {
+                                    Spacer()
+                                }
+                                
+                                if !self.userSearched.isEmpty {
+                                    Button(action: {
+                                        self.userSearched = ""
+                                    }) {
+                                        Image(systemName: "multiply.circle.fill")
+                                            .foregroundColor(.gray)
+                                            .padding(.trailing, 25)
+                                    }
+                                }
+                            }
+                        )
+                        .onSubmit {
+                            print(self.userSearched)
+                        }
+                        
+                        ZStack {
+                            Image(systemName: "line.3.horizontal.decrease")
+                                .resizable()
+                                .frame(width: 20, height: 15)
+                                .foregroundStyle(.white)
+                        }
+                        .padding(.leading, 5)
+                    }
+                    .frame(maxWidth: prop.size.width - 20)
+                    .padding(.top, 15)
+                    
+                    Divider()
+                        .background(.white)
+                        .padding(.top)
+                        .padding(.bottom, -5)
+                    
+                    ZStack {
+                        if self.launchUserPreview {
+                            VStack {
+                                Spacer()
+                                
+                                VStack {
+                                    ZStack {
+                                        self.usersPfpBg
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(maxHeight: prop.isLargerScreen ? 135 : 115)
+                                        //.aspectRatio(contentMode: .fill)
+                                            .clipped()
+                                            .overlay(Color.EZNotesBlack.opacity(0.3))
+                                            .cornerRadius(15, corners: [.topLeft, .topRight])
+                                    }
+                                    .frame(maxWidth: prop.size.width, maxHeight: 100)
+                                    
+                                    HStack {
+                                        ZStack {
+                                            Circle()
+                                                .fill(LinearGradient(colors: [Color.EZNotesBlue, Color.EZNotesBlack], startPoint: .top, endPoint: .bottom))
+                                            
+                                            self.usersPfp
+                                                .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
+                                                .scaledToFill()
+                                                .frame(maxWidth: 70, maxHeight: 70)
+                                                .clipShape(.circle)
+                                        }
+                                        .frame(width: 75, height: 75, alignment: .leading)
+                                        .padding(.leading, 20)
+                                        .zIndex(1)
+                                        
+                                        Spacer()
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.top, -20)
+                                    
+                                    HStack {
+                                        Text(launchedForUser)
+                                            .frame(alignment: .leading)
+                                            .padding(.leading, 20)
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: prop.isLargerScreen ? 30 : 24))//(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 28 : 22))
+                                        
+                                        Divider()
+                                            .background(.white)
+                                        
+                                        Text("0 Friends")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .light))
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 20)
+                                    .padding(.top, 10)
+                                    
+                                    Text("TODO: Add description details for users being looked up.")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(.leading, 20)
+                                        .padding(.top, 10)
+                                        .foregroundStyle(.gray)
+                                        .font(Font.custom("Poppins-Regular", size: 12))
+                                        .minimumScaleFactor(0.5)
+                                        .multilineTextAlignment(.leading)
+                                    
+                                    Text("Tags:")
+                                        .frame(maxWidth: prop.size.width - 40, alignment: .leading)
+                                        .font(Font.custom("Poppins-SemiBold", size: 14))
+                                        .foregroundStyle(.white)
+                                        .padding(.leading, 20)
+                                        .padding(.top, 10)
+                                    
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack {
+                                            HStack {
+                                                Text("Support Coming Soon")
+                                                    .frame(alignment: .center)
+                                                    .padding([.top, .bottom], 4)
+                                                    .padding([.leading, .trailing], 8.5)
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 15)
+                                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
+                                                        //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
+                                                    )
+                                                    .font(Font.custom("Poppins-SemiBold", size: 14))
+                                                    .foregroundStyle(.white)
+                                                    .padding([.top, .bottom], 1.5)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            
+                                            HStack {
+                                                Text("Stay Tuned")
+                                                    .frame(alignment: .center)
+                                                    .padding([.top, .bottom], 4)
+                                                    .padding([.leading, .trailing], 8.5)
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 15)
+                                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
+                                                        //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
+                                                    )
+                                                    .font(Font.custom("Poppins-SemiBold", size: 14))
+                                                    .foregroundStyle(.white)
+                                                    .padding([.top, .bottom], 1.5)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding(.trailing, 10)
+                                        .padding(.leading, 2)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.leading, 20)
+                                    
+                                    /* TODO: Remove this after releasing build tonight. */
+                                    Text("The rest of this view, alongside the entire **\"Chat\"** view, is in development. Stay tuned for the next build 🤝")
+                                        .frame(maxWidth: prop.size.width - 80, alignment: .center)
+                                        .font(Font.custom("Poppins-Regular", size: 13))
+                                        .foregroundStyle(.white)
+                                        .multilineTextAlignment(.center)
+                                        .padding([.top, .bottom], 40) /* MARK: Temporary. Will get removed when this entire feature is actually implemented for use. */
+                                }
+                                .frame(maxWidth: prop.size.width - 40)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(.black)
+                                        .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
+                                )
+                                .cornerRadius(15)
+                                .padding(4.5) /* MARK: Ensure the shadow can be seen. */
+                                
+                                Button(action: { self.launchUserPreview = false }) {
+                                    HStack {
+                                        ZStack { }.frame(maxWidth: .infinity, alignment: .leading)
+                                        
+                                        HStack {
+                                            Image(systemName: "plus")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(.black)
+                                            
+                                            Text("Add User")
+                                                .frame(alignment: .center)
+                                                .font(.system(size: 14, weight: .medium))
+                                                .foregroundStyle(.black)
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        
+                                        ZStack { }.frame(maxWidth: .infinity, alignment: .trailing)
+                                    }
+                                    .frame(maxWidth: prop.size.width - 40)
+                                    .padding(8)
+                                    .background(Color.EZNotesBlue)
+                                    .cornerRadius(15)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                
+                                Button(action: { self.launchUserPreview = false }) {
+                                    Text("Go Back")
+                                        .frame(alignment: .center)
+                                        .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                        .padding(8)
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundStyle(.black)
+                                        .background(Color.white)
+                                        .cornerRadius(15)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                
+                                Spacer()
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color.EZNotesBlack.opacity(0.9))
+                            .zIndex(1)
+                        }
+                        
+                        ScrollView(.vertical, showsIndicators: false) {
+                            VStack {
+                                ForEach(Array(self.usersSearched.keys), id: \.self) { user in
+                                    Button(action: {
+                                        RequestAction<GetUsersAccountIdData>(parameters: GetUsersAccountIdData(
+                                            Username: user
+                                        )).perform(action: get_users_account_id_req) { statusCode, resp in
+                                            guard resp != nil && statusCode == 200 else {
+                                                print("ERROR!")
+                                                return
+                                            }
+                                            
+                                            /*guard resp!.keys.contains("AccountId") else {
+                                                print("Missing `AccountId` in response.")
+                                                return
+                                            }*/
+                                            
+                                            if let accountId: String = resp!["AccountId"] as? String {
+                                                PFP(accountID: accountId)
+                                                    .requestGetPFPBg() { statusCode, pfp_bg in
+                                                        guard pfp_bg != nil && statusCode == 200 else { return }
+                                                        
+                                                        self.usersPfpBg = Image(uiImage: UIImage(data: pfp_bg!)!)
+                                                    }
+                                            }
+                                        }
+                                        
+                                        self.launchUserPreview = true
+                                        self.usersPfp = self.usersSearched[user]!
+                                        self.launchedForUser = user
+                                    }) {
+                                        HStack {
+                                            ZStack {
+                                                Circle()
+                                                    .fill(Color.EZNotesBlue)
+                                                
+                                                /*Image(systemName: "person.crop.circle.fill")*/
+                                                self.usersSearched[user]!
+                                                    .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
+                                                    .scaledToFill()
+                                                    .frame(maxWidth: 35, maxHeight: 35)
+                                                    .clipShape(.circle)
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(width: 38, height: 38)
+                                            .padding([.leading], 10)
+                                            
+                                            Text(user)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 16 : 14))
+                                                .foregroundStyle(.white)
+                                            
+                                            Button(action: { print("Add User") }) {
+                                                HStack {
+                                                    Image(systemName: "plus")
+                                                        .resizable()
+                                                        .frame(width: 10, height: 10)
+                                                        .foregroundStyle(.black)
+                                                    
+                                                    Text("Add")
+                                                        .frame(alignment: .center)
+                                                        .font(.system(size: 14, weight: .medium))
+                                                        .foregroundStyle(.black)
+                                                }
+                                                .padding([.top, .bottom], 2)
+                                                .padding([.leading, .trailing], 8)
+                                                .background(Color.EZNotesBlue)
+                                                .cornerRadius(15)
+                                                .padding(.trailing, 10)
+                                            }
+                                        }
+                                        .padding(8)
+                                        .background(Color.EZNotesLightBlack)
+                                        .cornerRadius(15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                }
+                            }
+                            .padding(.top, 10)
+                            .padding(.bottom, 30) /* MARK: Ensure space between bottom of screen and content at end of scrollview. */
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.EZNotesBlack)
+                .onAppear {
+                    RequestAction<ReqPlaceholder>(
+                        parameters: ReqPlaceholder()
+                    )
+                    .perform(action: get_user_req) { statusCode, resp in
+                        guard resp != nil && statusCode == 200 else {
+                            print("Error!")
+                            return
+                        }
+                        
+                        if let resp = resp as? [String: [String: Any]] {
+                            for user in resp.keys {
+                                guard resp[user] != nil else { continue }
+                                
+                                if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
+                                    if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
+                                        self.usersSearched[user] = Image(
+                                            uiImage: UIImage(
+                                                data: userPFPData
+                                            )!
+                                        )
+                                    } else {
+                                        self.usersSearched[user] = Image(systemName: "person.crop.circle.fill")
+                                    }
+                                } else {
+                                    self.usersSearched[user] = Image(systemName: "person.crop.circle.fill")
+                                }
+                            }
+                        } else {
+                            print("Error")
+                        }
+                    }
+                }
                 /*WebView(url: URL(string: "https://www.youtube.com/watch?v=oHg5SJYRHA0")!)
                     .navigationBarTitle("Get Rick Rolled, Boi", displayMode: .inline)*/
-                YouTubeVideoView() // Replace with your YouTube video ID
+                /*YouTubeVideoView() // Replace with your YouTube video ID
                     .frame(maxWidth: .infinity, maxHeight: .infinity)//: 300) // Set height for the video player
                     .cornerRadius(10)
-                    .padding()
+                    .padding()*/
             }
         }
         .topNavSettings(prop: prop, backgroundColor: .clear)

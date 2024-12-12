@@ -1312,13 +1312,13 @@ struct SignUpScreen : View, KeyboardReadable {
                                     ? prop.size.width - 800
                                     : prop.size.width - 450
                                     : prop.size.width - 100,
-                                    height: prop.isLargerScreen ? 40 : 30
+                                    height: 40
                                 )
                                 .padding([.leading], prop.isLargerScreen ? 15 : 5)
                                 .background(
                                     Rectangle()//RoundedRectangle(cornerRadius: 15)
                                         .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                        .borderBottomWLColor(isError: self.userInputedCode == "")
+                                        .borderBottomWLColor(isError: self.error == .WrongCode)
                                 )
                                 .foregroundStyle(Color.EZNotesBlue)
                                 .padding(prop.isLargerScreen ? 10 : 4)
@@ -1500,6 +1500,11 @@ struct SignUpScreen : View, KeyboardReadable {
                                 } else {
                                     /* TODO: Is the below if statement needed? */
                                     if self.section == "code_input" {
+                                        if self.userInputedCode.isEmpty {
+                                            self.error = .WrongCode
+                                            return
+                                        }
+                                        
                                         RequestAction<SignUp2RequestData>(
                                             parameters: SignUp2RequestData(
                                                 AccountID: accountID,
@@ -1601,8 +1606,8 @@ struct SignUpScreen : View, KeyboardReadable {
                             )
                         }
                         .padding(.bottom, self.section == "main"
-                                 ? prop.isLargerScreen ? 0 : 10
-                                 : 30
+                                 ? 10
+                                 : !prop.isLargerScreen ? 10 : 30
                         )
                     }
                 }

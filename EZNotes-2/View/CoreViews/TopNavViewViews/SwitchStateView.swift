@@ -7,9 +7,10 @@
 import SwiftUI
 
 struct SwitchState: View {
+    @EnvironmentObject private var accountInfo: AccountDetails
+    
     var prop: Properties
     
-    @ObservedObject public var accountInfo: AccountDetails
     @Binding public var accountPopupSection: String
     @Binding public var loadingChangeSchoolsSection: Bool
     @Binding public var errorLoadingChangeSchoolsSection: Bool

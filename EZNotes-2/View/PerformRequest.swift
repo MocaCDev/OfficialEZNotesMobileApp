@@ -308,6 +308,10 @@ struct RequestAction<T> {
         
         switch(action.reqData.self)
         {
+            case is GetUsersAccountIdData.Type:
+                guard let params: GetUsersAccountIdData = (parameters as? GetUsersAccountIdData) else { return }
+                request.addValue(params.Username, forHTTPHeaderField: "Username");
+                break
             case is CheckUsernameRequestData.Type://"complete_login":
                 guard let params: CheckUsernameRequestData = (parameters as? CheckUsernameRequestData) else { return }
                 request.addValue(params.Username, forHTTPHeaderField: "Username");
@@ -470,7 +474,7 @@ struct RequestAction<T> {
                 request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
                 request.addValue(params.OldPassword, forHTTPHeaderField: "Old-Password")
                 request.addValue(params.NewPassword, forHTTPHeaderField: "New-Password")
-            break
+                break
             default: break
         }
         
