@@ -65,7 +65,7 @@ struct Settings: View {
                     ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                 }
                 .frame(maxWidth: .infinity, maxHeight: 30)
-                .padding(.top, prop.isLargerScreen ? 45 : 0)
+                .padding(.top, prop.isLargerScreen ? 55 : 0)
                 
                 Spacer()
             }
@@ -332,13 +332,13 @@ struct Settings: View {
                             .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
                     )
                     .padding([.leading, .trailing], 4.5)
-                    .padding(.bottom, 10)
+                    .padding(.bottom, 40)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.bottom, -15)
             }
             .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-            .padding(.top, prop.isLargerScreen ? 80 : 40)
+            .padding(.top, prop.isLargerScreen ? 90 : 50)
             .zIndex(1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

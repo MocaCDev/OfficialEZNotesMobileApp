@@ -1691,6 +1691,7 @@ struct TopNavChat: View {
     var prop: Properties
     var backgroundColor: Color
     
+    @State private var showUserProfilePreview: Bool = false
     @State private var rickRoll: Bool = false
     @State private var userSearched: String = ""
     @FocusState private var userSearchBarFocused: Bool
@@ -1712,7 +1713,7 @@ struct TopNavChat: View {
             
             HStack {
                 ZStack {
-                    Button(action: { self.rickRoll = true }) {
+                    Button(action: { self.showUserProfilePreview = true }) {
                         Image(systemName: "person.badge.plus")//Image("Add-Friend-Icon")
                             .resizable()
                             .frame(maxWidth: 25, maxHeight: 25)
@@ -1731,10 +1732,10 @@ struct TopNavChat: View {
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
             .padding(.bottom, 20)
-            .popover(isPresented: $rickRoll) {
+            .popover(isPresented: $showUserProfilePreview) {
                 VStack {
                     HStack {
-                        Button(action: { self.rickRoll = false }) {
+                        Button(action: { self.showUserProfilePreview = false }) {
                             ZStack {
                                 Image(systemName: "chevron.down")
                                     .resizable()
@@ -1823,113 +1824,17 @@ struct TopNavChat: View {
                                 Spacer()
                                 
                                 VStack {
-                                    ZStack {
-                                        self.usersPfpBg
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(maxHeight: prop.isLargerScreen ? 135 : 115)
-                                        //.aspectRatio(contentMode: .fill)
-                                            .clipped()
-                                            .overlay(Color.EZNotesBlack.opacity(0.3))
-                                            .cornerRadius(15, corners: [.topLeft, .topRight])
-                                    }
-                                    .frame(maxWidth: prop.size.width, maxHeight: 100)
-                                    
-                                    HStack {
-                                        ZStack {
-                                            Circle()
-                                                .fill(LinearGradient(colors: [Color.EZNotesBlue, Color.EZNotesBlack], startPoint: .top, endPoint: .bottom))
-                                            
-                                            self.usersPfp
-                                                .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
-                                                .scaledToFill()
-                                                .frame(maxWidth: 70, maxHeight: 70)
-                                                .clipShape(.circle)
-                                        }
-                                        .frame(width: 75, height: 75, alignment: .leading)
-                                        .padding(.leading, 20)
-                                        .zIndex(1)
-                                        
-                                        Spacer()
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.top, -20)
-                                    
-                                    HStack {
-                                        Text(launchedForUser)
-                                            .frame(alignment: .leading)
-                                            .padding(.leading, 20)
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: prop.isLargerScreen ? 30 : 24))//(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 28 : 22))
-                                        
-                                        Divider()
-                                            .background(.white)
-                                        
-                                        Text("0 Friends")
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .foregroundStyle(.white)
-                                            .font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .light))
-                                    }
-                                    .frame(maxWidth: .infinity, maxHeight: 20)
-                                    .padding(.top, 10)
-                                    
-                                    Text("TODO: Add description details for users being looked up.")
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding(.leading, 20)
-                                        .padding(.top, 10)
-                                        .foregroundStyle(.gray)
-                                        .font(Font.custom("Poppins-Regular", size: 12))
-                                        .minimumScaleFactor(0.5)
-                                        .multilineTextAlignment(.leading)
-                                    
-                                    Text("Tags:")
-                                        .frame(maxWidth: prop.size.width - 40, alignment: .leading)
-                                        .font(Font.custom("Poppins-SemiBold", size: 14))
-                                        .foregroundStyle(.white)
-                                        .padding(.leading, 20)
-                                        .padding(.top, 10)
-                                    
-                                    ScrollView(.horizontal, showsIndicators: false) {
-                                        HStack {
-                                            HStack {
-                                                Text("Support Coming Soon")
-                                                    .frame(alignment: .center)
-                                                    .padding([.top, .bottom], 4)
-                                                    .padding([.leading, .trailing], 8.5)
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 15)
-                                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
-                                                        //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
-                                                    )
-                                                    .font(Font.custom("Poppins-SemiBold", size: 14))
-                                                    .foregroundStyle(.white)
-                                                    .padding([.top, .bottom], 1.5)
-                                            }
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            
-                                            HStack {
-                                                Text("Stay Tuned")
-                                                    .frame(alignment: .center)
-                                                    .padding([.top, .bottom], 4)
-                                                    .padding([.leading, .trailing], 8.5)
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 15)
-                                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
-                                                        //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
-                                                    )
-                                                    .font(Font.custom("Poppins-SemiBold", size: 14))
-                                                    .foregroundStyle(.white)
-                                                    .padding([.top, .bottom], 1.5)
-                                            }
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                        }
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding(.trailing, 10)
-                                        .padding(.leading, 2)
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.leading, 20)
-                                    
+                                    UsersProfile(
+                                        prop: self.prop,
+                                        username: self.launchedForUser,
+                                        usersPfpBg: self.usersPfpBg,
+                                        usersPfp: self.usersPfp,
+                                        usersDescription: "TODO: Add description details for users being looked up.",
+                                        usersTags: ["Support Coming Soon", "Stay Tuned"],
+                                        accountPopupSection: $launchedForUser, /* TODO: Figure something out with this, this is bad. */
+                                        showAccount: $launchUserPreview /* TODO: Figure something out with this, this is bad. */
+                                    )
+    
                                     /* TODO: Remove this after releasing build tonight. */
                                     Text("The rest of this view, alongside the entire **\"Chat\"** view, is in development. Stay tuned for the next build 🤝")
                                         .frame(maxWidth: prop.size.width - 80, alignment: .center)
@@ -1947,7 +1852,7 @@ struct TopNavChat: View {
                                 .cornerRadius(15)
                                 .padding(4.5) /* MARK: Ensure the shadow can be seen. */
                                 
-                                Button(action: { self.launchUserPreview = false }) {
+                                Button(action: { self.rickRoll = true }) {
                                     HStack {
                                         ZStack { }.frame(maxWidth: .infinity, alignment: .leading)
                                         
@@ -1989,6 +1894,9 @@ struct TopNavChat: View {
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .background(Color.EZNotesBlack.opacity(0.9))
+                            .onTapGesture {
+                                self.launchUserPreview = false
+                            }
                             .zIndex(1)
                         }
                         
@@ -2112,12 +2020,14 @@ struct TopNavChat: View {
                         }
                     }
                 }
-                /*WebView(url: URL(string: "https://www.youtube.com/watch?v=oHg5SJYRHA0")!)
-                    .navigationBarTitle("Get Rick Rolled, Boi", displayMode: .inline)*/
-                /*YouTubeVideoView() // Replace with your YouTube video ID
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)//: 300) // Set height for the video player
-                    .cornerRadius(10)
-                    .padding()*/
+                .popover(isPresented: $rickRoll) {
+                    /*WebView(url: URL(string: "https://www.youtube.com/watch?v=oHg5SJYRHA0")!)
+                     .navigationBarTitle("Get Rick Rolled, Boi", displayMode: .inline)*/
+                    YouTubeVideoView() // Replace with your YouTube video ID
+                     .frame(maxWidth: .infinity, maxHeight: .infinity)//: 300) // Set height for the video player
+                     .cornerRadius(10)
+                     .padding()
+                }
             }
         }
         .topNavSettings(prop: prop, backgroundColor: .clear)

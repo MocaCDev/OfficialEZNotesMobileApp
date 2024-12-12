@@ -113,518 +113,143 @@ struct Account: View {
     
     var body: some View {
         VStack {
-            ZStack {
-                if self.accountPopupSection == "main" {
-                    accountInfo.profileBackgroundPicture
-                        .resizable()
-                        .scaledToFill()
-                        .frame(maxHeight: prop.isLargerScreen ? 135 : 115)
-                    //.aspectRatio(contentMode: .fill)
-                        .clipped()
-                        .overlay(Color.EZNotesBlack.opacity(0.3))
-                } else { Color.black }
-                
-                if self.accountPopupSection == "main" {
-                    if self.pfpUploadStatus == "failed" || self.pfpBgUploadStatus == "failed" {
-                        HStack {
-                            ZStack {
-                                
-                            }
-                            .frame(maxWidth: 25, alignment: .leading)
-                            
-                            if self.errorUploadingPFP {
-                                VStack {
-                                    Spacer()
-                                    
-                                    Text("Error saving PFP. Try Again.")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                    //.padding(.top, 8)
-                                        .foregroundStyle(.black)
-                                        .font(Font.custom("Poppins-Regular", size: 16))
-                                        .minimumScaleFactor(0.5)
-                                        .padding(.bottom, 4)
-                                }
-                            } else {
-                                VStack {
-                                    Spacer()
-                                    
-                                    Text("Error saving PFP Background. Try Again.")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                    //.padding(.top, 8)
-                                        .foregroundStyle(.black)
-                                        .font(Font.custom("Poppins-Regular", size: 16))
-                                        .minimumScaleFactor(0.5)
-                                        .padding(.bottom, 4)
-                                }
-                            }
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: 55)
-                        .background(Color.EZNotesRed.opacity(0.8))
-                        .offset(y: self.statusBarYOffset)
-                        .onAppear {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                                withAnimation(.easeOut(duration: 3)) {
-                                    self.statusBarYOffset = -prop.size.height //-UIScreen.main.bounds.height
-                                }
-                                
-                                /* MARK: Wait another second and ensure the status bar view is invisible. */
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    if self.pfpUploadStatus != "none" { self.pfpUploadStatus = "none"; return }
-                                    self.pfpBgUploadStatus = "none"
-                                }
-                            }
-                        }
-                    } else {
-                        if self.pfpUploadStatus != "none" || self.pfpBgUploadStatus != "none" { /* MARK: We will assume if it isn't `none` and it isn't `failed` it is `good`. */
-                            HStack {
-                                ZStack { }.frame(maxWidth: 25, alignment: .leading)
-                                
-                                if self.pfpUploadStatus == "good" {
-                                    VStack {
-                                        Spacer()
-                                        
-                                        Text("Updated PFP")
-                                            .frame(maxWidth: .infinity, alignment: .center)
-                                        //.padding(.top, 8)
-                                            .foregroundStyle(.black)
-                                            .font(Font.custom("Poppins-Regular", size: 16))
-                                            .minimumScaleFactor(0.5)
-                                            .padding(.bottom, 4)
-                                    }
-                                } else {
-                                    VStack {
-                                        Spacer()
-                                        
-                                        Text("Updated PFP Background")
-                                            .frame(maxWidth: .infinity, alignment: .center)
-                                        ///.padding(.top, 8)
-                                            .foregroundStyle(.black)
-                                            .font(Font.custom("Poppins-Regular", size: 16))//.setFontSizeAndWeight(weight: .medium)
-                                            .minimumScaleFactor(0.5)
-                                            .padding(.bottom, 4)
-                                    }
-                                }
-                                
-                                ZStack { }.frame(maxWidth: 25, alignment: .trailing)
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: 55)
-                            .background(Color.EZNotesGreen.opacity(0.8))
-                            .offset(y: self.statusBarYOffset)
-                            .onAppear {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                                    withAnimation(.easeOut(duration: 3)) {
-                                        self.statusBarYOffset = -prop.size.height //-UIScreen.main.bounds.height
-                                    }
-                                    
-                                    /* MARK: Wait another second and ensure the status bar view is invisible. */
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                        if self.pfpUploadStatus != "none" { self.pfpUploadStatus = "none"; return }
-                                        self.pfpBgUploadStatus = "none"
-                                    }
-                                }
-                            }
-                        } else {
-                            HStack {
-                                Button(action: { self.showAccount = false }) {
-                                    ZStack {
-                                        Image(systemName: "arrow.backward")
-                                            .resizable()
-                                            .frame(width: 15, height: 15)
-                                            .foregroundStyle(.white)
-                                    }
-                                    .frame(maxWidth: 20, alignment: .leading)
-                                    .padding(.top, prop.isLargerScreen ? 30 : 5)
-                                    .padding(.leading, 25)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                
-                                ZStack {
-                                    
-                                }
-                                .frame(maxWidth: .infinity)
-                            }
-                        }
-                    }
-                }
+            /* MARK: This content is in a separate view due to the fact that when adding a person the user can click on the persons profile and get a preview. */
+            if self.accountPopupSection == "main" {
+                UsersProfile(
+                    prop: self.prop,
+                    isUserPreview: false,
+                    accountPopupSection: $accountPopupSection,
+                    showAccount: $showAccount
+                )
             }
-            .frame(maxWidth: prop.size.width, maxHeight: self.accountPopupSection != "main" ? 15 : 100) /* MARK: Set `maxWidth` to `prop.size.width` to avoid images with larger width from stretching content. */
-            
-            VStack {
-                if self.accountPopupSection == "main" {
-                    HStack {
-                        ZStack {
-                            Circle()
-                                .fill(LinearGradient(colors: [Color.EZNotesBlue, Color.EZNotesBlack], startPoint: .top, endPoint: .bottom))
-                            
-                            self.accountInfo.profilePicture
-                                .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
-                                .scaledToFill()
-                                .frame(maxWidth: 70, maxHeight: 70)
-                                .clipShape(.circle)
-                                .overlay(
-                                    VStack {
-                                        if self.changingProfilePic {
-                                            Text("Updating")
-                                                .frame(maxWidth: .infinity, alignment: .center)
-                                                .setFontSizeAndWeight(weight: .medium, size: 12)
-                                                .minimumScaleFactor(0.5)
-                                            
-                                            ProgressView()
-                                                .tint(Color.EZNotesBlue)
-                                        }
-                                    }
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                        .background(self.changingProfilePic ? Color.EZNotesBlack.opacity(0.6) : .clear)
-                                        .clipShape(.circle)
-                                )
-                        }
-                        .frame(width: 75, height: 75, alignment: .leading)
-                        .padding(.leading, 20)
-                        .zIndex(1)
-                        
-                        HStack {
-                            ZStack {
-                                PhotosPicker(selection: $pfpPhotoPicked, matching: .images) {
-                                    Text("Change PFP")
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                        .padding([.top, .bottom], 6)
-                                        .foregroundStyle(.white)
-                                        .setFontSizeAndWeight(weight: .medium, size: 14)
-                                }
-                                .onChange(of: self.pfpPhotoPicked) {
-                                    Task {
-                                        if let image = try? await pfpPhotoPicked!.loadTransferable(type: Image.self) {
-                                            self.changingProfilePic = true
-                                            
-                                            PFP(pfp: image, accountID: self.accountInfo.accountID)
-                                                .requestSavePFP() { statusCode, resp in
-                                                    self.changingProfilePic = false
-                                                    
-                                                    /* MARK: Reset the y-offset of the status bar at the top of the popup to ensure the "banner" actually shows. */
-                                                    self.statusBarYOffset = 0
-                                                    
-                                                    guard resp != nil && statusCode == 200 else {
-                                                        self.pfpUploadStatus = "failed"
-                                                        return
-                                                    }
-                                                    
-                                                    self.accountInfo.profilePicture = image
-                                                    if self.errorUploadingPFP { self.errorUploadingPFP = false }
-                                                    self.pfpUploadStatus = "good"
-                                                }
-                                        }
-                                    }
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: 30, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(.gray.opacity(0.25))
-                                    .stroke(.white, lineWidth: 1)
-                            )
-                            .padding(.leading, 15)
-                            
-                            ZStack {
-                                PhotosPicker(selection: $pfpBackgroundPhotoPicked) {
-                                    Text("Change Display")
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                        .padding([.top, .bottom], 6)
-                                        .foregroundStyle(.white)
-                                        .setFontSizeAndWeight(weight: .medium, size: 14)
-                                }
-                                .onChange(of: self.pfpBackgroundPhotoPicked) {
-                                    Task {
-                                        if let image = try? await pfpBackgroundPhotoPicked!.loadTransferable(type: Image.self) {
-                                            PFP(pfpBg: image, accountID: self.accountInfo.accountID)
-                                                .requestSavePFPBg() { statusCode, resp in
-                                                    /* MARK: Reset the y-offset of the status bar at the top of the popup to ensure the "banner" actually shows. */
-                                                    self.statusBarYOffset = 0
-                                                    
-                                                    guard resp != nil && statusCode == 200 else {
-                                                        self.pfpBgUploadStatus = "failed"
-                                                        //self.errorUploadingPFPBg = true
-                                                        return
-                                                    }
-                                                    
-                                                    //if self.errorUploadingPFPBg { self.errorUploadingPFPBg = false }
-                                                    self.pfpBgUploadStatus = "good"
-                                                    
-                                                    self.accountInfo.profileBackgroundPicture = image
-                                                }
-                                        }
-                                    }
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: 30, alignment: .trailing)
-                            .background(
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(.gray.opacity(0.25))
-                                    .stroke(.white, lineWidth: 1)
-                            )
-                            .padding(.trailing, 15)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .padding(.top, 30)
-                        .padding(.leading, -15)
-                    }
-                    .frame(maxWidth: .infinity)
-                    
-                    HStack {
-                        Text("\(self.accountInfo.username)")
-                            .frame(alignment: .leading)
-                            .padding(.leading, 20)
-                            .foregroundStyle(.white)
-                            .font(.system(size: prop.isLargerScreen ? 30 : 24))//(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 28 : 22))
-                        
-                        Divider()
-                            .background(.white)
-                        
-                        Text("0 Friends")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .foregroundStyle(.white)
-                            .font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .light))
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: 20)
-                    .padding(.top, 15)
-                    
-                    Text(self.accountInfo.email)
-                        .frame(maxWidth: .infinity, maxHeight: 20, alignment: .leading)
-                        .padding(.leading, 20)
-                        .padding(.top, 10)
-                        .foregroundStyle(.white)
-                        .setFontSizeAndWeight(weight: .medium, size: 14)
-                    
-                    HStack {
-                        if self.accountInfo.usage == "school" {
-                            Text("Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**")
-                                .frame(alignment: .leading)
-                                .padding(.leading, 20)
-                                .padding(.top, 10)
-                                .foregroundStyle(.white)
-                                .font(Font.custom("Poppins-Regular", size: 12))
-                                .minimumScaleFactor(0.5)
-                                .multilineTextAlignment(.leading)
-                        } else {
-                            if !self.editDescription {
-                                Text(self.accountDescription)
-                                    .frame(alignment: .leading)
-                                    .padding(.leading, 20)
-                                    .padding(.top, 10)
-                                    .foregroundStyle(self.accountDescription == "No Description" ? .gray : .white)
-                                    .font(Font.custom("Poppins-Regular", size: 12))
-                                    .minimumScaleFactor(0.5)
-                                    .multilineTextAlignment(.leading)
-                            } else {
-                                VStack {
-                                    TextField(
-                                        "Account description...",
-                                        text: $newAccountDescription,
-                                        axis: .vertical
-                                    )
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .lineLimit(2...4)
-                                    .font(Font.custom("Poppins-Regular", size: 12))
-                                    .padding(10)
-                                    .background(Color.EZNotesLightBlack)//(Color(.systemGray6))
-                                    .cornerRadius(15)
-                                    .foregroundStyle(.white)
-                                    .padding(.leading, 20)
-                                    .onChange(of: self.newAccountDescription) {
-                                        if self.newAccountDescription.count > 80 {
-                                            self.newAccountDescription = String(self.newAccountDescription.prefix(80))
-                                        }
-                                    }
-                                    
-                                    Text("\(self.newAccountDescription.count) out of 80 characters")
-                                        .frame(maxWidth: .infinity, maxHeight: 15, alignment: .leading)
-                                        .padding([.leading], 20)
-                                        .foregroundStyle(
-                                            self.newAccountDescription.count < 80
-                                                ? self.newAccountDescription.count > 70 && self.newAccountDescription.count < 80
-                                                    ? .yellow
-                                                    : Color.gray
-                                                : .red
-                                        )
-                                        .font(.system(size: 10, design: .rounded))
-                                        .fontWeight(.medium)
-                                        .padding(.bottom, 15)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.top, 15)
-                            }
-                        }
-                        
-                        if !self.editDescription {
-                            Button(action: {
-                                self.editDescription = true
-                                
-                                if self.accountDescription != "No Description" { self.newAccountDescription = self.accountDescription }
-                            }) {
-                                ZStack {
-                                    Image(systemName: "pencil")
-                                        .resizable()
-                                        .frame(width: 15, height: 15)
-                                        .foregroundStyle(.white)
-                                }
-                                .frame(maxWidth: prop.isLargerScreen ? 80 : 60, alignment: .trailing)
-                                .padding(.trailing, 20)
-                                .padding(.top, 10)
-                            }
-                            .buttonStyle(NoLongPressButtonStyle())
-                        } else {
-                            VStack {
-                                Button(action: {
-                                    /* TODO: Add `account_description` to database; add API endpoint to server that will be used to update the `account_description` column for the given user. For now, storing the account description in `UserDefaults` works. */
-                                    assignUDKey(key: "account_description", value: self.newAccountDescription)
-                                    
-                                    self.accountDescription = self.newAccountDescription
-                                    self.newAccountDescription.removeAll()
-                                    
-                                    self.editDescription = false
-                                }) {
-                                    Text("Save")
-                                        .frame(maxWidth: prop.isLargerScreen ? 80 : 60, alignment: .center)
-                                        .padding(4)
-                                        .font(Font.custom("Poppins-Regular", size: 14))
-                                        .background(.white)
-                                        .cornerRadius(15)
-                                        .foregroundStyle(.black)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                
-                                Button(action: {
-                                    self.newAccountDescription.removeAll()
-                                    
-                                    self.editDescription = false
-                                }) {
-                                    Text("Cancel")
-                                        .frame(maxWidth: prop.isLargerScreen ? 80 : 60, alignment: .center)
-                                        .padding(4)
-                                        .font(Font.custom("Poppins-Regular", size: 14))
-                                        .background(Color.EZNotesRed)
-                                        .cornerRadius(15)
-                                        .foregroundStyle(.black)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                            }
-                        }
-                        
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity)
-                    
-                    Text("Tags:")
-                        .frame(maxWidth: prop.size.width - 40, alignment: .leading)
-                        .font(Font.custom("Poppins-SemiBold", size: 14))
-                        .foregroundStyle(.white)
-                        .padding(.top, 10)
-                    
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
-                            if self.accountInfo.usage == "school" {
-                                HStack {
-                                    Text(self.accountInfo.college)
-                                        .frame(alignment: .center)
-                                        .padding([.top, .bottom], 4)
-                                        .padding([.leading, .trailing], 8.5)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(Color.EZNotesLightBlack.opacity(0.8))
-                                            //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
-                                        )
-                                        .font(Font.custom("Poppins-SemiBold", size: 14))
-                                        .foregroundStyle(.white)
-                                        .padding([.top, .bottom], 1.5)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                
-                                HStack {
-                                    Text(self.accountInfo.major)
-                                        .frame(alignment: .center)
-                                        .padding([.top, .bottom], 4)
-                                        .padding([.leading, .trailing], 8.5)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(Color.EZNotesLightBlack.opacity(0.8))
-                                            //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
-                                        )
-                                        .font(Font.custom("Poppins-SemiBold", size: 14))
-                                        .foregroundStyle(.white)
-                                        .padding([.top, .bottom], 1.5)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                
-                                HStack {
-                                    Text(self.accountInfo.state)
-                                        .frame(alignment: .center)
-                                        .padding([.top, .bottom], 4)
-                                        .padding([.leading, .trailing], 8.5)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(Color.EZNotesLightBlack.opacity(0.8))
-                                            //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
-                                        )
-                                        .font(Font.custom("Poppins-SemiBold", size: 14))
-                                        .foregroundStyle(.white)
-                                        .padding([.top, .bottom], 1.5)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            
-                            Button(action: { print("Add More Tags") }) {
-                                HStack {
-                                    Image(systemName: "plus")
-                                        .resizable()
-                                        .frame(width: 15, height: 15)
-                                        .foregroundStyle(.white)
-                                    
-                                    Text("Add Tag")
-                                        .frame(alignment: .center)
-                                        .font(Font.custom("Poppins-SemiBold", size: 14))
-                                        .foregroundStyle(.white)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding([.leading, .trailing], 8.5)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.trailing, 10)
-                        .padding(.leading, 2) /* MARK: Some of the first rounded rectangles border was cut off, this ensures that does not happen. */
-                    }
-                    .frame(maxWidth: prop.size.width - 40)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.top, prop.isLargerScreen ? -15 : -25)
             
             VStack {
                 VStack {
                     if self.accountPopupSection == "main" {
-                        VStack {
-                            VStack { }.frame(maxWidth: .infinity, maxHeight: 5)
+                        ScrollView(.vertical, showsIndicators: false) {
+                            Text("Account")
+                                .textCase(.uppercase) // Ensures the text is uppercased before styling.
+                                .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
+                                .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
+                                .foregroundStyle(.white) // Applies color styling after setting the font.
+                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
                             
-                            ScrollView(.vertical, showsIndicators: false) {
-                                Text("Account")
-                                    .textCase(.uppercase) // Ensures the text is uppercased before styling.
-                                    .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
-                                    .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
-                                    .foregroundStyle(.white) // Applies color styling after setting the font.
-                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                            VStack {
+                                Button(action: {
+                                    self.accountPopupSection = "change_username"
+                                }) {
+                                    HStack {
+                                        VStack {
+                                            Text("Change Username")
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .font(.system(size: 18, design: .rounded))
+                                                .foregroundStyle(Color.white)
+                                            
+                                            Text("\(self.accountInfo.username)")
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .font(Font.custom("Poppins-Regular", size: 14))
+                                                .foregroundStyle(Color.white)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                        .padding(.leading, 15)
+                                        
+                                        ZStack {
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
+                                                .foregroundStyle(.gray)
+                                        }
+                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                        .padding(.trailing, 25)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 40)
+                                    .padding(.bottom, 5)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
                                 
-                                VStack {
+                                Divider()
+                                    .overlay(Color(.systemGray4))
+                                    .padding([.leading, .trailing], 15)//.frame(width: prop.size.width - 75)
+                                
+                                Button(action: {
+                                    self.accountPopupSection = "update_password"
+                                }) {
+                                    HStack {
+                                        Text("Update Password")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                            .padding(.leading, 15)
+                                            .font(.system(size: 18, design: .rounded))
+                                            .foregroundStyle(.white)
+                                        
+                                        ZStack {
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
+                                                .foregroundStyle(.gray)
+                                        }
+                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                        .padding(.trailing, 25)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 40)
+                                    .padding([.top, .bottom], 5)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                
+                                if self.accountInfo.usage == "school" {
+                                    Divider()
+                                        .overlay(Color(.systemGray4))
+                                        .padding([.leading, .trailing], 15)
+                                    
                                     Button(action: {
-                                        self.accountPopupSection = "change_username"
+                                        if self.accountInfo.state == "" {
+                                            self.accountPopupSection = "swich_state"
+                                            return
+                                        }
+                                        
+                                        self.accountPopupSection = "switch_college"
+                                        self.loadingChangeSchoolsSection = true
+                                        
+                                        RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(State: self.accountInfo.state))
+                                            .perform(action: get_colleges) { statusCode, resp in
+                                                self.loadingChangeSchoolsSection = false
+                                                
+                                                /* TODO: Add loading screen while college names load. */
+                                                guard
+                                                    resp != nil,
+                                                    resp!.keys.contains("Colleges"),
+                                                    statusCode == 200
+                                                else {
+                                                    self.errorLoadingChangeSchoolsSection = true
+                                                    
+                                                    /* TODO: Add some sort of error checking. We can use the banner-thing that is used to signify a success or failure when updating PFP/PFP BG image. */
+                                                    /* TODO: As has been aforementioned - lets go ahead and ensure the banner message can be used across the board, not just with update success/failures of PFP/PFP BG image. */
+                                                    //self.serverError = true
+                                                    if let resp = resp { print(resp) }
+                                                    return
+                                                }
+                                                
+                                                let respColleges = resp!["Colleges"] as! [String]
+                                                
+                                                /* MARK: Ensure the `colleges` array is empty. */
+                                                self.colleges.removeAll()
+                                                
+                                                for c in respColleges {
+                                                    if !self.colleges.contains(c) { self.colleges.append(c) }
+                                                }
+                                                
+                                                self.colleges.append("Other")
+                                                self.errorLoadingChangeSchoolsSection = false
+                                                //self.college = self.colleges[0]
+                                            }
                                     }) {
                                         HStack {
                                             VStack {
-                                                Text("Change Username")
+                                                Text("Change Schools")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .font(.system(size: 18, design: .rounded))
                                                     .foregroundStyle(Color.white)
                                                 
-                                                /*Text("\(self.accountInfo.username)")
+                                                /*Text(self.accountInfo.college)
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .font(Font.custom("Poppins-Regular", size: 14))
                                                     .foregroundStyle(Color.white)*/
@@ -642,23 +267,29 @@ struct Account: View {
                                             .padding(.trailing, 25)
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: 40)
-                                        .padding(.bottom, 5)
+                                        .padding([.top, .bottom], 5)
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                     
                                     Divider()
                                         .overlay(Color(.systemGray4))
-                                        .padding([.leading, .trailing], 15)//.frame(width: prop.size.width - 75)
+                                        .padding([.leading, .trailing], 15)
                                     
-                                    Button(action: {
-                                        self.accountPopupSection = "update_password"
-                                    }) {
+                                    Button(action: { self.accountPopupSection = "switch_state" }) {
                                         HStack {
-                                            Text("Update Password")
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding(.leading, 15)
-                                                .font(.system(size: 18, design: .rounded))
-                                                .foregroundStyle(.white)
+                                            VStack {
+                                                Text("Change States")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(.system(size: 18, design: .rounded))
+                                                    .foregroundStyle(Color.white)
+                                                
+                                                /*Text(self.accountInfo.state)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-Regular", size: 14))
+                                                    .foregroundStyle(Color.white)*/
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                            .padding(.leading, 15)
                                             
                                             ZStack {
                                                 Image(systemName: "chevron.right")
@@ -674,201 +305,57 @@ struct Account: View {
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                     
-                                    if self.accountInfo.usage == "school" {
-                                        Divider()
-                                            .overlay(Color(.systemGray4))
-                                            .padding([.leading, .trailing], 15)
-                                        
-                                        Button(action: {
-                                            if self.accountInfo.state == "" {
-                                                self.accountPopupSection = "swich_state"
-                                                return
-                                            }
-                                            
-                                            self.accountPopupSection = "switch_college"
-                                            self.loadingChangeSchoolsSection = true
-                                            
-                                            RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(State: self.accountInfo.state))
-                                                .perform(action: get_colleges) { statusCode, resp in
-                                                    self.loadingChangeSchoolsSection = false
-                                                    
-                                                    /* TODO: Add loading screen while college names load. */
-                                                    guard
-                                                        resp != nil,
-                                                        resp!.keys.contains("Colleges"),
-                                                        statusCode == 200
-                                                    else {
-                                                        self.errorLoadingChangeSchoolsSection = true
-                                                        
-                                                        /* TODO: Add some sort of error checking. We can use the banner-thing that is used to signify a success or failure when updating PFP/PFP BG image. */
-                                                        /* TODO: As has been aforementioned - lets go ahead and ensure the banner message can be used across the board, not just with update success/failures of PFP/PFP BG image. */
-                                                        //self.serverError = true
-                                                        if let resp = resp { print(resp) }
-                                                        return
-                                                    }
-                                                    
-                                                    let respColleges = resp!["Colleges"] as! [String]
-                                                    
-                                                    /* MARK: Ensure the `colleges` array is empty. */
-                                                    self.colleges.removeAll()
-                                                    
-                                                    for c in respColleges {
-                                                        if !self.colleges.contains(c) { self.colleges.append(c) }
-                                                    }
-                                                    
-                                                    self.colleges.append("Other")
-                                                    self.errorLoadingChangeSchoolsSection = false
-                                                    //self.college = self.colleges[0]
-                                                }
-                                        }) {
-                                            HStack {
-                                                VStack {
-                                                    Text("Change Schools")
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .font(.system(size: 18, design: .rounded))
-                                                        .foregroundStyle(Color.white)
-                                                    
-                                                    /*Text(self.accountInfo.college)
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .font(Font.custom("Poppins-Regular", size: 14))
-                                                        .foregroundStyle(Color.white)*/
-                                                }
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding(.leading, 15)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.gray)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 25)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding([.top, .bottom], 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        
-                                        Divider()
-                                            .overlay(Color(.systemGray4))
-                                            .padding([.leading, .trailing], 15)
-                                        
-                                        Button(action: { self.accountPopupSection = "switch_state" }) {
-                                            HStack {
-                                                VStack {
-                                                    Text("Change States")
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .font(.system(size: 18, design: .rounded))
-                                                        .foregroundStyle(Color.white)
-                                                    
-                                                    /*Text(self.accountInfo.state)
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .font(Font.custom("Poppins-Regular", size: 14))
-                                                        .foregroundStyle(Color.white)*/
-                                                }
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding(.leading, 15)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.gray)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 25)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding([.top, .bottom], 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        
-                                        Divider()
-                                            .overlay(Color(.systemGray4))
-                                            .padding([.leading, .trailing], 15)
-                                        
-                                        Button(action: {
-                                            self.accountPopupSection = "switch_field_and_major"
-                                            self.loadingMajorFields = true
-                                            
-                                            RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
-                                                State: self.accountInfo.state,
-                                                College: self.accountInfo.college
-                                            ))
-                                            .perform(action: get_custom_college_fields_req) { statusCode, resp in
-                                                self.loadingMajorFields = false
-                                                
-                                                guard
-                                                    resp != nil,
-                                                    statusCode == 200
-                                                else {
-                                                    /* TODO: Handle errors. For now, the below works. */
-                                                    self.errorLoadingMajorFields = true
-                                                    return
-                                                }
-                                                
-                                                guard resp!.keys.contains("Fields") else {
-                                                    /* TODO: Handle errors. For now the below works. */
-                                                    //self.accountPopupSection = "main"
-                                                    self.errorLoadingMajorFields = true
-                                                    return
-                                                }
-                                                
-                                                self.errorLoadingMajorFields = false
-                                                
-                                                /* MARK: Ensure the array is empty before populating it. */
-                                                self.majorFields.removeAll()
-                                                
-                                                self.majorFields = resp!["Fields"] as! [String]
-                                                self.majorFields.append("Other")
-                                            }
-                                        }) {
-                                            HStack {
-                                                VStack {
-                                                    Text("Change Field/Major")
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .font(.system(size: 18, design: .rounded))
-                                                        .foregroundStyle(Color.white)
-                                                    
-                                                    /*Text(self.accountInfo.major)
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .font(Font.custom("Poppins-Regular", size: 14))
-                                                        .foregroundStyle(Color.white)*/
-                                                }
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding(.leading, 15)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.gray)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 25)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding(.top, 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                    }
-                                    
-                                    /*Divider()
+                                    Divider()
                                         .overlay(Color(.systemGray4))
                                         .padding([.leading, .trailing], 15)
                                     
-                                    Button(action: { print("Change Usage") }) {
+                                    Button(action: {
+                                        self.accountPopupSection = "switch_field_and_major"
+                                        self.loadingMajorFields = true
+                                        
+                                        RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+                                            State: self.accountInfo.state,
+                                            College: self.accountInfo.college
+                                        ))
+                                        .perform(action: get_custom_college_fields_req) { statusCode, resp in
+                                            self.loadingMajorFields = false
+                                            
+                                            guard
+                                                resp != nil,
+                                                statusCode == 200
+                                            else {
+                                                /* TODO: Handle errors. For now, the below works. */
+                                                self.errorLoadingMajorFields = true
+                                                return
+                                            }
+                                            
+                                            guard resp!.keys.contains("Fields") else {
+                                                /* TODO: Handle errors. For now the below works. */
+                                                //self.accountPopupSection = "main"
+                                                self.errorLoadingMajorFields = true
+                                                return
+                                            }
+                                            
+                                            self.errorLoadingMajorFields = false
+                                            
+                                            /* MARK: Ensure the array is empty before populating it. */
+                                            self.majorFields.removeAll()
+                                            
+                                            self.majorFields = resp!["Fields"] as! [String]
+                                            self.majorFields.append("Other")
+                                        }
+                                    }) {
                                         HStack {
                                             VStack {
-                                                Text("Change Usage")
+                                                Text("Change Field/Major")
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .font(.system(size: 18, design: .rounded))
                                                     .foregroundStyle(Color.white)
                                                 
-                                                Text(self.accountInfo.usage)
+                                                /*Text(self.accountInfo.major)
                                                     .frame(maxWidth: .infinity, alignment: .leading)
                                                     .font(Font.custom("Poppins-Regular", size: 14))
-                                                    .foregroundStyle(Color.white)
+                                                    .foregroundStyle(Color.white)*/
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                                             .padding(.leading, 15)
@@ -884,1112 +371,444 @@ struct Account: View {
                                         .frame(maxWidth: .infinity, maxHeight: 40)
                                         .padding(.top, 5)
                                     }
-                                    .buttonStyle(NoLongPressButtonStyle())*/
+                                    .buttonStyle(NoLongPressButtonStyle())
                                 }
-                                .frame(maxWidth: prop.size.width - 50, maxHeight: .infinity)
-                                .padding([.top, .bottom], 14)
-                                //.padding([.leading, .trailing], 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(Color.EZNotesBlack)//.fill(Color.EZNotesBlack)
-                                        .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
-                                        //.shadow(color: Color.EZNotesLightBlack, radius: 1.5)
-                                    /*.stroke(LinearGradient(gradient: Gradient(
-                                     colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
-                                     ), startPoint: .leading, endPoint: .trailing), lineWidth: 1)*/
-                                )
-                                .padding(.top, -5)
-                                .padding(5) /* MARK: Ensure the shadow can be seen. */
-                                //.cornerRadius(15)
                                 
-                                VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
+                                Divider()
+                                    .overlay(Color(.systemGray4))
+                                    .padding([.leading, .trailing], 15)
                                 
-                                Text("Core Actions")
-                                    .textCase(.uppercase) // Ensures the text is uppercased before styling.
-                                    .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
-                                    .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
-                                    .foregroundStyle(.white) // Applies color styling after setting the font.
-                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                
-                                VStack {
+                                Button(action: { print("Change Usage") }) {
                                     HStack {
-                                        Button(action: {
-                                            self.accountPopupSection = "settings"
-                                        }) {
-                                            VStack {
-                                                ZStack {
-                                                    Image(systemName: "gearshape.fill")
-                                                        .resizable()
-                                                        .frame(width: 35, height: 35, alignment: .topTrailing)
-                                                        .foregroundStyle(.black)
-                                                }
-                                                .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
-                                                
-                                                Text("Settings")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                                                    .foregroundStyle(.black)
-                                                    .font(.system(size: 20, design: .rounded))
-                                                    .fontWeight(.heavy)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                            .padding()
-                                            .background(Color.EZNotesOrange.gradient)
-                                            .cornerRadius(15)
+                                        VStack {
+                                            Text("Change Usage")
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .font(.system(size: 18, design: .rounded))
+                                                .foregroundStyle(Color.white)
+                                            
+                                            Text(self.accountInfo.usage)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .font(Font.custom("Poppins-Regular", size: 14))
+                                                .foregroundStyle(Color.white)
                                         }
-                                        .buttonStyle(NoLongPressButtonStyle())
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                        .padding(.leading, 15)
                                         
-                                        Button(action: {
-                                            if self.eznotesSubscriptionManager.userSubscriptionIDs.isEmpty {
-                                                self.accountPopupSection = "setup_plan"
-                                                return
-                                            }
-                                            
-                                            self.accountPopupSection = "planDetails"
-                                            self.loadingPlanDetailsSection = true
-                                            
-                                            /*RequestAction<GetSubscriptionInfoData>(parameters: GetSubscriptionInfoData(AccountID: self.accountInfo.accountID))
-                                                .perform(action: get_subscription_info_req) { statusCode, resp in
-                                                    self.loadingPlanDetailsSection = false
-                                                    
-                                                    guard resp != nil && statusCode == 200 else {
-                                                        if let resp = resp {
-                                                            if resp["Message"] as! String == "plan_id_not_found_for_user" {
-                                                                self.accountPopupSection = "setup_plan"
-                                                                return
-                                                            }
-                                                        }
-                                                        self.errorLoadingPlanDetailsSection = true
-                                                        return
-                                                    }
-                                                    
-                                                    if let resp = resp {
-                                                        let d: TimeInterval = resp["PlanCreated"] as! TimeInterval
-                                                        let date = Date(timeIntervalSince1970: d)
-                                                        
-                                                        /* MARK: Assign the according fields to be refereneced in the "Plan Details" section. */
-                                                        self.subscriptionInfo.TimeCreated = "\(date.formatted(date: .omitted, time: .shortened))"
-                                                        self.subscriptionInfo.DateCreated = Date(timeIntervalSince1970: resp["PlanCreated"] as! TimeInterval)
-                                                        self.subscriptionInfo.CurrentPeriodStart = Date(timeIntervalSince1970: resp["PeriodStart"] as! TimeInterval)
-                                                        self.subscriptionInfo.CurrentPeriodEnd = Date(timeIntervalSince1970: resp["PeriodEnd"] as! TimeInterval)
-                                                        self.subscriptionInfo.Lifetime = (resp["Lifetime"] as! Int)
-                                                        self.subscriptionInfo.ProductName = (resp["ProductName"] as! String)
-                                                        self.subscriptionInfo.Price = (resp["Price"] as! String)
-                                                        self.subscriptionInfo.Interval = (resp["Interval"] as! String)
-                                                        self.subscriptionInfo.PlanID = (resp["UserSubID"] as! String)
-                                                        self.subscriptionInfo.PriceID = (resp["PriceID"] as! String)
-                                                        self.subscriptionInfo.ProductID = (resp["ProductID"] as! String)
-                                                        self.subscriptionInfo.Last4 = (resp["LastFour"] as! String)
-                                                        self.subscriptionInfo.CardBrand = (resp["CardBrand"] as! String)
-                                                        self.subscriptionInfo.CardExpMonth = (resp["CardExpMonth"] as! String)
-                                                        self.subscriptionInfo.CardExpYear = (resp["CardExpYear"] as! String)
-                                                        self.subscriptionInfo.CardHolderName = (resp["CustomerName"] as! String)
-                                                        self.subscriptionInfo.PaymentMethodCreatedOn = Date(timeIntervalSince1970: resp["PaymentMethodCreatedOn"] as! TimeInterval)
-                                                        
-                                                        // Get the index two characters before the end of the string
-                                                        let splitIndex = self.subscriptionInfo.Price!.index(self.subscriptionInfo.Price!.endIndex, offsetBy: -2)
-                                                        
-                                                        // Split into prefix and suffix
-                                                        let prefix = String(self.subscriptionInfo.Price![..<splitIndex])
-                                                        let suffix = String(self.subscriptionInfo.Price![splitIndex...])
-                                                        
-                                                        self.subscriptionInfo.Price = "$\(prefix).\(suffix)"
-                                                        self.errorLoadingPlanDetailsSection = false
-                                                        return
-                                                    }
-                                                    
-                                                    /* MARK: If the above if statement fails, there was an error obtaining the response. */
-                                                    self.errorLoadingPlanDetailsSection = true
-                                                }*/
-                                        }) {
-                                            VStack {
-                                                ZStack {
-                                                    Image(systemName: "dollarsign.bank.building")
-                                                        .resizable()
-                                                        .frame(width: 35, height: 35, alignment: .topTrailing)
-                                                        .foregroundStyle(.black)
-                                                }
-                                                .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
-                                                
-                                                Text("Billing")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                                                    .foregroundStyle(.black)
-                                                    .font(.system(size: 20, design: .rounded))
-                                                    .fontWeight(.heavy)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                                            .padding()
-                                            .background(Color.EZNotesGreen.gradient)
-                                            .cornerRadius(15)
+                                        ZStack {
+                                            Image(systemName: "chevron.right")
+                                                .resizableImage(width: 10, height: 15)
+                                                .foregroundStyle(.gray)
                                         }
-                                        .buttonStyle(NoLongPressButtonStyle())
+                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                        .padding(.trailing, 25)
                                     }
-                                    .frame(maxWidth: .infinity, maxHeight: 140)
-                                    
+                                    .frame(maxWidth: .infinity, maxHeight: 40)
+                                    .padding(.top, 5)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                            }
+                            .frame(maxWidth: prop.size.width - 50, maxHeight: .infinity)
+                            .padding([.top, .bottom], 14)
+                            //.padding([.leading, .trailing], 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.EZNotesBlack)//.fill(Color.EZNotesBlack)
+                                    .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
+                                    //.shadow(color: Color.EZNotesLightBlack, radius: 1.5)
+                                /*.stroke(LinearGradient(gradient: Gradient(
+                                 colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
+                                 ), startPoint: .leading, endPoint: .trailing), lineWidth: 1)*/
+                            )
+                            .padding(.top, -5)
+                            .padding(5) /* MARK: Ensure the shadow can be seen. */
+                            
+                            VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
+                            
+                            Text("Core Actions")
+                                .textCase(.uppercase) // Ensures the text is uppercased before styling.
+                                .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
+                                .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
+                                .foregroundStyle(.white) // Applies color styling after setting the font.
+                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                            
+                            VStack {
+                                HStack {
                                     Button(action: {
-                                        self.accountPopupSection = "themes"
+                                        self.accountPopupSection = "settings"
                                     }) {
                                         VStack {
                                             ZStack {
-                                                Image(systemName: "macwindow.on.rectangle")
+                                                Image(systemName: "gearshape.fill")
                                                     .resizable()
                                                     .frame(width: 35, height: 35, alignment: .topTrailing)
                                                     .foregroundStyle(.black)
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
                                             
-                                            Text("Themes")
+                                            Text("Settings")
                                                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                                                 .foregroundStyle(.black)
                                                 .font(.system(size: 20, design: .rounded))
                                                 .fontWeight(.heavy)
                                         }
-                                        .frame(maxWidth: .infinity, maxHeight: 140)
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                                         .padding()
-                                        .background(
-                                            Color.EZNotesBlue.gradient
-                                        )
+                                        .background(Color.EZNotesOrange.gradient)
+                                        .cornerRadius(15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Button(action: {
+                                        if self.eznotesSubscriptionManager.userSubscriptionIDs.isEmpty {
+                                            self.accountPopupSection = "setup_plan"
+                                            return
+                                        }
+                                        
+                                        self.accountPopupSection = "planDetails"
+                                        self.loadingPlanDetailsSection = true
+                                        
+                                        /*RequestAction<GetSubscriptionInfoData>(parameters: GetSubscriptionInfoData(AccountID: self.accountInfo.accountID))
+                                            .perform(action: get_subscription_info_req) { statusCode, resp in
+                                                self.loadingPlanDetailsSection = false
+                                                
+                                                guard resp != nil && statusCode == 200 else {
+                                                    if let resp = resp {
+                                                        if resp["Message"] as! String == "plan_id_not_found_for_user" {
+                                                            self.accountPopupSection = "setup_plan"
+                                                            return
+                                                        }
+                                                    }
+                                                    self.errorLoadingPlanDetailsSection = true
+                                                    return
+                                                }
+                                                
+                                                if let resp = resp {
+                                                    let d: TimeInterval = resp["PlanCreated"] as! TimeInterval
+                                                    let date = Date(timeIntervalSince1970: d)
+                                                    
+                                                    /* MARK: Assign the according fields to be refereneced in the "Plan Details" section. */
+                                                    self.subscriptionInfo.TimeCreated = "\(date.formatted(date: .omitted, time: .shortened))"
+                                                    self.subscriptionInfo.DateCreated = Date(timeIntervalSince1970: resp["PlanCreated"] as! TimeInterval)
+                                                    self.subscriptionInfo.CurrentPeriodStart = Date(timeIntervalSince1970: resp["PeriodStart"] as! TimeInterval)
+                                                    self.subscriptionInfo.CurrentPeriodEnd = Date(timeIntervalSince1970: resp["PeriodEnd"] as! TimeInterval)
+                                                    self.subscriptionInfo.Lifetime = (resp["Lifetime"] as! Int)
+                                                    self.subscriptionInfo.ProductName = (resp["ProductName"] as! String)
+                                                    self.subscriptionInfo.Price = (resp["Price"] as! String)
+                                                    self.subscriptionInfo.Interval = (resp["Interval"] as! String)
+                                                    self.subscriptionInfo.PlanID = (resp["UserSubID"] as! String)
+                                                    self.subscriptionInfo.PriceID = (resp["PriceID"] as! String)
+                                                    self.subscriptionInfo.ProductID = (resp["ProductID"] as! String)
+                                                    self.subscriptionInfo.Last4 = (resp["LastFour"] as! String)
+                                                    self.subscriptionInfo.CardBrand = (resp["CardBrand"] as! String)
+                                                    self.subscriptionInfo.CardExpMonth = (resp["CardExpMonth"] as! String)
+                                                    self.subscriptionInfo.CardExpYear = (resp["CardExpYear"] as! String)
+                                                    self.subscriptionInfo.CardHolderName = (resp["CustomerName"] as! String)
+                                                    self.subscriptionInfo.PaymentMethodCreatedOn = Date(timeIntervalSince1970: resp["PaymentMethodCreatedOn"] as! TimeInterval)
+                                                    
+                                                    // Get the index two characters before the end of the string
+                                                    let splitIndex = self.subscriptionInfo.Price!.index(self.subscriptionInfo.Price!.endIndex, offsetBy: -2)
+                                                    
+                                                    // Split into prefix and suffix
+                                                    let prefix = String(self.subscriptionInfo.Price![..<splitIndex])
+                                                    let suffix = String(self.subscriptionInfo.Price![splitIndex...])
+                                                    
+                                                    self.subscriptionInfo.Price = "$\(prefix).\(suffix)"
+                                                    self.errorLoadingPlanDetailsSection = false
+                                                    return
+                                                }
+                                                
+                                                /* MARK: If the above if statement fails, there was an error obtaining the response. */
+                                                self.errorLoadingPlanDetailsSection = true
+                                            }*/
+                                    }) {
+                                        VStack {
+                                            ZStack {
+                                                Image(systemName: "dollarsign.bank.building")
+                                                    .resizable()
+                                                    .frame(width: 35, height: 35, alignment: .topTrailing)
+                                                    .foregroundStyle(.black)
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
+                                            
+                                            Text("Billing")
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                                                .foregroundStyle(.black)
+                                                .font(.system(size: 20, design: .rounded))
+                                                .fontWeight(.heavy)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                                        .padding()
+                                        .background(Color.EZNotesGreen.gradient)
                                         .cornerRadius(15)
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                 }
-                                .frame(maxWidth: prop.size.width - 50, maxHeight: .infinity)
+                                .frame(maxWidth: .infinity, maxHeight: 140)
                                 
-                                VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
-                                
-                                Text("Privacy & Terms")
-                                    .textCase(.uppercase) // Ensures the text is uppercased before styling.
-                                    .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
-                                    .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
-                                    .foregroundStyle(.white) // Applies color styling after setting the font.
-                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                
-                                VStack {
-                                    Button(action: { self.showPrivacyAndPolicy = true }) {
-                                        HStack {
-                                            Text("Privacy & Policy")
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding(.leading, 15)
-                                                .font(.system(size: 18, design: .rounded))
-                                                .foregroundStyle(Color.white)
-                                            
-                                            ZStack {
-                                                Image(systemName: "chevron.right")
-                                                    .resizable()
-                                                    .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                    .foregroundStyle(.white)
-                                            }
-                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                            .padding(.trailing, 25)
-                                        }
-                                        .frame(maxWidth: .infinity, maxHeight: 40)
-                                        .padding(.bottom, 5)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    .popover(isPresented: $showPrivacyAndPolicy) {
-                                        WebView(url: URL(string: "https://www.eznotes.space/privacy_policy")!)
-                                            .navigationBarTitle("Privacy Policy", displayMode: .inline)
-                                    }
-                                    
-                                    Divider()
-                                        .overlay(Color(.systemGray4))
-                                        .padding([.leading, .trailing], 15)
-                                    
-                                    Button(action: { self.showTermsAndConditions = true }) {
-                                        HStack {
-                                            Text("Terms & Conditions")
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding(.leading, 15)
-                                                .font(.system(size: 18, design: .rounded))
-                                                .foregroundStyle(Color.white)
-                                            
-                                            ZStack {
-                                                Image(systemName: "chevron.right")
-                                                    .resizable()
-                                                    .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                    .foregroundStyle(.white)
-                                            }
-                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                            .padding(.trailing, 25)
-                                        }
-                                        .frame(maxWidth: .infinity, maxHeight: 40)
-                                        .padding(.top, 5)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    .popover(isPresented: $showTermsAndConditions) {
-                                        WebView(url: URL(string: "https://www.eznotes.space/terms_and_conditions")!)
-                                            .navigationBarTitle("Terms & Conditions", displayMode: .inline)
-                                    }
-                                }
-                                .frame(maxWidth: prop.size.width - 50)
-                                .padding([.top, .bottom], 14)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(Color.EZNotesBlack)//.fill(Color.EZNotesBlack)
-                                        .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
-                                )
-                                .padding(5) /* MARK: Ensure the shadow can be seen. */
-                                .cornerRadius(15)
-                                
-                                VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
-                                
-                                /* MARK: More details will show the user their account ID, session ID etc. */
-                                Text("Additional")
-                                    .textCase(.uppercase) // Ensures the text is uppercased before styling.
-                                    .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
-                                    .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
-                                    .foregroundStyle(.white) // Applies color styling after setting the font.
-                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                
-                                VStack {
-                                    Button(action: { self.accountPopupSection = "moreAccountDetails" }) {
-                                        HStack {
-                                            Text("More Account Details")
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding(.leading, 15)
-                                                .font(.system(size: 18, design: .rounded))
-                                                .foregroundStyle(Color.white)
-                                            
-                                            ZStack {
-                                                Image(systemName: "chevron.right")
-                                                    .resizable()
-                                                    .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                    .foregroundStyle(.white)
-                                            }
-                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                            .padding(.trailing, 15)
-                                        }
-                                        .frame(maxWidth: .infinity, maxHeight: 40)
-                                        .padding(.bottom, 5)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    
-                                    Divider()
-                                        .overlay(Color(.systemGray4))
-                                        .padding([.leading, .trailing], 15)
-                                    
-                                    Button(action: { self.accountPopupSection = "reportIssue" }) {
-                                        HStack {
-                                            Text("Report An Issue")
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding(.leading, 15)
-                                                .font(.system(size: 18, design: .rounded))
-                                                .foregroundStyle(Color.white)
-                                            
-                                            ZStack {
-                                                Image(systemName: "chevron.right")
-                                                    .resizable()
-                                                    .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                    .foregroundStyle(.white)
-                                            }
-                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                            .padding(.trailing, 15)
-                                        }
-                                        .frame(maxWidth: .infinity, maxHeight: 40)
-                                        .padding(.top, 5)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                }
-                                .frame(maxWidth: prop.size.width - 50)
-                                .padding([.top, .bottom], 14)
-                                //.padding([.leading, .trailing], 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(Color.EZNotesBlack)//.fill(Color.EZNotesBlack)
-                                        .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
-                                )
-                                .padding(5) /* MARK: Ensure the padding can be seen. */
-                                .cornerRadius(15)
-                                
-                                VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
-                                
-                                Text("Actions")
-                                    .textCase(.uppercase) // Ensures the text is uppercased before styling.
-                                    .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
-                                    .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
-                                    .foregroundStyle(.white) // Applies color styling after setting the font.
-                                    .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                
-                                VStack {
-                                    Button(action: { self.deleteAccountAlert = true }) {
-                                        HStack {
-                                            Text("Delete Account")
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding(.leading, 15)
-                                                .font(.system(size: 18, design: .rounded))
-                                                .foregroundStyle(Color.white)
-                                            
-                                            ZStack {
-                                                Image(systemName: "chevron.right")
-                                                    .resizable()
-                                                    .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                    .foregroundStyle(.white)
-                                            }
-                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                            .padding(.trailing, 25)
-                                        }
-                                        .frame(maxWidth: .infinity, maxHeight: 40)
-                                        .padding(.bottom, 5)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    .alert("AYO!", isPresented: $deleteAccountAlert) {
-                                        Button("Mmmm.. okay", role: .cancel) { }
-                                    } message: {
-                                        Text("Why do you even wanna do such a thing? Not like the app is North Korea dude🙄")
-                                    }
-                                    
-                                    Divider()
-                                        .overlay(Color(.systemGray4))
-                                        .padding([.leading, .trailing], 15)
-                                    
-                                    Button(action: { self.logoutAlert = true }) {
-                                        HStack {
-                                            Text("Logout")
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding(.leading, 15)
-                                                .font(.system(size: 18, design: .rounded))
-                                                .foregroundStyle(Color.white)
-                                            
-                                            ZStack {
-                                                Image(systemName: "chevron.right")
-                                                    .resizable()
-                                                    .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                    .foregroundStyle(.white)
-                                            }
-                                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                            .padding(.trailing, 25)
-                                        }
-                                        .frame(maxWidth: .infinity, maxHeight: 40)
-                                        .padding(.top, 5)
-                                    }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    .alert("Are You Sure?", isPresented: $logoutAlert) {
-                                        Button(action: {
-                                            assignUDKey(key: "logged_in", value: false)
-                                            self.userHasSignedIn = false
-                                            self.accountInfo.reset()
-                                            
-                                            udRemoveAllAccountInfoKeys()
-                                        }) { Text("Yes") }
-                                        
-                                        Button("No", role: .cancel) { }
-                                    } message: {
-                                        Text("By selecting yes, you will effectively be logged out. Are you sure?")
-                                    }
-                                }
-                                .frame(maxWidth: prop.size.width - 50)
-                                .padding([.top, .bottom], 14)
-                                //.padding([.leading, .trailing], 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(Color.EZNotesBlack)//.fill(Color.EZNotesBlack)
-                                        .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
-                                )
-                                .padding(5) /* MARK: Ensure the shadow can be seen. */
-                                .cornerRadius(15)
-                                
-                                /*VStack {
-                                    Text("Account")
-                                        .textCase(.uppercase) // Ensures the text is uppercased before styling.
-                                        .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
-                                        .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
-                                        .foregroundStyle(.white) // Applies color styling after setting the font.
-                                        .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                    
+                                Button(action: {
+                                    self.accountPopupSection = "themes"
+                                }) {
                                     VStack {
-                                        Button(action: {
-                                            self.accountPopupSection = "change_username"
-                                        }) {
-                                            HStack {
-                                                /*Text("Change Username")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                    .padding(.leading, 15)
-                                                    .foregroundStyle(.white)
-                                                    .font(.system(size: 18, design: .rounded))*/
-                                                VStack {
-                                                    Text("Change Username")
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .font(.system(size: 18, design: .rounded))
-                                                        .foregroundStyle(Color.white)
-                                                    
-                                                    Text(self.accountInfo.username)
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .font(Font.custom("Poppins-Regular", size: 14))
-                                                        .foregroundStyle(Color.white)
-                                                }
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding(.leading, 15)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.gray)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 25)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding(.bottom, 5)
+                                        ZStack {
+                                            Image(systemName: "macwindow.on.rectangle")
+                                                .resizable()
+                                                .frame(width: 35, height: 35, alignment: .topTrailing)
+                                                .foregroundStyle(.black)
                                         }
-                                        .buttonStyle(NoLongPressButtonStyle())
+                                        .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
                                         
-                                        Divider()
-                                            .overlay(Color(.systemGray4))
-                                            .padding([.leading, .trailing], 15)//.frame(width: prop.size.width - 75)
-                                        
-                                        Button(action: {
-                                            self.accountPopupSection = "update_password"
-                                        }) {
-                                            HStack {
-                                                Text("Update Password")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                    .padding(.leading, 15)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(.white)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.gray)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 25)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding([.top, .bottom], 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        
-                                        Divider()
-                                            .overlay(Color(.systemGray4))
-                                            .padding([.leading, .trailing], 15)
-                                        
-                                        Button(action: {
-                                            if self.accountInfo.state == "" {
-                                                self.accountPopupSection = "swich_state"
-                                                return
-                                            }
-                                            
-                                            self.accountPopupSection = "switch_college"
-                                            self.loadingChangeSchoolsSection = true
-                                            
-                                            RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(State: self.accountInfo.state))
-                                                .perform(action: get_colleges) { statusCode, resp in
-                                                    self.loadingChangeSchoolsSection = false
-                                                    
-                                                    /* TODO: Add loading screen while college names load. */
-                                                    guard
-                                                        resp != nil,
-                                                        resp!.keys.contains("Colleges"),
-                                                        statusCode == 200
-                                                    else {
-                                                        self.errorLoadingChangeSchoolsSection = true
-                                                        
-                                                        /* TODO: Add some sort of error checking. We can use the banner-thing that is used to signify a success or failure when updating PFP/PFP BG image. */
-                                                        /* TODO: As has been aforementioned - lets go ahead and ensure the banner message can be used across the board, not just with update success/failures of PFP/PFP BG image. */
-                                                        //self.serverError = true
-                                                        if let resp = resp { print(resp) }
-                                                        return
-                                                    }
-                                                    
-                                                    let respColleges = resp!["Colleges"] as! [String]
-                                                    
-                                                    /* MARK: Ensure the `colleges` array is empty. */
-                                                    self.colleges.removeAll()
-                                                    
-                                                    for c in respColleges {
-                                                        if !self.colleges.contains(c) { self.colleges.append(c) }
-                                                    }
-                                                    
-                                                    self.colleges.append("Other")
-                                                    self.errorLoadingChangeSchoolsSection = false
-                                                    //self.college = self.colleges[0]
-                                                }
-                                        }) {
-                                            HStack {
-                                                Text("Change Schools")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                    .padding(.leading, 15)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(.white)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.gray)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 25)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding([.top, .bottom], 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        
-                                        Divider()
-                                            .overlay(Color(.systemGray4))
-                                            .padding([.leading, .trailing], 15)
-                                        
-                                        Button(action: { self.accountPopupSection = "switch_state" }) {
-                                            HStack {
-                                                Text("Change States")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                    .padding(.leading, 15)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(.white)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.gray)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 25)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding([.top, .bottom], 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        
-                                        Divider()
-                                            .overlay(Color(.systemGray4))
-                                            .padding([.leading, .trailing], 15)
-                                        
-                                        Button(action: {
-                                            self.accountPopupSection = "switch_field_and_major"
-                                            self.loadingMajorFields = true
-                                            
-                                            RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
-                                                State: self.accountInfo.state,
-                                                College: self.accountInfo.college
-                                            ))
-                                            .perform(action: get_custom_college_fields_req) { statusCode, resp in
-                                                self.loadingMajorFields = false
-                                                
-                                                guard
-                                                    resp != nil,
-                                                    statusCode == 200
-                                                else {
-                                                    /* TODO: Handle errors. For now, the below works. */
-                                                    self.errorLoadingMajorFields = true
-                                                    return
-                                                }
-                                                
-                                                guard resp!.keys.contains("Fields") else {
-                                                    /* TODO: Handle errors. For now the below works. */
-                                                    //self.accountPopupSection = "main"
-                                                    self.errorLoadingMajorFields = true
-                                                    return
-                                                }
-                                                
-                                                self.errorLoadingMajorFields = false
-                                                
-                                                /* MARK: Ensure the array is empty before populating it. */
-                                                self.majorFields.removeAll()
-                                                
-                                                self.majorFields = resp!["Fields"] as! [String]
-                                                self.majorFields.append("Other")
-                                            }
-                                        }) {
-                                            HStack {
-                                                Text("Change Field/Major")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                    .padding(.leading, 15)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(.white)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.gray)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 25)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding(.top, 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
+                                        Text("Themes")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                                            .foregroundStyle(.black)
+                                            .font(.system(size: 20, design: .rounded))
+                                            .fontWeight(.heavy)
                                     }
-                                    .frame(maxWidth: prop.size.width - 30)
-                                    .padding([.top, .bottom], 14)
-                                    //.padding([.leading, .trailing], 8)
+                                    .frame(maxWidth: .infinity, maxHeight: 140)
+                                    .padding()
                                     .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesBlack)//.fill(Color.EZNotesBlack)
-                                            .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
-                                            //.shadow(color: Color.EZNotesLightBlack, radius: 1.5)
-                                        /*.stroke(LinearGradient(gradient: Gradient(
-                                         colors: [Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesGreen]
-                                         ), startPoint: .leading, endPoint: .trailing), lineWidth: 1)*/
+                                        Color.EZNotesBlue.gradient
                                     )
-                                    .padding(.top, -5)
-                                    .padding(5) /* MARK: Ensure the shadow can be seen. */
-                                    //.cornerRadius(15)
-                                    
-                                    /* MARK: Custom `spacer`. Scrollview makes all the views within it kind of funky. */
-                                    VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
-                                    
-                                    Text("Core Actions")
-                                        .textCase(.uppercase) // Ensures the text is uppercased before styling.
-                                        .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
-                                        .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
-                                        .foregroundStyle(.white) // Applies color styling after setting the font.
-                                        .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                    
-                                    VStack {
-                                        HStack {
-                                            Button(action: {
-                                                self.accountPopupSection = "settings"
-                                            }) {
-                                                VStack {
-                                                    ZStack {
-                                                        Image(systemName: "gearshape.fill")
-                                                            .resizable()
-                                                            .frame(width: 35, height: 35, alignment: .topTrailing)
-                                                            .foregroundStyle(.black)
-                                                    }
-                                                    .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
-                                                    
-                                                    Text("Settings")
-                                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                                                        .foregroundStyle(.black)
-                                                        .font(.system(size: 20, design: .rounded))
-                                                        .fontWeight(.heavy)
-                                                }
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                .padding()
-                                                .background(Color.EZNotesOrange.gradient)
-                                                .cornerRadius(15)
-                                            }
-                                            .buttonStyle(NoLongPressButtonStyle())
-                                            
-                                            Button(action: {
-                                                if self.eznotesSubscriptionManager.userSubscriptionIDs.isEmpty {
-                                                    self.accountPopupSection = "setup_plan"
-                                                    return
-                                                }
-                                                
-                                                self.accountPopupSection = "planDetails"
-                                                self.loadingPlanDetailsSection = true
-                                                
-                                                /*RequestAction<GetSubscriptionInfoData>(parameters: GetSubscriptionInfoData(AccountID: self.accountInfo.accountID))
-                                                    .perform(action: get_subscription_info_req) { statusCode, resp in
-                                                        self.loadingPlanDetailsSection = false
-                                                        
-                                                        guard resp != nil && statusCode == 200 else {
-                                                            if let resp = resp {
-                                                                if resp["Message"] as! String == "plan_id_not_found_for_user" {
-                                                                    self.accountPopupSection = "setup_plan"
-                                                                    return
-                                                                }
-                                                            }
-                                                            self.errorLoadingPlanDetailsSection = true
-                                                            return
-                                                        }
-                                                        
-                                                        if let resp = resp {
-                                                            let d: TimeInterval = resp["PlanCreated"] as! TimeInterval
-                                                            let date = Date(timeIntervalSince1970: d)
-                                                            
-                                                            /* MARK: Assign the according fields to be refereneced in the "Plan Details" section. */
-                                                            self.subscriptionInfo.TimeCreated = "\(date.formatted(date: .omitted, time: .shortened))"
-                                                            self.subscriptionInfo.DateCreated = Date(timeIntervalSince1970: resp["PlanCreated"] as! TimeInterval)
-                                                            self.subscriptionInfo.CurrentPeriodStart = Date(timeIntervalSince1970: resp["PeriodStart"] as! TimeInterval)
-                                                            self.subscriptionInfo.CurrentPeriodEnd = Date(timeIntervalSince1970: resp["PeriodEnd"] as! TimeInterval)
-                                                            self.subscriptionInfo.Lifetime = (resp["Lifetime"] as! Int)
-                                                            self.subscriptionInfo.ProductName = (resp["ProductName"] as! String)
-                                                            self.subscriptionInfo.Price = (resp["Price"] as! String)
-                                                            self.subscriptionInfo.Interval = (resp["Interval"] as! String)
-                                                            self.subscriptionInfo.PlanID = (resp["UserSubID"] as! String)
-                                                            self.subscriptionInfo.PriceID = (resp["PriceID"] as! String)
-                                                            self.subscriptionInfo.ProductID = (resp["ProductID"] as! String)
-                                                            self.subscriptionInfo.Last4 = (resp["LastFour"] as! String)
-                                                            self.subscriptionInfo.CardBrand = (resp["CardBrand"] as! String)
-                                                            self.subscriptionInfo.CardExpMonth = (resp["CardExpMonth"] as! String)
-                                                            self.subscriptionInfo.CardExpYear = (resp["CardExpYear"] as! String)
-                                                            self.subscriptionInfo.CardHolderName = (resp["CustomerName"] as! String)
-                                                            self.subscriptionInfo.PaymentMethodCreatedOn = Date(timeIntervalSince1970: resp["PaymentMethodCreatedOn"] as! TimeInterval)
-                                                            
-                                                            // Get the index two characters before the end of the string
-                                                            let splitIndex = self.subscriptionInfo.Price!.index(self.subscriptionInfo.Price!.endIndex, offsetBy: -2)
-                                                            
-                                                            // Split into prefix and suffix
-                                                            let prefix = String(self.subscriptionInfo.Price![..<splitIndex])
-                                                            let suffix = String(self.subscriptionInfo.Price![splitIndex...])
-                                                            
-                                                            self.subscriptionInfo.Price = "$\(prefix).\(suffix)"
-                                                            self.errorLoadingPlanDetailsSection = false
-                                                            return
-                                                        }
-                                                        
-                                                        /* MARK: If the above if statement fails, there was an error obtaining the response. */
-                                                        self.errorLoadingPlanDetailsSection = true
-                                                    }*/
-                                            }) {
-                                                VStack {
-                                                    ZStack {
-                                                        Image(systemName: "dollarsign.bank.building")
-                                                            .resizable()
-                                                            .frame(width: 35, height: 35, alignment: .topTrailing)
-                                                            .foregroundStyle(.black)
-                                                    }
-                                                    .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
-                                                    
-                                                    Text("Billing")
-                                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                                                        .foregroundStyle(.black)
-                                                        .font(.system(size: 20, design: .rounded))
-                                                        .fontWeight(.heavy)
-                                                }
-                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
-                                                .padding()
-                                                .background(Color.EZNotesGreen.gradient)
-                                                .cornerRadius(15)
-                                            }
-                                            .buttonStyle(NoLongPressButtonStyle())
-                                        }
-                                        .frame(maxWidth: .infinity, maxHeight: 140)
-                                        
-                                        Button(action: {
-                                            self.accountPopupSection = "themes"
-                                        }) {
-                                            VStack {
-                                                ZStack {
-                                                    Image(systemName: "macwindow.on.rectangle")
-                                                        .resizable()
-                                                        .frame(width: 35, height: 35, alignment: .topTrailing)
-                                                        .foregroundStyle(.black)
-                                                }
-                                                .frame(maxWidth: .infinity, maxHeight: 35, alignment: .topTrailing)
-                                                
-                                                Text("Themes")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                                                    .foregroundStyle(.black)
-                                                    .font(.system(size: 20, design: .rounded))
-                                                    .fontWeight(.heavy)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 140)
-                                            .padding()
-                                            .background(
-                                                Color.EZNotesBlue.gradient
-                                            )
-                                            .cornerRadius(15)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                    }
-                                    .frame(maxWidth: prop.size.width - 30, maxHeight: .infinity)
-                                    
-                                    Divider()
-                                        .background(Color.black)
-                                        .frame(maxWidth: prop.size.width - 50)
-                                        .padding([.top, .bottom], 10)
-                                    
-                                    Text("Privacy & Terms")
-                                        .textCase(.uppercase) // Ensures the text is uppercased before styling.
-                                        .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
-                                        .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
-                                        .foregroundStyle(.white) // Applies color styling after setting the font.
-                                        .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                    
-                                    VStack {
-                                        Button(action: { self.showPrivacyAndPolicy = true }) {
-                                            HStack {
-                                                Text("Privacy & Policy")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                    .padding(.leading, 15)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(Color.white)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.white)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 25)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding(.bottom, 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        .popover(isPresented: $showPrivacyAndPolicy) {
-                                            WebView(url: URL(string: "https://www.eznotes.space/privacy_policy")!)
-                                                .navigationBarTitle("Privacy Policy", displayMode: .inline)
-                                        }
-                                        
-                                        Divider()
-                                            .overlay(Color(.systemGray4))
-                                            .padding([.leading, .trailing], 15)
-                                        
-                                        Button(action: { self.showTermsAndConditions = true }) {
-                                            HStack {
-                                                Text("Terms & Conditions")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                    .padding(.leading, 15)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(Color.white)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.white)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 25)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding(.top, 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        .popover(isPresented: $showTermsAndConditions) {
-                                            WebView(url: URL(string: "https://www.eznotes.space/terms_and_conditions")!)
-                                                .navigationBarTitle("Terms & Conditions", displayMode: .inline)
-                                        }
-                                    }
-                                    .frame(maxWidth: prop.size.width - 30)
-                                    .padding([.top, .bottom], 14)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesBlack)//.fill(Color.EZNotesBlack)
-                                            .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
-                                    )
-                                    .padding(5) /* MARK: Ensure the shadow can be seen. */
                                     .cornerRadius(15)
-                                    
-                                    /* MARK: More details will show the user their account ID, session ID etc. */
-                                    Text("Additional")
-                                        .textCase(.uppercase) // Ensures the text is uppercased before styling.
-                                        .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
-                                        .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
-                                        .foregroundStyle(.white) // Applies color styling after setting the font.
-                                        .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                    
-                                    VStack {
-                                        Button(action: { self.accountPopupSection = "moreAccountDetails" }) {
-                                            HStack {
-                                                Text("More Account Details")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                    .padding(.leading, 15)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(Color.white)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.white)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 15)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding(.bottom, 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        
-                                        Divider()
-                                            .overlay(Color(.systemGray4))
-                                            .padding([.leading, .trailing], 15)
-                                        
-                                        Button(action: { self.accountPopupSection = "reportIssue" }) {
-                                            HStack {
-                                                Text("Report An Issue")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                    .padding(.leading, 15)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(Color.white)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.white)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 15)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding(.top, 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                    }
-                                    .frame(maxWidth: prop.size.width - 50)
-                                    .padding([.top, .bottom], 14)
-                                    //.padding([.leading, .trailing], 8)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesBlack)//.fill(Color.EZNotesBlack)
-                                            .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
-                                    )
-                                    .padding(5) /* MARK: Ensure the padding can be seen. */
-                                    .cornerRadius(15)
-                                    
-                                    Text("Account Actions")
-                                        .textCase(.uppercase) // Ensures the text is uppercased before styling.
-                                        .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
-                                        .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
-                                        .foregroundStyle(.white) // Applies color styling after setting the font.
-                                        .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                                    
-                                    VStack {
-                                        Button(action: { self.accountPopupSection = "moreAccountDetails" }) {
-                                            HStack {
-                                                Text("More Account Details")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                    .padding(.leading, 15)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(Color.white)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.white)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 15)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding(.bottom, 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        
-                                        Divider()
-                                            .overlay(Color(.systemGray4))
-                                            .padding([.leading, .trailing], 15)
-                                        
-                                        Button(action: { self.accountPopupSection = "reportIssue" }) {
-                                            HStack {
-                                                Text("Report An Issue")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                    .padding(.leading, 15)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(Color.white)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.white)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 15)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding(.top, 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                    }
-                                    .frame(maxWidth: prop.size.width - 50)
-                                    .padding([.top, .bottom], 14)
-                                    //.padding([.leading, .trailing], 8)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesBlack)//.fill(Color.EZNotesBlack)
-                                            .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
-                                    )
-                                    .padding(5) /* MARK: Ensure the padding can be seen. */
-                                    .cornerRadius(15)
-                                    /*VStack {
-                                        Button(action: { self.deleteAccountAlert = true }) {
-                                            HStack {
-                                                Text("Delete Account")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                    .padding(.leading, 15)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(Color.white)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.white)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 25)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding(.bottom, 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        /*.alert("AYO!", isPresented: $deleteAccountAlert) {
-                                            Button("Mmmm.. okay", role: .cancel) { }
-                                        } message: {
-                                            Text("Why do you even wanna do such a thing? Not like the app is North Korea dude🙄")
-                                        }*/
-                                        
-                                        Divider()
-                                            .overlay(Color(.systemGray4))
-                                            .padding([.leading, .trailing], 15)
-                                        
-                                        Button(action: { self.logoutAlert = true }) {
-                                            HStack {
-                                                Text("Logout")
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                                                    .padding(.leading, 15)
-                                                    .font(.system(size: 18, design: .rounded))
-                                                    .foregroundStyle(Color.white)
-                                                
-                                                ZStack {
-                                                    Image(systemName: "chevron.right")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
-                                                        .foregroundStyle(.white)
-                                                }
-                                                .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
-                                                .padding(.trailing, 25)
-                                            }
-                                            .frame(maxWidth: .infinity, maxHeight: 40)
-                                            .padding(.top, 5)
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        /*.alert("Are You Sure?", isPresented: $logoutAlert) {
-                                            Button(action: {
-                                                assignUDKey(key: "logged_in", value: false)
-                                                self.userHasSignedIn = false
-                                                self.accountInfo.reset()
-                                                
-                                                udRemoveAllAccountInfoKeys()
-                                            }) { Text("Yes") }
-                                            
-                                            Button("No", role: .cancel) { }
-                                        } message: {
-                                            Text("By selecting yes, you will effectively be logged out. Are you sure?")
-                                        }*/
-                                    }
-                                    .frame(maxWidth: prop.size.width - 30)
-                                    .padding([.top, .bottom], 14)
-                                    //.padding([.leading, .trailing], 8)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesBlack)//.fill(Color.EZNotesBlack)
-                                            .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
-                                    )
-                                    .padding(5) /* MARK: Ensure the shadow can be seen. */
-                                    .cornerRadius(15)*/
                                 }
-                                .frame(maxWidth: prop.size.width - 20)
-                                .padding(.top, 5)
-                                .padding()
-                                //.background(Color.EZNotesBlack)
-                                .cornerRadius(15)
-                                .padding(.bottom, 40)*/
-                                
-                                Text("Joined 10/10/2024")
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .padding(.bottom, 40)
-                                    .foregroundStyle(.white)
-                                    .setFontSizeAndWeight(weight: .medium)
+                                .buttonStyle(NoLongPressButtonStyle())
                             }
+                            .frame(maxWidth: prop.size.width - 50, maxHeight: .infinity)
+                            
+                            VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
+                            
+                            Text("Privacy & Terms")
+                                .textCase(.uppercase) // Ensures the text is uppercased before styling.
+                                .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
+                                .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
+                                .foregroundStyle(.white) // Applies color styling after setting the font.
+                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                            
+                            VStack {
+                                Button(action: { self.showPrivacyAndPolicy = true }) {
+                                    HStack {
+                                        Text("Privacy & Policy")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                            .padding(.leading, 15)
+                                            .font(.system(size: 18, design: .rounded))
+                                            .foregroundStyle(Color.white)
+                                        
+                                        ZStack {
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                        .padding(.trailing, 25)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 40)
+                                    .padding(.bottom, 5)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                .popover(isPresented: $showPrivacyAndPolicy) {
+                                    WebView(url: URL(string: "https://www.eznotes.space/privacy_policy")!)
+                                        .navigationBarTitle("Privacy Policy", displayMode: .inline)
+                                }
+                                
+                                Divider()
+                                    .overlay(Color(.systemGray4))
+                                    .padding([.leading, .trailing], 15)
+                                
+                                Button(action: { self.showTermsAndConditions = true }) {
+                                    HStack {
+                                        Text("Terms & Conditions")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                            .padding(.leading, 15)
+                                            .font(.system(size: 18, design: .rounded))
+                                            .foregroundStyle(Color.white)
+                                        
+                                        ZStack {
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                        .padding(.trailing, 25)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 40)
+                                    .padding(.top, 5)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                .popover(isPresented: $showTermsAndConditions) {
+                                    WebView(url: URL(string: "https://www.eznotes.space/terms_and_conditions")!)
+                                        .navigationBarTitle("Terms & Conditions", displayMode: .inline)
+                                }
+                            }
+                            .frame(maxWidth: prop.size.width - 50)
+                            .padding([.top, .bottom], 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.EZNotesBlack)//.fill(Color.EZNotesBlack)
+                                    .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
+                            )
+                            .padding(5) /* MARK: Ensure the shadow can be seen. */
+                            .cornerRadius(15)
+                            
+                            VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
+                            
+                            /* MARK: More details will show the user their account ID, session ID etc. */
+                            Text("Additional")
+                                .textCase(.uppercase) // Ensures the text is uppercased before styling.
+                                .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
+                                .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
+                                .foregroundStyle(.white) // Applies color styling after setting the font.
+                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                            
+                            VStack {
+                                Button(action: { self.accountPopupSection = "moreAccountDetails" }) {
+                                    HStack {
+                                        Text("More Account Details")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                            .padding(.leading, 15)
+                                            .font(.system(size: 18, design: .rounded))
+                                            .foregroundStyle(Color.white)
+                                        
+                                        ZStack {
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                        .padding(.trailing, 15)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 40)
+                                    .padding(.bottom, 5)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                
+                                Divider()
+                                    .overlay(Color(.systemGray4))
+                                    .padding([.leading, .trailing], 15)
+                                
+                                Button(action: { self.accountPopupSection = "reportIssue" }) {
+                                    HStack {
+                                        Text("Report An Issue")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                            .padding(.leading, 15)
+                                            .font(.system(size: 18, design: .rounded))
+                                            .foregroundStyle(Color.white)
+                                        
+                                        ZStack {
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                        .padding(.trailing, 15)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 40)
+                                    .padding(.top, 5)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                            }
+                            .frame(maxWidth: prop.size.width - 50)
+                            .padding([.top, .bottom], 14)
+                            //.padding([.leading, .trailing], 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.EZNotesBlack)//.fill(Color.EZNotesBlack)
+                                    .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
+                            )
+                            .padding(5) /* MARK: Ensure the padding can be seen. */
+                            .cornerRadius(15)
+                            
+                            VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
+                            
+                            Text("Actions")
+                                .textCase(.uppercase) // Ensures the text is uppercased before styling.
+                                .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
+                                .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
+                                .foregroundStyle(.white) // Applies color styling after setting the font.
+                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                            
+                            VStack {
+                                Button(action: { self.deleteAccountAlert = true }) {
+                                    HStack {
+                                        Text("Delete Account")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                            .padding(.leading, 15)
+                                            .font(.system(size: 18, design: .rounded))
+                                            .foregroundStyle(Color.white)
+                                        
+                                        ZStack {
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                        .padding(.trailing, 25)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 40)
+                                    .padding(.bottom, 5)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                .alert("AYO!", isPresented: $deleteAccountAlert) {
+                                    Button("Mmmm.. okay", role: .cancel) { }
+                                } message: {
+                                    Text("Why do you even wanna do such a thing? Not like the app is North Korea dude🙄")
+                                }
+                                
+                                Divider()
+                                    .overlay(Color(.systemGray4))
+                                    .padding([.leading, .trailing], 15)
+                                
+                                Button(action: { self.logoutAlert = true }) {
+                                    HStack {
+                                        Text("Logout")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                            .padding(.leading, 15)
+                                            .font(.system(size: 18, design: .rounded))
+                                            .foregroundStyle(Color.white)
+                                        
+                                        ZStack {
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                                        .padding(.trailing, 25)
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: 40)
+                                    .padding(.top, 5)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                .alert("Are You Sure?", isPresented: $logoutAlert) {
+                                    Button(action: {
+                                        assignUDKey(key: "logged_in", value: false)
+                                        self.userHasSignedIn = false
+                                        self.accountInfo.reset()
+                                        
+                                        udRemoveAllAccountInfoKeys()
+                                    }) { Text("Yes") }
+                                    
+                                    Button("No", role: .cancel) { }
+                                } message: {
+                                    Text("Are you sure you want to logout?")
+                                }
+                            }
+                            .frame(maxWidth: prop.size.width - 50)
+                            .padding([.top, .bottom], 14)
+                            //.padding([.leading, .trailing], 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.EZNotesBlack)//.fill(Color.EZNotesBlack)
+                                    .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
+                            )
+                            .padding(5) /* MARK: Ensure the shadow can be seen. */
+                            .cornerRadius(15)
+                            .padding(.bottom, 30) /* MARK: Ensure padding between end of content in the scrollview and the bottom of the screen. */
                         }
                         .frame(maxWidth: prop.size.width - 20)
-                        .padding(.top, -20)
                     } else {
                         switch(self.accountPopupSection) {
                         case "moreAccountDetails":
@@ -2044,7 +863,7 @@ struct Account: View {
                                         ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 30)
-                                    .padding(.top, prop.isLargerScreen ? 45 : 0)
+                                    .padding(.top, prop.isLargerScreen ? 55 : 0)
                                     
                                     Spacer()
                                 }
@@ -2058,10 +877,10 @@ struct Account: View {
                                         isLargerScreen: prop.isLargerScreen,
                                         action: doSomething
                                     )
-                                    .padding([.top, .bottom], -15) /* MARK: Needed to make it looks like content come up from the bottom of the screen. */
+                                    .padding(.top, prop.isLargerScreen ? 80 : 40)//.padding([.top, .bottom], -15) /* MARK: Needed to make it looks like content come up from the bottom of the screen. */
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .padding(.top, 60)
+                                .padding(.top, prop.isLargerScreen ? 90 : 50)
                             }
                         case "change_username":
                             /* TODO: `isLargerScreen` should be moved into a class where it becomes a published variable. */
@@ -2126,7 +945,7 @@ struct Account: View {
                                         ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 30)
-                                    .padding(.top, prop.isLargerScreen ? 45 : 0)
+                                    .padding(.top, prop.isLargerScreen ? 55 : 0)
                                     
                                     Spacer()
                                 }
@@ -2215,7 +1034,7 @@ struct Account: View {
                                     //Spacer()
                                 }
                                 .frame(maxWidth: prop.size.width - 40 , maxHeight: .infinity)
-                                .padding(.top, prop.isLargerScreen ? 80 : 40)
+                                .padding(.top, prop.isLargerScreen ? 90 : 50)
                                 .alert("Are you sure?", isPresented: $updateCollegeAlert) {
                                     Button(action: {
                                         RequestAction<UpdateCollegeNameData>(parameters: UpdateCollegeNameData(
@@ -2320,7 +1139,7 @@ struct Account: View {
                                         ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: 30)
-                                    .padding(.top, prop.isLargerScreen ? 45 : 0)
+                                    .padding(.top, prop.isLargerScreen ? 55 : 0)
                                     
                                     Spacer()
                                 }
@@ -2436,7 +1255,7 @@ struct Account: View {
                                     }
                                 }
                                 .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-                                .padding(.top, prop.isLargerScreen ? 80 : 40)
+                                .padding(.top, prop.isLargerScreen ? 90 : 50)
                                 .alert("Are you sure?", isPresented: $updateMajorFieldAndMajorAlert) {
                                     Button(action: {
                                         RequestAction<UpdateMajorFieldData>(parameters: UpdateMajorFieldData(
