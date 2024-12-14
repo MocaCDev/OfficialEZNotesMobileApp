@@ -308,9 +308,17 @@ struct RequestAction<T> {
         
         switch(action.reqData.self)
         {
+            case is GetClientsFriendRequestsData.Type:
+                guard let params: GetClientsFriendRequestsData = (parameters as? GetClientsFriendRequestsData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                break
+            case is GetClientsPendingRequestsData.Type:
+                guard let params: GetClientsPendingRequestsData = (parameters as? GetClientsPendingRequestsData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                break
             case is SendFriendRequestData.Type:
                 guard let params: SendFriendRequestData = (parameters as? SendFriendRequestData) else { return }
-                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id");
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
                 request.addValue(params.Username, forHTTPHeaderField: "Username")
                 request.addValue(params.RequestTo, forHTTPHeaderField: "Request-To")
                 break

@@ -17,6 +17,14 @@ let server = "http://192.168.1.109:8088"
  * */
 struct ReqPlaceholder {}
 
+struct GetClientsFriendRequestsData {
+    let AccountId: String
+}
+
+struct GetClientsPendingRequestsData {
+    let AccountId: String
+}
+
 struct GetUsersData {
     let AccountId: String
     let Filter: String
@@ -455,4 +463,16 @@ let is_friend_or_has_sent_friend_request_req: CSIARequest = CSIARequest(
     url: "\(server)/is_friend_or_has_sent_friend_request",
     method: "get",
     reqData: IsFriendsOrHasSentFriendRequestData.self
+)
+
+let get_clients_friend_requests_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_all_clients_friend_requestes",
+    method: "get",
+    reqData: GetClientsFriendRequestsData.self
+)
+
+let get_clients_pending_requests_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_all_clients_pending_requests",
+    method: "get",
+    reqData: GetClientsPendingRequestsData.self
 )
