@@ -1679,6 +1679,21 @@ struct YouTubeVideoView: UIViewRepresentable {
     }
 }
 
+struct CheckBox: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        // 1
+        Button(action: {
+            configuration.isOn.toggle()
+        }, label: {
+            HStack {
+                Image(systemName: configuration.isOn ? "checkmark.square" : "square")
+                configuration.label
+            }
+        })
+        .buttonStyle(NoLongPressButtonStyle())
+    }
+}
+
 struct TopNavChat: View {
     
     @ObservedObject public var accountInfo: AccountDetails
@@ -1691,6 +1706,7 @@ struct TopNavChat: View {
     var prop: Properties
     var backgroundColor: Color
     
+    /* MARK: States for the overall "Add Friend" popup. */
     @State private var showUserProfilePreview: Bool = false
     @State private var rickRoll: Bool = false
     @State private var userSearched: String = ""
@@ -1700,6 +1716,117 @@ struct TopNavChat: View {
     @State private var launchedForUser: String = ""
     @State private var usersPfpBg: Image = Image("Pfp-Default-Bg")
     @State private var usersPfp: Image = Image(systemName: "person.crop.circle.fill")
+    @State private var noUsersToShow: Bool = false
+    @State private var noSearchResults: Bool = false
+    @State private var performingSearch: Bool = false
+    @State private var addingFriend: Bool = false
+    @State private var pendingRequests: Array<String> = []
+    @State private var friends: Array<String> = []
+    @State private var sendingFriendRequestsTo: Array<String> = []
+    @State private var selectedView: String = "add"
+    @State private var loadingView: Bool = false
+    
+    /* MARK: States for filters. */
+    @State private var showFilters: Bool = false
+    @State private var showAnyUser: Bool = true /* MARK: Default filter. */
+    @State private var showUsersFromSameState: Bool = false
+    @State private var showUsersFromSameCollege: Bool = false
+    @State private var showUsersWithSameMajor: Bool = false
+    @State private var showUsersWithSchoolUsageOnly: Bool = false
+    @State private var showUsersWithWorkUsageOnly: Bool = false
+    @State private var showUsersWithGeneralUsageOnly: Bool = false
+    @State private var numberOfResults: Int = 30
+    @State private var usersNumberOfFriends: Int = 1
+    
+    private func getFilter() -> (Filters: String, Usages: String) { /* MARK: Checks all of the filter toggle states and returns which one is toggled on. */
+        let filters: [String] = [
+            self.showUsersFromSameState ? "same_state" : nil,
+            self.showUsersFromSameCollege ? "same_college" : nil,
+            self.showUsersWithSameMajor ? "same_major" : nil
+        ].compactMap { $0 } // Remove nil entries
+        
+        let usages: [String] = [
+            self.showUsersWithSchoolUsageOnly ? "school_usage" : nil,
+            self.showUsersWithWorkUsageOnly ? "work_usage" : nil,
+            self.showUsersWithGeneralUsageOnly ? "general_usage" : nil
+        ].compactMap { $0 }
+        
+        return (
+            Filters: filters.isEmpty ? "show_any" : filters.joined(separator: "_and_"),
+            Usages: usages.isEmpty ? "" : usages.joined(separator: ",")
+        )
+    }
+    
+    private func populateUsers(resp: [String: Any]) {
+        if let resp = resp as? [String: [String: Any]] {
+            for user in resp.keys {
+                guard resp[user] != nil else { continue }
+                
+                if user == Array(resp.keys).last { self.loadingView = false }
+                
+                if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
+                    if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
+                        self.usersSearched[user] = Image(
+                            uiImage: UIImage(
+                                data: userPFPData
+                            )!
+                        )
+                    } else {
+                        self.usersSearched[user] = Image(systemName: "person.crop.circle.fill")
+                    }
+                } else {
+                    self.usersSearched[user] = Image(systemName: "person.crop.circle.fill")
+                }
+            }
+        } else {
+            self.noUsersToShow = true
+        }
+    }
+    
+    private func getUsers() {
+        RequestAction<GetUsersData>(
+            parameters: GetUsersData(
+                AccountId: self.accountInfo.accountID,
+                Filter: self.getFilter().Filters,
+                Usages: self.getFilter().Usages
+            )
+        )
+        .perform(action: get_user_req) { statusCode, resp in
+            guard resp != nil && statusCode == 200 else {
+                self.noUsersToShow = true
+                return
+            }
+            
+            DispatchQueue.global(qos: .background).async {
+                if let resp = resp { self.populateUsers(resp: resp) }
+                else { self.noUsersToShow = true }
+                
+                /* MARK: In the background, send requests to the server to check the friend status of the users being shown. */
+                for user in self.usersSearched.keys {
+                    /* MARK: Check to see if the client is friends with the user, or the user has sent a request to be friends with the client. */
+                    RequestAction<IsFriendsOrHasSentFriendRequestData>(parameters: IsFriendsOrHasSentFriendRequestData(
+                        AccountId: self.accountInfo.accountID,
+                        Username: user
+                    )).perform(action: is_friend_or_has_sent_friend_request_req) { statusCode, r in
+                        guard r != nil && statusCode == 200 else {
+                            return
+                        }
+                        
+                        if let r = r {
+                            if r["Pending"]! as! Bool {
+                                DispatchQueue.main.async { self.pendingRequests.append(user) }
+                            }
+                            else {
+                                if r["Friends"]! as! Bool {
+                                    DispatchQueue.main.async { self.friends.append(user) }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     
     var body: some View {
         HStack {
@@ -1735,19 +1862,33 @@ struct TopNavChat: View {
             .popover(isPresented: $showUserProfilePreview) {
                 VStack {
                     HStack {
-                        Button(action: { self.showUserProfilePreview = false }) {
-                            ZStack {
-                                Image(systemName: "chevron.down")
-                                    .resizable()
-                                    .frame(width: 18, height: 10)
-                                    .foregroundStyle(.white)
+                        if self.showFilters {
+                            Button(action: { self.showFilters = false }) {
+                                ZStack {
+                                    Image(systemName: "arrow.backward")
+                                        .resizable()
+                                        .frame(width: 15, height: 15)
+                                        .foregroundStyle(.white)
+                                }
+                                .frame(maxWidth: 30, alignment: .leading)
+                                .padding(.leading, 15)
                             }
-                            .frame(maxWidth: 30, alignment: .leading)
-                            .padding(.leading, 15)
+                            .buttonStyle(NoLongPressButtonStyle())
+                        } else {
+                            Button(action: { self.showUserProfilePreview = false }) {
+                                ZStack {
+                                    Image(systemName: "chevron.down")
+                                        .resizable()
+                                        .frame(width: 18, height: 10)
+                                        .foregroundStyle(.white)
+                                }
+                                .frame(maxWidth: 30, alignment: .leading)
+                                .padding(.leading, 15)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
                         }
-                        .buttonStyle(NoLongPressButtonStyle())
                         
-                        Text("Add Friend")
+                        Text(!self.showFilters ? "Add Friend" : "Filters")
                             .frame(maxWidth: .infinity, alignment: .center)
                             .font(.system(size: prop.isLargerScreen ? 24 : 22, weight: .bold))
                             .foregroundStyle(.white)
@@ -1757,276 +1898,972 @@ struct TopNavChat: View {
                     .frame(maxWidth: .infinity, maxHeight: 30)
                     .padding([.leading, .top, .trailing], 8)
                     
-                    HStack {
-                        TextField(
-                            "",
-                            text: $userSearched
-                        )
-                        .frame(
-                            maxWidth: .infinity
-                        )
-                        .padding(8)
-                        .padding(.horizontal, 25)
-                        .background(Color.EZNotesLightBlack)//(Color(.systemGray5))
-                        .foregroundStyle(.white)
-                        .cornerRadius(15)
-                        .padding(.horizontal, 10)
-                        .focused($userSearchBarFocused)
-                        .overlay(
-                            HStack {
-                                Image(systemName: "magnifyingglass")
-                                    .foregroundColor(.gray)
-                                    .frame(minWidth: 0, alignment: .leading)
-                                    .padding(.leading, 20)
-                                
-                                if self.userSearched.isEmpty && !self.userSearchBarFocused {
-                                    Text("Search...")
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .foregroundStyle(.white)
+                    if !self.showFilters {
+                        HStack {
+                            TextField(
+                                "",
+                                text: $userSearched
+                            )
+                            .frame(
+                                maxWidth: .infinity
+                            )
+                            .padding(8)
+                            .padding(.horizontal, 25)
+                            .background(Color.EZNotesLightBlack)//(Color(.systemGray5))
+                            .foregroundStyle(.white)
+                            .cornerRadius(15)
+                            .padding(.horizontal, 10)
+                            .focused($userSearchBarFocused)
+                            .overlay(
+                                HStack {
+                                    Image(systemName: "magnifyingglass")
+                                        .foregroundColor(.gray)
+                                        .frame(minWidth: 0, alignment: .leading)
+                                        .padding(.leading, 20)
+                                    
+                                    if self.userSearched.isEmpty && !self.userSearchBarFocused {
+                                        Text("Search...")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                    } else {
+                                        Spacer()
+                                    }
+                                    
+                                    if !self.userSearched.isEmpty {
+                                        Button(action: {
+                                            self.userSearched.removeAll()
+                                            
+                                            if self.noUsersToShow { self.noUsersToShow = false }
+                                            if self.noSearchResults { self.noSearchResults = false }
+                                            
+                                            self.usersSearched.removeAll()
+                                            self.pendingRequests.removeAll()
+                                            self.friends.removeAll()
+                                            
+                                            self.getUsers()
+                                        }) {
+                                            Image(systemName: "multiply.circle.fill")
+                                                .foregroundColor(.gray)
+                                                .padding(.trailing, 25)
+                                        }
+                                    }
+                                }
+                            )
+                            .onChange(of: self.userSearched) {
+                                if self.userSearched.isEmpty {
+                                    self.userSearched.removeAll()
+                                    
+                                    if self.noUsersToShow { self.noUsersToShow = false }
+                                    if self.noSearchResults { self.noSearchResults = false }
+                                    
+                                    self.usersSearched.removeAll()
+                                    self.pendingRequests.removeAll()
+                                    self.friends.removeAll()
+                                    
+                                    self.getUsers()
                                 } else {
-                                    Spacer()
-                                }
-                                
-                                if !self.userSearched.isEmpty {
-                                    Button(action: {
-                                        self.userSearched = ""
-                                    }) {
-                                        Image(systemName: "multiply.circle.fill")
-                                            .foregroundColor(.gray)
-                                            .padding(.trailing, 25)
+                                    /* MARK: Ensure both of these states are false to allow the view for `performingSearch` to show. */
+                                    if self.noUsersToShow { self.noUsersToShow = false }
+                                    if self.noSearchResults { self.noSearchResults = false }
+                                    
+                                    /* MARK: Do nothing if `userSearched` is empty. */
+                                    if self.userSearched.isEmpty { return }
+                                    
+                                    self.performingSearch = true
+                                    
+                                    RequestAction<SearchUserData>(parameters: SearchUserData(
+                                        AccountId: self.accountInfo.accountID,
+                                        Filter: self.getFilter().Filters,
+                                        Usages: self.getFilter().Usages,
+                                        Query: self.userSearched
+                                    )).perform(action: search_user_req) { statusCode, resp in
+                                        self.performingSearch = false
+                                        
+                                        guard resp != nil && statusCode == 200 else {
+                                            self.noSearchResults = true
+                                            return
+                                        }
+                                        
+                                        self.usersSearched.removeAll()
+                                        
+                                        if let resp = resp {
+                                            self.populateUsers(resp: resp)
+                                            
+                                            if self.noUsersToShow {
+                                                self.noSearchResults = true
+                                                self.noUsersToShow = false
+                                                return
+                                            }
+                                        }
+                                        else { self.noSearchResults = true }
                                     }
                                 }
                             }
-                        )
-                        .onSubmit {
-                            print(self.userSearched)
-                        }
-                        
-                        ZStack {
-                            Image(systemName: "line.3.horizontal.decrease")
-                                .resizable()
-                                .frame(width: 20, height: 15)
-                                .foregroundStyle(.white)
-                        }
-                        .padding(.leading, 5)
-                    }
-                    .frame(maxWidth: prop.size.width - 20)
-                    .padding(.top, 15)
-                    
-                    Divider()
-                        .background(.white)
-                        .padding(.top)
-                        .padding(.bottom, -5)
-                    
-                    ZStack {
-                        if self.launchUserPreview {
-                            VStack {
-                                Spacer()
+                            .onSubmit {
+                                /* MARK: Ensure both of these states are false to allow the view for `performingSearch` to show. */
+                                if self.noUsersToShow { self.noUsersToShow = false }
+                                if self.noSearchResults { self.noSearchResults = false }
                                 
-                                VStack {
-                                    UsersProfile(
-                                        prop: self.prop,
-                                        username: self.launchedForUser,
-                                        usersPfpBg: self.usersPfpBg,
-                                        usersPfp: self.usersPfp,
-                                        usersDescription: "TODO: Add description details for users being looked up.",
-                                        usersTags: ["Support Coming Soon", "Stay Tuned"],
-                                        accountPopupSection: $launchedForUser, /* TODO: Figure something out with this, this is bad. */
-                                        showAccount: $launchUserPreview /* TODO: Figure something out with this, this is bad. */
-                                    )
-    
-                                    /* TODO: Remove this after releasing build tonight. */
-                                    Text("The rest of this view, alongside the entire **\"Chat\"** view, is in development. Stay tuned for the next build 🤝")
-                                        .frame(maxWidth: prop.size.width - 80, alignment: .center)
-                                        .font(Font.custom("Poppins-Regular", size: 13))
-                                        .foregroundStyle(.white)
-                                        .multilineTextAlignment(.center)
-                                        .padding([.top, .bottom], 40) /* MARK: Temporary. Will get removed when this entire feature is actually implemented for use. */
+                                /* MARK: Do nothing if `userSearched` is empty. */
+                                if self.userSearched.isEmpty {
+                                    self.userSearched.removeAll()
+                                    
+                                    if self.noUsersToShow { self.noUsersToShow = false }
+                                    if self.noSearchResults { self.noSearchResults = false }
+                                    
+                                    self.usersSearched.removeAll()
+                                    self.pendingRequests.removeAll()
+                                    self.friends.removeAll()
+                                    
+                                    self.getUsers()
                                 }
-                                .frame(maxWidth: prop.size.width - 40)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 15)
-                                        .fill(.black)
-                                        .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
-                                )
-                                .cornerRadius(15)
-                                .padding(4.5) /* MARK: Ensure the shadow can be seen. */
                                 
-                                Button(action: { self.rickRoll = true }) {
-                                    HStack {
-                                        ZStack { }.frame(maxWidth: .infinity, alignment: .leading)
+                                self.performingSearch = true
+                                
+                                RequestAction<SearchUserData>(parameters: SearchUserData(
+                                    AccountId: self.accountInfo.accountID,
+                                    Filter: self.getFilter().Filters,
+                                    Usages: self.getFilter().Usages,
+                                    Query: self.userSearched
+                                )).perform(action: search_user_req) { statusCode, resp in
+                                    self.performingSearch = false
+                                    
+                                    guard resp != nil && statusCode == 200 else {
+                                        self.noSearchResults = true
+                                        return
+                                    }
+                                    
+                                    self.usersSearched.removeAll()
+                                    
+                                    if let resp = resp {
+                                        self.populateUsers(resp: resp)
                                         
+                                        if self.noUsersToShow {
+                                            self.noSearchResults = true
+                                            self.noUsersToShow = false
+                                            return
+                                        }
+                                    }
+                                    else { self.noSearchResults = true }
+                                }
+                            }
+                            
+                            /* MARK: Filters for searching for friends will come for users who are using the app for work/general purposes later. For now, filters only apply to those using the app for school as the app was initially being built for only those using it for school. */
+                            //if self.accountInfo.usage == "school" {
+                                Button(action: { self.showFilters = true }) {
+                                    ZStack {
+                                        Image(systemName: "line.3.horizontal.decrease")
+                                            .resizable()
+                                            .frame(width: 20, height: 15)
+                                            .foregroundStyle(.white)
+                                    }
+                                    .padding(.leading, 5)
+                                }
+                            //}
+                        }
+                        .frame(maxWidth: prop.size.width - 20)
+                        .padding(.top, 15)
+                        
+                        HStack {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack {
+                                    Button(action: { self.selectedView = "add" }) {
                                         HStack {
-                                            Image(systemName: "plus")
-                                                .resizable()
-                                                .frame(width: 15, height: 15)
-                                                .foregroundStyle(.black)
-                                            
-                                            Text("Add User")
+                                            Text("Add")
                                                 .frame(alignment: .center)
-                                                .font(.system(size: 14, weight: .medium))
-                                                .foregroundStyle(.black)
+                                                .padding([.top, .bottom], 4)
+                                                .padding([.leading, .trailing], 8.5)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(self.selectedView == "add" ? Color.EZNotesBlue : .clear)
+                                                )
+                                                .foregroundStyle(self.selectedView == "add" ? .black : .secondary)
+                                                .font(Font.custom("Poppins-SemiBold", size: 12))
                                         }
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        
-                                        ZStack { }.frame(maxWidth: .infinity, alignment: .trailing)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                     }
-                                    .frame(maxWidth: prop.size.width - 40)
-                                    .padding(8)
-                                    .background(Color.EZNotesBlue)
-                                    .cornerRadius(15)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                
-                                Button(action: { self.launchUserPreview = false }) {
-                                    Text("Go Back")
-                                        .frame(alignment: .center)
-                                        .frame(maxWidth: prop.size.width - 40, alignment: .center)
-                                        .padding(8)
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundStyle(.black)
-                                        .background(Color.white)
-                                        .cornerRadius(15)
-                                }
-                                .buttonStyle(NoLongPressButtonStyle())
-                                
-                                Spacer()
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .background(Color.EZNotesBlack.opacity(0.9))
-                            .onTapGesture {
-                                self.launchUserPreview = false
-                            }
-                            .zIndex(1)
-                        }
-                        
-                        ScrollView(.vertical, showsIndicators: false) {
-                            VStack {
-                                ForEach(Array(self.usersSearched.keys), id: \.self) { user in
-                                    Button(action: {
-                                        RequestAction<GetUsersAccountIdData>(parameters: GetUsersAccountIdData(
-                                            Username: user
-                                        )).perform(action: get_users_account_id_req) { statusCode, resp in
-                                            guard resp != nil && statusCode == 200 else {
-                                                print("ERROR!")
-                                                return
-                                            }
-                                            
-                                            /*guard resp!.keys.contains("AccountId") else {
-                                                print("Missing `AccountId` in response.")
-                                                return
-                                            }*/
-                                            
-                                            if let accountId: String = resp!["AccountId"] as? String {
-                                                PFP(accountID: accountId)
-                                                    .requestGetPFPBg() { statusCode, pfp_bg in
-                                                        guard pfp_bg != nil && statusCode == 200 else { return }
-                                                        
-                                                        self.usersPfpBg = Image(uiImage: UIImage(data: pfp_bg!)!)
-                                                    }
-                                            }
-                                        }
-                                        
-                                        self.launchUserPreview = true
-                                        self.usersPfp = self.usersSearched[user]!
-                                        self.launchedForUser = user
-                                    }) {
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Button(action: { self.selectedView = "requests" }) {
                                         HStack {
-                                            ZStack {
-                                                Circle()
-                                                    .fill(Color.EZNotesBlue)
-                                                
-                                                /*Image(systemName: "person.crop.circle.fill")*/
-                                                self.usersSearched[user]!
-                                                    .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
-                                                    .scaledToFill()
-                                                    .frame(maxWidth: 35, maxHeight: 35)
-                                                    .clipShape(.circle)
-                                                    .foregroundStyle(.white)
-                                            }
-                                            .frame(width: 38, height: 38)
-                                            .padding([.leading], 10)
-                                            
-                                            Text(user)
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 16 : 14))
-                                                .foregroundStyle(.white)
-                                            
-                                            Button(action: { print("Add User") }) {
-                                                HStack {
-                                                    Image(systemName: "plus")
-                                                        .resizable()
-                                                        .frame(width: 10, height: 10)
-                                                        .foregroundStyle(.black)
-                                                    
-                                                    Text("Add")
-                                                        .frame(alignment: .center)
-                                                        .font(.system(size: 14, weight: .medium))
-                                                        .foregroundStyle(.black)
-                                                }
-                                                .padding([.top, .bottom], 2)
-                                                .padding([.leading, .trailing], 8)
-                                                .background(Color.EZNotesBlue)
-                                                .cornerRadius(15)
-                                                .padding(.trailing, 10)
-                                            }
+                                            Text("Requests")
+                                                .frame(alignment: .center)
+                                                .padding([.top, .bottom], 4)
+                                                .padding([.leading, .trailing], 8.5)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(self.selectedView == "requests" ? Color.EZNotesBlue : .clear)
+                                                )
+                                                .foregroundStyle(self.selectedView == "requests" ? .black : .secondary)
+                                                .font(Font.custom("Poppins-SemiBold", size: 12))
                                         }
-                                        .padding(8)
-                                        .background(Color.EZNotesLightBlack)
-                                        .cornerRadius(15)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Button(action: { self.selectedView = "pending" }) {
+                                        HStack {
+                                            Text("Pending")
+                                                .frame(alignment: .center)
+                                                .padding([.top, .bottom], 4)
+                                                .padding([.leading, .trailing], 8.5)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(self.selectedView == "pending" ? Color.EZNotesBlue : .clear)
+                                                )
+                                                .foregroundStyle(self.selectedView == "pending" ? .black : .secondary)
+                                                .font(Font.custom("Poppins-SemiBold", size: 12))
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                 }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 10)
                             }
-                            .padding(.top, 10)
-                            .padding(.bottom, 30) /* MARK: Ensure space between bottom of screen and content at end of scrollview. */
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                    .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.EZNotesBlack)
-                .onAppear {
-                    RequestAction<ReqPlaceholder>(
-                        parameters: ReqPlaceholder()
-                    )
-                    .perform(action: get_user_req) { statusCode, resp in
-                        guard resp != nil && statusCode == 200 else {
-                            print("Error!")
-                            return
-                        }
+                        .frame(maxWidth: .infinity, minHeight: 15)
+                        .padding(.top)
                         
-                        if let resp = resp as? [String: [String: Any]] {
-                            for user in resp.keys {
-                                guard resp[user] != nil else { continue }
-                                
-                                if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
-                                    if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
-                                        self.usersSearched[user] = Image(
-                                            uiImage: UIImage(
-                                                data: userPFPData
-                                            )!
-                                        )
-                                    } else {
-                                        self.usersSearched[user] = Image(systemName: "person.crop.circle.fill")
+                        Divider()
+                            .background(.white)
+                            .padding(.bottom, -5)
+                        
+                        switch(self.selectedView) {
+                        case "add":
+                            ZStack {
+                                if self.performingSearch {
+                                    VStack { /* MARK: `VStack` needing to ensure the content in `LoadingView` does not sit on top of each other. */
+                                        LoadingView(message: "Searching...")
                                     }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 } else {
-                                    self.usersSearched[user] = Image(systemName: "person.crop.circle.fill")
+                                    if self.launchUserPreview {
+                                        VStack {
+                                            Spacer()
+                                            
+                                            VStack {
+                                                UsersProfile(
+                                                    prop: self.prop,
+                                                    username: self.launchedForUser,
+                                                    usersPfpBg: self.usersPfpBg,
+                                                    usersPfp: self.usersPfp,
+                                                    usersDescription: "TODO: Add description details for users being looked up.",
+                                                    usersTags: ["Support Coming Soon", "Stay Tuned"],
+                                                    accountPopupSection: $launchedForUser, /* TODO: Figure something out with this, this is bad. */
+                                                    showAccount: $launchUserPreview /* TODO: Figure something out with this, this is bad. */
+                                                )
+                                                .padding(.top, 8)
+                                                
+                                                /* TODO: Remove this after releasing build tonight. */
+                                                Text("The rest of this view, alongside the entire **\"Chat\"** view, is in development. Stay tuned for the next build 🤝")
+                                                    .frame(maxWidth: prop.size.width - 80, alignment: .center)
+                                                    .font(Font.custom("Poppins-Regular", size: 13))
+                                                    .foregroundStyle(.white)
+                                                    .multilineTextAlignment(.center)
+                                                    .padding([.top, .bottom], 40) /* MARK: Temporary. Will get removed when this entire feature is actually implemented for use. */
+                                            }
+                                            .frame(maxWidth: prop.size.width - 40)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.black)
+                                                    .shadow(color: /*Color.EZNotesLightBlack*/Color.white, radius: 2.5)
+                                            )
+                                            .padding(2.5)
+                                            .cornerRadius(15)
+                                            //.padding(4.5) /* MARK: Ensure the shadow can be seen. */
+                                            
+                                            Button(action: { self.rickRoll = true }) {
+                                                HStack {
+                                                    ZStack { }.frame(maxWidth: .infinity, alignment: .leading)
+                                                    
+                                                    HStack {
+                                                        Image(systemName: "plus")
+                                                            .resizable()
+                                                            .frame(width: 15, height: 15)
+                                                            .foregroundStyle(.black)
+                                                        
+                                                        Text("Add User")
+                                                            .frame(alignment: .center)
+                                                            .font(.system(size: 14, weight: .medium))
+                                                            .foregroundStyle(.black)
+                                                    }
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                    
+                                                    ZStack { }.frame(maxWidth: .infinity, alignment: .trailing)
+                                                }
+                                                .frame(maxWidth: prop.size.width - 40)
+                                                .padding(8)
+                                                .background(Color.EZNotesBlue)
+                                                .cornerRadius(15)
+                                            }
+                                            .buttonStyle(NoLongPressButtonStyle())
+                                            
+                                            Button(action: { self.launchUserPreview = false }) {
+                                                Text("Go Back")
+                                                    .frame(alignment: .center)
+                                                    .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                                    .padding(8)
+                                                    .font(.system(size: 14, weight: .medium))
+                                                    .foregroundStyle(.black)
+                                                    .background(Color.white)
+                                                    .cornerRadius(15)
+                                            }
+                                            .buttonStyle(NoLongPressButtonStyle())
+                                            
+                                            Spacer()
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        .background(.black.opacity(0.9))
+                                        .onTapGesture {
+                                            self.launchUserPreview = false
+                                        }
+                                        .zIndex(1)
+                                    }
+                                    
+                                    if !self.noUsersToShow && !self.noSearchResults {
+                                        if !self.loadingView {
+                                            ScrollView(.vertical, showsIndicators: false) {
+                                                VStack {
+                                                    ForEach(Array(self.usersSearched.enumerated()), id: \.offset) { index, value in
+                                                        Button(action: {
+                                                            RequestAction<GetUsersAccountIdData>(parameters: GetUsersAccountIdData(
+                                                                Username: value.key
+                                                            )).perform(action: get_users_account_id_req) { statusCode, resp in
+                                                                guard resp != nil && statusCode == 200 else {
+                                                                    print("ERROR!")
+                                                                    return
+                                                                }
+                                                                
+                                                                /*guard resp!.keys.contains("AccountId") else {
+                                                                 print("Missing `AccountId` in response.")
+                                                                 return
+                                                                 }*/
+                                                                
+                                                                if let accountId: String = resp!["AccountId"] as? String {
+                                                                    PFP(accountID: accountId)
+                                                                        .requestGetPFPBg() { statusCode, pfp_bg in
+                                                                            guard pfp_bg != nil && statusCode == 200 else { return }
+                                                                            
+                                                                            self.usersPfpBg = Image(uiImage: UIImage(data: pfp_bg!)!)
+                                                                        }
+                                                                }
+                                                            }
+                                                            
+                                                            self.launchUserPreview = true
+                                                            self.usersPfp = self.usersSearched[value.key]!
+                                                            self.launchedForUser = value.key
+                                                        }) {
+                                                            HStack {
+                                                                ZStack {
+                                                                    Circle()
+                                                                        .fill(Color.EZNotesBlue)
+                                                                    
+                                                                    /*Image(systemName: "person.crop.circle.fill")*/
+                                                                    self.usersSearched[value.key]!
+                                                                        .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
+                                                                        .scaledToFill()
+                                                                        .frame(maxWidth: 35, maxHeight: 35)
+                                                                        .clipShape(.circle)
+                                                                        .foregroundStyle(.white)
+                                                                }
+                                                                .frame(width: 38, height: 38)
+                                                                .padding([.leading], 10)
+                                                                
+                                                                Text(value.key)
+                                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                                                    .foregroundStyle(.white)
+                                                                
+                                                                if !self.pendingRequests.contains(value.key) && !self.friends.contains(value.key) {
+                                                                    Button(action: {
+                                                                        self.sendingFriendRequestsTo.append(value.key)
+                                                                        self.addingFriend = true
+                                                                        
+                                                                        RequestAction<SendFriendRequestData>(parameters: SendFriendRequestData(
+                                                                            AccountId: self.accountInfo.accountID,
+                                                                            Username: self.accountInfo.username,
+                                                                            RequestTo: value.key
+                                                                        )).perform(action: send_friend_request_req) { statusCode, resp in
+                                                                            self.addingFriend = false
+                                                                            self.sendingFriendRequestsTo.removeAll(where: { $0 == value.key })
+                                                                            
+                                                                            guard resp != nil && statusCode == 200 else {
+                                                                                print("Error")
+                                                                                return
+                                                                            }
+                                                                            
+                                                                            self.pendingRequests.append(value.key)
+                                                                        }
+                                                                    }) {
+                                                                        if !self.sendingFriendRequestsTo.contains(value.key) {
+                                                                            HStack {
+                                                                                Image(systemName: "plus")
+                                                                                    .resizable()
+                                                                                    .frame(width: 10, height: 10)
+                                                                                    .foregroundStyle(.black)
+                                                                                
+                                                                                Text("Add")
+                                                                                    .frame(alignment: .center)
+                                                                                    .font(.system(size: 14, weight: .medium))
+                                                                                    .foregroundStyle(.black)
+                                                                            }
+                                                                            .padding([.top, .bottom], 2)
+                                                                            .padding([.leading, .trailing], 8)
+                                                                            .background(Color.EZNotesBlue)
+                                                                            .cornerRadius(15)
+                                                                            .padding(.trailing, 10)
+                                                                        } else {
+                                                                            LoadingView(message: "")
+                                                                        }
+                                                                    }
+                                                                } else {
+                                                                    if self.pendingRequests.contains(value.key) {
+                                                                        HStack {
+                                                                            Image(systemName: "paperplane")
+                                                                                .resizable()
+                                                                                .frame(width: 10, height: 10)
+                                                                                .foregroundStyle(.gray)
+                                                                            
+                                                                            Text("Pending")
+                                                                                .frame(alignment: .center)
+                                                                                .font(.system(size: 14, weight: .medium))
+                                                                                .foregroundStyle(.gray)
+                                                                            
+                                                                            Button(action: { print("Unsend request") }) {
+                                                                                Image(systemName: "multiply")
+                                                                                    .resizable()
+                                                                                    .frame(width: 10, height: 10)
+                                                                                    .foregroundStyle(.white)
+                                                                                    .padding(8) /* MARK: Ensure the button can be clicked on feasibly. */
+                                                                            }
+                                                                            .buttonStyle(NoLongPressButtonStyle())
+                                                                        }
+                                                                        .padding([.top, .bottom], 2)
+                                                                        .padding([.leading, .trailing], 8)
+                                                                        .cornerRadius(15)
+                                                                    } else {
+                                                                        HStack {
+                                                                            Image(systemName: "person.badge.minus")
+                                                                                .resizable()
+                                                                                .frame(width: 10, height: 10)
+                                                                                .foregroundStyle(.black)
+                                                                            
+                                                                            Text("Remove")
+                                                                                .frame(alignment: .center)
+                                                                                .font(.system(size: 14, weight: .medium))
+                                                                                .foregroundStyle(.black)
+                                                                        }
+                                                                        .padding([.top, .bottom], 2)
+                                                                        .padding([.leading, .trailing], 8)
+                                                                        .background(Color.EZNotesRed)
+                                                                        .cornerRadius(15)
+                                                                        .padding(.trailing, 10)
+                                                                    }
+                                                                }
+                                                            }
+                                                            .padding(8)
+                                                            //.background(Color.EZNotesLightBlack)
+                                                            //.cornerRadius(15)
+                                                        }
+                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                        
+                                                        if !(index == self.usersSearched.count - 1) {
+                                                            Divider()
+                                                                .background(.white)
+                                                                .frame(height: 0.5)
+                                                        }
+                                                    }
+                                                }
+                                                .padding(6)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(Color.EZNotesBlack)
+                                                )
+                                                .cornerRadius(15)
+                                                .padding(.top, 10)
+                                                .padding(.bottom, 30) /* MARK: Ensure space between bottom of screen and content at end of scrollview. */
+                                            }
+                                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+                                        } else {
+                                            LoadingView(message: "")
+                                        }
+                                    } else {
+                                        if self.noUsersToShow {
+                                            Text("Something Went Wrong :(")
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                                .foregroundStyle(.white)
+                                                .font(Font.custom("Poppins-Regular", size: 16))
+                                                .minimumScaleFactor(0.5)
+                                        } else {
+                                            Text("No results for: **\(self.userSearched)**")
+                                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                                .foregroundStyle(.white)
+                                                .font(Font.custom("Poppins-Regular", size: 16))
+                                                .minimumScaleFactor(0.5)
+                                        }
+                                    }
                                 }
                             }
-                        } else {
-                            print("Error")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .onAppear {
+                                self.loadingView = true
+                                
+                                self.noUsersToShow = false
+                                self.noSearchResults = false
+                                
+                                self.usersSearched.removeAll()
+                                self.pendingRequests.removeAll()
+                                self.friends.removeAll()
+                                
+                                self.getUsers()
+                            }
+                        case "requests":
+                            VStack {
+                                if !self.noUsersToShow {
+                                    if self.loadingView {
+                                        LoadingView(message: "Loading requests")
+                                    } else {
+                                        ScrollView(.vertical, showsIndicators: false) {
+                                            ForEach(self.pendingRequests, id: \.self) { pendingRequest in
+                                                HStack {
+                                                    ZStack {
+                                                        Circle()
+                                                            .fill(Color.EZNotesBlue)
+                                                        
+                                                        /*Image(systemName: "person.crop.circle.fill")*/
+                                                        self.usersSearched[pendingRequest]!
+                                                            .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
+                                                            .scaledToFill()
+                                                            .frame(maxWidth: 35, maxHeight: 35)
+                                                            .clipShape(.circle)
+                                                            .foregroundStyle(.white)
+                                                    }
+                                                    .frame(width: 38, height: 38)
+                                                    .padding([.leading], 10)
+                                                    
+                                                    Text(pendingRequest)
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                                        .foregroundStyle(.white)
+                                                    
+                                                    HStack {
+                                                        Image(systemName: "paperplane")
+                                                            .resizable()
+                                                            .frame(width: 10, height: 10)
+                                                            .foregroundStyle(.gray)
+                                                        
+                                                        Text("Pending")
+                                                            .frame(alignment: .center)
+                                                            .font(.system(size: 14, weight: .medium))
+                                                            .foregroundStyle(.gray)
+                                                        
+                                                        Button(action: { print("Unsend request") }) {
+                                                            Image(systemName: "multiply")
+                                                                .resizable()
+                                                                .frame(width: 10, height: 10)
+                                                                .foregroundStyle(.white)
+                                                                .padding(8) /* MARK: Ensure the button can be clicked on feasibly. */
+                                                        }
+                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                    }
+                                                    .padding([.top, .bottom], 2)
+                                                    .padding([.leading, .trailing], 8)
+                                                    .cornerRadius(15)
+                                                }
+                                                .padding(8)
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Text("Nothing to see here.")
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .font(Font.custom("Poppins-Regular", size: 16))
+                                        .minimumScaleFactor(0.5)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .onAppear {
+                                /* MARK: Reset all error states/user data states. */
+                                /*self.usersSearched.removeAll()
+                                self.noUsersToShow = false
+                                self.noSearchResults = false
+                                
+                                if self.pendingRequests.isEmpty { self.noUsersToShow = true; return }
+                                
+                                self.loadingView = true
+                                for user in self.pendingRequests {
+                                    RequestAction<SearchUserData>(parameters: SearchUserData(
+                                        AccountId: self.accountInfo.accountID,
+                                        Filter: "",
+                                        Usages: "",
+                                        Query: user
+                                    )).perform(action: search_user_req) { statusCode, resp in
+                                        guard resp != nil && statusCode == 200 else {
+                                            self.usersSearched[user] = Image(systemName: "person.crop.circle.fill")
+                                            if user == self.pendingRequests.last { self.loadingView = false }
+                                            return
+                                        }
+                                        
+                                        if let resp = resp as? [String: [String: Any]] {
+                                            for user in resp.keys {
+                                                guard resp[user] != nil else { continue }
+                                                
+                                                if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
+                                                    if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
+                                                        self.usersSearched[user] = Image(
+                                                            uiImage: UIImage(
+                                                                data: userPFPData
+                                                            )!
+                                                        )
+                                                    } else {
+                                                        self.usersSearched[user] = Image(systemName: "person.crop.circle.fill")
+                                                    }
+                                                } else {
+                                                    self.usersSearched[user] = Image(systemName: "person.crop.circle.fill")
+                                                }
+                                            }
+                                        } else {
+                                            self.noUsersToShow = true
+                                        }
+                                        
+                                        if user == self.pendingRequests.last { self.loadingView = false }
+                                    }
+                                }*/
+                                self.noUsersToShow = true
+                            }
+                        case "pending":
+                            VStack {
+                                if !self.noUsersToShow {
+                                    
+                                } else {
+                                    Text("Nothing to see here")
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .font(Font.custom("Poppins-Regular", size: 16))
+                                        .minimumScaleFactor(0.5)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .onAppear {
+                                /* MARK: Reset all error states/user data states. */
+                                self.usersSearched.removeAll()
+                                self.noUsersToShow = false
+                                self.noSearchResults = false
+                                
+                                if self.friends.isEmpty { self.noUsersToShow = true; return }
+                            }
+                        default:
+                            VStack { }.onAppear { self.selectedView = "add" }
                         }
+                    } else {
+                        HStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.white)
+                        
+                        ScrollView(.vertical, showsIndicators: false) {
+                            /*Text("Search Filters:")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 10)
+                                .padding(.top)
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(.white)*/
+                            
+                            HStack {
+                                Text("Filter")
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 18 : 16))
+                                    .foregroundStyle(.white)
+                                
+                                Spacer()
+                                
+                                Text("Description")
+                                    .frame(maxWidth: prop.size.width / 2.2, alignment: .leading)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 18 : 16))
+                                    .foregroundStyle(.white)
+                            }
+                            .frame(maxWidth: prop.size.width - 30)
+                            .padding(.top) /* MARK: Ensure space between divider before scrollview and content in the scrollview. */
+                            
+                            LazyVGrid(columns: [GridItem(.flexible())], spacing: 15) {//[GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]) {
+                                VStack {
+                                    HStack {
+                                        Toggle(isOn: $showAnyUser) {
+                                            Text("Show Any")
+                                                .font(.system(size: 14, weight: .medium))
+                                        }
+                                        .toggleStyle(CheckBox())
+                                        .foregroundStyle(Color.EZNotesBlue)
+                                        .onChange(of: self.showAnyUser) {
+                                            
+                                            if !self.showUsersFromSameCollege
+                                                && !self.showUsersWithSameMajor
+                                                && !self.showUsersFromSameState
+                                                && !self.showUsersWithSchoolUsageOnly
+                                                && !self.showUsersWithWorkUsageOnly
+                                                && !self.showUsersWithGeneralUsageOnly { self.showAnyUser = true }
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        Text(self.accountInfo.usage == "school"
+                                             ? "Show users regardless their state, college, or major."
+                                             : "Show any user, regardless their usage of the app or career.")
+                                            .frame(maxWidth: prop.size.width / 2.2, alignment: .center)
+                                            .font(Font.custom("Poppins-Regular", size: 12))
+                                            .foregroundStyle(.gray)
+                                    }
+                                    .padding(.bottom, 8)
+                                    
+                                    if self.accountInfo.usage == "school" {
+                                        HStack {
+                                            Toggle(isOn: $showUsersFromSameState) {
+                                                Text("Same State")
+                                                    .font(.system(size: 14, weight: .medium))
+                                            }
+                                            .toggleStyle(CheckBox())
+                                            .foregroundStyle(Color.EZNotesBlue)
+                                            .onChange(of: self.showUsersFromSameState) { /* MARK: If another filter gets toggled on, ensure `showAny` is off. */
+                                                if self.showUsersFromSameState { self.showAnyUser = false; return }
+                                                
+                                                /* MARK: We can assume that upon the below if statement being reached, the above filter is not set. If the below filter is toggled off as well, force `showAnyUser` to be on. */
+                                                if !self.showUsersFromSameCollege
+                                                    && !self.showUsersWithSameMajor
+                                                    && !self.showUsersWithSchoolUsageOnly
+                                                    && !self.showUsersWithWorkUsageOnly
+                                                    && !self.showUsersWithGeneralUsageOnly { self.showAnyUser = true }
+                                            }
+                                            Spacer()
+                                            
+                                            Text("Show users who reside in the same state as you.")
+                                                .frame(maxWidth: prop.size.width / 2.3, alignment: .center)
+                                                .padding(.leading, 10)
+                                                .font(Font.custom("Poppins-Regular", size: 12))
+                                                .foregroundStyle(.gray)
+                                        }
+                                        .padding(.bottom, 8)
+                                        
+                                        HStack {
+                                            Toggle(isOn: $showUsersFromSameCollege) {
+                                                Text("Same College")
+                                                    .font(.system(size: 14, weight: .medium))
+                                            }
+                                            .toggleStyle(CheckBox())
+                                            .foregroundStyle(Color.EZNotesBlue)
+                                            .onChange(of: self.showUsersFromSameCollege) { /* MARK: If another filter gets toggled on, ensure `showAny` is off. */
+                                                if self.showUsersFromSameCollege { self.showAnyUser = false; return }
+                                                
+                                                /* MARK: We can assume that upon the below if statement being reached, the above filter is not set. If the below filter is toggled off as well, force `showAnyUser` to be on. */
+                                                if !self.showUsersFromSameState
+                                                    && !self.showUsersWithSameMajor
+                                                    && !self.showUsersWithSchoolUsageOnly
+                                                    && !self.showUsersWithWorkUsageOnly
+                                                    && !self.showUsersWithGeneralUsageOnly { self.showAnyUser = true }
+                                            }
+                                            
+                                            Spacer()
+                                            
+                                            Text("Show users who attend the same college as you.")
+                                                .frame(maxWidth: prop.size.width / 2.2, alignment: .center)
+                                                .font(Font.custom("Poppins-Regular", size: 12))
+                                                .foregroundStyle(.gray)
+                                        }
+                                        .padding(.bottom, 8)
+                                    }
+                                    
+                                    HStack {
+                                        Toggle(isOn: $showUsersWithSchoolUsageOnly) {
+                                            Text("School Usage Only")
+                                                .font(.system(size: 14, weight: .medium))
+                                        }
+                                        .toggleStyle(CheckBox())
+                                        .foregroundStyle(Color.EZNotesBlue)
+                                        .onChange(of: self.showUsersWithSchoolUsageOnly) {
+                                            if self.showUsersWithSchoolUsageOnly { self.showAnyUser = false; return }
+                                            
+                                            /* MARK: We can assume that upon the below if statement being reached, the above filter is not set. If the below filter is toggled off as well, force `showAnyUser` to be on. */
+                                            if !self.showUsersFromSameState
+                                                && !self.showUsersFromSameCollege
+                                                && !self.showUsersWithSameMajor
+                                                && !self.showUsersWithWorkUsageOnly
+                                                && !self.showUsersWithGeneralUsageOnly { self.showAnyUser = true }
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        Text("Show users that use the app for **school** purposes.")
+                                            .frame(maxWidth: prop.size.width / 2.35, alignment: .leading)
+                                            //.padding(.leading, 20)
+                                            .font(Font.custom("Poppins-Regular", size: 12))
+                                            .foregroundStyle(.gray)
+                                    }
+                                    .padding(.bottom, 8)
+                                    
+                                    HStack {
+                                        Toggle(isOn: $showUsersWithWorkUsageOnly) {
+                                            Text("Work Usage Only")
+                                                .font(.system(size: 14, weight: .medium))
+                                        }
+                                        .toggleStyle(CheckBox())
+                                        .foregroundStyle(Color.EZNotesBlue)
+                                        .onChange(of: self.showUsersWithWorkUsageOnly) {
+                                            if self.showUsersWithWorkUsageOnly { self.showAnyUser = false; return }
+                                            
+                                            /* MARK: We can assume that upon the below if statement being reached, the above filter is not set. If the below filter is toggled off as well, force `showAnyUser` to be on. */
+                                            if !self.showUsersFromSameState
+                                                && !self.showUsersFromSameCollege
+                                                && !self.showUsersWithSameMajor
+                                                && !self.showUsersWithSchoolUsageOnly
+                                                && !self.showUsersWithGeneralUsageOnly { self.showAnyUser = true }
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        Text("Show users that use the app for **work** purposes.")
+                                            .frame(maxWidth: prop.size.width / 2.35, alignment: .leading)
+                                            //.padding(.leading, 20)
+                                            .font(Font.custom("Poppins-Regular", size: 12))
+                                            .foregroundStyle(.gray)
+                                    }
+                                    .padding(.bottom, 8)
+                                    
+                                    HStack {
+                                        Toggle(isOn: $showUsersWithGeneralUsageOnly) {
+                                            Text("General Usage Only")
+                                                .font(.system(size: 14, weight: .medium))
+                                        }
+                                        .toggleStyle(CheckBox())
+                                        .foregroundStyle(Color.EZNotesBlue)
+                                        .onChange(of: self.showUsersWithGeneralUsageOnly) {
+                                            if self.showUsersWithGeneralUsageOnly { self.showAnyUser = false; return }
+                                            
+                                            /* MARK: We can assume that upon the below if statement being reached, the above filter is not set. If the below filter is toggled off as well, force `showAnyUser` to be on. */
+                                            if !self.showUsersFromSameState
+                                                && !self.showUsersFromSameCollege
+                                                && !self.showUsersWithSameMajor
+                                                && !self.showUsersWithSchoolUsageOnly
+                                                && !self.showUsersWithWorkUsageOnly { self.showAnyUser = true }
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        Text("Show users that use the app for **general** purposes.")
+                                            .frame(maxWidth: prop.size.width / 2.35, alignment: .leading)
+                                            //.padding(.leading, 20)
+                                            .font(Font.custom("Poppins-Regular", size: 12))
+                                            .foregroundStyle(.gray)
+                                    }
+                                    .padding(.bottom, 8)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .frame(maxWidth: prop.size.width - 40)
+                            .padding(.trailing, 10)
+                            
+                            Divider()
+                                .background(.gray)
+                                .frame(width: prop.size.width - 40)
+                                .padding([.top, .bottom])
+                            
+                            Text("Filter Results:")
+                                .frame(maxWidth: prop.size.width - 40, alignment: .leading)
+                                .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 18 : 16))
+                                .foregroundStyle(.white)
+                            
+                            HStack {
+                                Text("Number Of Results")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .font(Font.custom("Poppins-SemiBold", size: 14))
+                                    .foregroundStyle(.white)
+                                
+                                Spacer()
+                                
+                                Menu {
+                                    ForEach(1...50, id: \.self) { resultNumber in
+                                        Button(action: { self.numberOfResults = resultNumber }) { Text("\(resultNumber)") }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text("\(Int(self.numberOfResults))")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 14))
+                                            .padding(.leading, 10)
+                                        
+                                        VStack {
+                                            Image(systemName: "arrowtriangle.up")
+                                                .resizable()
+                                                .frame(width: 5.5, height: 5.5)
+                                                .foregroundStyle(.white)
+                                                .padding(.bottom, -5)
+                                            
+                                            Image(systemName: "arrowtriangle.down")
+                                                .resizable()
+                                                .frame(width: 5.5, height: 5.5)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .padding(.trailing, 10)
+                                    }
+                                    //.frame(maxWidth: .infinity)
+                                    .padding([.top, .bottom], 2)
+                                    .background(Color.EZNotesLightBlack)
+                                    .cornerRadius(15)
+                                }
+                            }
+                            .frame(maxWidth: prop.size.width - 40)
+                            
+                            HStack {
+                                Text("Number Of Friends")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .font(Font.custom("Poppins-SemiBold", size: 14))
+                                    .foregroundStyle(.white)
+                                
+                                Spacer()
+                                
+                                Menu {
+                                    ForEach(1...200, id: \.self) { resultNumber in
+                                        Button(action: { self.usersNumberOfFriends = resultNumber }) { Text("\(resultNumber)") }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text("\(Int(self.usersNumberOfFriends))")
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 14))
+                                            .padding(.leading, 10)
+                                        
+                                        VStack {
+                                            Image(systemName: "arrowtriangle.up")
+                                                .resizable()
+                                                .frame(width: 5.5, height: 5.5)
+                                                .foregroundStyle(.white)
+                                                .padding(.bottom, -5)
+                                            
+                                            Image(systemName: "arrowtriangle.down")
+                                                .resizable()
+                                                .frame(width: 5.5, height: 5.5)
+                                                .foregroundStyle(.white)
+                                        }
+                                        .padding(.trailing, 10)
+                                    }
+                                    //.frame(maxWidth: .infinity)
+                                    .padding([.top, .bottom], 2)
+                                    .background(Color.EZNotesLightBlack)
+                                    .cornerRadius(15)
+                                }
+                            }
+                            .frame(maxWidth: prop.size.width - 40)
+                        }
+                        .padding(.top, -6) /* MARK: Make it look like the scrollview scrolls "under" the header. */
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.black)
                 .popover(isPresented: $rickRoll) {
                     /*WebView(url: URL(string: "https://www.youtube.com/watch?v=oHg5SJYRHA0")!)
                      .navigationBarTitle("Get Rick Rolled, Boi", displayMode: .inline)*/
                     YouTubeVideoView() // Replace with your YouTube video ID
-                     .frame(maxWidth: .infinity, maxHeight: .infinity)//: 300) // Set height for the video player
-                     .cornerRadius(10)
-                     .padding()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)//: 300) // Set height for the video player
+                        .cornerRadius(10)
+                        .padding()
                 }
             }
         }

@@ -17,6 +17,34 @@ let server = "http://192.168.1.109:8088"
  * */
 struct ReqPlaceholder {}
 
+struct GetUsersData {
+    let AccountId: String
+    let Filter: String
+    let Usages: String
+}
+
+struct GetUsersAccountIdData {
+    let Username: String
+}
+
+struct SearchUserData {
+    let AccountId: String
+    let Filter: String
+    let Usages: String
+    let Query: String
+}
+
+struct SendFriendRequestData {
+    let AccountId: String
+    let Username: String
+    let RequestTo: String
+}
+
+struct IsFriendsOrHasSentFriendRequestData {
+    let AccountId: String
+    let Username: String
+}
+
 struct SummarizeNotesData {
     let OriginalNotes: String
     let EditedNotes: String
@@ -400,17 +428,31 @@ let detect_possible_similar_categories_req: CSIARequest = CSIARequest(
 )
 
 let get_user_req: CSIARequest = CSIARequest(
-    url: "\(server)/get_user",
+    url: "\(server)/get_users",
     method: "get",
-    reqData: ReqPlaceholder.self
+    reqData: GetUsersData.self
 )
-
-struct GetUsersAccountIdData {
-    let Username: String
-}
 
 let get_users_account_id_req: CSIARequest = CSIARequest(
     url: "\(server)/get_users_account_id",
     method: "get",
     reqData: GetUsersAccountIdData.self
+)
+
+let search_user_req: CSIARequest = CSIARequest(
+    url: "\(server)/search_user",
+    method: "get",
+    reqData: SearchUserData.self
+)
+
+let send_friend_request_req: CSIARequest = CSIARequest(
+    url: "\(server)/send_friend_request",
+    method: "get",
+    reqData: SendFriendRequestData.self
+)
+
+let is_friend_or_has_sent_friend_request_req: CSIARequest = CSIARequest(
+    url: "\(server)/is_friend_or_has_sent_friend_request",
+    method: "get",
+    reqData: IsFriendsOrHasSentFriendRequestData.self
 )

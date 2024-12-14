@@ -179,7 +179,7 @@ struct UsersProfile: View {
                     self.usersPfpBg
                         .resizable()
                         .scaledToFill()
-                        .frame(maxHeight: prop.isLargerScreen ? 135 : 115)
+                        .frame(maxHeight: prop.isLargerScreen ? 95 : 75)
                     //.aspectRatio(contentMode: .fill)
                         .clipped()
                         .overlay(Color.EZNotesBlack.opacity(0.3))
@@ -190,7 +190,7 @@ struct UsersProfile: View {
                    ? self.accountPopupSection != "main"
                         ? 15
                         : 100
-                   : 100
+                   : 80
             )
             
             HStack {
@@ -308,7 +308,7 @@ struct UsersProfile: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity)
-            .padding(.top, -20)
+            .padding(.top, self.isUserPreview ? -30 : -20)
             
             HStack {
                 Text(self.isUserPreview ? username : self.accountInfo.username)

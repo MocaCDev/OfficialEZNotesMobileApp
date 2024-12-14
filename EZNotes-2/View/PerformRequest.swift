@@ -308,6 +308,30 @@ struct RequestAction<T> {
         
         switch(action.reqData.self)
         {
+            case is SendFriendRequestData.Type:
+                guard let params: SendFriendRequestData = (parameters as? SendFriendRequestData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id");
+                request.addValue(params.Username, forHTTPHeaderField: "Username")
+                request.addValue(params.RequestTo, forHTTPHeaderField: "Request-To")
+                break
+            case is IsFriendsOrHasSentFriendRequestData.Type:
+                guard let params: IsFriendsOrHasSentFriendRequestData = (parameters as? IsFriendsOrHasSentFriendRequestData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id");
+                request.addValue(params.Username, forHTTPHeaderField: "Username")
+                break
+            case is SearchUserData.Type:
+                guard let params: SearchUserData = (parameters as? SearchUserData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id");
+                request.addValue(params.Filter, forHTTPHeaderField: "Filter")
+                request.addValue(params.Usages, forHTTPHeaderField: "Usages")
+                request.addValue(params.Query, forHTTPHeaderField: "Query")
+                break
+            case is GetUsersData.Type:
+                guard let params: GetUsersData = (parameters as? GetUsersData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id");
+                request.addValue(params.Filter, forHTTPHeaderField: "Filter")
+                request.addValue(params.Usages, forHTTPHeaderField: "Usages")
+                break
             case is GetUsersAccountIdData.Type:
                 guard let params: GetUsersAccountIdData = (parameters as? GetUsersAccountIdData) else { return }
                 request.addValue(params.Username, forHTTPHeaderField: "Username");
