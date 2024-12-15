@@ -1730,6 +1730,8 @@ struct TopNavChat: View {
     @State private var noSearchResults: Bool = false
     @State private var performingSearch: Bool = false
     @State private var addingFriend: Bool = false
+    @State private var removingFriendRequest: Bool = false
+    @State private var usersBeingRemoved: Array<String> = []
 
     @State private var sendingFriendRequestsTo: Array<String> = []
     @State private var selectedView: String = "add"
@@ -1819,34 +1821,34 @@ struct TopNavChat: View {
                     }
                     
                     self.defaultUsers = usersData
-                }
-                else { self.noUsersToShow = true }
-                
-                /* MARK: In the background, send requests to the server to check the friend status of the users being shown. */
-                for user in self.defaultUsers.keys {
-                    /* MARK: Check to see if the client is friends with the user, or the user has sent a request to be friends with the client. */
-                    RequestAction<IsFriendsOrHasSentFriendRequestData>(parameters: IsFriendsOrHasSentFriendRequestData(
-                        AccountId: self.accountInfo.accountID,
-                        Username: user
-                    )).perform(action: is_friend_or_has_sent_friend_request_req) { statusCode, r in
-                        guard r != nil && statusCode == 200 else {
-                            return
-                        }
-                        
-                        if let r = r {
-                            if r["Pending"]! as! Bool {
-                                DispatchQueue.main.async { self.defaultUsersPendingRequests.append(user) }
-                                //self.defaultUsersPendingRequests.append(user)
+                    
+                    /* MARK: In the background, send requests to the server to check the friend status of the users being shown. */
+                    for user in self.defaultUsers.keys {
+                        /* MARK: Check to see if the client is friends with the user, or the user has sent a request to be friends with the client. */
+                        RequestAction<IsFriendsOrHasSentFriendRequestData>(parameters: IsFriendsOrHasSentFriendRequestData(
+                            AccountId: self.accountInfo.accountID,
+                            Username: user
+                        )).perform(action: is_friend_or_has_sent_friend_request_req) { statusCode, r in
+                            guard r != nil && statusCode == 200 else {
+                                return
                             }
-                            else {
-                                if r["Friends"]! as! Bool {
-                                    DispatchQueue.main.async { self.defaultUsersFriends.append(user) }
-                                    //self.defaultUsersFriends.append(user)
+                            
+                            if let r = r {
+                                if r["Pending"]! as! Bool {
+                                    DispatchQueue.main.async { self.defaultUsersPendingRequests.append(user) }
+                                    //self.defaultUsersPendingRequests.append(user)
+                                }
+                                else {
+                                    if r["Friends"]! as! Bool {
+                                        DispatchQueue.main.async { self.defaultUsersFriends.append(user) }
+                                        //self.defaultUsersFriends.append(user)
+                                    }
                                 }
                             }
                         }
                     }
                 }
+                else { self.noUsersToShow = true }
             }
         }
     }
@@ -2728,24 +2730,48 @@ struct TopNavChat: View {
                                                         .foregroundStyle(.white)
                                                     
                                                     HStack {
-                                                        Image(systemName: "paperplane")
-                                                            .resizable()
-                                                            .frame(width: 10, height: 10)
-                                                            .foregroundStyle(.gray)
-                                                        
-                                                        Text("Pending")
-                                                            .frame(alignment: .center)
-                                                            .font(.system(size: 14, weight: .medium))
-                                                            .foregroundStyle(.gray)
-                                                        
-                                                        Button(action: { print("Unsend request") }) {
-                                                            Image(systemName: "multiply")
+                                                        if !self.usersBeingRemoved.contains(value.key) {
+                                                            Image(systemName: "paperplane")
                                                                 .resizable()
                                                                 .frame(width: 10, height: 10)
-                                                                .foregroundStyle(.white)
-                                                                .padding(8) /* MARK: Ensure the button can be clicked on feasibly. */
+                                                                .foregroundStyle(.gray)
+                                                            
+                                                            Text("Pending")
+                                                                .frame(alignment: .center)
+                                                                .font(.system(size: 14, weight: .medium))
+                                                                .foregroundStyle(.gray)
+                                                            
+                                                            Button(action: {
+                                                                self.removingFriendRequest = true
+                                                                
+                                                                self.usersBeingRemoved.append(value.key)
+                                                                
+                                                                RequestAction<RemoveFriendRequest>(parameters: RemoveFriendRequest(
+                                                                    AccountId: self.accountInfo.accountID,
+                                                                    CancelFor: value.key
+                                                                )).perform(action: cancel_friend_request_req) { statusCode, resp in
+                                                                    self.removingFriendRequest = false
+                                                                    
+                                                                    guard resp != nil && statusCode == 200 else {
+                                                                        return /* TODO: Handle error. */
+                                                                    }
+                                                                    
+                                                                    /* MARK: Ensure that the dictionary is updated with the current manipulation. */
+                                                                    self.clientsFriendRequests.removeValue(forKey: value.key)
+                                                                    
+                                                                    self.usersBeingRemoved.removeAll(where: { $0 == value.key })
+                                                                }
+                                                            }) {
+                                                                Image(systemName: "multiply")
+                                                                    .resizable()
+                                                                    .frame(width: 10, height: 10)
+                                                                    .foregroundStyle(.white)
+                                                                    .padding(8) /* MARK: Ensure the button can be clicked on feasibly. */
+                                                            }
+                                                            .buttonStyle(NoLongPressButtonStyle())
+                                                        } else {
+                                                            LoadingView(message: "")
                                                         }
-                                                        .buttonStyle(NoLongPressButtonStyle())
                                                     }
                                                     .padding([.top, .bottom], 2)
                                                     .padding([.leading, .trailing], 8)
@@ -2909,6 +2935,8 @@ struct TopNavChat: View {
                                     AccountId: self.accountInfo.accountID
                                 )).perform(action: get_clients_pending_requests_req) { statusCode, resp in
                                     guard resp != nil && statusCode == 200 else {
+                                        self.loadingView = false
+                                        
                                         self.noUsersToShow = true
                                         return
                                     }

@@ -306,8 +306,15 @@ struct RequestAction<T> {
         request.addValue("text/html; charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.addValue("text/html; charset=utf-8", forHTTPHeaderField: "Accept")
         
+        request.timeoutInterval = 50000
+        
         switch(action.reqData.self)
         {
+            case is RemoveFriendRequest.Type:
+                guard let params: RemoveFriendRequest = (parameters as? RemoveFriendRequest) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.CancelFor, forHTTPHeaderField: "Cancel-For")
+                break
             case is GetClientsFriendRequestsData.Type:
                 guard let params: GetClientsFriendRequestsData = (parameters as? GetClientsFriendRequestsData) else { return }
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
