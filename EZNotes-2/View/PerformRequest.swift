@@ -315,6 +315,20 @@ struct RequestAction<T> {
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
                 request.addValue(params.CancelFor, forHTTPHeaderField: "Cancel-For")
                 break
+            case is RemoveFriendData.Type:
+                guard let params: RemoveFriendData = (parameters as? RemoveFriendData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.ToRemove, forHTTPHeaderField: "To-Remove")
+                break
+            case is AcceptFriendRequestData.Type:
+                guard let params: AcceptFriendRequestData = (parameters as? AcceptFriendRequestData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.AcceptFrom, forHTTPHeaderField: "Accept-From")
+                break
+            case is GetClientsFriendsData.Type:
+                guard let params: GetClientsFriendsData = (parameters as? GetClientsFriendsData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                break
             case is GetClientsFriendRequestsData.Type:
                 guard let params: GetClientsFriendRequestsData = (parameters as? GetClientsFriendRequestsData) else { return }
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")

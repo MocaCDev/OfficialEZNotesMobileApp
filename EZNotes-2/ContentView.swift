@@ -230,32 +230,34 @@ struct ContentView: View {
                 if udKeyExists(key: "account_id") {
                     accountInfo.setAccountID(accountID: getUDValue(key: "account_id"))
                     
-                    PFP(accountID: UserDefaults.standard.string(forKey: "account_id"))
-                        .requestGetPFP() { statusCode, pfp, resp in
-                            guard pfp != nil && statusCode == 200 else {
-                                guard resp != nil else { return }
-                                
-                                /* MARK: If `ErrorCode` is 0x6966 means the user was not found in the database. */
-                                if resp!["ErrorCode"] as! Int == 0x6966 {
-                                    /* MARK: If the error code is `0x6966`, remove all the data over the user from `UserDefaults`, ensure the "User Not Found" banner will show and "redirect" the user back to the home screen. */
-                                    udRemoveAllAccountInfoKeys()
+                    DispatchQueue.global(qos: .background).async {
+                        PFP(accountID: UserDefaults.standard.string(forKey: "account_id"))
+                            .requestGetPFP() { statusCode, pfp, resp in
+                                guard pfp != nil && statusCode == 200 else {
+                                    guard resp != nil else { return }
                                     
-                                    self.userHasSignedIn = false
-                                    self.userNotFound = true
+                                    /* MARK: If `ErrorCode` is 0x6966 means the user was not found in the database. */
+                                    if resp!["ErrorCode"] as! Int == 0x6966 {
+                                        /* MARK: If the error code is `0x6966`, remove all the data over the user from `UserDefaults`, ensure the "User Not Found" banner will show and "redirect" the user back to the home screen. */
+                                        udRemoveAllAccountInfoKeys()
+                                        
+                                        self.userHasSignedIn = false
+                                        self.userNotFound = true
+                                    }
+                                    
+                                    return
                                 }
                                 
-                                return
+                                accountInfo.setProfilePicture(pfp: UIImage(data: pfp!)!)
                             }
-                            
-                            accountInfo.setProfilePicture(pfp: UIImage(data: pfp!)!)
-                        }
-                    
-                    PFP(accountID: UserDefaults.standard.string(forKey: "account_id"))
-                        .requestGetPFPBg() { statusCode, pfp_bg in
-                            guard pfp_bg != nil && statusCode == 200 else { return }
-                            
-                            accountInfo.setProfilePictureBackground(bg: UIImage(data: pfp_bg!)!)
-                        }
+                        
+                        PFP(accountID: UserDefaults.standard.string(forKey: "account_id"))
+                            .requestGetPFPBg() { statusCode, pfp_bg in
+                                guard pfp_bg != nil && statusCode == 200 else { return }
+                                
+                                accountInfo.setProfilePictureBackground(bg: UIImage(data: pfp_bg!)!)
+                            }
+                    }
                 }
                 
                 if UserDefaults.standard.object(forKey: "client_sub_id") != nil {

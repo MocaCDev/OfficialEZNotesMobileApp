@@ -9,7 +9,7 @@ import SwiftUI
 
 /* MARK: URLs used for requests. */
 //let server = "https://www.eznotes.space"
-let server = "http://192.168.0.8:8088"
+let server = "http://192.168.1.109:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
@@ -28,6 +28,20 @@ struct GetClientsPendingRequestsData {
 struct RemoveFriendRequest {
     let AccountId: String
     let CancelFor: String
+}
+
+struct RemoveFriendData {
+    let AccountId: String
+    let ToRemove: String
+}
+
+struct AcceptFriendRequestData {
+    let AccountId: String
+    let AcceptFrom: String
+}
+
+struct GetClientsFriendsData {
+    let AccountId: String
 }
 
 struct GetUsersData {
@@ -486,4 +500,22 @@ let cancel_friend_request_req: CSIARequest = CSIARequest(
     url: "\(server)/cancel_friend_request",
     method: "get",
     reqData: RemoveFriendRequest.self
+)
+
+let accept_friend_request_req: CSIARequest = CSIARequest(
+    url: "\(server)/accept_friend_request",
+    method: "get",
+    reqData: AcceptFriendRequestData.self
+)
+
+let get_clients_friends_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_all_clients_friends",
+    method: "get",
+    reqData: GetClientsFriendsData.self
+)
+
+let remove_friend_req: CSIARequest = CSIARequest(
+    url: "\(server)/remove_friend",
+    method: "get",
+    reqData: RemoveFriendData.self
 )

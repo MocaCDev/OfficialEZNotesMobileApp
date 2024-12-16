@@ -1695,8 +1695,8 @@ struct CheckBox: ToggleStyle {
 }
 
 struct TopNavChat: View {
-    
-    @ObservedObject public var accountInfo: AccountDetails
+    @EnvironmentObject private var accountInfo: AccountDetails
+    //@ObservedObject public var accountInfo: AccountDetails
     
     @Binding public var showAccountPopup: Bool
     
@@ -1731,6 +1731,8 @@ struct TopNavChat: View {
     @State private var performingSearch: Bool = false
     @State private var addingFriend: Bool = false
     @State private var removingFriendRequest: Bool = false
+    @State private var acceptingFriendRequest: Bool = false
+    @State private var usersBeingAccepted: Array<String> = []
     @State private var usersBeingRemoved: Array<String> = []
 
     @State private var sendingFriendRequestsTo: Array<String> = []
@@ -2213,6 +2215,23 @@ struct TopNavChat: View {
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                     
+                                    Button(action: { self.selectedView = "friends" }) {
+                                        HStack {
+                                            Text("Friends")
+                                                .frame(alignment: .center)
+                                                .padding([.top, .bottom], 4)
+                                                .padding([.leading, .trailing], 8.5)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(self.selectedView == "friends" ? Color.EZNotesBlue : .clear)
+                                                )
+                                                .foregroundStyle(self.selectedView == "friends" ? .black : .secondary)
+                                                .font(Font.custom("Poppins-SemiBold", size: 12))
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
                                     Button(action: { self.selectedView = "requests" }) {
                                         HStack {
                                             Text("Requests")
@@ -2473,22 +2492,36 @@ struct TopNavChat: View {
                                                                             .padding([.leading, .trailing], 8)
                                                                             .cornerRadius(15)
                                                                         } else {
-                                                                            HStack {
-                                                                                Image(systemName: "person.badge.minus")
-                                                                                    .resizable()
-                                                                                    .frame(width: 10, height: 10)
-                                                                                    .foregroundStyle(.black)
-                                                                                
-                                                                                Text("Remove")
-                                                                                    .frame(alignment: .center)
-                                                                                    .font(.system(size: 14, weight: .medium))
-                                                                                    .foregroundStyle(.black)
+                                                                            Button(action: {
+                                                                                RequestAction<RemoveFriendData>(parameters: RemoveFriendData(
+                                                                                    AccountId: self.accountInfo.accountID,
+                                                                                    ToRemove: value.key
+                                                                                )).perform(action: remove_friend_req) { statusCode, resp in
+                                                                                    guard resp != nil && statusCode == 200 else {
+                                                                                        return
+                                                                                    }
+                                                                                    
+                                                                                    self.accountInfo.friends.removeValue(forKey: value.key)
+                                                                                }
+                                                                            }) {
+                                                                                HStack {
+                                                                                    Image(systemName: "person.badge.minus")
+                                                                                        .resizable()
+                                                                                        .frame(width: 10, height: 10)
+                                                                                        .foregroundStyle(.black)
+                                                                                    
+                                                                                    Text("Remove")
+                                                                                        .frame(alignment: .center)
+                                                                                        .font(.system(size: 14, weight: .medium))
+                                                                                        .foregroundStyle(.black)
+                                                                                }
+                                                                                .padding([.top, .bottom], 2)
+                                                                                .padding([.leading, .trailing], 8)
+                                                                                .background(Color.EZNotesRed)
+                                                                                .cornerRadius(15)
+                                                                                .padding(.trailing, 10)
                                                                             }
-                                                                            .padding([.top, .bottom], 2)
-                                                                            .padding([.leading, .trailing], 8)
-                                                                            .background(Color.EZNotesRed)
-                                                                            .cornerRadius(15)
-                                                                            .padding(.trailing, 10)
+                                                                            .buttonStyle(NoLongPressButtonStyle())
                                                                         }
                                                                     }
                                                                 }
@@ -2555,74 +2588,106 @@ struct TopNavChat: View {
                                                                         .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
                                                                         .foregroundStyle(.white)
                                                                     
-                                                                    if !self.defaultUsersPendingRequests.contains(value.key) && !self.defaultUsersFriends.contains(value.key) {
-                                                                        Button(action: {
-                                                                            self.sendingFriendRequestsTo.append(value.key)
-                                                                            self.addingFriend = true
-                                                                            
-                                                                            RequestAction<SendFriendRequestData>(parameters: SendFriendRequestData(
-                                                                                AccountId: self.accountInfo.accountID,
-                                                                                Username: self.accountInfo.username,
-                                                                                RequestTo: value.key
-                                                                            )).perform(action: send_friend_request_req) { statusCode, resp in
-                                                                                self.addingFriend = false
-                                                                                self.sendingFriendRequestsTo.removeAll(where: { $0 == value.key })
+                                                                    if !self.accountInfo.friends.keys.contains(value.key) {
+                                                                        if !self.defaultUsersPendingRequests.contains(value.key) && !self.defaultUsersFriends.contains(value.key) {
+                                                                            Button(action: {
+                                                                                self.sendingFriendRequestsTo.append(value.key)
+                                                                                self.addingFriend = true
                                                                                 
-                                                                                guard resp != nil && statusCode == 200 else {
-                                                                                    print("Error")
-                                                                                    return
+                                                                                RequestAction<SendFriendRequestData>(parameters: SendFriendRequestData(
+                                                                                    AccountId: self.accountInfo.accountID,
+                                                                                    Username: self.accountInfo.username,
+                                                                                    RequestTo: value.key
+                                                                                )).perform(action: send_friend_request_req) { statusCode, resp in
+                                                                                    self.addingFriend = false
+                                                                                    self.sendingFriendRequestsTo.removeAll(where: { $0 == value.key })
+                                                                                    
+                                                                                    guard resp != nil && statusCode == 200 else {
+                                                                                        print("Error")
+                                                                                        return
+                                                                                    }
+                                                                                    
+                                                                                    self.defaultUsersPendingRequests.append(value.key)
                                                                                 }
-                                                                                
-                                                                                self.defaultUsersPendingRequests.append(value.key)
+                                                                            }) {
+                                                                                if !self.sendingFriendRequestsTo.contains(value.key) {
+                                                                                    HStack {
+                                                                                        Image(systemName: "plus")
+                                                                                            .resizable()
+                                                                                            .frame(width: 10, height: 10)
+                                                                                            .foregroundStyle(.black)
+                                                                                        
+                                                                                        Text("Add")
+                                                                                            .frame(alignment: .center)
+                                                                                            .font(.system(size: 14, weight: .medium))
+                                                                                            .foregroundStyle(.black)
+                                                                                    }
+                                                                                    .padding([.top, .bottom], 2)
+                                                                                    .padding([.leading, .trailing], 8)
+                                                                                    .background(Color.EZNotesBlue)
+                                                                                    .cornerRadius(15)
+                                                                                    .padding(.trailing, 10)
+                                                                                } else {
+                                                                                    LoadingView(message: "")
+                                                                                }
                                                                             }
-                                                                        }) {
-                                                                            if !self.sendingFriendRequestsTo.contains(value.key) {
+                                                                        } else {
+                                                                            if self.defaultUsersPendingRequests.contains(value.key) {
                                                                                 HStack {
-                                                                                    Image(systemName: "plus")
+                                                                                    Image(systemName: "paperplane")
+                                                                                        .resizable()
+                                                                                        .frame(width: 10, height: 10)
+                                                                                        .foregroundStyle(.gray)
+                                                                                    
+                                                                                    Text("Pending")
+                                                                                        .frame(alignment: .center)
+                                                                                        .font(.system(size: 14, weight: .medium))
+                                                                                        .foregroundStyle(.gray)
+                                                                                    
+                                                                                    Button(action: { print("Unsend request") }) {
+                                                                                        Image(systemName: "multiply")
+                                                                                            .resizable()
+                                                                                            .frame(width: 10, height: 10)
+                                                                                            .foregroundStyle(.white)
+                                                                                            .padding(8) /* MARK: Ensure the button can be clicked on feasibly. */
+                                                                                    }
+                                                                                    .buttonStyle(NoLongPressButtonStyle())
+                                                                                }
+                                                                                .padding([.top, .bottom], 2)
+                                                                                .padding([.leading, .trailing], 8)
+                                                                                .cornerRadius(15)
+                                                                            } else {
+                                                                                HStack {
+                                                                                    Image(systemName: "person.badge.minus")
                                                                                         .resizable()
                                                                                         .frame(width: 10, height: 10)
                                                                                         .foregroundStyle(.black)
                                                                                     
-                                                                                    Text("Add")
+                                                                                    Text("Remove")
                                                                                         .frame(alignment: .center)
                                                                                         .font(.system(size: 14, weight: .medium))
                                                                                         .foregroundStyle(.black)
                                                                                 }
                                                                                 .padding([.top, .bottom], 2)
                                                                                 .padding([.leading, .trailing], 8)
-                                                                                .background(Color.EZNotesBlue)
+                                                                                .background(Color.EZNotesRed)
                                                                                 .cornerRadius(15)
                                                                                 .padding(.trailing, 10)
-                                                                            } else {
-                                                                                LoadingView(message: "")
                                                                             }
                                                                         }
                                                                     } else {
-                                                                        if self.defaultUsersPendingRequests.contains(value.key) {
-                                                                            HStack {
-                                                                                Image(systemName: "paperplane")
-                                                                                    .resizable()
-                                                                                    .frame(width: 10, height: 10)
-                                                                                    .foregroundStyle(.gray)
-                                                                                
-                                                                                Text("Pending")
-                                                                                    .frame(alignment: .center)
-                                                                                    .font(.system(size: 14, weight: .medium))
-                                                                                    .foregroundStyle(.gray)
-                                                                                
-                                                                                Button(action: { print("Unsend request") }) {
-                                                                                    Image(systemName: "multiply")
-                                                                                        .resizable()
-                                                                                        .frame(width: 10, height: 10)
-                                                                                        .foregroundStyle(.white)
-                                                                                        .padding(8) /* MARK: Ensure the button can be clicked on feasibly. */
+                                                                        Button(action: {
+                                                                            RequestAction<RemoveFriendData>(parameters: RemoveFriendData(
+                                                                                AccountId: self.accountInfo.accountID,
+                                                                                ToRemove: value.key
+                                                                            )).perform(action: remove_friend_req) { statusCode, resp in
+                                                                                guard resp != nil && statusCode == 200 else {
+                                                                                    return
                                                                                 }
-                                                                                .buttonStyle(NoLongPressButtonStyle())
+                                                                                
+                                                                                self.accountInfo.friends.removeValue(forKey: value.key)
                                                                             }
-                                                                            .padding([.top, .bottom], 2)
-                                                                            .padding([.leading, .trailing], 8)
-                                                                            .cornerRadius(15)
-                                                                        } else {
+                                                                        }) {
                                                                             HStack {
                                                                                 Image(systemName: "person.badge.minus")
                                                                                     .resizable()
@@ -2640,9 +2705,10 @@ struct TopNavChat: View {
                                                                             .cornerRadius(15)
                                                                             .padding(.trailing, 10)
                                                                         }
+                                                                        .buttonStyle(NoLongPressButtonStyle())
                                                                     }
                                                                 }
-                                                                //.padding(8)
+                                                                .padding(8)
                                                                 //.background(Color.EZNotesLightBlack)
                                                                 //.cornerRadius(15)
                                                             }
@@ -2700,6 +2766,75 @@ struct TopNavChat: View {
                                 
                                 self.getUsers()
                             }
+                        case "friends":
+                            VStack {
+                                if self.accountInfo.friends.isEmpty {
+                                        Text("No Friends")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                            .minimumScaleFactor(0.5)
+                                } else {
+                                    ScrollView(.vertical, showsIndicators: false) {
+                                        ForEach(Array(self.accountInfo.friends.enumerated()), id: \.offset) { index, value in
+                                            HStack {
+                                                ZStack {
+                                                    Circle()
+                                                        .fill(Color.EZNotesBlue)
+                                                    
+                                                    /*Image(systemName: "person.crop.circle.fill")*/
+                                                    self.accountInfo.friends[value.key]!
+                                                        .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
+                                                        .scaledToFill()
+                                                        .frame(maxWidth: 35, maxHeight: 35)
+                                                        .clipShape(.circle)
+                                                        .foregroundStyle(.white)
+                                                }
+                                                .frame(width: 38, height: 38)
+                                                .padding([.leading], 10)
+                                                
+                                                Text(value.key)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                                    .foregroundStyle(.white)
+                                                
+                                                Button(action: {
+                                                    RequestAction<RemoveFriendData>(parameters: RemoveFriendData(
+                                                        AccountId: self.accountInfo.accountID,
+                                                        ToRemove: value.key
+                                                    )).perform(action: remove_friend_req) { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            return
+                                                        }
+                                                        
+                                                        self.accountInfo.friends.removeValue(forKey: value.key)
+                                                    }
+                                                }) {
+                                                    HStack {
+                                                        Image(systemName: "person.badge.minus")
+                                                            .resizable()
+                                                            .frame(width: 10, height: 10)
+                                                            .foregroundStyle(.black)
+                                                        
+                                                        Text("Remove")
+                                                            .frame(alignment: .center)
+                                                            .font(.system(size: 14, weight: .medium))
+                                                            .foregroundStyle(.black)
+                                                    }
+                                                    .padding([.top, .bottom], 2)
+                                                    .padding([.leading, .trailing], 8)
+                                                    .background(Color.EZNotesRed)
+                                                    .cornerRadius(15)
+                                                    .padding(.trailing, 10)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                            }
+                                            .padding(8)
+                                        }
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                         case "requests":
                             VStack {
                                 if !self.noUsersToShow {
@@ -2782,7 +2917,7 @@ struct TopNavChat: View {
                                         }
                                     }
                                 } else {
-                                    Text("Nothing to see here.")
+                                    Text("Nothing to see here")
                                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                                         .foregroundStyle(.white)
                                         .font(Font.custom("Poppins-Regular", size: 16))
@@ -2801,6 +2936,8 @@ struct TopNavChat: View {
                                 RequestAction<GetClientsFriendRequestsData>(parameters: GetClientsFriendRequestsData(
                                     AccountId: self.accountInfo.accountID
                                 )).perform(action: get_clients_friend_requests_req) { statusCode, resp in
+                                    self.loadingView = false
+                                    
                                     guard resp != nil && statusCode == 200 else {
                                         self.noUsersToShow = true
                                         return
@@ -2893,18 +3030,46 @@ struct TopNavChat: View {
                                                         .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
                                                         .foregroundStyle(.white)
                                                     
-                                                    Button(action: { print("Accept friend request") }) {
-                                                        HStack {
-                                                            Text("Accept")
-                                                                .frame(alignment: .center)
-                                                                .font(.system(size: 14, weight: .medium))
-                                                                .foregroundStyle(.black)
+                                                    Button(action: {
+                                                        self.acceptingFriendRequest = true
+                                                        self.usersBeingAccepted.append(value.key)
+                                                        
+                                                        RequestAction<AcceptFriendRequestData>(parameters: AcceptFriendRequestData(
+                                                            AccountId: self.accountInfo.accountID,
+                                                            AcceptFrom: value.key
+                                                        )).perform(action: accept_friend_request_req) { statusCode, resp in
+                                                            guard resp != nil && statusCode == 200 else {
+                                                                //self.accountInfo.friends[value.key] = Image(systemName: "person.crop.circle.fill")
+                                                                return /* TODO: Handle errors. */
+                                                            }
+                                                            
+                                                            self.clientsPendingRequests.removeValue(forKey: value.key)
+                                                            
+                                                            if let resp = resp {
+                                                                guard let f = self.populateUsers(resp: resp) else {
+                                                                    self.accountInfo.friends[value.key] = Image(systemName: "person.crop.circle.fill")
+                                                                    return
+                                                                }
+                                                                
+                                                                self.accountInfo.friends[value.key] = f[value.key]
+                                                            }
                                                         }
-                                                        .padding([.top, .bottom], 2)
-                                                        .padding([.leading, .trailing], 8)
-                                                        .background(Color.EZNotesBlue)
-                                                        .cornerRadius(15)
-                                                        .padding(.trailing, 10)
+                                                    }) {
+                                                        if self.acceptingFriendRequest && self.usersBeingAccepted.contains(value.key) {
+                                                            LoadingView(message: "")
+                                                        } else {
+                                                            HStack {
+                                                                Text("Accept")
+                                                                    .frame(alignment: .center)
+                                                                    .font(.system(size: 14, weight: .medium))
+                                                                    .foregroundStyle(.black)
+                                                            }
+                                                            .padding([.top, .bottom], 4) /* MARK: Add a bit more padding. I don't know why, but it looks off compared to the "+ Add". */
+                                                            .padding([.leading, .trailing], 8)
+                                                            .background(Color.EZNotesBlue)
+                                                            .cornerRadius(15)
+                                                            .padding(.trailing, 10)
+                                                        }
                                                     }
                                                     .buttonStyle(NoLongPressButtonStyle())
                                                 }
@@ -2944,6 +3109,8 @@ struct TopNavChat: View {
                                     if let resp = resp {
                                         /* MARK: `CPR` - Clients Pending Requests. */
                                         guard let CPR = self.populateUsers(resp: resp) else {
+                                            self.loadingView = false
+                                            
                                             self.noUsersToShow = true
                                             return
                                         }
@@ -2952,6 +3119,8 @@ struct TopNavChat: View {
                                     } else {
                                         self.noUsersToShow = true
                                     }
+                                    
+                                    self.loadingView = false
                                 }
                             }
                         default:
@@ -3257,6 +3426,27 @@ struct TopNavChat: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(.black)
+                .onAppear {
+                    if self.accountInfo.friends.isEmpty {
+                        DispatchQueue.global(qos: .background).async {
+                            RequestAction<GetClientsFriendsData>(parameters: GetClientsFriendsData(
+                                AccountId: self.accountInfo.accountID
+                            )).perform(action: get_clients_friends_req) { statusCode, resp in
+                                guard resp != nil && statusCode == 200 else {
+                                    return
+                                }
+                                
+                                if let resp = resp {
+                                    guard let clientsFriends = self.populateUsers(resp: resp) else {
+                                        return
+                                    }
+                                    
+                                    self.accountInfo.friends = clientsFriends
+                                }
+                            }
+                        }
+                    }
+                }
                 .popover(isPresented: $rickRoll) {
                     /*WebView(url: URL(string: "https://www.youtube.com/watch?v=oHg5SJYRHA0")!)
                      .navigationBarTitle("Get Rick Rolled, Boi", displayMode: .inline)*/

@@ -13,7 +13,7 @@ struct ChatView: View {
     
     var prop: Properties
     
-    @ObservedObject public var accountInfo: AccountDetails
+    //@ObservedObject public var accountInfo: AccountDetails
     
     @Binding public var userHasSignedIn: Bool
     
@@ -24,7 +24,6 @@ struct ChatView: View {
             ZStack {
                 VStack {
                     TopNavChat(
-                        accountInfo: accountInfo,
                         showAccountPopup: $showAccount,
                         friendSearch: $friendSearch,
                         userHasSignedIn: $userHasSignedIn,

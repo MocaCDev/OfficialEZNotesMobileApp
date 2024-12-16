@@ -169,7 +169,6 @@ struct CoreApp: View {
                 ChatView(
                     section: $section,
                     prop: prop,
-                    accountInfo: accountInfo,
                     userHasSignedIn: $userHasSignedIn
                 )
             } else if self.section == "upload_error" {

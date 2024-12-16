@@ -17,6 +17,9 @@ class AccountDetails: ObservableObject {
     @Published var subID: String
     @Published var aiChatID: UUID
     
+    /* TODO: Mature the interface with friends. Perhaps make it to where the app (server) keeps track of how long the client has been friends with the given user. Perhaps we can make another class store specific information over the user so that the app doesn't have to consistently send requests to the server to obtain that data. */
+    @Published var friends: [String: Image]
+    
     /* MARK: PFP - will be on top of `profileBackgroundImage`. */
     @Published var profilePicture: Image
     
@@ -33,6 +36,7 @@ class AccountDetails: ObservableObject {
         usage = ""
         subID = ""
         aiChatID = UUID()
+        friends = [:]
         profilePicture = Image(systemName: "person.crop.circle.fill") /* MARK: Default PFP icon. */
         profileBackgroundPicture = Image("Pfp-Default-Bg") /* MARK: Default PFP BG. */
     }
