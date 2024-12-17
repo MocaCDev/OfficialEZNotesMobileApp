@@ -149,6 +149,7 @@ struct CategoryInternalsView: View {
     @EnvironmentObject private var categoryData: CategoryData
     @EnvironmentObject private var messageModel: MessagesModel
     @EnvironmentObject private var settings: SettingsConfigManager
+    @EnvironmentObject private var accountInfo: AccountDetails
     
     /* MARK: Needed for the "Create Set by Image". */
     /* MARK: See `TODO` in `UploadSectionView.swift` (line 16). */
@@ -176,7 +177,7 @@ struct CategoryInternalsView: View {
     @Binding public var launchCategory: Bool
     //@Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
     //@Binding public var messages: Array<MessageDetails> /* TODO: Add a new interface for messages. */
-    @ObservedObject public var accountInfo: AccountDetails
+    //@ObservedObject public var accountInfo: AccountDetails
     
     @State private var show_category_internal_title: Bool = false
     

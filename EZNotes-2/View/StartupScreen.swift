@@ -118,7 +118,7 @@ struct StartupScreen: View {
     @Binding public var userHasSignedIn: Bool
     @Binding public var userNotFound: Bool
     @Binding public var goBackToLogin: Bool
-    @Binding public var faceIDAuthenticated: Bool
+    //@Binding public var faceIDAuthenticated: Bool
     
     @State public var serverError: Bool = false
     @State public var supportedStates: Array<String> = []
@@ -338,8 +338,8 @@ struct StartupScreen: View {
                         startupScreen: StartupScreen(
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
-                            goBackToLogin: $goBackToLogin,
-                            faceIDAuthenticated: $faceIDAuthenticated
+                            goBackToLogin: $goBackToLogin/*,
+                            faceIDAuthenticated: $faceIDAuthenticated*/
                         )
                     )
                 case "signup":
@@ -348,8 +348,8 @@ struct StartupScreen: View {
                         startupScreen: StartupScreen(
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
-                            goBackToLogin: $goBackToLogin,
-                            faceIDAuthenticated: $faceIDAuthenticated
+                            goBackToLogin: $goBackToLogin/*,
+                                                          faceIDAuthenticated: $faceIDAuthenticated*/
                         ),
                         screen: $screen,
                         userHasSignedIn: $userHasSignedIn,
@@ -362,8 +362,8 @@ struct StartupScreen: View {
                         startupScreen: StartupScreen(
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
-                            goBackToLogin: $goBackToLogin,
-                            faceIDAuthenticated: $faceIDAuthenticated
+                            goBackToLogin: $goBackToLogin/*,
+                                                          faceIDAuthenticated: $faceIDAuthenticated*/
                         ),
                         screen: $screen,
                         userHasSignedIn: $userHasSignedIn
@@ -377,8 +377,8 @@ struct StartupScreen: View {
                         startupScreen: StartupScreen(
                             userHasSignedIn: $userHasSignedIn,
                             userNotFound: $userNotFound,
-                            goBackToLogin: $goBackToLogin,
-                            faceIDAuthenticated: $faceIDAuthenticated
+                            goBackToLogin: $goBackToLogin/*,
+                                                          faceIDAuthenticated: $faceIDAuthenticated*/
                         )
                     )
                 }
@@ -586,12 +586,5 @@ struct StartupScreen: View {
                 // Handle denial of request.
             }
         }
-    }
-}
-
-struct StartupScreen_Preview: PreviewProvider
-{
-    static var previews: some View {
-        ContentView()
     }
 }

@@ -1783,7 +1783,3 @@ struct SignUpScreen : View, KeyboardReadable {
         }
     }
 }
-
-#Preview {
-    ContentView()
-}

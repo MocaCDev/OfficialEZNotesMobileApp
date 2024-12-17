@@ -10,6 +10,13 @@ struct UploadSection: View {
     @EnvironmentObject private var categoryData: CategoryData
     @EnvironmentObject private var networkMonitor: NetworkMonitor
     @EnvironmentObject private var settings: SettingsConfigManager
+    //@EnvironmentObject private var model: FrameHandler
+    @EnvironmentObject private var accountInfo: AccountDetails
+    //@EnvironmentObject private var images_to_upload: ImagesUploads
+    
+    @ObservedObject public var model: FrameHandler
+    
+    @ObservedObject public var images_to_upload: ImagesUploads
     
     /* MARK: `topBanner` helps the view know what to display in it's banner (located to the right of the profile icon). */
     @Binding public var topBanner: TopBanner
@@ -21,15 +28,12 @@ struct UploadSection: View {
     @State private var currentZoomFactor: CGFloat = 1.0
     @State private var loadingCameraView: Bool = false
     
-    @ObservedObject public var images_to_upload: ImagesUploads
-    @ObservedObject public var model: FrameHandler
+    //@ObservedObject public var images_to_upload: ImagesUploads
     
     @Binding public var lastSection: String
     @Binding public var section: String
     
     var prop: Properties
-    
-    @ObservedObject public var accountInfo: AccountDetails
     
     @Binding public var userHasSignedIn: Bool
     
@@ -333,7 +337,7 @@ struct UploadSection: View {
                 .edgesIgnoringSafeArea([.bottom])
                 .background(
                     self.model.permissionGranted && self.model.cameraDeviceFound
-                    ? AnyView(FrameView(handler: model, image: model.frame, prop: prop, loadingCameraView: $loadingCameraView)
+                    ? AnyView(FrameView(handler: self.model, image: self.model.frame, prop: prop, loadingCameraView: $loadingCameraView)
                         .ignoresSafeArea()
                         .gesture(MagnificationGesture()
                             .onChanged { value in

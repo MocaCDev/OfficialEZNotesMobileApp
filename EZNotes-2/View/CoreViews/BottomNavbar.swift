@@ -94,9 +94,3 @@ struct ButtomNavbar: View {
         )
     }
 }
-
-struct BottomNavbar_Preview: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
-}

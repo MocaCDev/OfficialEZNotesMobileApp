@@ -17,6 +17,32 @@ let server = "http://192.168.1.109:8088"
  * */
 struct ReqPlaceholder {}
 
+struct SaveTagsData {
+    let AccountId: String
+    let Tags: String
+}
+
+struct GetTagsData {
+    let AccountId: String
+}
+
+struct GetAccountDescriptionData {
+    let AccountId: String
+}
+
+struct SaveAccountDescriptionData {
+    let AccountId: String
+    let NewDescription: String
+}
+
+struct GetClientsUsernameData {
+    let AccountId: String
+}
+
+struct GetUsersFriendsData {
+    let ForUser: String
+}
+
 struct GetClientsFriendRequestsData {
     let AccountId: String
 }
@@ -518,4 +544,40 @@ let remove_friend_req: CSIARequest = CSIARequest(
     url: "\(server)/remove_friend",
     method: "get",
     reqData: RemoveFriendData.self
+)
+
+let get_clients_username_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_clients_username",
+    method: "get",
+    reqData: GetClientsUsernameData.self
+)
+
+let get_users_friends_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_all_users_friends",
+    method: "get",
+    reqData: GetUsersFriendsData.self
+)
+
+let get_account_description_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_account_description",
+    method: "get",
+    reqData: GetAccountDescriptionData.self
+)
+
+let save_account_description_req: CSIARequest = CSIARequest(
+    url: "\(server)/save_account_description",
+    method: "get",
+    reqData: SaveAccountDescriptionData.self
+)
+
+let save_tags_req: CSIARequest = CSIARequest(
+    url: "\(server)/add_tags",
+    method: "get",
+    reqData: SaveTagsData.self
+)
+
+let get_tags_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_tags",
+    method: "get",
+    reqData: GetTagsData.self
 )

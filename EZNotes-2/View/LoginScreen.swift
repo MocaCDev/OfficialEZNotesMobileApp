@@ -327,9 +327,3 @@ struct LoginScreen: View, KeyboardReadable {
         .background(Color.EZNotesBlack)
     }
 }
-
-struct LoginScreen_Preview: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
-}

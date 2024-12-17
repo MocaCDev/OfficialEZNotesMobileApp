@@ -40,17 +40,17 @@ extension KeyboardReadable {
 struct ContentView: View {
     @EnvironmentObject private var accountInfo: AccountDetails
     
-    @State private var faceIDAuthenticated: Bool = false
+    //@State private var faceIDAuthenticated: Bool = false
     @Environment(\.scenePhase) private var scenePhase
     
     @State public var reAuthReqFromLogin: Bool = false
     //@StateObject public var accountInfo: AccountDetails = AccountDetails()
     
-    init() {
+    /*init() {
         StripeAPI.defaultPublishableKey = "pk_test_51OdoXSDNLx34I7Pu22ELrZac5NUd5lrs8EXqK96SFOUJM6wZqOe8HQxyH0f3CR8emsCAVwQiqStwTWyGhCj1wRtM00T1fR9V2D"
-    }
+    }*/
     
-    public func authenticate(initializing: Bool) {
+    /*public func authenticate(initializing: Bool) {
         let context = LAContext()
         var error: NSError?
 
@@ -80,14 +80,14 @@ struct ContentView: View {
         } else {
             // no biometrics
         }
-    }
+    }*/
     
     @State public var userHasSignedIn: Bool = UserDefaults.standard.bool(forKey: "logged_in")
     @State public var userNotFound: Bool = false
     @State private var goBackToLogin: Bool = false
-    @StateObject private var model: FrameHandler = FrameHandler()
+    //@StateObject private var model: FrameHandler = FrameHandler()
     
-    @StateObject public var categoryData: CategoryData = CategoryData()
+    //@StateObject public var categoryData: CategoryData = CategoryData()
     
     //@State private var messages: Array<MessageDetails> = []
     
@@ -100,13 +100,20 @@ struct ContentView: View {
     @State private var topBanner: TopBanner = .None
     //@State private var needsNoWifiBanner: Bool = false
     
+    /* `section` can be: "upload", "review_upload", "home" or "chat". */
+    @State private var section: String = "upload"
+    @State private var lastSection: String = "upload"
+    
+    @ObservedObject public var images_to_upload: ImagesUploads
+    @ObservedObject public var model: FrameHandler
+    
     var body: some View {
         if !userHasSignedIn {
             StartupScreen(
                 userHasSignedIn: $userHasSignedIn,
                 userNotFound: $userNotFound,
-                goBackToLogin: $goBackToLogin,
-                faceIDAuthenticated: $faceIDAuthenticated
+                goBackToLogin: $goBackToLogin//,
+                //faceIDAuthenticated: $faceIDAuthenticated
             )
             /*.onChange(of: self.networkMonitor.isConnectedToWiFi) {
                 if !self.networkMonitor.isConnectedToWiFi {
@@ -138,147 +145,335 @@ struct ContentView: View {
                 }
             })
         } else {
-            VStack {
-                if self.faceIDAuthenticated {
-                    ResponsiveView { prop in
-                        CoreApp(
-                            prop: prop,
+            ResponsiveView { prop in
+                VStack {
+                    switch(self.section) {
+                    case "upload":
+                        //ResponsiveView { prop in
+                        UploadSection(
+                            model: self.model,
+                            images_to_upload: self.images_to_upload,
                             topBanner: $topBanner,
-                            accountInfo: accountInfo,
-                            model: model,
+                            lastSection: $lastSection,
+                            section: $section,
+                            prop: prop,
                             userHasSignedIn: $userHasSignedIn
                         )
+                        //}
+                    case "home":
+                        /*ResponsiveView { prop in
+                         HomeView(
+                         section: $section,
+                         prop: prop,
+                         userHasSignedIn:$userHasSignedIn,
+                         model: self.model//,
+                         //images_to_upload: self.images_to_upload
+                         )
+                         }*/
+                        HomeView(
+                            section: $section,
+                            prop: prop,
+                            userHasSignedIn:$userHasSignedIn,
+                            model: self.model//,
+                            //images_to_upload: self.images_to_upload
+                        )
+                    case "chat":
+                        ChatView(section: $section, userHasSignedIn: $userHasSignedIn)
+                    default: VStack { }.onAppear { self.section = "upload" }
                     }
-                } else {
-                    if self.goBackToLogin {
-                        StartupScreen(
-                            userHasSignedIn: $userHasSignedIn,
-                            userNotFound: $userNotFound,
-                            goBackToLogin: $goBackToLogin,
-                            faceIDAuthenticated: $faceIDAuthenticated
-                        )
-                    } else {
-                        ZStack {
-                            if self.faceIDAuthenticated {
-                                VStack {
-                                    ProgressView()
-                                        .tint(Color.EZNotesBlue)
-                                        .frame(width: 25, height: 25)
-                                        .controlSize(.large)
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .background(.black.opacity(0.5))
-                            }
-                            Text("Unlock With FaceID")
-                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                .foregroundStyle(.white)
-                                .font(.system(size: 30, design: .rounded))
-                                .fontWeight(.bold)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(
-                            Image(!self.faceIDAuthenticated ? "Background" : "Background2")
-                        )
+                    /*if self.faceIDAuthenticated {
+                     ResponsiveView { prop in
+                     CoreApp(
+                     prop: prop,
+                     topBanner: $topBanner,
+                     model: model,
+                     userHasSignedIn: $userHasSignedIn
+                     )
+                     }
+                     } else {
+                     if self.goBackToLogin {
+                     StartupScreen(
+                     userHasSignedIn: $userHasSignedIn,
+                     userNotFound: $userNotFound,
+                     goBackToLogin: $goBackToLogin,
+                     faceIDAuthenticated: $faceIDAuthenticated
+                     )
+                     } else {
+                     ZStack {
+                     if self.faceIDAuthenticated {
+                     VStack {
+                     ProgressView()
+                     .tint(Color.EZNotesBlue)
+                     .frame(width: 25, height: 25)
+                     .controlSize(.large)
+                     }
+                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                     .background(.black.opacity(0.5))
+                     }
+                     Text("Unlock With FaceID")
+                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                     .foregroundStyle(.white)
+                     .font(.system(size: 30, design: .rounded))
+                     .fontWeight(.bold)
+                     }
+                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                     .background(
+                     Image(!self.faceIDAuthenticated ? "Background" : "Background2")
+                     )
+                     }
+                     }*/
+                    
+                }
+                .onChange(of: scenePhase) {
+                    if scenePhase == .inactive || scenePhase == .background {
+                        UserDefaults.standard.set(true, forKey: "requires_faceID")
                     }
                 }
-            }
-            .onChange(of: scenePhase) {
-                if scenePhase == .inactive || scenePhase == .background {
-                    UserDefaults.standard.set(true, forKey: "requires_faceID")
-                }
-            }
-            .onAppear(perform: { /* MARK: The below code is placed in the `.onAppear`, regardless if the user logged in, signed up or just re-launched the app. All of the users data, unless further noticed, will be stored in `UserDefaults`. */
-                // else {
-                    RequestAction<ReqPlaceholder>(
-                        parameters: ReqPlaceholder()
-                    )
-                    .perform(action: check_server_active_req)
-                    { statusCode, resp in
+                /*.task {
+                    RequestAction<GetClientsFriendsData>(parameters: GetClientsFriendsData(
+                        AccountId: self.accountInfo.accountID
+                    )).perform(action: get_clients_friends_req) { statusCode, resp in
                         guard resp != nil && statusCode == 200 else {
-                            self.topBanner = .NoWifiConnection
                             return
                         }
+                        
+                        if let resp = resp as? [String: [String: Any]] {
+                            for user in resp.keys {
+                                guard resp[user] != nil else { continue }
+                                
+                                if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
+                                    if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
+                                        self.accountInfo.friends[user] = Image(
+                                            uiImage: UIImage(
+                                                data: userPFPData
+                                            )!
+                                        )
+                                    } else {
+                                        self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
+                                    }
+                                } else {
+                                    self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
+                                }
+                            }
+                        }
                     }
-                //}
-                
-                /* MARK: If this `.onAppear` runs, there should be a key `username` in `UserDefaults.standard`. If there isn't, then there is a problem.
-                 * */
-                if udKeyExists(key: "usecase") {
-                    accountInfo.setUsage(usage: getUDValue(key: "usecase"))
-                }
-                
-                if udKeyExists(key: "username") {
-                    accountInfo.setUsername(username: getUDValue(key: "username"))
-                }
-                
-                if udKeyExists(key: "email") {
-                    accountInfo.setEmail(email: getUDValue(key: "email"))
-                }
-                
-                if udKeyExists(key: "college_name") {
-                    accountInfo.setCollegeName(collegeName: getUDValue(key: "college_name"))
-                }
-                
-                if udKeyExists(key: "major_name") {
-                    accountInfo.setMajorName(majorName: getUDValue(key: "major_name"))
-                }
-                
-                if udKeyExists(key: "college_state") {
-                    accountInfo.setCollegeState(collegeState: getUDValue(key: "college_state"))
-                }
-                
-                if udKeyExists(key: "account_id") {
-                    accountInfo.setAccountID(accountID: getUDValue(key: "account_id"))
+                    //}
                     
-                    DispatchQueue.global(qos: .background).async {
-                        PFP(accountID: UserDefaults.standard.string(forKey: "account_id"))
-                            .requestGetPFP() { statusCode, pfp, resp in
-                                guard pfp != nil && statusCode == 200 else {
-                                    guard resp != nil else { return }
+                    //DispatchQueue.global(qos: .background).async {
+                    
+                }*/
+                .onAppear(perform: { /* MARK: The below code is placed in the `.onAppear`, regardless if the user logged in, signed up or just re-launched the app. All of the users data, unless further noticed, will be stored in `UserDefaults`. */
+                    // else {
+                    Task {
+                        /* TODO: If the below request fails, we need to figure out a way to ensure that the user still gets into the app. */
+                        RequestAction<ReqPlaceholder>(
+                            parameters: ReqPlaceholder()
+                        )
+                        .perform(action: check_server_active_req)
+                        { statusCode, resp in
+                            guard resp != nil && statusCode == 200 else {
+                                self.topBanner = .NetworkCheckFailure
+                                return
+                            }
+                        }
+                        
+                        /* MARK: If `topBanner` is `networkCheckFailure`, which will be set above, just exit from the rest of this code. */
+                        /* TODO: We need to figure out a way to ensure that the rest of the `accountInfo` gets assigned when the server is responsive again. */
+                        if self.topBanner == .NetworkCheckFailure { return }
+                        //}
+                        
+                        /* MARK: If this `.onAppear` runs, there should be a key `username` in `UserDefaults.standard`. If there isn't, then there is a problem.
+                         * */
+                        if udKeyExists(key: "usecase") {
+                            accountInfo.setUsage(usage: getUDValue(key: "usecase"))
+                        }
+                        
+                        if udKeyExists(key: "username") {
+                            accountInfo.setUsername(username: getUDValue(key: "username"))
+                        }
+                        
+                        if udKeyExists(key: "email") {
+                            accountInfo.setEmail(email: getUDValue(key: "email"))
+                        }
+                        
+                        if udKeyExists(key: "college_name") {
+                            accountInfo.setCollegeName(collegeName: getUDValue(key: "college_name"))
+                        }
+                        
+                        if udKeyExists(key: "major_name") {
+                            accountInfo.setMajorName(majorName: getUDValue(key: "major_name"))
+                        }
+                        
+                        if udKeyExists(key: "college_state") {
+                            accountInfo.setCollegeState(collegeState: getUDValue(key: "college_state"))
+                        }
+                        
+                        if udKeyExists(key: "account_id") {
+                            accountInfo.setAccountID(accountID: getUDValue(key: "account_id"))
+                            
+                            if self.accountInfo.username == "" {
+                                /* MARK: Upon any error ocurring whilst getting the users username by account ID, we will assume the user cannot be found and, therefore, show a "User Not Found" error. */
+                                RequestAction<GetClientsUsernameData>(parameters: GetClientsUsernameData(
+                                    AccountId: self.accountInfo.accountID
+                                )).perform(action: get_clients_username_req) { statusCode, resp in
+                                    guard resp != nil && statusCode == 200 else {
+                                        self.userHasSignedIn = false
+                                        self.userNotFound = true
+                                        return
+                                    }
                                     
-                                    /* MARK: If `ErrorCode` is 0x6966 means the user was not found in the database. */
-                                    if resp!["ErrorCode"] as! Int == 0x6966 {
-                                        /* MARK: If the error code is `0x6966`, remove all the data over the user from `UserDefaults`, ensure the "User Not Found" banner will show and "redirect" the user back to the home screen. */
-                                        udRemoveAllAccountInfoKeys()
+                                    if let resp = resp as? [String: String] {
+                                        guard resp.keys.contains("Username") else {
+                                            self.userHasSignedIn = false
+                                            self.userNotFound = true
+                                            return
+                                        }
                                         
+                                        self.accountInfo.setUsername(username: resp["Username"]!)
+                                    } else {
                                         self.userHasSignedIn = false
                                         self.userNotFound = true
                                     }
+                                }
+                            }
+                            
+                            //DispatchQueue.global(qos: .background).async {
+                            PFP(accountID: UserDefaults.standard.string(forKey: "account_id"))
+                                .requestGetPFP() { statusCode, pfp, resp in
+                                    guard pfp != nil && statusCode == 200 else {
+                                        guard resp != nil else { return }
+                                        
+                                        /* MARK: If `ErrorCode` is 0x6966 means the user was not found in the database. */
+                                        if resp!["ErrorCode"] as! Int == 0x6966 {
+                                            /* MARK: If the error code is `0x6966`, remove all the data over the user from `UserDefaults`, ensure the "User Not Found" banner will show and "redirect" the user back to the home screen. */
+                                            udRemoveAllAccountInfoKeys()
+                                            
+                                            self.userHasSignedIn = false
+                                            self.userNotFound = true
+                                        }
+                                        
+                                        return
+                                    }
                                     
+                                    accountInfo.setProfilePicture(pfp: UIImage(data: pfp!)!)
+                                }
+                            //}
+                            
+                            //DispatchQueue.global(qos: .background).async {
+                            PFP(accountID: UserDefaults.standard.string(forKey: "account_id"))
+                                .requestGetPFPBg() { statusCode, pfp_bg in
+                                    guard pfp_bg != nil && statusCode == 200 else { return }
+                                    
+                                    accountInfo.setProfilePictureBackground(bg: UIImage(data: pfp_bg!)!)
+                                }
+                            //}
+                            
+                            //DispatchQueue.global(qos: .background).async {
+                            RequestAction<GetClientsFriendsData>(parameters: GetClientsFriendsData(
+                                AccountId: self.accountInfo.accountID
+                            )).perform(action: get_clients_friends_req) { statusCode, resp in
+                                guard resp != nil && statusCode == 200 else {
                                     return
                                 }
                                 
-                                accountInfo.setProfilePicture(pfp: UIImage(data: pfp!)!)
+                                if let resp = resp as? [String: [String: Any]] {
+                                    for user in resp.keys {
+                                        guard resp[user] != nil else { continue }
+                                        
+                                        if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
+                                            if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
+                                                self.accountInfo.friends[user] = Image(
+                                                    uiImage: UIImage(
+                                                        data: userPFPData
+                                                    )!
+                                                )
+                                            } else {
+                                                self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
+                                            }
+                                        } else {
+                                            self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
+                                        }
+                                        
+                                        print(self.accountInfo.friends)
+                                    }
+                                }
                             }
-                        
-                        PFP(accountID: UserDefaults.standard.string(forKey: "account_id"))
-                            .requestGetPFPBg() { statusCode, pfp_bg in
-                                guard pfp_bg != nil && statusCode == 200 else { return }
+                            
+                            RequestAction<GetClientsFriendRequestsData>(parameters: GetClientsFriendRequestsData(
+                                AccountId: self.accountInfo.accountID
+                            )).perform(action: get_clients_friend_requests_req) { statusCode, resp in
+                                guard resp != nil && statusCode == 200 else {
+                                    return
+                                }
                                 
-                                accountInfo.setProfilePictureBackground(bg: UIImage(data: pfp_bg!)!)
+                                if let resp = resp as? [String: [String: Any]] {
+                                    for user in resp.keys {
+                                        guard resp[user] != nil else { continue }
+                                        
+                                        if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
+                                            if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
+                                                self.accountInfo.friendRequests[user] = Image(
+                                                    uiImage: UIImage(
+                                                        data: userPFPData
+                                                    )!
+                                                )
+                                            } else {
+                                                self.accountInfo.friendRequests[user] = Image(systemName: "person.crop.circle.fill")
+                                            }
+                                        } else {
+                                            self.accountInfo.friendRequests[user] = Image(systemName: "person.crop.circle.fill")
+                                        }
+                                    }
+                                }
                             }
+                            
+                            RequestAction<GetClientsPendingRequestsData>(parameters: GetClientsPendingRequestsData(
+                                AccountId: self.accountInfo.accountID
+                            )).perform(action: get_clients_pending_requests_req) { statusCode, resp in
+                                guard resp != nil && statusCode == 200 else {
+                                    return
+                                }
+                                
+                                if let resp = resp as? [String: [String: Any]] {
+                                    for user in resp.keys {
+                                        guard resp[user] != nil else { continue }
+                                        
+                                        if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
+                                            if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
+                                                self.accountInfo.pendingRequests[user] = Image(
+                                                    uiImage: UIImage(
+                                                        data: userPFPData
+                                                    )!
+                                                )
+                                            } else {
+                                                accountInfo.pendingRequests[user] = Image(systemName: "person.crop.circle.fill")
+                                            }
+                                        } else {
+                                            accountInfo.pendingRequests[user] = Image(systemName: "person.crop.circle.fill")
+                                        }
+                                    }
+                                }
+                            }
+                            //}
+                        }
+                        
+                        if UserDefaults.standard.object(forKey: "client_sub_id") != nil {
+                            accountInfo.setClientSubID(subID: UserDefaults.standard.string(forKey: "client_sub_id")!)
+                        }
                     }
-                }
-                
-                if UserDefaults.standard.object(forKey: "client_sub_id") != nil {
-                    accountInfo.setClientSubID(subID: UserDefaults.standard.string(forKey: "client_sub_id")!)
-                }
-                
-                if UserDefaults.standard.string(forKey: "faceID_enabled") == "enabled" {
-                    if !(UserDefaults.standard.bool(forKey: "faceID_initialized")) {
-                        authenticate(initializing: true)
+                    
+                    /*if UserDefaults.standard.string(forKey: "faceID_enabled") == "enabled" {
+                        if !(UserDefaults.standard.bool(forKey: "faceID_initialized")) {
+                            authenticate(initializing: true)
+                        } else {
+                            self.faceIDAuthenticated = false
+                            authenticate(initializing: false)
+                        }
                     } else {
-                        self.faceIDAuthenticated = false
-                        authenticate(initializing: false)
-                    }
-                } else {
-                    self.faceIDAuthenticated = true
-                }
-            })
+                        self.faceIDAuthenticated = true
+                    }*/
+                })
+            }
         }
     }
-}
-
-#Preview {
-    ContentView()
 }

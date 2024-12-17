@@ -20,10 +20,12 @@ struct UsersProfile: View {
     var usersDescription: String = ""
     var usersTags: Array<String> = []
     var isUserPreview: Bool = true
+    var usersFriends: Int = 0
     
     /* MARK: All of the below bindings/states are used only if `isUserPreview` is false. */
     @Binding public var accountPopupSection: String
     @Binding public var showAccount: Bool
+    @Binding public var addMoreTags: Bool
     
     @State private var pfpUploadStatus: String = "none"
     @State private var pfpBgUploadStatus: String = "none"
@@ -188,8 +190,8 @@ struct UsersProfile: View {
             }
             .frame(maxWidth: prop.size.width, maxHeight: !self.isUserPreview
                    ? self.accountPopupSection != "main"
-                        ? 15
-                        : 100
+                   ? 15
+                   : 100
                    : 80
             )
             
@@ -231,7 +233,7 @@ struct UsersProfile: View {
                                     if let image = try? await pfpPhotoPicked!.loadTransferable(type: Image.self) {
                                         self.changingProfilePic = true
                                         
-                                        PFP(pfp: image, accountID: self.accountInfo.accountID)
+                                        PFP(pfp: image, pfpBg: nil, accountID: self.accountInfo.accountID)
                                             .requestSavePFP() { statusCode, resp in
                                                 self.changingProfilePic = false
                                                 
@@ -271,7 +273,7 @@ struct UsersProfile: View {
                             .onChange(of: self.pfpBackgroundPhotoPicked) {
                                 Task {
                                     if let image = try? await pfpBackgroundPhotoPicked!.loadTransferable(type: Image.self) {
-                                        PFP(pfpBg: image, accountID: self.accountInfo.accountID)
+                                        PFP(pfp: nil, pfpBg: image, accountID: self.accountInfo.accountID)
                                             .requestSavePFPBg() { statusCode, resp in
                                                 /* MARK: Reset the y-offset of the status bar at the top of the popup to ensure the "banner" actually shows. */
                                                 self.statusBarYOffset = 0
@@ -322,7 +324,7 @@ struct UsersProfile: View {
                     .frame(width: 1)
                     .padding(.top, 5)
                 
-                Text("0 Friends")
+                Text(self.isUserPreview ? "\(self.usersFriends) Friends" : "\(self.accountInfo.friends.count) Friend\(self.accountInfo.friends.count > 1 ? "s" : "")")
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                     .foregroundStyle(.white)
                     .font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .light))
@@ -349,21 +351,60 @@ struct UsersProfile: View {
                 
                 HStack {
                     if self.accountInfo.usage == "school" {
-                        Text("Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**")
-                            .frame(alignment: .leading)
-                            .padding(.leading, 20)
-                            .padding(.top, 10)
-                            .foregroundStyle(.white)
-                            .font(Font.custom("Poppins-Regular", size: 12))
-                            .minimumScaleFactor(0.5)
-                            .multilineTextAlignment(.leading)
-                    } else {
                         if !self.editDescription {
-                            Text(self.accountDescription)
+                            Text(self.accountInfo.accountDescription)//("Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**")
                                 .frame(alignment: .leading)
                                 .padding(.leading, 20)
                                 .padding(.top, 10)
-                                .foregroundStyle(self.accountDescription == "No Description" ? .gray : .white)
+                                .foregroundStyle(.white)
+                                .font(Font.custom("Poppins-Regular", size: 12))
+                                .minimumScaleFactor(0.5)
+                                .multilineTextAlignment(.leading)
+                        } else {
+                            VStack {
+                                TextField(
+                                    "Account description...",
+                                    text: $newAccountDescription,
+                                    axis: .vertical
+                                )
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .lineLimit(2...4)
+                                .font(Font.custom("Poppins-Regular", size: 12))
+                                .padding(10)
+                                .background(Color.EZNotesLightBlack)//(Color(.systemGray6))
+                                .cornerRadius(15)
+                                .foregroundStyle(.white)
+                                .padding(.leading, 20)
+                                .onChange(of: self.newAccountDescription) {
+                                    if self.newAccountDescription.count > 80 {
+                                        self.newAccountDescription = String(self.newAccountDescription.prefix(80))
+                                    }
+                                }
+                                
+                                Text("\(self.newAccountDescription.count) out of 80 characters")
+                                    .frame(maxWidth: .infinity, maxHeight: 15, alignment: .leading)
+                                    .padding([.leading], 20)
+                                    .foregroundStyle(
+                                        self.newAccountDescription.count < 80
+                                        ? self.newAccountDescription.count > 70 && self.newAccountDescription.count < 80
+                                        ? .yellow
+                                        : Color.gray
+                                        : .red
+                                    )
+                                    .font(.system(size: 10, design: .rounded))
+                                    .fontWeight(.medium)
+                                    .padding(.bottom, 15)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.top, 15)
+                        }
+                    } else {
+                        if !self.editDescription {
+                            Text(self.accountInfo.accountDescription)
+                                .frame(alignment: .leading)
+                                .padding(.leading, 20)
+                                .padding(.top, 10)
+                                .foregroundStyle(self.accountInfo.accountDescription == "No Description" ? .gray : .white)
                                 .font(Font.custom("Poppins-Regular", size: 12))
                                 .minimumScaleFactor(0.5)
                                 .multilineTextAlignment(.leading)
@@ -430,10 +471,26 @@ struct UsersProfile: View {
                                 /* TODO: Add `account_description` to database; add API endpoint to server that will be used to update the `account_description` column for the given user. For now, storing the account description in `UserDefaults` works. */
                                 assignUDKey(key: "account_description", value: self.newAccountDescription)
                                 
-                                self.accountDescription = self.newAccountDescription
-                                self.newAccountDescription.removeAll()
+                                //self.accountInfo.accountDescription = self.newAccountDescription
                                 
-                                self.editDescription = false
+                                RequestAction<SaveAccountDescriptionData>(parameters: SaveAccountDescriptionData(
+                                    AccountId: self.accountInfo.accountID,
+                                    NewDescription: self.newAccountDescription
+                                )).perform(action: save_account_description_req) { statusCode, resp in
+                                    self.editDescription = false
+                                    
+                                    guard resp != nil && statusCode == 200 else {
+                                        return /* TODO: Handle error. */
+                                    }
+                                    
+                                    self.accountInfo.accountDescription = self.newAccountDescription
+                                    self.newAccountDescription.removeAll()
+                                }
+                                
+                                /*self.accountDescription = self.newAccountDescription
+                                 self.newAccountDescription.removeAll()
+                                 
+                                 self.editDescription = false*/
                             }) {
                                 Text("Save")
                                     .frame(maxWidth: prop.isLargerScreen ? 80 : 60, alignment: .center)
@@ -495,7 +552,24 @@ struct UsersProfile: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     } else {
-                        if self.accountInfo.usage == "school" {
+                        ForEach(self.accountInfo.accountTags, id: \.self) { tag in
+                            HStack {
+                                Text(tag)
+                                    .frame(alignment: .center)
+                                    .padding([.top, .bottom], 4)
+                                    .padding([.leading, .trailing], 8.5)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
+                                        //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
+                                    )
+                                    .font(Font.custom("Poppins-SemiBold", size: 14))
+                                    .foregroundStyle(.white)
+                                    .padding([.top, .bottom], 1.5)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        /*if self.accountInfo.usage == "school" {
                             HStack {
                                 Text(self.accountInfo.college)
                                     .frame(alignment: .center)
@@ -543,9 +617,9 @@ struct UsersProfile: View {
                                     .padding([.top, .bottom], 1.5)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        }
+                        }*/
                         
-                        Button(action: { print("Add More Tags") }) {
+                        Button(action: { self.addMoreTags = true }) {
                             HStack {
                                 Image(systemName: "plus")
                                     .resizable()

@@ -64,6 +64,7 @@ struct RightSideMenuButtonStyle: ButtonStyle {
 
 enum TopBanner {
     case None
+    case NetworkCheckFailure
     case LoadingUploads
     case UploadsReadyToReview
     case ErrorUploading
@@ -73,11 +74,10 @@ enum TopBanner {
 struct CoreApp: View {
     @EnvironmentObject private var categoryData: CategoryData
     
-    public var prop: Properties
+    //public var prop: Properties
     @Binding public var topBanner: TopBanner
     
     @ObservedObject public var accountInfo: AccountDetails
-    @ObservedObject public var model: FrameHandler
     //@ObservedObject public var messageModel: MessagesModel
     
     @Binding public var userHasSignedIn: Bool
@@ -128,11 +128,10 @@ struct CoreApp: View {
     
     var body: some View {
         ZStack {
-            if self.section == "upload" {
+            /*if self.section == "upload" {
                 UploadSection(
                     topBanner: $topBanner,
                     images_to_upload: self.images_to_upload,
-                    model: self.model,
                     lastSection: $lastSection,
                     section: $section,
                     prop: prop,
@@ -158,7 +157,6 @@ struct CoreApp: View {
                 )
             } else if self.section == "home" {
                 HomeView(
-                    model: self.model,
                     images_to_upload: self.images_to_upload,
                     section: $section,
                     prop: prop,
@@ -239,15 +237,9 @@ struct CoreApp: View {
                         .blur(radius: 3.5)
                         .overlay(Color.EZNotesBlack.opacity(0.4))
                 )
-            }
+            }*/
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea(.keyboard)
-    }
-}
-
-struct Core_Preview: PreviewProvider {
-    static var previews: some View {
-        ContentView()
     }
 }

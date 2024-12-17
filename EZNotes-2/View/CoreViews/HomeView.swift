@@ -478,10 +478,6 @@ struct HomeView: View {
     @EnvironmentObject private var settings: SettingsConfigManager
     //@EnvironmentObject private var messageModel: MessagesModel
     
-    /* MARK: Needed for `CategoryInternalsView.swift`, as there is the ability to create a set via images. */
-    @ObservedObject public var model: FrameHandler
-    @ObservedObject public var images_to_upload: ImagesUploads
-    
     @State private var error: HomeError = .None
     
     //@Binding public var messages: Array<MessageDetails>
@@ -529,9 +525,9 @@ struct HomeView: View {
     
     var prop: Properties
     
-    @ObservedObject public var accountInfo: AccountDetails
-    
     @Binding public var userHasSignedIn: Bool
+    @ObservedObject public var model: FrameHandler
+    @StateObject private var images_to_upload: ImagesUploads = ImagesUploads()//@ObservedObject public var images_to_upload: ImagesUploads
     //@ObservedObject public var messageModel: MessagesModel//@Binding public var tempChatHistory: [String: [UUID: Array<MessageDetails>]]
     
     /* TODO: Eventually the app will enable users to set the outline of there categories as they please. Get this implemented. */
@@ -925,7 +921,6 @@ struct HomeView: View {
                         
                         VStack {
                             TopNavHome(
-                                accountInfo: accountInfo,
                                 categoryData: self.categoryData,
                                 showAccountPopup: $showAccount,
                                 prop: prop,
@@ -1197,7 +1192,6 @@ struct HomeView: View {
                         launchCategory: $launchCategory,
                         //tempChatHistory: $tempChatHistory,
                         //messages: $messages,
-                        accountInfo: self.accountInfo,
                         topBanner: $topBanner
                     )
                 }
@@ -1209,11 +1203,5 @@ struct HomeView: View {
                 userHasSignedIn: $userHasSignedIn
             )
         }
-    }
-}
-
-struct HomeView_Preview: PreviewProvider {
-    static var previews: some View {
-        ContentView()
     }
 }

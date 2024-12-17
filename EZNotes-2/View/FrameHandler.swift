@@ -152,11 +152,13 @@ class FrameHandler: NSObject, ObservableObject {
 
 extension FrameHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        guard let cgImage = imageFromSampleBuffer(sampleBuffer: sampleBuffer) else { return }
-        
-        // All UI updates should be/ must be performed on the main queue.
-        DispatchQueue.main.async { [unowned self] in
-            self.frame = cgImage
+        DispatchQueue.global(qos: .background).async { [unowned self] in
+            guard let cgImage = self.imageFromSampleBuffer(sampleBuffer: sampleBuffer) else { return }
+            
+            // All UI updates should be/ must be performed on the main queue.
+            DispatchQueue.main.async { [unowned self] in
+                self.frame = cgImage
+            }
         }
     }
     

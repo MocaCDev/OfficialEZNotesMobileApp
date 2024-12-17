@@ -132,7 +132,7 @@ struct EditableNotes: View {
             object: nil,
             queue: .main) { notification in
                 if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                    self.keyboardHeight = keyboardFrame.height - 30
+                    self.keyboardHeight = keyboardFrame.height - 10
                 }
             }
         
@@ -565,6 +565,7 @@ struct EditableNotes: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .edgesIgnoringSafeArea(self.noteChatDetails.aiChatOverNotesIsLive ? [.bottom] : .init())
         /*.onAppear {
             self.textHeight = calculateHeight()
         }*/
@@ -1086,8 +1087,9 @@ struct ShowNotes: View {
                                 /* MARK: Ensure space between bottom of screen and end of the scrollview. */
                                 VStack { }.frame(maxWidth: .infinity, maxHeight: 35)
                             }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .padding(.bottom, 20) /* MARK: Ensure there is spacing between the bottom of the screen and the end of the content. */
                         }
-                        .buttonStyle(NoLongPressButtonStyle())
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 case "save_changes":

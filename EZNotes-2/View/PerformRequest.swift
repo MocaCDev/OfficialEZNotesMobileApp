@@ -15,6 +15,49 @@ extension Data {
     }
 }
 
+class CompletionDelegate: NSObject, URLSessionDelegate, URLSessionDataDelegate {
+    var completion: ((Int, [String: Any]?) -> Void)?
+    
+    var accumulatedData = Data()
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        accumulatedData.append(data)
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if let error = error {
+            print("Error: \(error)")
+            DispatchQueue.main.async {
+                self.completion?(500, nil)
+            }
+        } else {
+            if let taskResponse = task.response as? HTTPURLResponse {
+                if taskResponse.statusCode != 200 {
+                    DispatchQueue.main.async {
+                        self.completion?(taskResponse.statusCode, nil)
+                    }
+                    
+                    return
+                }
+                
+                if let response = try? JSONSerialization.jsonObject(with: accumulatedData, options: []) as? [String: Any] {
+                    DispatchQueue.main.async {
+                        self.completion?(200, response)
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        self.completion?(500, nil)
+                    }
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.completion?(500, nil)
+                }
+            }
+        }
+    }
+}
+
 struct ImageRequest : Encodable
 {
     let attachment : String
@@ -60,13 +103,30 @@ struct MediaUpload {
     }
 }
 
-struct PFP {
+class PFP {
     var pfp: Image?
     var pfpBg: Image?
     var accountID: String?
     
+    init(pfp: Image? = nil, pfpBg: Image? = nil, accountID: String? = nil) {
+        self.pfp = pfp
+        self.pfpBg = pfpBg
+        self.accountID = accountID
+    }
+    
     private func perform(request: URLRequest, completion: @escaping (Int, [String: Any]?) -> Void) {
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        let sessionConfig: URLSessionConfiguration = URLSessionConfiguration.background(withIdentifier: UUID().uuidString)
+        sessionConfig.allowsCellularAccess = true
+        sessionConfig.timeoutIntervalForRequest = 10000
+        sessionConfig.timeoutIntervalForResource = 10000
+        
+        let sessionDelegate: CompletionDelegate = CompletionDelegate()
+        sessionDelegate.completion = completion
+        
+        let dataTask = URLSession(configuration: sessionConfig, delegate: sessionDelegate, delegateQueue: nil).dataTask(with: request)
+        dataTask.resume()
+        
+        /*URLSession.shared.dataTask(with: request) { data, response, error in
             guard
                 let response = response as? HTTPURLResponse,
                 200..<300~=response.statusCode,
@@ -78,7 +138,7 @@ struct PFP {
             }
             
             DispatchQueue.main.async { completion(response.statusCode, resp) }
-        }.resume()
+        }.resume()*/
     }
     
     @MainActor public func requestSavePFPBg(completion: @escaping (Int, [String: Any]?) -> Void) {
@@ -104,7 +164,18 @@ struct PFP {
         let dataBody = MediaUpload().createDataBody(media: [pfpImage], boundary: boundary)
         request.httpBody = dataBody
         
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        let sessionDelegate: CompletionDelegate = CompletionDelegate()
+        sessionDelegate.completion = completion
+        
+        let sessionConfig: URLSessionConfiguration = URLSessionConfiguration.background(withIdentifier: UUID().uuidString)
+        sessionConfig.allowsCellularAccess = true
+        sessionConfig.timeoutIntervalForRequest = 10000
+        sessionConfig.timeoutIntervalForResource = 10000
+        
+        let dataTask = URLSession(configuration: sessionConfig, delegate: sessionDelegate, delegateQueue: nil).dataTask(with: request)
+        dataTask.resume()
+        
+        /*URLSession.shared.dataTask(with: request) { data, response, error in
             guard
                 let response = response as? HTTPURLResponse,
                 200..<300~=response.statusCode,
@@ -116,7 +187,7 @@ struct PFP {
             }
             
             DispatchQueue.main.async { completion(response.statusCode, resp) }
-        }.resume()
+        }.resume()*/
     }
     
     @MainActor public func requestSavePFP(completion: @escaping (Int, [String: Any]?) -> Void) {
@@ -142,7 +213,18 @@ struct PFP {
         let dataBody = MediaUpload().createDataBody(media: [pfpImage], boundary: boundary)
         request.httpBody = dataBody
         
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        let sessionDelegate: CompletionDelegate = CompletionDelegate()
+        sessionDelegate.completion = completion
+        
+        let sessionConfig: URLSessionConfiguration = URLSessionConfiguration.background(withIdentifier: UUID().uuidString)
+        sessionConfig.allowsCellularAccess = true
+        sessionConfig.timeoutIntervalForRequest = 10000
+        sessionConfig.timeoutIntervalForResource = 10000
+        
+        let dataTask = URLSession(configuration: sessionConfig, delegate: sessionDelegate, delegateQueue: nil).dataTask(with: request)
+        dataTask.resume()
+        
+        /*URLSession.shared.dataTask(with: request) { data, response, error in
             guard
                 let response = response as? HTTPURLResponse,
                 200..<300~=response.statusCode,
@@ -154,7 +236,7 @@ struct PFP {
             }
             
             DispatchQueue.main.async { completion(response.statusCode, resp) }
-        }.resume()
+        }.resume()*/
     }
     
     public func requestGetPFP(completion: @escaping (Int, Data?, [String: Any]?) -> Void) {
@@ -210,8 +292,12 @@ struct PFP {
     }
 }
 
-struct UploadImages {
+class UploadImages {
     var imageUpload: Array<[String: UIImage]>
+    
+    init(imageUpload: Array<[String: UIImage]>) {
+        self.imageUpload = imageUpload
+    }
     
     public func requestNativeImageUpload(completion: @escaping (ImageUploadRequestResponse) -> Void) {
         //let localServer1 = "http://10.185.51.126:8088"
@@ -285,9 +371,13 @@ struct UploadImages {
     }
 }
 
-struct RequestAction<T> {
+class RequestAction<T> {
     
     var parameters: T
+    
+    init(parameters: T) {
+        self.parameters = parameters
+    }
     
     func perform(action: CSIARequest<T>, completion: @escaping (Int, [String: Any]?) -> Void) {
         
@@ -310,6 +400,32 @@ struct RequestAction<T> {
         
         switch(action.reqData.self)
         {
+            case is SaveTagsData.Type:
+                guard let params: SaveTagsData = (parameters as? SaveTagsData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.Tags, forHTTPHeaderField: "Tags")
+                break
+            case is GetTagsData.Type:
+                guard let params: GetTagsData = (parameters as? GetTagsData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                break
+            case is GetAccountDescriptionData.Type:
+                guard let params: GetAccountDescriptionData = (parameters as? GetAccountDescriptionData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                break
+            case is SaveAccountDescriptionData.Type:
+                guard let params: SaveAccountDescriptionData = (parameters as? SaveAccountDescriptionData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.NewDescription, forHTTPHeaderField: "New-Description")
+                break
+            case is GetUsersFriendsData.Type:
+                guard let params: GetUsersFriendsData = (parameters as? GetUsersFriendsData) else { return }
+                request.addValue(params.ForUser, forHTTPHeaderField: "For-User")
+                break
+            case is GetClientsUsernameData.Type:
+                guard let params: GetClientsUsernameData = (parameters as? GetClientsUsernameData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                break
             case is RemoveFriendRequest.Type:
                 guard let params: RemoveFriendRequest = (parameters as? RemoveFriendRequest) else { return }
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
@@ -531,64 +647,16 @@ struct RequestAction<T> {
             default: break
         }
         
+        let sessionConfig: URLSessionConfiguration = URLSessionConfiguration.background(withIdentifier: UUID().uuidString)
+        sessionConfig.allowsCellularAccess = true
+        //sessionConfig.timeoutIntervalForRequest = 10000
+        //sessionConfig.timeoutIntervalForResource = 10000
         
-        let _: Void = URLSession.shared.dataTask(with: request) { data, response, error in
-            guard
-                let response = response as? HTTPURLResponse,
-                let data = data,
-                let resp = try? JSONSerialization.jsonObject(with: data, options: []) as? [String : Any]
-            else {
-                DispatchQueue.main.async {
-                    completion(500, nil)
-                }
-                return
-            }
-            
-            DispatchQueue.main.async {
-                completion(response.statusCode, resp)
-            }
-            
-            /*if let data = data {
-                /* Attempt to get a good response. */
-                let response = try? JSONDecoder().decode(GoodResponse.self, from: data)
-                
-                /* Attempt to get a bad response*/
-                let bresponse = try? JSONDecoder().decode(BadResponse.self, from: data)
-                
-                /* Complete accordingly. */
-                if let bresponse = bresponse {
-                    DispatchQueue.main.async {
-                        completion(RequestResponse(Good: nil, Bad: bresponse))
-                    }
-                    return
-                }
-                
-                if let response = response {
-                    DispatchQueue.main.async {
-                        completion(RequestResponse(Good: response, Bad: nil))
-                    }
-                    return
-                }
-                
-            } else {
-                DispatchQueue.main.async {
-                    completion(RequestResponse(
-                        Good: nil,
-                        Bad: BadResponse(
-                            Status: "404",
-                            ErrorCode: 0x1,
-                            Message: "(Internal) Request Failed"
-                        )
-                    ))
-                }
-            }*/
-        }
-        .resume()
-    }
-}
-
-struct PerformRequest_Preview: PreviewProvider {
-    static var previews: some View {
-        ContentView()
+        let delegate = CompletionDelegate()
+        delegate.completion = completion
+        let session = URLSession(configuration: sessionConfig, delegate: delegate, delegateQueue: nil)
+        
+        let requestTask = session.dataTask(with: request)
+        requestTask.resume()
     }
 }

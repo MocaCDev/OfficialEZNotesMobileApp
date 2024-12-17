@@ -47,8 +47,8 @@ struct ViewPositionKey: PreferenceKey {
 
 struct TopNavHome: View {
     @EnvironmentObject private var messageModel: MessagesModel
+    @EnvironmentObject private var accountInfo: AccountDetails
     
-    @ObservedObject public var accountInfo: AccountDetails
     @ObservedObject public var categoryData: CategoryData
     
     @Binding public var showAccountPopup: Bool
@@ -1715,17 +1715,14 @@ struct TopNavChat: View {
     /* MARK: Friends/friend requests/pending states. */
     @State private var defaultUsers: [String: Image] = [:] /* MARK: Stores users that show in the "Add" section without the user searching. */
     @State private var usersSearched: [String: Image] = [:] /* MARK: Stores users that match the users search. */
-    @State private var defaultUsersPendingRequests: Array<String> = [] /* MARK: Users in `defaultUsers` with a pending friend request from client. */
-    @State private var pendingRequests: Array<String> = [] /* MARK: Array of all of the clients pending requests to other users. */
-    @State private var defaultUsersFriends: Array<String> = [] /* MARK: Users in `defaultUseres` that are friends with the client. */
-    @State private var friends: Array<String> = [] /* MARK: Array of all the clients friends. */
-    @State private var clientsFriendRequests: [String: Image] = [:] /* MARK: Stores friend requests that the client has explicitly sent. */
-    @State private var clientsPendingRequests: [String: Image] = [:] /* MARK: Stores requests sent to the client to be friends. */
     
     @State private var launchUserPreview: Bool = false
     @State private var launchedForUser: String = ""
+    @State private var usersFriendCount: Int = 0
     @State private var usersPfpBg: Image = Image("Pfp-Default-Bg")
     @State private var usersPfp: Image = Image(systemName: "person.crop.circle.fill")
+    @State private var usersDescrition: String = "No Description"
+    @State private var usersTags: Array<String> = []
     @State private var noUsersToShow: Bool = false
     @State private var noSearchResults: Bool = false
     @State private var performingSearch: Bool = false
@@ -1825,7 +1822,7 @@ struct TopNavChat: View {
                     self.defaultUsers = usersData
                     
                     /* MARK: In the background, send requests to the server to check the friend status of the users being shown. */
-                    for user in self.defaultUsers.keys {
+                    /*for user in self.defaultUsers.keys {
                         /* MARK: Check to see if the client is friends with the user, or the user has sent a request to be friends with the client. */
                         RequestAction<IsFriendsOrHasSentFriendRequestData>(parameters: IsFriendsOrHasSentFriendRequestData(
                             AccountId: self.accountInfo.accountID,
@@ -1848,7 +1845,7 @@ struct TopNavChat: View {
                                 }
                             }
                         }
-                    }
+                    }*/
                 }
                 else { self.noUsersToShow = true }
             }
@@ -1864,11 +1861,13 @@ struct TopNavChat: View {
         
         self.usersSearched.removeAll()
         self.defaultUsers.removeAll()
-        self.pendingRequests.removeAll()
-        self.friends.removeAll()
         
         self.getUsers()
     }
+    
+    @FocusState private var searchFieldFocus: Bool
+    
+    @State private var constantlyUpdateIncomingFriendRequests: Bool = false
     
     var body: some View {
         HStack {
@@ -1956,6 +1955,7 @@ struct TopNavChat: View {
                             .cornerRadius(15)
                             .padding(.horizontal, 10)
                             .focused($userSearchBarFocused)
+                            .autocorrectionDisabled(true)
                             .overlay(
                                 HStack {
                                     Image(systemName: "magnifyingglass")
@@ -2001,8 +2001,6 @@ struct TopNavChat: View {
                                     
                                     self.usersSearched.removeAll()
                                     self.defaultUsers.removeAll()
-                                    self.pendingRequests.removeAll()
-                                    self.friends.removeAll()
                                     
                                     self.getUsers()
                                 } else {
@@ -2042,10 +2040,10 @@ struct TopNavChat: View {
                                             
                                             self.usersSearched = searchResults
                                             
-                                            self.defaultUsersPendingRequests.removeAll()
-                                            self.defaultUsersFriends.removeAll()
+                                            //self.defaultUsersPendingRequests.removeAll()
+                                            //self.defaultUsersFriends.removeAll()
                                             
-                                            for user in self.usersSearched.keys {
+                                            /*for user in self.usersSearched.keys {
                                                 /* MARK: Continue to check the search. If at any point during this iteration it becomes empty, hault the loop, repopulate the `defaultUsers` dictionary and exit. */
                                                 if self.userSearched.isEmpty {
                                                     self.performingSearch = false
@@ -2105,7 +2103,7 @@ struct TopNavChat: View {
                                                         }
                                                     }
                                                 }
-                                            }
+                                            }*/
                                             
                                             if self.noUsersToShow {
                                                 self.noSearchResults = true
@@ -2251,16 +2249,43 @@ struct TopNavChat: View {
                                     
                                     Button(action: { self.selectedView = "pending" }) {
                                         HStack {
-                                            Text("Pending")
-                                                .frame(alignment: .center)
+                                            ZStack {
+                                                HStack {
+                                                    Spacer()
+                                                    
+                                                    VStack {
+                                                        Text("\(self.accountInfo.pendingRequests.count)")
+                                                            .frame(maxWidth: .infinity, alignment: .center)
+                                                            .font(.system(size: 10, weight: .medium))
+                                                            .foregroundStyle(self.accountInfo.pendingRequests.count >= 1 ? Color.EZNotesGreen : .secondary)
+                                                        
+                                                        Spacer()
+                                                    }
+                                                    .frame(width: 20, height: 20)
+                                                    .clipShape(.circle)
+                                                }
+                                                .frame(maxWidth: .infinity)
+                                                .zIndex(1)
+                                                
+                                                Text("Pending")
+                                                    .frame(alignment: .center)
+                                                    .padding([.top, .bottom], 4)
+                                                    .padding(.leading, 8.5)
+                                                    .padding(.trailing, 15.5)
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 15)
+                                                            .fill(self.selectedView == "pending" ? Color.EZNotesBlue : .clear)
+                                                    )
+                                                    .foregroundStyle(self.selectedView == "pending" ? .black : .secondary)
+                                                    .font(Font.custom("Poppins-SemiBold", size: 12))
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: 25)
+                                            
+                                            /*Text("+ \(self.accountInfo.pendingRequests.count)")
+                                                .frame(alignment: .leading)
                                                 .padding([.top, .bottom], 4)
-                                                .padding([.leading, .trailing], 8.5)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 15)
-                                                        .fill(self.selectedView == "pending" ? Color.EZNotesBlue : .clear)
-                                                )
-                                                .foregroundStyle(self.selectedView == "pending" ? .black : .secondary)
-                                                .font(Font.custom("Poppins-SemiBold", size: 12))
+                                                .foregroundStyle(self.accountInfo.pendingRequests.count > 1 ? Color.EZNotesGreen : .secondary)
+                                                .font(Font.custom("Poppins-SemiBold", size: 12))*/
                                         }
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                     }
@@ -2296,20 +2321,23 @@ struct TopNavChat: View {
                                                     username: self.launchedForUser,
                                                     usersPfpBg: self.usersPfpBg,
                                                     usersPfp: self.usersPfp,
-                                                    usersDescription: "TODO: Add description details for users being looked up.",
-                                                    usersTags: ["Support Coming Soon", "Stay Tuned"],
+                                                    usersDescription: self.usersDescrition,
+                                                    usersTags: self.usersTags.isEmpty ? ["No Tags"] : self.usersTags,
+                                                    usersFriends: self.usersFriendCount,
                                                     accountPopupSection: $launchedForUser, /* TODO: Figure something out with this, this is bad. */
-                                                    showAccount: $launchUserPreview /* TODO: Figure something out with this, this is bad. */
+                                                    showAccount: $launchUserPreview, /* TODO: Figure something out with this, this is bad. */
+                                                    addMoreTags: $launchUserPreview
                                                 )
                                                 .padding(.top, 8)
+                                                .padding(.bottom, 20)
                                                 
                                                 /* TODO: Remove this after releasing build tonight. */
-                                                Text("The rest of this view, alongside the entire **\"Chat\"** view, is in development. Stay tuned for the next build 🤝")
+                                                /*Text("The rest of this view, alongside the entire **\"Chat\"** view, is in development. Stay tuned for the next build 🤝")
                                                     .frame(maxWidth: prop.size.width - 80, alignment: .center)
                                                     .font(Font.custom("Poppins-Regular", size: 13))
                                                     .foregroundStyle(.white)
                                                     .multilineTextAlignment(.center)
-                                                    .padding([.top, .bottom], 40) /* MARK: Temporary. Will get removed when this entire feature is actually implemented for use. */
+                                                    .padding([.top, .bottom], 40) /* MARK: Temporary. Will get removed when this entire feature is actually implemented for use. */*/
                                             }
                                             .frame(maxWidth: prop.size.width - 40)
                                             .background(
@@ -2321,31 +2349,142 @@ struct TopNavChat: View {
                                             .cornerRadius(15)
                                             //.padding(4.5) /* MARK: Ensure the shadow can be seen. */
                                             
-                                            Button(action: { self.rickRoll = true }) {
-                                                HStack {
-                                                    ZStack { }.frame(maxWidth: .infinity, alignment: .leading)
-                                                    
-                                                    HStack {
-                                                        Image(systemName: "plus")
-                                                            .resizable()
-                                                            .frame(width: 15, height: 15)
-                                                            .foregroundStyle(.black)
+                                            if !self.accountInfo.friends.keys.contains(self.launchedForUser) && !self.accountInfo.friendRequests.keys.contains(self.launchedForUser) {
+                                                if !self.sendingFriendRequestsTo.contains(self.launchedForUser) {
+                                                    Button(action: {
+                                                        self.sendingFriendRequestsTo.append(self.launchedForUser)
+                                                        self.addingFriend = true
                                                         
-                                                        Text("Add User")
-                                                            .frame(alignment: .center)
-                                                            .font(.system(size: 14, weight: .medium))
-                                                            .foregroundStyle(.black)
+                                                        RequestAction<SendFriendRequestData>(parameters: SendFriendRequestData(
+                                                            AccountId: self.accountInfo.accountID,
+                                                            Username: self.accountInfo.username,
+                                                            RequestTo: self.launchedForUser
+                                                        )).perform(action: send_friend_request_req) { statusCode, resp in
+                                                            self.addingFriend = false
+                                                            self.sendingFriendRequestsTo.removeAll(where: { $0 == self.launchedForUser })
+                                                            
+                                                            guard resp != nil && statusCode == 200 else {
+                                                                print("Error")
+                                                                return
+                                                            }
+                                                            
+                                                            self.accountInfo.friendRequests[self.launchedForUser] = self.defaultUsers[self.launchedForUser]
+                                                        }
+                                                    }) {
+                                                        HStack {
+                                                            ZStack { }.frame(maxWidth: .infinity, alignment: .leading)
+                                                            
+                                                            HStack {
+                                                                Image(systemName: "plus")
+                                                                    .resizable()
+                                                                    .frame(width: 15, height: 15)
+                                                                    .foregroundStyle(.black)
+                                                                
+                                                                Text("Add User")
+                                                                    .frame(alignment: .center)
+                                                                    .font(.system(size: 14, weight: .medium))
+                                                                    .foregroundStyle(.black)
+                                                            }
+                                                            .frame(maxWidth: .infinity, alignment: .center)
+                                                            
+                                                            ZStack { }.frame(maxWidth: .infinity, alignment: .trailing)
+                                                        }
+                                                        .frame(maxWidth: prop.size.width - 40)
+                                                        .padding(8)
+                                                        .background(Color.EZNotesBlue)
+                                                        .cornerRadius(15)
                                                     }
-                                                    .frame(maxWidth: .infinity, alignment: .center)
-                                                    
-                                                    ZStack { }.frame(maxWidth: .infinity, alignment: .trailing)
+                                                    .buttonStyle(NoLongPressButtonStyle())
+                                                } else {
+                                                    VStack {
+                                                        LoadingView(message: "Adding...")
+                                                    }
+                                                    .frame(maxWidth: .infinity)
                                                 }
-                                                .frame(maxWidth: prop.size.width - 40)
-                                                .padding(8)
-                                                .background(Color.EZNotesBlue)
-                                                .cornerRadius(15)
+                                            } else {
+                                                if !self.usersBeingRemoved.contains(self.launchedForUser) {
+                                                    if self.accountInfo.friends.keys.contains(self.launchedForUser) {
+                                                        Text("Friends")
+                                                            .frame(maxWidth: .infinity, alignment: .center)
+                                                            .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 18 : 16))
+                                                            .foregroundStyle(.white)
+                                                        
+                                                        Button(action: {
+                                                            self.usersBeingRemoved.append(self.launchedForUser)
+                                                            
+                                                            RequestAction<RemoveFriendData>(parameters: RemoveFriendData(
+                                                                AccountId: self.accountInfo.accountID,
+                                                                ToRemove: self.launchedForUser
+                                                            )).perform(action: remove_friend_req) { statusCode, resp in
+                                                                self.usersBeingRemoved.removeAll(where: { $0 == self.launchedForUser })
+                                                                
+                                                                guard resp != nil && statusCode == 200 else {
+                                                                    return
+                                                                }
+                                                                
+                                                                self.accountInfo.friends.removeValue(forKey: self.launchedForUser)
+                                                            }
+                                                        }) {
+                                                            Text("Remove Friend")
+                                                                .frame(alignment: .center)
+                                                                .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                                                .padding(8)
+                                                                .font(.system(size: 14, weight: .medium))
+                                                                .foregroundStyle(.black)
+                                                                .background(Color.white)
+                                                                .cornerRadius(15)
+                                                        }
+                                                    } else {
+                                                        HStack {
+                                                            Image(systemName: "paperplane")
+                                                                .resizable()
+                                                                .frame(width: 10, height: 10)
+                                                                .foregroundStyle(.gray)
+                                                            
+                                                            Text("Pending")
+                                                                .frame(alignment: .center)
+                                                                .font(.system(size: 14, weight: .medium))
+                                                                .foregroundStyle(.gray)
+                                                        }
+                                                        .frame(maxWidth: .infinity)
+                                                        .cornerRadius(15)
+                                                        
+                                                        Button(action: {
+                                                            self.removingFriendRequest = true
+                                                            
+                                                            self.usersBeingRemoved.append(self.launchedForUser)
+                                                            
+                                                            RequestAction<RemoveFriendRequest>(parameters: RemoveFriendRequest(
+                                                                AccountId: self.accountInfo.accountID,
+                                                                CancelFor: self.launchedForUser
+                                                            )).perform(action: cancel_friend_request_req) { statusCode, resp in
+                                                                self.removingFriendRequest = false
+                                                                
+                                                                guard resp != nil && statusCode == 200 else {
+                                                                    return /* TODO: Handle error. */
+                                                                }
+                                                                
+                                                                /* MARK: Ensure that the dictionary is updated with the current manipulation. */
+                                                                self.accountInfo.friendRequests.removeValue(forKey: self.launchedForUser)
+                                                                
+                                                                self.usersBeingRemoved.removeAll(where: { $0 == self.launchedForUser })
+                                                            }
+                                                        }) {
+                                                            Text("Cancel Friend Request")
+                                                                .frame(alignment: .center)
+                                                                .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                                                .padding(8)
+                                                                .font(.system(size: 14, weight: .medium))
+                                                                .foregroundStyle(.black)
+                                                                .background(Color.white)
+                                                                .cornerRadius(15)
+                                                        }
+                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                    }
+                                                } else {
+                                                    LoadingView(message: "Removing...")
+                                                }
                                             }
-                                            .buttonStyle(NoLongPressButtonStyle())
                                             
                                             Button(action: { self.launchUserPreview = false }) {
                                                 Text("Go Back")
@@ -2365,6 +2504,13 @@ struct TopNavChat: View {
                                         .background(.black.opacity(0.9))
                                         .onTapGesture {
                                             self.launchUserPreview = false
+                                        }
+                                        .onDisappear {
+                                            /* MARK: Reset all of the user information after the preview closes. */
+                                            self.usersFriendCount = 0
+                                            self.usersPfp = Image(systemName: "person.crop.circle.fill")
+                                            self.usersPfpBg = Image("Pfp-Default-Bg")
+                                            self.launchedForUser.removeAll()
                                         }
                                         .zIndex(1)
                                     }
@@ -2396,12 +2542,52 @@ struct TopNavChat: View {
                                                                                 
                                                                                 self.usersPfpBg = Image(uiImage: UIImage(data: pfp_bg!)!)
                                                                             }
+                                                                        
+                                                                        RequestAction<GetClientsFriendsData>(parameters: GetClientsFriendsData(
+                                                                            AccountId: accountId
+                                                                        )).perform(action: get_clients_friends_req) { statusCode, resp in
+                                                                            guard resp != nil && statusCode == 200 else {
+                                                                                return
+                                                                            }
+                                                                            
+                                                                            if let resp = resp {
+                                                                                self.usersFriendCount = resp.keys.count
+                                                                            }
+                                                                        }
+                                                                        
+                                                                        RequestAction<GetAccountDescriptionData>(parameters: GetAccountDescriptionData(
+                                                                            AccountId: accountId
+                                                                        )).perform(action: get_account_description_req) { statusCode, resp in
+                                                                            guard resp != nil && statusCode == 200 else {
+                                                                                self.usersDescrition = "No Description"
+                                                                                return
+                                                                            }
+                                                                            
+                                                                            if let resp = resp {
+                                                                                guard
+                                                                                    let desc = resp["AccountDescription"] as? String,
+                                                                                    desc != ""
+                                                                                else {
+                                                                                    self.usersDescrition = "No Description"
+                                                                                    return
+                                                                                }
+                                                                                
+                                                                                self.usersDescrition = desc
+                                                                            } else {
+                                                                                self.usersDescrition = "No Description"
+                                                                            }
+                                                                        }
                                                                     }
                                                                 }
                                                                 
                                                                 self.launchUserPreview = true
                                                                 self.usersPfp = self.defaultUsers[value.key]!
                                                                 self.launchedForUser = value.key
+                                                                
+                                                                if self.userSearchBarFocused {
+                                                                    print("YES")
+                                                                }
+                                                                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                                                             }) {
                                                                 HStack {
                                                                     ZStack {
@@ -2424,7 +2610,7 @@ struct TopNavChat: View {
                                                                         .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
                                                                         .foregroundStyle(.white)
                                                                     
-                                                                    if !self.defaultUsersPendingRequests.contains(value.key) && !self.defaultUsersFriends.contains(value.key) {
+                                                                    if !self.accountInfo.friendRequests.keys.contains(value.key) && !self.accountInfo.friends.keys.contains(value.key) {
                                                                         Button(action: {
                                                                             self.sendingFriendRequestsTo.append(value.key)
                                                                             self.addingFriend = true
@@ -2442,23 +2628,24 @@ struct TopNavChat: View {
                                                                                     return
                                                                                 }
                                                                                 
-                                                                                self.defaultUsersPendingRequests.append(value.key)
+                                                                                self.accountInfo.friendRequests[value.key] = self.defaultUsers[value.key]
                                                                             }
                                                                         }) {
                                                                             if !self.sendingFriendRequestsTo.contains(value.key) {
                                                                                 HStack {
                                                                                     Image(systemName: "plus")
                                                                                         .resizable()
-                                                                                        .frame(width: 10, height: 10)
+                                                                                        .frame(width: 12, height: 12)
                                                                                         .foregroundStyle(.black)
                                                                                     
                                                                                     Text("Add")
                                                                                         .frame(alignment: .center)
-                                                                                        .font(.system(size: 14, weight: .medium))
+                                                                                        .font(.system(size: 16, weight: .medium))
                                                                                         .foregroundStyle(.black)
                                                                                 }
-                                                                                .padding([.top, .bottom], 2)
-                                                                                .padding([.leading, .trailing], 8)
+                                                                                .padding(4)
+                                                                                //.padding([.top, .bottom], 2)
+                                                                                .padding([.leading, .trailing], 12)
                                                                                 .background(Color.EZNotesBlue)
                                                                                 .cornerRadius(15)
                                                                                 .padding(.trailing, 10)
@@ -2467,7 +2654,7 @@ struct TopNavChat: View {
                                                                             }
                                                                         }
                                                                     } else {
-                                                                        if self.defaultUsersPendingRequests.contains(value.key) {
+                                                                        if self.accountInfo.friendRequests.keys.contains(value.key) {
                                                                             HStack {
                                                                                 Image(systemName: "paperplane")
                                                                                     .resizable()
@@ -2479,7 +2666,27 @@ struct TopNavChat: View {
                                                                                     .font(.system(size: 14, weight: .medium))
                                                                                     .foregroundStyle(.gray)
                                                                                 
-                                                                                Button(action: { print("Unsend request") }) {
+                                                                                Button(action: {
+                                                                                    self.removingFriendRequest = true
+                                                                                    
+                                                                                    self.usersBeingRemoved.append(value.key)
+                                                                                    
+                                                                                    RequestAction<RemoveFriendRequest>(parameters: RemoveFriendRequest(
+                                                                                        AccountId: self.accountInfo.accountID,
+                                                                                        CancelFor: value.key
+                                                                                    )).perform(action: cancel_friend_request_req) { statusCode, resp in
+                                                                                        self.removingFriendRequest = false
+                                                                                        
+                                                                                        guard resp != nil && statusCode == 200 else {
+                                                                                            return /* TODO: Handle error. */
+                                                                                        }
+                                                                                        
+                                                                                        /* MARK: Ensure that the dictionary is updated with the current manipulation. */
+                                                                                        self.accountInfo.friendRequests.removeValue(forKey: value.key)
+                                                                                        
+                                                                                        self.usersBeingRemoved.removeAll(where: { $0 == value.key })
+                                                                                    }
+                                                                                }) {
                                                                                     Image(systemName: "multiply")
                                                                                         .resizable()
                                                                                         .frame(width: 10, height: 10)
@@ -2507,16 +2714,17 @@ struct TopNavChat: View {
                                                                                 HStack {
                                                                                     Image(systemName: "person.badge.minus")
                                                                                         .resizable()
-                                                                                        .frame(width: 10, height: 10)
+                                                                                        .frame(width: 13.5, height: 13.5)
                                                                                         .foregroundStyle(.black)
                                                                                     
                                                                                     Text("Remove")
                                                                                         .frame(alignment: .center)
-                                                                                        .font(.system(size: 14, weight: .medium))
+                                                                                        .font(.system(size: 16, weight: .medium))
                                                                                         .foregroundStyle(.black)
                                                                                 }
-                                                                                .padding([.top, .bottom], 2)
-                                                                                .padding([.leading, .trailing], 8)
+                                                                                .padding(4)
+                                                                                //.padding([.top, .bottom], 2)
+                                                                                .padding([.leading, .trailing], 12)
                                                                                 .background(Color.EZNotesRed)
                                                                                 .cornerRadius(15)
                                                                                 .padding(.trailing, 10)
@@ -2560,12 +2768,64 @@ struct TopNavChat: View {
                                                                                 
                                                                                 self.usersPfpBg = Image(uiImage: UIImage(data: pfp_bg!)!)
                                                                             }
+                                                                        
+                                                                        RequestAction<GetClientsFriendsData>(parameters: GetClientsFriendsData(
+                                                                            AccountId: accountId
+                                                                        )).perform(action: get_clients_friends_req) { statusCode, resp in
+                                                                            guard resp != nil && statusCode == 200 else {
+                                                                                return
+                                                                            }
+                                                                            
+                                                                            if let resp = resp {
+                                                                                self.usersFriendCount = resp.keys.count
+                                                                            }
+                                                                        }
+                                                                        
+                                                                        RequestAction<GetAccountDescriptionData>(parameters: GetAccountDescriptionData(
+                                                                            AccountId: accountId
+                                                                        )).perform(action: get_account_description_req) { statusCode, resp in
+                                                                            guard resp != nil && statusCode == 200 else {
+                                                                                self.usersDescrition = "No Description"
+                                                                                return
+                                                                            }
+                                                                            
+                                                                            if let resp = resp {
+                                                                                guard
+                                                                                    let desc = resp["AccountDescription"] as? String,
+                                                                                    desc != ""
+                                                                                else {
+                                                                                    self.usersDescrition = "No Description"
+                                                                                    return
+                                                                                }
+                                                                                
+                                                                                self.usersDescrition = desc
+                                                                            } else {
+                                                                                self.usersDescrition = "No Description"
+                                                                            }
+                                                                        }
+                                                                        
+                                                                        RequestAction<GetTagsData>(parameters: GetTagsData(
+                                                                            AccountId: accountId
+                                                                        )).perform(action: get_tags_req) { statusCode, resp in
+                                                                            guard resp != nil && statusCode == 200 else {
+                                                                                return
+                                                                            }
+                                                                            
+                                                                            if let resp = resp as? [String: Array<String>] {
+                                                                                guard resp.keys.contains("Tags") else { return }
+                                                                                
+                                                                                self.usersTags = resp["Tags"]!
+                                                                            }
+                                                                        }
                                                                     }
                                                                 }
                                                                 
                                                                 self.launchUserPreview = true
                                                                 self.usersPfp = self.usersSearched[value.key]!
                                                                 self.launchedForUser = value.key
+                                                                
+                                                                /* MARK: Make keyboard go away, if it's active. */
+                                                                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
                                                             }) {
                                                                 HStack {
                                                                     ZStack {
@@ -2589,7 +2849,7 @@ struct TopNavChat: View {
                                                                         .foregroundStyle(.white)
                                                                     
                                                                     if !self.accountInfo.friends.keys.contains(value.key) {
-                                                                        if !self.defaultUsersPendingRequests.contains(value.key) && !self.defaultUsersFriends.contains(value.key) {
+                                                                        if !self.accountInfo.friendRequests.keys.contains(value.key) && !self.accountInfo.friends.keys.contains(value.key) {
                                                                             Button(action: {
                                                                                 self.sendingFriendRequestsTo.append(value.key)
                                                                                 self.addingFriend = true
@@ -2607,7 +2867,7 @@ struct TopNavChat: View {
                                                                                         return
                                                                                     }
                                                                                     
-                                                                                    self.defaultUsersPendingRequests.append(value.key)
+                                                                                    self.accountInfo.friendRequests[value.key] = self.usersSearched[value.key]//.append(value.key)
                                                                                 }
                                                                             }) {
                                                                                 if !self.sendingFriendRequestsTo.contains(value.key) {
@@ -2619,11 +2879,12 @@ struct TopNavChat: View {
                                                                                         
                                                                                         Text("Add")
                                                                                             .frame(alignment: .center)
-                                                                                            .font(.system(size: 14, weight: .medium))
+                                                                                            .font(.system(size: 16, weight: .medium))
                                                                                             .foregroundStyle(.black)
                                                                                     }
-                                                                                    .padding([.top, .bottom], 2)
-                                                                                    .padding([.leading, .trailing], 8)
+                                                                                    .padding(4)
+                                                                                    //.padding([.top, .bottom], 2)
+                                                                                    .padding([.leading, .trailing], 12)
                                                                                     .background(Color.EZNotesBlue)
                                                                                     .cornerRadius(15)
                                                                                     .padding(.trailing, 10)
@@ -2632,7 +2893,7 @@ struct TopNavChat: View {
                                                                                 }
                                                                             }
                                                                         } else {
-                                                                            if self.defaultUsersPendingRequests.contains(value.key) {
+                                                                            if self.accountInfo.friendRequests.keys.contains(value.key) {
                                                                                 HStack {
                                                                                     Image(systemName: "paperplane")
                                                                                         .resizable()
@@ -2644,7 +2905,27 @@ struct TopNavChat: View {
                                                                                         .font(.system(size: 14, weight: .medium))
                                                                                         .foregroundStyle(.gray)
                                                                                     
-                                                                                    Button(action: { print("Unsend request") }) {
+                                                                                    Button(action: {
+                                                                                        self.removingFriendRequest = true
+                                                                                        
+                                                                                        self.usersBeingRemoved.append(value.key)
+                                                                                        
+                                                                                        RequestAction<RemoveFriendRequest>(parameters: RemoveFriendRequest(
+                                                                                            AccountId: self.accountInfo.accountID,
+                                                                                            CancelFor: value.key
+                                                                                        )).perform(action: cancel_friend_request_req) { statusCode, resp in
+                                                                                            self.removingFriendRequest = false
+                                                                                            
+                                                                                            guard resp != nil && statusCode == 200 else {
+                                                                                                return /* TODO: Handle error. */
+                                                                                            }
+                                                                                            
+                                                                                            /* MARK: Ensure that the dictionary is updated with the current manipulation. */
+                                                                                            self.accountInfo.friendRequests.removeValue(forKey: value.key)
+                                                                                            
+                                                                                            self.usersBeingRemoved.removeAll(where: { $0 == value.key })
+                                                                                        }
+                                                                                    }) {
                                                                                         Image(systemName: "multiply")
                                                                                             .resizable()
                                                                                             .frame(width: 10, height: 10)
@@ -2660,16 +2941,17 @@ struct TopNavChat: View {
                                                                                 HStack {
                                                                                     Image(systemName: "person.badge.minus")
                                                                                         .resizable()
-                                                                                        .frame(width: 10, height: 10)
+                                                                                        .frame(width: 13.5, height: 13.5)
                                                                                         .foregroundStyle(.black)
                                                                                     
                                                                                     Text("Remove")
                                                                                         .frame(alignment: .center)
-                                                                                        .font(.system(size: 14, weight: .medium))
+                                                                                        .font(.system(size: 16, weight: .medium))
                                                                                         .foregroundStyle(.black)
                                                                                 }
-                                                                                .padding([.top, .bottom], 2)
-                                                                                .padding([.leading, .trailing], 8)
+                                                                                .padding(4)
+                                                                                //.padding([.top, .bottom], 2)
+                                                                                .padding([.leading, .trailing], 12)
                                                                                 .background(Color.EZNotesRed)
                                                                                 .cornerRadius(15)
                                                                                 .padding(.trailing, 10)
@@ -2691,16 +2973,17 @@ struct TopNavChat: View {
                                                                             HStack {
                                                                                 Image(systemName: "person.badge.minus")
                                                                                     .resizable()
-                                                                                    .frame(width: 10, height: 10)
+                                                                                    .frame(width: 13.5, height: 13.5)
                                                                                     .foregroundStyle(.black)
                                                                                 
                                                                                 Text("Remove")
                                                                                     .frame(alignment: .center)
-                                                                                    .font(.system(size: 14, weight: .medium))
+                                                                                    .font(.system(size: 16, weight: .medium))
                                                                                     .foregroundStyle(.black)
                                                                             }
-                                                                            .padding([.top, .bottom], 2)
-                                                                            .padding([.leading, .trailing], 8)
+                                                                            .padding(4)
+                                                                            //.padding([.top, .bottom], 2)
+                                                                            .padding([.leading, .trailing], 12)
                                                                             .background(Color.EZNotesRed)
                                                                             .cornerRadius(15)
                                                                             .padding(.trailing, 10)
@@ -2761,8 +3044,8 @@ struct TopNavChat: View {
                                 self.noSearchResults = false
                                 
                                 self.defaultUsers.removeAll()
-                                self.defaultUsersPendingRequests.removeAll()
-                                self.defaultUsersFriends.removeAll()
+                                //self.defaultUsersPendingRequests.removeAll()
+                                //self.defaultUsersFriends.removeAll()
                                 
                                 self.getUsers()
                             }
@@ -2813,16 +3096,17 @@ struct TopNavChat: View {
                                                     HStack {
                                                         Image(systemName: "person.badge.minus")
                                                             .resizable()
-                                                            .frame(width: 10, height: 10)
+                                                            .frame(width: 13.5, height: 13.5)
                                                             .foregroundStyle(.black)
                                                         
                                                         Text("Remove")
                                                             .frame(alignment: .center)
-                                                            .font(.system(size: 14, weight: .medium))
+                                                            .font(.system(size: 16, weight: .medium))
                                                             .foregroundStyle(.black)
                                                     }
-                                                    .padding([.top, .bottom], 2)
-                                                    .padding([.leading, .trailing], 8)
+                                                    .padding(4)
+                                                    //.padding([.top, .bottom], 2)
+                                                    .padding([.leading, .trailing], 12)
                                                     .background(Color.EZNotesRed)
                                                     .cornerRadius(15)
                                                     .padding(.trailing, 10)
@@ -2842,14 +3126,14 @@ struct TopNavChat: View {
                                         LoadingView(message: "Loading requests")
                                     } else {
                                         ScrollView(.vertical, showsIndicators: false) {
-                                            ForEach(Array(self.clientsFriendRequests.enumerated()), id: \.offset) { index, value in
+                                            ForEach(Array(self.accountInfo.friendRequests.enumerated()), id: \.offset) { index, value in
                                                 HStack {
                                                     ZStack {
                                                         Circle()
                                                             .fill(Color.EZNotesBlue)
                                                         
                                                         /*Image(systemName: "person.crop.circle.fill")*/
-                                                        self.clientsFriendRequests[value.key]!
+                                                        self.accountInfo.friendRequests[value.key]!
                                                             .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
                                                             .scaledToFill()
                                                             .frame(maxWidth: 35, maxHeight: 35)
@@ -2892,7 +3176,7 @@ struct TopNavChat: View {
                                                                     }
                                                                     
                                                                     /* MARK: Ensure that the dictionary is updated with the current manipulation. */
-                                                                    self.clientsFriendRequests.removeValue(forKey: value.key)
+                                                                    self.accountInfo.friendRequests.removeValue(forKey: value.key)
                                                                     
                                                                     self.usersBeingRemoved.removeAll(where: { $0 == value.key })
                                                                 }
@@ -2926,13 +3210,11 @@ struct TopNavChat: View {
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .onAppear {
-                                self.clientsFriendRequests.removeAll()
+                                self.accountInfo.friendRequests.removeAll()
                                 
                                 if self.noUsersToShow { self.noUsersToShow = false }
-                                if self.noSearchResults { self.noSearchResults = false }
                                 
                                 self.loadingView = true
-                                
                                 RequestAction<GetClientsFriendRequestsData>(parameters: GetClientsFriendRequestsData(
                                     AccountId: self.accountInfo.accountID
                                 )).perform(action: get_clients_friend_requests_req) { statusCode, resp in
@@ -2950,7 +3232,7 @@ struct TopNavChat: View {
                                             return
                                         }
                                         
-                                        self.clientsFriendRequests = CFR
+                                        self.accountInfo.friendRequests = CFR
                                     } else {
                                         self.noUsersToShow = true
                                     }
@@ -3005,7 +3287,88 @@ struct TopNavChat: View {
                             }
                         case "pending":
                             VStack {
-                                if !self.loadingView {
+                                if !self.accountInfo.pendingRequests.isEmpty {
+                                    ScrollView(.vertical, showsIndicators: false) {
+                                        ForEach(Array(self.accountInfo.pendingRequests.enumerated()), id: \.offset) { index, value in
+                                            HStack {
+                                                ZStack {
+                                                    Circle()
+                                                        .fill(Color.EZNotesBlue)
+                                                    
+                                                    /*Image(systemName: "person.crop.circle.fill")*/
+                                                    self.accountInfo.pendingRequests[value.key]!
+                                                        .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
+                                                        .scaledToFill()
+                                                        .frame(maxWidth: 35, maxHeight: 35)
+                                                        .clipShape(.circle)
+                                                        .foregroundStyle(.white)
+                                                }
+                                                .frame(width: 38, height: 38)
+                                                .padding([.leading], 10)
+                                                
+                                                Text(value.key)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                                    .foregroundStyle(.white)
+                                                
+                                                Button(action: {
+                                                    self.acceptingFriendRequest = true
+                                                    self.usersBeingAccepted.append(value.key)
+                                                    
+                                                    RequestAction<AcceptFriendRequestData>(parameters: AcceptFriendRequestData(
+                                                        AccountId: self.accountInfo.accountID,
+                                                        AcceptFrom: value.key
+                                                    )).perform(action: accept_friend_request_req) { statusCode, resp in
+                                                        self.usersBeingAccepted.removeAll(where: { $0 == value.key })
+                                                        self.acceptingFriendRequest = false
+                                                        
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            //self.accountInfo.friends[value.key] = Image(systemName: "person.crop.circle.fill")
+                                                            return /* TODO: Handle errors. */
+                                                        }
+                                                        
+                                                        self.accountInfo.pendingRequests.removeValue(forKey: value.key)
+                                                        
+                                                        if let resp = resp {
+                                                            guard let f = self.populateUsers(resp: resp) else {
+                                                                self.accountInfo.friends[value.key] = Image(systemName: "person.crop.circle.fill")
+                                                                return
+                                                            }
+                                                            
+                                                            self.accountInfo.friends[value.key] = f[value.key]
+                                                        }
+                                                    }
+                                                }) {
+                                                    if self.acceptingFriendRequest && self.usersBeingAccepted.contains(value.key) {
+                                                        LoadingView(message: "")
+                                                    } else {
+                                                        HStack {
+                                                            Text("Accept")
+                                                                .frame(alignment: .center)
+                                                                .font(.system(size: 16, weight: .medium))
+                                                                .foregroundStyle(.black)
+                                                        }
+                                                        .padding(4) /* MARK: Add a bit more padding. I don't know why, but it looks off compared to the "+ Add". */
+                                                        //.padding([.top, .bottom], 2)
+                                                        .padding([.leading, .trailing], 12)
+                                                        .background(Color.EZNotesBlue)
+                                                        .cornerRadius(15)
+                                                        .padding(.trailing, 10)
+                                                    }
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                            }
+                                            .padding(8)
+                                        }
+                                    }
+                                } else {
+                                    Text("Nothing to see here")
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .font(Font.custom("Poppins-Regular", size: 16))
+                                        .minimumScaleFactor(0.5)
+                                }
+                                /*if !self.loadingView {
                                     if !self.noUsersToShow {
                                         ScrollView(.vertical, showsIndicators: false) {
                                             ForEach(Array(self.clientsPendingRequests.enumerated()), id: \.offset) { index, value in
@@ -3085,11 +3448,11 @@ struct TopNavChat: View {
                                     }
                                 } else {
                                     LoadingView(message: "Loading pending requests...")
-                                }
+                                }*/
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .onAppear {
-                                self.clientsPendingRequests.removeAll()
+                            /*.onAppear {
+                                self.accountInfo.pendingRequests.removeAll()
                                 
                                 self.noUsersToShow = false
                                 self.noSearchResults = false
@@ -3115,14 +3478,14 @@ struct TopNavChat: View {
                                             return
                                         }
                                         
-                                        self.clientsPendingRequests = CPR
+                                        self.accountInfo.pendingRequests = CPR
                                     } else {
                                         self.noUsersToShow = true
                                     }
                                     
                                     self.loadingView = false
                                 }
-                            }
+                            }*/
                         default:
                             VStack { }.onAppear { self.selectedView = "add" }
                         }
@@ -3426,7 +3789,44 @@ struct TopNavChat: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(.black)
+                .onTapGesture {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                }
                 .onAppear {
+                    self.constantlyUpdateIncomingFriendRequests = true
+                    
+                    DispatchQueue.global(qos: .background).async {
+                        while self.constantlyUpdateIncomingFriendRequests {
+                            RequestAction<GetClientsPendingRequestsData>(parameters: GetClientsPendingRequestsData(
+                                AccountId: self.accountInfo.accountID
+                            )).perform(action: get_clients_pending_requests_req) { statusCode, resp in
+                                guard resp != nil && statusCode == 200 else {
+                                    return
+                                }
+                                
+                                if let resp = resp {
+                                    /* MARK: `CPR` - Clients Pending Requests. */
+                                    guard let CPR = self.populateUsers(resp: resp) else {
+                                        return
+                                    }
+                                    
+                                    for user in CPR.keys {
+                                        if !self.accountInfo.pendingRequests.keys.contains(user) {
+                                            self.accountInfo.pendingRequests[user] = CPR[user]!
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            /* MARK: Every 6.5 seconds, send a new request to the server seeing if there are any new incoming friend requests for the user. */
+                            Thread.sleep(forTimeInterval: 6.5)
+                        }
+                    }
+                }
+                .onDisappear {
+                    self.constantlyUpdateIncomingFriendRequests = false
+                }
+                /*.onAppear {
                     if self.accountInfo.friends.isEmpty {
                         DispatchQueue.global(qos: .background).async {
                             RequestAction<GetClientsFriendsData>(parameters: GetClientsFriendsData(
@@ -3446,7 +3846,7 @@ struct TopNavChat: View {
                             }
                         }
                     }
-                }
+                }*/
                 .popover(isPresented: $rickRoll) {
                     /*WebView(url: URL(string: "https://www.youtube.com/watch?v=oHg5SJYRHA0")!)
                      .navigationBarTitle("Get Rick Rolled, Boi", displayMode: .inline)*/
@@ -3460,8 +3860,4 @@ struct TopNavChat: View {
         .topNavSettings(prop: prop, backgroundColor: .clear)
         .padding([.top], 5)
     }
-}
-
-#Preview {
-    ContentView()
 }

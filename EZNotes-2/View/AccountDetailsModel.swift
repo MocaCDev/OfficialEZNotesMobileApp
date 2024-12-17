@@ -16,9 +16,13 @@ class AccountDetails: ObservableObject {
     @Published var usage: String
     @Published var subID: String
     @Published var aiChatID: UUID
+    @Published var accountDescription: String
+    @Published var accountTags: Array<String>
     
     /* TODO: Mature the interface with friends. Perhaps make it to where the app (server) keeps track of how long the client has been friends with the given user. Perhaps we can make another class store specific information over the user so that the app doesn't have to consistently send requests to the server to obtain that data. */
     @Published var friends: [String: Image]
+    @Published var friendRequests: [String: Image]
+    @Published var pendingRequests: [String: Image]
     
     /* MARK: PFP - will be on top of `profileBackgroundImage`. */
     @Published var profilePicture: Image
@@ -36,7 +40,11 @@ class AccountDetails: ObservableObject {
         usage = ""
         subID = ""
         aiChatID = UUID()
+        accountDescription = ""
+        accountTags = []
         friends = [:]
+        friendRequests = [:]
+        pendingRequests = [:]
         profilePicture = Image(systemName: "person.crop.circle.fill") /* MARK: Default PFP icon. */
         profileBackgroundPicture = Image("Pfp-Default-Bg") /* MARK: Default PFP BG. */
     }
@@ -48,10 +56,16 @@ class AccountDetails: ObservableObject {
         major = ""
         state = ""
         accountID = ""
+        usage = ""
         subID = ""
         aiChatID = UUID()
-        profilePicture = Image(systemName: "person.crop.circle.fill")
-        profileBackgroundPicture = Image("Pfp-Default-Bg")
+        accountDescription = ""
+        accountTags = []
+        friends = [:]
+        friendRequests = [:]
+        pendingRequests = [:]
+        profilePicture = Image(systemName: "person.crop.circle.fill") /* MARK: Default PFP icon. */
+        profileBackgroundPicture = Image("Pfp-Default-Bg") /* MARK: Default PFP BG. */
     }
     
     final public func setUsername(username: String) { self.username = username }

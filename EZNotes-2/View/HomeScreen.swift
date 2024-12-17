@@ -227,9 +227,3 @@ struct HomeScreen: View {
         .edgesIgnoringSafeArea([.top, .bottom])
     }
 }
-
-struct HomeScreen_Preview: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
-}
