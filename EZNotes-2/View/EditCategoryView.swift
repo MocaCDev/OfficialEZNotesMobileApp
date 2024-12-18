@@ -11,6 +11,7 @@ struct EditCategory: View {
     var categoryBeingEditedImage: Image
     
     @Binding public var categoryBeingEdited: String
+    @Binding public var categoryLaunched: String /* MARK: Needed just in case the category gets edited after its been launched (`CategoryInternalsView.swift` is active). */
     @ObservedObject public var categoryData: CategoryData
     
     @State private var editSection: String = "edit"
@@ -316,13 +317,17 @@ struct EditCategory: View {
                             .alert("Hang On", isPresented: $showSaveAlert) {
                                 Button(action: {
                                     if self.newCategoryName.count > 0 && !(self.newCategoryName == self.categoryBeingEdited) {
+                                        self.categoryLaunched = self.newCategoryName
+                                        
                                         let categoryData = self.categoryData.categoriesAndSets[self.categoryBeingEdited]
                                         let categoryImageData = self.categoryData.categoryImages[self.categoryBeingEdited]
                                         let categoryCreationDate = self.categoryData.categoryCreationDates[self.categoryBeingEdited]
+                                        let categorySetAndNotes = self.categoryData.setAndNotes[self.categoryBeingEdited]
                                         
                                         self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryBeingEdited)
                                         self.categoryData.categoryImages.removeValue(forKey: self.categoryBeingEdited)
                                         self.categoryData.categoryCreationDates.removeValue(forKey: self.categoryBeingEdited)
+                                        self.categoryData.setAndNotes.removeValue(forKey: self.categoryBeingEdited)
                                         
                                         self.categoryData.categoriesAndSets[self.newCategoryName] = categoryData
                                         writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
@@ -332,6 +337,9 @@ struct EditCategory: View {
                                         
                                         self.categoryData.categoryCreationDates[self.newCategoryName] = categoryCreationDate
                                         writeCategoryCreationDates(categoryCreationDates: self.categoryData.categoryCreationDates)
+                                        
+                                        self.categoryData.setAndNotes[self.newCategoryName] = categorySetAndNotes
+                                        writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
                                         
                                         if self.categoryData.categoryCustomColors.keys.contains(self.categoryBeingEdited) {
                                             self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryBeingEdited)

@@ -162,7 +162,7 @@ struct CategoryInternalsView: View {
     @State private var showUploadPreview: Bool = false
     
     var prop: Properties
-    var categoryName: String
+    @Binding public var categoryName: String
     var creationDate: String
     @State public var categoryTitleColor: Color?
     @State public var categoryBackgroundColor: Color?
@@ -1092,6 +1092,7 @@ struct CategoryInternalsView: View {
                                             prop: self.prop,
                                             categoryBeingEditedImage: self.categoryBackground,
                                             categoryBeingEdited: $categoryBeingEdited,
+                                            categoryLaunched: $categoryName,
                                             categoryData: self.categoryData,
                                             newCategoryDisplayColor: $newCategoryDisplayColor,
                                             newCategoryTextColor: $newCategoryTextColor

@@ -22,10 +22,25 @@ class FrameHandler: NSObject, ObservableObject {
     override init() {
         super.init()
         self.checkPermission()
+        /*sessionQueue.async { [unowned self] in
+            self.setupCaptureSession()
+            self.captureSession.startRunning()
+        }*/
+    }
+    
+    func startSession() {
+        guard !self.captureSession.isRunning else { return }
+        
         sessionQueue.async { [unowned self] in
             self.setupCaptureSession()
             self.captureSession.startRunning()
-        }
+        }//self.captureSession.startRunning()
+    }
+    
+    func stopSession() {
+        guard self.captureSession.isRunning else { return }
+        
+        self.captureSession.stopRunning()
     }
     
     func checkPermission() {

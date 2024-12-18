@@ -14,8 +14,10 @@ struct UploadSection: View {
     @EnvironmentObject private var accountInfo: AccountDetails
     //@EnvironmentObject private var images_to_upload: ImagesUploads
     
+    //@StateObject private var model: FrameHandler = FrameHandler()
     @ObservedObject public var model: FrameHandler
     
+    //@StateObject public var images_to_upload: ImagesUploads = ImagesUploads()
     @ObservedObject public var images_to_upload: ImagesUploads
     
     /* MARK: `topBanner` helps the view know what to display in it's banner (located to the right of the profile icon). */
@@ -385,6 +387,9 @@ struct UploadSection: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(.black)
+                .onAppear { /* MARK: Stop the capture session if `JustNotes` is enabled. */
+                    self.model.stopSession()
+                }
             }
         } else {
             Account(
@@ -392,6 +397,12 @@ struct UploadSection: View {
                 showAccount: $showAccount,
                 userHasSignedIn: $userHasSignedIn
             )
+            .onAppear { /* MARK: We don't want to continue the capture session if the user isn't actively using it. */
+                self.model.stopSession()
+            }
+            .onDisappear {
+                self.model.startSession()
+            }
         }
         //.onAppear(perform: { self.model.permissionGranted = false })
     }

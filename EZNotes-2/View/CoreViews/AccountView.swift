@@ -2080,7 +2080,6 @@ struct Account: View {
                     RequestAction<GetTagsData>(parameters: GetTagsData(
                         AccountId: self.accountInfo.accountID
                     )).perform(action: get_tags_req) { statusCode, resp in
-                        print("HI")
                         guard resp != nil && statusCode == 200 else {
                             return
                         }

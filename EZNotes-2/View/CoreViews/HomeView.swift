@@ -1080,6 +1080,7 @@ struct HomeView: View {
                                                 prop: self.prop,
                                                 categoryBeingEditedImage: self.categoryBeingEditedImage,
                                                 categoryBeingEdited: $categoryBeingEdited,
+                                                categoryLaunched: $categoryLaunched,
                                                 categoryData: self.categoryData,
                                                 newCategoryDisplayColor: $newCategoryDisplayColor,
                                                 newCategoryTextColor: $newCategoryTextColor
@@ -1183,7 +1184,7 @@ struct HomeView: View {
                         model: self.model,
                         images_to_upload: self.images_to_upload,
                         prop: prop,
-                        categoryName: categoryLaunched,
+                        categoryName: $categoryLaunched,
                         creationDate: "\(self.categoryData.categoryCreationDates[self.categoryLaunched]!.formatted(date: .numeric, time: .omitted))",
                         categoryTitleColor: self.categoryTitleColor,
                         categoryBackgroundColor: self.categoryBackgroundColor,

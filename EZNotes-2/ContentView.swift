@@ -85,7 +85,7 @@ struct ContentView: View {
     @State public var userHasSignedIn: Bool = UserDefaults.standard.bool(forKey: "logged_in")
     @State public var userNotFound: Bool = false
     @State private var goBackToLogin: Bool = false
-    //@StateObject private var model: FrameHandler = FrameHandler()
+    @StateObject private var model: FrameHandler = FrameHandler()
     
     //@StateObject public var categoryData: CategoryData = CategoryData()
     
@@ -102,10 +102,22 @@ struct ContentView: View {
     
     /* `section` can be: "upload", "review_upload", "home" or "chat". */
     @State private var section: String = "upload"
+    @State private var selectedTab: Int = 1
     @State private var lastSection: String = "upload"
     
-    @ObservedObject public var images_to_upload: ImagesUploads
-    @ObservedObject public var model: FrameHandler
+    //@ObservedObject public var images_to_upload: ImagesUploads
+    @StateObject public var images_to_upload: ImagesUploads = ImagesUploads()
+    //@ObservedObject public var model: FrameHandler
+    
+    @State private var loadingCameraView: Bool = false
+    @State private var focusLocation: CGPoint = .zero
+    @State private var currentZoomFactor: CGFloat = 1.0
+    
+    @State private var homeView: Bool = true
+    
+    @State private var localUpload: Bool = false
+    @State private var createOneCategory: Bool = false
+    @State private var errorType: String = "" /* TODO: Change this. */
     
     var body: some View {
         if !userHasSignedIn {
@@ -147,6 +159,111 @@ struct ContentView: View {
         } else {
             ResponsiveView { prop in
                 VStack {
+                    /*if self.selectedTab == 1 && self.images_to_upload.images_to_upload.isEmpty {
+                        TabView(selection: $selectedTab) {
+                            VStack {
+                                
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .tag(0)
+                            .background(Color.EZNotesBlack)
+                            .tabItem {
+                                Label("Home", systemImage: "house")
+                            }
+                            
+                            UploadSection(
+                                model: self.model,
+                                images_to_upload: self.images_to_upload,
+                                topBanner: $topBanner,
+                                lastSection: $lastSection,
+                                section: $section,
+                                prop: prop,
+                                userHasSignedIn: $userHasSignedIn
+                            )
+                            .onAppear {
+                                self.model.startSession()
+                            }
+                            .onDisappear {
+                                self.model.stopSession()
+                            }
+                            .tag(1)
+                            .gesture(DragGesture(minimumDistance: 0.5, coordinateSpace: .local)
+                                .onEnded({ value in
+                                    if value.translation.width < 0 {
+                                        //self.section = "chat"
+                                        self.selectedTab = 2
+                                        return
+                                    }
+                                    
+                                    if value.translation.width > 0 {
+                                        //self.section = "home"
+                                        self.selectedTab = 1
+                                        return
+                                    }
+                                })
+                            )
+                            .tabItem {
+                                Label(self.section == "upload" ? "History" : "Upload", systemImage: self.section == "upload" ? "clock" : "plus")
+                            }
+                            /*VStack {
+                             
+                             }
+                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                             .edgesIgnoringSafeArea([.bottom])
+                             .tag(1)
+                             .onAppear {
+                             self.model.startSession()
+                             }
+                             .onDisappear {
+                             self.model.stopSession()
+                             }
+                             .background(
+                             self.model.permissionGranted && self.model.cameraDeviceFound
+                             ? AnyView(FrameView(handler: self.model, image: self.model.frame, prop: prop, loadingCameraView: $loadingCameraView)
+                             .ignoresSafeArea()
+                             .gesture(MagnificationGesture()
+                             .onChanged { value in
+                             //self.currentZoomFactor += value - 1.0 // Calculate the zoom factor change
+                             //self.currentZoomFactor = min(max(self.currentZoomFactor, 0.5), 20)
+                             //self.model.setScale(scale: currentZoomFactor)
+                             }
+                             )
+                             .gesture(DragGesture(minimumDistance: 0.5, coordinateSpace: .local)
+                             .onEnded({ value in
+                             if value.translation.width < 0 {
+                             //self.section = "chat"
+                             self.selectedTab = 2
+                             return
+                             }
+                             
+                             if value.translation.width > 0 {
+                             //self.section = "home"
+                             self.selectedTab = 1
+                             return
+                             }
+                             })
+                             )
+                             )
+                             : AnyView(Color.EZNotesBlack)
+                             )
+                             .tabItem {
+                             Label(self.section == "upload" ? "History" : "Upload", systemImage: self.section == "upload" ? "clock" : "plus")
+                             }*/
+                            
+                            VStack {
+                                
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .tag(2)
+                            .background(Color.EZNotesBlack)
+                            .tabItem {
+                                Label("Chat", systemImage: "message")
+                            }
+                        }
+                    }
+                    //.tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))*/
+                    
+                    
                     switch(self.section) {
                     case "upload":
                         //ResponsiveView { prop in
@@ -159,7 +276,12 @@ struct ContentView: View {
                             prop: prop,
                             userHasSignedIn: $userHasSignedIn
                         )
-                        //}
+                        .onAppear {
+                            self.model.startSession()
+                        }
+                        .onDisappear {
+                            self.model.stopSession()
+                        }
                     case "home":
                         /*ResponsiveView { prop in
                          HomeView(
@@ -176,6 +298,17 @@ struct ContentView: View {
                             userHasSignedIn:$userHasSignedIn,
                             model: self.model//,
                             //images_to_upload: self.images_to_upload
+                        )
+                    case "upload_review":
+                        UploadReview(
+                            images_to_upload: self.images_to_upload,
+                            topBanner: $topBanner,
+                            localUpload: $localUpload,
+                            createOneCategory: $createOneCategory,
+                            section: $section,
+                            lastSection: $lastSection,
+                            errorType: $errorType,
+                            prop: prop
                         )
                     case "chat":
                         ChatView(section: $section, userHasSignedIn: $userHasSignedIn)
@@ -222,7 +355,6 @@ struct ContentView: View {
                      )
                      }
                      }*/
-                    
                 }
                 .onChange(of: scenePhase) {
                     if scenePhase == .inactive || scenePhase == .background {

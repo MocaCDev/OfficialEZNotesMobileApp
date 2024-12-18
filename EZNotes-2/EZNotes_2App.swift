@@ -82,16 +82,18 @@ struct EZNotes_2App: App {
     @StateObject private var networkMonitor = NetworkMonitor()
     @StateObject private var settings: SettingsConfigManager = SettingsConfigManager()
     @StateObject public var messageModel: MessagesModel = MessagesModel()
-    @StateObject private var model: FrameHandler = FrameHandler()
+    //@StateObject private var model: FrameHandler = FrameHandler()
     
     /* MARK: Needed for `CategoryInternalsView.swift`, as there is the ability to create a set via images. */
-    @StateObject public var images_to_upload: ImagesUploads = ImagesUploads()
+    //@StateObject public var images_to_upload: ImagesUploads = ImagesUploads()
+    @State private var loadingCameraView: Bool = false
+    @State private var section: String = "upload"
     
     var body: some Scene {
         WindowGroup {
             ContentView(
-                images_to_upload: self.images_to_upload,
-                model: model
+                //images_to_upload: self.images_to_upload,
+                //model: model
             )
                 .environmentObject(self.eznotesSubscriptionManager)
                 .environmentObject(self.categoryData)
@@ -114,6 +116,7 @@ struct EZNotes_2App: App {
                         await self.eznotesSubscriptionManager.obtainCurrentSubscription()
                     }
                 }
+             
         }
     }
 }
