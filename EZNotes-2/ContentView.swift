@@ -396,7 +396,7 @@ struct ContentView: View {
                 }*/
                 .onAppear(perform: { /* MARK: The below code is placed in the `.onAppear`, regardless if the user logged in, signed up or just re-launched the app. All of the users data, unless further noticed, will be stored in `UserDefaults`. */
                     // else {
-                    Task {
+                    //Task {
                         /* TODO: If the below request fails, we need to figure out a way to ensure that the user still gets into the app. */
                         RequestAction<ReqPlaceholder>(
                             parameters: ReqPlaceholder()
@@ -501,98 +501,13 @@ struct ContentView: View {
                             //}
                             
                             //DispatchQueue.global(qos: .background).async {
-                            RequestAction<GetClientsFriendsData>(parameters: GetClientsFriendsData(
-                                AccountId: self.accountInfo.accountID
-                            )).perform(action: get_clients_friends_req) { statusCode, resp in
-                                guard resp != nil && statusCode == 200 else {
-                                    return
-                                }
-                                
-                                if let resp = resp as? [String: [String: Any]] {
-                                    for user in resp.keys {
-                                        guard resp[user] != nil else { continue }
-                                        
-                                        if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
-                                            if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
-                                                self.accountInfo.friends[user] = Image(
-                                                    uiImage: UIImage(
-                                                        data: userPFPData
-                                                    )!
-                                                )
-                                            } else {
-                                                self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
-                                            }
-                                        } else {
-                                            self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
-                                        }
-                                        
-                                        print(self.accountInfo.friends)
-                                    }
-                                }
-                            }
-                            
-                            RequestAction<GetClientsFriendRequestsData>(parameters: GetClientsFriendRequestsData(
-                                AccountId: self.accountInfo.accountID
-                            )).perform(action: get_clients_friend_requests_req) { statusCode, resp in
-                                guard resp != nil && statusCode == 200 else {
-                                    return
-                                }
-                                
-                                if let resp = resp as? [String: [String: Any]] {
-                                    for user in resp.keys {
-                                        guard resp[user] != nil else { continue }
-                                        
-                                        if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
-                                            if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
-                                                self.accountInfo.friendRequests[user] = Image(
-                                                    uiImage: UIImage(
-                                                        data: userPFPData
-                                                    )!
-                                                )
-                                            } else {
-                                                self.accountInfo.friendRequests[user] = Image(systemName: "person.crop.circle.fill")
-                                            }
-                                        } else {
-                                            self.accountInfo.friendRequests[user] = Image(systemName: "person.crop.circle.fill")
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            RequestAction<GetClientsPendingRequestsData>(parameters: GetClientsPendingRequestsData(
-                                AccountId: self.accountInfo.accountID
-                            )).perform(action: get_clients_pending_requests_req) { statusCode, resp in
-                                guard resp != nil && statusCode == 200 else {
-                                    return
-                                }
-                                
-                                if let resp = resp as? [String: [String: Any]] {
-                                    for user in resp.keys {
-                                        guard resp[user] != nil else { continue }
-                                        
-                                        if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
-                                            if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
-                                                self.accountInfo.pendingRequests[user] = Image(
-                                                    uiImage: UIImage(
-                                                        data: userPFPData
-                                                    )!
-                                                )
-                                            } else {
-                                                accountInfo.pendingRequests[user] = Image(systemName: "person.crop.circle.fill")
-                                            }
-                                        } else {
-                                            accountInfo.pendingRequests[user] = Image(systemName: "person.crop.circle.fill")
-                                        }
-                                    }
-                                }
-                            }
                             //}
                         }
                         
                         if UserDefaults.standard.object(forKey: "client_sub_id") != nil {
                             accountInfo.setClientSubID(subID: UserDefaults.standard.string(forKey: "client_sub_id")!)
                         }
-                    }
+                    //}
                     
                     /*if UserDefaults.standard.string(forKey: "faceID_enabled") == "enabled" {
                         if !(UserDefaults.standard.bool(forKey: "faceID_initialized")) {

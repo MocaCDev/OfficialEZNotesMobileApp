@@ -1938,6 +1938,7 @@ struct TopNavChat: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: 30)
                     .padding([.leading, .top, .trailing], 8)
+                    .padding(.top, 10)
                     
                     if !self.showFilters {
                         HStack {
@@ -2435,51 +2436,53 @@ struct TopNavChat: View {
                                                                 .cornerRadius(15)
                                                         }
                                                     } else {
-                                                        HStack {
-                                                            Image(systemName: "paperplane")
-                                                                .resizable()
-                                                                .frame(width: 10, height: 10)
-                                                                .foregroundStyle(.gray)
-                                                            
-                                                            Text("Pending")
-                                                                .frame(alignment: .center)
-                                                                .font(.system(size: 14, weight: .medium))
-                                                                .foregroundStyle(.gray)
-                                                        }
-                                                        .frame(maxWidth: .infinity)
-                                                        .cornerRadius(15)
-                                                        
-                                                        Button(action: {
-                                                            self.removingFriendRequest = true
-                                                            
-                                                            self.usersBeingRemoved.append(self.launchedForUser)
-                                                            
-                                                            RequestAction<RemoveFriendRequest>(parameters: RemoveFriendRequest(
-                                                                AccountId: self.accountInfo.accountID,
-                                                                CancelFor: self.launchedForUser
-                                                            )).perform(action: cancel_friend_request_req) { statusCode, resp in
-                                                                self.removingFriendRequest = false
+                                                        if self.accountInfo.pendingRequests.keys.contains(self.launchedForUser) {
+                                                            HStack {
+                                                                Image(systemName: "paperplane")
+                                                                    .resizable()
+                                                                    .frame(width: 10, height: 10)
+                                                                    .foregroundStyle(.gray)
                                                                 
-                                                                guard resp != nil && statusCode == 200 else {
-                                                                    return /* TODO: Handle error. */
-                                                                }
-                                                                
-                                                                /* MARK: Ensure that the dictionary is updated with the current manipulation. */
-                                                                self.accountInfo.friendRequests.removeValue(forKey: self.launchedForUser)
-                                                                
-                                                                self.usersBeingRemoved.removeAll(where: { $0 == self.launchedForUser })
+                                                                Text("Pending")
+                                                                    .frame(alignment: .center)
+                                                                    .font(.system(size: 14, weight: .medium))
+                                                                    .foregroundStyle(.gray)
                                                             }
-                                                        }) {
-                                                            Text("Cancel Friend Request")
-                                                                .frame(alignment: .center)
-                                                                .frame(maxWidth: prop.size.width - 40, alignment: .center)
-                                                                .padding(8)
-                                                                .font(.system(size: 14, weight: .medium))
-                                                                .foregroundStyle(.black)
-                                                                .background(Color.white)
-                                                                .cornerRadius(15)
+                                                            .frame(maxWidth: .infinity)
+                                                            .cornerRadius(15)
+                                                            
+                                                            Button(action: {
+                                                                self.removingFriendRequest = true
+                                                                
+                                                                self.usersBeingRemoved.append(self.launchedForUser)
+                                                                
+                                                                RequestAction<RemoveFriendRequest>(parameters: RemoveFriendRequest(
+                                                                    AccountId: self.accountInfo.accountID,
+                                                                    CancelFor: self.launchedForUser
+                                                                )).perform(action: cancel_friend_request_req) { statusCode, resp in
+                                                                    self.removingFriendRequest = false
+                                                                    
+                                                                    guard resp != nil && statusCode == 200 else {
+                                                                        return /* TODO: Handle error. */
+                                                                    }
+                                                                    
+                                                                    /* MARK: Ensure that the dictionary is updated with the current manipulation. */
+                                                                    self.accountInfo.friendRequests.removeValue(forKey: self.launchedForUser)
+                                                                    
+                                                                    self.usersBeingRemoved.removeAll(where: { $0 == self.launchedForUser })
+                                                                }
+                                                            }) {
+                                                                Text("Cancel Friend Request")
+                                                                    .frame(alignment: .center)
+                                                                    .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                                                    .padding(8)
+                                                                    .font(.system(size: 14, weight: .medium))
+                                                                    .foregroundStyle(.black)
+                                                                    .background(Color.white)
+                                                                    .cornerRadius(15)
+                                                            }
+                                                            .buttonStyle(NoLongPressButtonStyle())
                                                         }
-                                                        .buttonStyle(NoLongPressButtonStyle())
                                                     }
                                                 } else {
                                                     LoadingView(message: "Removing...")
@@ -2709,6 +2712,26 @@ struct TopNavChat: View {
                                                                                     }
                                                                                     
                                                                                     self.accountInfo.friends.removeValue(forKey: value.key)
+                                                                                    
+                                                                                    for chat in self.accountInfo.allChats {
+                                                                                        if chat.keys.contains(value.key) {
+                                                                                            self.accountInfo.allChats.removeAll(where: { $0 == chat })
+                                                                                            break
+                                                                                        }
+                                                                                    }
+                                                                                    
+                                                                                    self.accountInfo.messages.removeValue(forKey: value.key)
+                                                                                    
+                                                                                    for chat in self.accountInfo.allChats {
+                                                                                        if chat.keys.contains(value.key) {
+                                                                                            self.accountInfo.allChats.removeAll(where: { $0 == chat })
+                                                                                            break
+                                                                                        }
+                                                                                    }
+                                                                                    
+                                                                                    if self.accountInfo.messages.keys.contains(value.key) {
+                                                                                        self.accountInfo.messages.removeValue(forKey: value.key)
+                                                                                    }
                                                                                 }
                                                                             }) {
                                                                                 HStack {
@@ -2849,7 +2872,7 @@ struct TopNavChat: View {
                                                                         .foregroundStyle(.white)
                                                                     
                                                                     if !self.accountInfo.friends.keys.contains(value.key) {
-                                                                        if !self.accountInfo.friendRequests.keys.contains(value.key) && !self.accountInfo.friends.keys.contains(value.key) {
+                                                                        if !self.accountInfo.friendRequests.keys.contains(value.key) {
                                                                             Button(action: {
                                                                                 self.sendingFriendRequestsTo.append(value.key)
                                                                                 self.addingFriend = true
@@ -2968,6 +2991,17 @@ struct TopNavChat: View {
                                                                                 }
                                                                                 
                                                                                 self.accountInfo.friends.removeValue(forKey: value.key)
+                                                                                
+                                                                                for chat in self.accountInfo.allChats {
+                                                                                    if chat.keys.contains(value.key) {
+                                                                                        self.accountInfo.allChats.removeAll(where: { $0 == chat })
+                                                                                        break
+                                                                                    }
+                                                                                }
+                                                                                
+                                                                                if self.accountInfo.messages.keys.contains(value.key) {
+                                                                                    self.accountInfo.messages.removeValue(forKey: value.key)
+                                                                                }
                                                                             }
                                                                         }) {
                                                                             HStack {
@@ -3091,6 +3125,17 @@ struct TopNavChat: View {
                                                         }
                                                         
                                                         self.accountInfo.friends.removeValue(forKey: value.key)
+                                                        
+                                                        for chat in self.accountInfo.allChats {
+                                                            if chat.keys.contains(value.key) {
+                                                                self.accountInfo.allChats.removeAll(where: { $0 == chat })
+                                                                break
+                                                            }
+                                                        }
+                                                        
+                                                        if self.accountInfo.messages.keys.contains(value.key) {
+                                                            self.accountInfo.messages.removeValue(forKey: value.key)
+                                                        }
                                                     }
                                                 }) {
                                                     HStack {
@@ -3797,6 +3842,25 @@ struct TopNavChat: View {
                     
                     DispatchQueue.global(qos: .background).async {
                         while self.constantlyUpdateIncomingFriendRequests {
+                            
+                            RequestAction<GetClientsFriendRequestsData>(parameters: GetClientsFriendRequestsData(
+                                AccountId: self.accountInfo.accountID
+                            )).perform(action: get_clients_friend_requests_req) { statusCode, resp in
+                                guard resp != nil && statusCode == 200 else {
+                                    DispatchQueue.main.async { self.accountInfo.friendRequests.removeAll() }
+                                    return
+                                }
+                                
+                                if let resp = resp {
+                                    /* MARK: `CFR` - Clients Friend Requests. */
+                                    guard let CFR = self.populateUsers(resp: resp) else {
+                                        return
+                                    }
+                                    
+                                    DispatchQueue.main.async { self.accountInfo.friendRequests = CFR }
+                                }
+                            }
+                            
                             RequestAction<GetClientsPendingRequestsData>(parameters: GetClientsPendingRequestsData(
                                 AccountId: self.accountInfo.accountID
                             )).perform(action: get_clients_pending_requests_req) { statusCode, resp in
@@ -3812,14 +3876,14 @@ struct TopNavChat: View {
                                     
                                     for user in CPR.keys {
                                         if !self.accountInfo.pendingRequests.keys.contains(user) {
-                                            self.accountInfo.pendingRequests[user] = CPR[user]!
+                                            DispatchQueue.main.async { self.accountInfo.pendingRequests[user] = CPR[user]! }
                                         }
                                     }
                                 }
                             }
                             
                             /* MARK: Every 6.5 seconds, send a new request to the server seeing if there are any new incoming friend requests for the user. */
-                            Thread.sleep(forTimeInterval: 6.5)
+                            Thread.sleep(forTimeInterval: 2.5)
                         }
                     }
                 }

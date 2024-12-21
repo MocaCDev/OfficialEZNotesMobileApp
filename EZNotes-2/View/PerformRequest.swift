@@ -32,17 +32,9 @@ class CompletionDelegate: NSObject, URLSessionDelegate, URLSessionDataDelegate {
             }
         } else {
             if let taskResponse = task.response as? HTTPURLResponse {
-                if taskResponse.statusCode != 200 {
-                    DispatchQueue.main.async {
-                        self.completion?(taskResponse.statusCode, nil)
-                    }
-                    
-                    return
-                }
-                
                 if let response = try? JSONSerialization.jsonObject(with: accumulatedData, options: []) as? [String: Any] {
                     DispatchQueue.main.async {
-                        self.completion?(200, response)
+                        self.completion?(taskResponse.statusCode, response)
                     }
                 } else {
                     DispatchQueue.main.async {
@@ -371,7 +363,7 @@ class UploadImages {
     }
 }
 
-class RequestAction<T> {
+class RequestAction<T>: ObservableObject {
     
     var parameters: T
     
@@ -379,9 +371,57 @@ class RequestAction<T> {
         self.parameters = parameters
     }
     
+    final public func initSession(withRequest: CSIARequest<T>, withDelegate: Bool = false, delegate: CompletionDelegate? = nil) -> (Session: URLSession, Request: URLRequest) {
+        var request = URLRequest(url: URL(string: withRequest.url)!)
+        request.httpMethod = withRequest.method
+        
+        request.addValue("yes", forHTTPHeaderField: "Fm") /* `Fm` - From Mobile. */
+        
+        request.addValue("text/html; charset=utf-8", forHTTPHeaderField: "Content-Type")
+        request.addValue("text/html; charset=utf-8", forHTTPHeaderField: "Accept")
+        
+        // Configure the session
+        let sessionConfig = URLSessionConfiguration.default
+        sessionConfig.allowsCellularAccess = true
+        
+        /* MARK: Allow 15 minutes for requests. This is way more than what is needed, but it's okay during beta testing. */
+        sessionConfig.timeoutIntervalForRequest = 900
+        sessionConfig.timeoutIntervalForResource = 900
+        
+        if withDelegate && delegate != nil {
+            let session = URLSession(configuration: sessionConfig, delegate: delegate!, delegateQueue: nil)
+            
+            return (session, request)
+        }
+        
+        let session = URLSession(configuration: sessionConfig)
+        return (session, request)
+    }
+    
+    final public func handleResponse(response: Any, data: Data, completion: @escaping (Int, [String: Any]?) -> Void) -> Void {
+        if let httpResponse = response as? HTTPURLResponse {
+            if httpResponse.statusCode == 200 {
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    DispatchQueue.main.async {
+                        completion(httpResponse.statusCode, json)
+                    }//return (httpResponse.statusCode, json)
+                    return
+                } else {
+                    DispatchQueue.main.async {
+                        completion(500, nil)
+                    }
+                }
+            } else {
+                DispatchQueue.main.async {
+                    completion(500, nil)
+                }
+            }
+        }
+    }
+    
     func perform(action: CSIARequest<T>, completion: @escaping (Int, [String: Any]?) -> Void) {
         
-        let scheme: String = "https"
+        /*let scheme: String = "https"
         let host: String = "www.eznotes.space"//"http://127.0.0.1:8088"//"www.eznotes.space"
         
         var components = URLComponents()
@@ -396,10 +436,38 @@ class RequestAction<T> {
         request.addValue("text/html; charset=utf-8", forHTTPHeaderField: "Content-Type")
         request.addValue("text/html; charset=utf-8", forHTTPHeaderField: "Accept")
         
-        request.timeoutInterval = 50000
+        request.timeoutInterval = 50000*/
+        
+        let delegate = CompletionDelegate()
+        delegate.completion = completion
+        
+        let reqInit = self.initSession(withRequest: action, withDelegate: true, delegate: delegate)
+        
+        var request = reqInit.Request
+        let session = reqInit.Session
         
         switch(action.reqData.self)
         {
+            case is GetClientsMessagesData.Type:
+                guard let params: GetClientsMessagesData = (parameters as? GetClientsMessagesData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                break
+            case is StartNewChatData.Type:
+                guard let params: StartNewChatData = (parameters as? StartNewChatData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.StartChatWith, forHTTPHeaderField: "Start-Chat-With")
+                break
+            case is SendMessageToFriendData.Type:
+                guard let params: SendMessageToFriendData = (parameters as? SendMessageToFriendData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.SendTo, forHTTPHeaderField: "Send-To")
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+                let encoder = JSONEncoder()
+                encoder.dateEncodingStrategy = .iso8601
+                
+                request.httpBody = try? encoder.encode(params.MessageData)//try? JSONSerialization.data(withJSONObject: params.MessageData)
+                break
             case is SaveTagsData.Type:
                 guard let params: SaveTagsData = (parameters as? SaveTagsData) else { return }
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
@@ -647,14 +715,7 @@ class RequestAction<T> {
             default: break
         }
         
-        let sessionConfig: URLSessionConfiguration = URLSessionConfiguration.background(withIdentifier: UUID().uuidString)
-        sessionConfig.allowsCellularAccess = true
-        //sessionConfig.timeoutIntervalForRequest = 10000
-        //sessionConfig.timeoutIntervalForResource = 10000
-        
-        let delegate = CompletionDelegate()
-        delegate.completion = completion
-        let session = URLSession(configuration: sessionConfig, delegate: delegate, delegateQueue: nil)
+        //let session = URLSession(configuration: sessionConfig, delegate: delegate, delegateQueue: nil)
         
         let requestTask = session.dataTask(with: request)
         requestTask.resume()

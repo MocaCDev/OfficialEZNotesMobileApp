@@ -17,6 +17,21 @@ let server = "http://192.168.1.109:8088"
  * */
 struct ReqPlaceholder {}
 
+struct GetClientsMessagesData {
+    let AccountId: String
+}
+
+struct SendMessageToFriendData {
+    let AccountId: String
+    let SendTo: String
+    let MessageData: FriendMessageDetails
+}
+
+struct StartNewChatData {
+    let AccountId: String
+    let StartChatWith: String
+}
+
 struct SaveTagsData {
     let AccountId: String
     let Tags: String
@@ -581,3 +596,22 @@ let get_tags_req: CSIARequest = CSIARequest(
     method: "get",
     reqData: GetTagsData.self
 )
+
+let start_chat_req: CSIARequest = CSIARequest(
+    url: "\(server)/start_chat_with_user",
+    method: "get",
+    reqData: StartNewChatData.self
+)
+
+let send_message_req: CSIARequest = CSIARequest(
+    url: "\(server)/send_message",
+    method: "post",
+    reqData: SendMessageToFriendData.self
+)
+
+let get_clients_messages_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_clients_messages",
+    method: "get",
+    reqData: GetClientsMessagesData.self
+)
+

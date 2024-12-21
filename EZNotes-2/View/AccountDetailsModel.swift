@@ -6,6 +6,14 @@
 //
 import SwiftUI
 
+struct FriendMessageDetails: Hashable, Encodable, Decodable {
+    let MessageID: String
+    let ContentType: String /* MARK: For now, the app only supports string-based messages. Image-based messages will be supported soon. */
+    let MessageContent: String
+    let From: String /* MARK: Will either be "client" or "<user>". This helps the app decipher how to display the messages. `<user>` will be the username of the client who sent the message to the current client. `<client>` tells the app that the content of the message is from the client. */
+    let dateSent: Date
+}
+
 class AccountDetails: ObservableObject {
     @Published var username: String
     @Published var email: String
@@ -23,6 +31,27 @@ class AccountDetails: ObservableObject {
     @Published var friends: [String: Image]
     @Published var friendRequests: [String: Image]
     @Published var pendingRequests: [String: Image]
+    @Published var allChats: Array<[String: Image]> /* MARK: All chats that the client has with other users. */
+    @Published var messages: [String: Array<FriendMessageDetails>]
+    
+    /* MARK: Used to manipulate the `messages` dictionary when the client sends an outgoing request. Method enables more efficient code in the actual UI part. */
+    public final func addOutgoingMessages(to: String, messageID: String = UUID().uuidString, contentType: String, content: String, date: Date = .now) -> FriendMessageDetails {
+        let messageDetails = FriendMessageDetails(
+            MessageID: messageID,
+            ContentType: contentType,
+            MessageContent: content,
+            From: "client",
+            dateSent: date
+        )
+        
+        if !self.messages.keys.contains(to) {
+            self.messages[to] = [messageDetails]
+        } else {
+            self.messages[to]!.append(messageDetails)
+        }
+        
+        return messageDetails
+    }
     
     /* MARK: PFP - will be on top of `profileBackgroundImage`. */
     @Published var profilePicture: Image
@@ -45,8 +74,37 @@ class AccountDetails: ObservableObject {
         friends = [:]
         friendRequests = [:]
         pendingRequests = [:]
+        messages = [:]
+        allChats = []
         profilePicture = Image(systemName: "person.crop.circle.fill") /* MARK: Default PFP icon. */
         profileBackgroundPicture = Image("Pfp-Default-Bg") /* MARK: Default PFP BG. */
+    }
+    
+    public func getMessages(accountID: String, completion: @escaping (Int, [String: Any]?) -> Void) async {
+        
+    }
+    
+    public func getFriends(accountID: String, completion: @escaping (Int, [String: Any]?) -> Void) async {
+        do {
+            let req: RequestAction<GetClientsFriendsData> = RequestAction<GetClientsFriendsData>(
+                parameters: GetClientsFriendsData(
+                    AccountId: accountID
+                )
+            )
+            
+            let reqInit = req.initSession(withRequest: get_clients_friends_req)//, withDelegate: true, delegate: delegate)
+            
+            var request = reqInit.Request
+            let session = reqInit.Session
+            
+            request.addValue(req.parameters.AccountId, forHTTPHeaderField: "Account-Id")
+            
+            let (data, response) = try await session.data(for: request)
+            
+            req.handleResponse(response: response, data: data, completion: completion)
+        } catch {
+            print(error)
+        }
     }
     
     final public func reset() {

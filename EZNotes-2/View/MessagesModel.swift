@@ -20,6 +20,57 @@ class MessagesModel: ObservableObject {
     init() { self.tempStoredChats = getTemporaryStoredChats() }
 }
 
+struct FriendMessageView: View {
+    var message: FriendMessageDetails
+    
+    var body: some View {
+        VStack {
+            if self.message.From != "client" {
+                VStack {
+                    VStack {
+                        HStack {
+                            Text(message.MessageContent)
+                                .frame(minWidth: 20,  alignment: .leading)
+                                .foregroundStyle(.black)
+                                .padding(8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(.white.opacity(0.85))
+                                )
+                                .font(.system(size: 13))
+                                .minimumScaleFactor(0.5)
+                                .multilineTextAlignment(.leading)
+                                .fontWeight(.semibold)
+                        }
+                    }
+                    .frame(maxWidth: 340, alignment: .leading)
+                }
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, 15)
+            } else {
+                VStack {
+                    VStack {
+                        Text(message.MessageContent)
+                            .frame(minWidth: 10, alignment: .trailing)
+                            .padding(8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color.EZNotesBlue)
+                            )
+                            .font(.system(size: 13))
+                            .minimumScaleFactor(0.5)
+                            .multilineTextAlignment(.leading)
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: 340, alignment: .trailing)
+                }
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
+                .padding(.bottom, 15)
+            }
+        }
+    }
+}
+
 struct MessageView: View {
     var message: MessageDetails
     
