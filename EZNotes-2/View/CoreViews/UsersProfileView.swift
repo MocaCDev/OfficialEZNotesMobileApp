@@ -257,7 +257,7 @@ struct UsersProfile: View {
                         .frame(maxWidth: .infinity, maxHeight: 30, alignment: .leading)
                         .background(
                             RoundedRectangle(cornerRadius: 15)
-                                .fill(.gray.opacity(0.25))
+                                .fill(.clear)
                                 .stroke(.white, lineWidth: 1)
                         )
                         .padding(.leading, 15)
@@ -297,10 +297,10 @@ struct UsersProfile: View {
                         .frame(maxWidth: .infinity, maxHeight: 30, alignment: .trailing)
                         .background(
                             RoundedRectangle(cornerRadius: 15)
-                                .fill(.gray.opacity(0.25))
+                                .fill(.clear)
                                 .stroke(.white, lineWidth: 1)
                         )
-                        .padding(.trailing, 15)
+                        .padding(.trailing, 10)
                     }
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.top, 30)

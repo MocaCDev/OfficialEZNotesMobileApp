@@ -721,3 +721,45 @@ class RequestAction<T>: ObservableObject {
         requestTask.resume()
     }
 }
+
+struct ResponseHelper {
+    var endingAction: (() -> Void)? = nil
+    var returnNilAction: (() -> Void)? = nil
+    
+    public func populateUsers(resp: [String: Any]) -> [String: Image]? {
+        if let resp = resp as? [String: [String: Any]] {
+            var usersData: [String: Image] = [:]
+            
+            for user in resp.keys {
+                guard resp[user] != nil else { continue }
+                
+                if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
+                    if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
+                        usersData[user] = Image(
+                            uiImage: UIImage(
+                                data: userPFPData
+                            )!
+                        )
+                    } else {
+                        usersData[user] = Image(systemName: "person.crop.circle.fill")
+                    }
+                } else {
+                    usersData[user] = Image(systemName: "person.crop.circle.fill")
+                }
+                
+                /*if setLoadingViewToFalse {
+                    if user == Array(resp.keys).last && self.loadingView { self.loadingView = false }
+                }*/
+                if user == Array(resp.keys).last && self.endingAction != nil {
+                    self.endingAction!()
+                }
+            }
+            
+            return usersData
+        } else {
+            if self.returnNilAction != nil { self.returnNilAction!() } //self.noUsersToShow = true
+        }
+        
+        return nil
+    }
+}

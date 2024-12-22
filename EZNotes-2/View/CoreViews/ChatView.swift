@@ -47,6 +47,7 @@ class MessageSentHandler: ObservableObject {
 
 struct ChatView: View {
     @EnvironmentObject private var accountInfo: AccountDetails
+    @Environment(\.scenePhase) var scenePhase
     
     @StateObject private var messageSentHandler: MessageSentHandler = MessageSentHandler()
     
@@ -63,6 +64,7 @@ struct ChatView: View {
     @State private var showAccount: Bool = false
     @State private var newChatPopup: Bool = false
     @State private var newChatSearch: String = ""
+    @State private var newChatSearchResults: [String: Image] = [:]
     @State private var showAllClientsFriends: Bool = true /* MARK: If `newChatSearch` is empty, this will be true. */
     @State private var chatSearchResults: [String: Image] = [:] /* MARK: The dictionary will get mutated depending on the friends that are found in `accountInfo.friends`. */
     @State private var chatSelected: Bool = false
@@ -97,7 +99,7 @@ struct ChatView: View {
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
-    @State private var fetchMessages: Bool = true
+    @State private var fetchData: Bool = true
     @State private var loadingAllMessages: Bool = false
     @State private var launchUserPreview: Bool = false
     @State private var launchedForUser: String = ""
@@ -106,6 +108,145 @@ struct ChatView: View {
     @State private var usersDescrition: String = ""
     @State private var usersTags: Array<String> = []
     @State private var usersFriendCount: Int = 0
+    @State private var showUserProfilePreview: Bool = false
+    
+    private func fetchClientsFriendData() -> Void {
+        DispatchQueue.global(qos: .background).async {
+            while(self.fetchData) {
+                /* MARK: We want to consistenly update the outgoing requests for the user. In the case the end user accepts, we want to ensure that the apps data is up to date. */
+                RequestAction<GetClientsFriendRequestsData>(parameters: GetClientsFriendRequestsData(
+                    AccountId: self.accountInfo.accountID
+                )).perform(action: get_clients_friend_requests_req) { statusCode, resp in
+                    guard resp != nil && statusCode == 200 else {
+                        DispatchQueue.main.async { self.accountInfo.friendRequests.removeAll() }
+                        return
+                    }
+                    
+                    if let resp = resp {
+                        /* MARK: `CFR` - Clients Friend Requests. */
+                        guard let CFR = ResponseHelper().populateUsers(resp: resp) else {
+                            return
+                        }
+                        
+                        DispatchQueue.main.async {
+                            /* MARK: Iterate through the users in `CFR`. Make sure `friendRequests` doesn't already contain the user. Only add to `friendRequests` upon there being a new friend request. */
+                            for user in CFR.keys {
+                                if !self.accountInfo.friendRequests.keys.contains(user) {
+                                    self.accountInfo.friendRequests[user] = CFR[user]!
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                /* MARK: Ensure the `friends` dictionary is up to day in regards to the updated `friendRequests`. */
+                Task {
+                    await self.accountInfo.getFriends(accountID: self.accountInfo.accountID) { statusCode, resp in
+                        guard resp != nil && statusCode == 200 else {
+                            return
+                        }
+                        
+                        if let resp = resp as? [String: [String: Any]] {
+                            for user in resp.keys {
+                                guard resp[user] != nil else { continue }
+                                
+                                if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
+                                    if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
+                                        DispatchQueue.main.async { /* MARK: Needed to ensure `accountInfo` is being used on the main thread.. otherwise it is error prone. */
+                                            if !self.accountInfo.friends.keys.contains(user) {
+                                                self.accountInfo.friends[user] = Image(
+                                                    uiImage: UIImage(
+                                                        data: userPFPData
+                                                    )!
+                                                )
+                                            }
+                                        }
+                                    } else {
+                                        DispatchQueue.main.async {
+                                            if !self.accountInfo.friends.keys.contains(user) {
+                                                self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    DispatchQueue.main.async {
+                                        if !self.accountInfo.friends.keys.contains(user) {
+                                            self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                RequestAction<GetClientsMessagesData>(parameters: GetClientsMessagesData(
+                    AccountId: self.accountInfo.accountID
+                )).perform(action: get_clients_messages_req) { statusCode, resp in
+                    guard resp != nil && statusCode == 200 else {
+                        return
+                    }
+                    
+                    if let resp = resp as? [String: Array<[String: String]>] {
+                        resp.keys.forEach { user in
+                            if !self.accountInfo.friends.keys.contains(user) {
+                                for chat in self.accountInfo.allChats {
+                                    print(chat)
+                                    if chat.keys.contains(user) {
+                                        self.accountInfo.allChats.removeAll(where: { $0 == chat })
+                                        break
+                                    }
+                                }
+                                
+                                self.accountInfo.messages.removeValue(forKey: user)
+                            } else {
+                                if let friendImage = self.accountInfo.friends[user] {
+                                    if !self.accountInfo.allChats.contains(where: { $0 == [user: friendImage] }) {
+                                        self.accountInfo.allChats.append([user: friendImage])
+                                    }
+                                } else {
+                                    if !self.accountInfo.allChats.contains(where: { $0 == [user: Image(systemName: "person.crop.circle.fill")] }) {
+                                        self.accountInfo.allChats.append([user: Image(systemName: "person.crop.circle.fill")])
+                                    }
+                                }
+                                
+                                /* MARK: Automatically assume there is no chat history with `user`. */
+                                if !self.accountInfo.messages.keys.contains(user) {
+                                    self.accountInfo.messages[user] = []
+                                }
+                                
+                                if !resp[user]!.isEmpty {
+                                    
+                                    resp[user]!.forEach { message in
+                                        let messageData = FriendMessageDetails(
+                                            MessageID: message["MessageID"]!,
+                                            ContentType: message["ContentType"]!,
+                                            MessageContent: message["MessageContent"]!,
+                                            From: message["From"]!,
+                                            dateSent: ISO8601DateFormatter().date(from: message["dateSent"]!)!
+                                        )
+                                        
+                                        if !self.accountInfo.messages[user]!.contains(where: { $0 == messageData }) && messageData.From != "client" {
+                                            self.accountInfo.messages[user]!.append(messageData)
+                                        }
+                                    }
+                                    
+                                    /*if let messageHistoryWithUser = resp[user]! as? Array<FriendMessageDetails> {
+                                     print(messageHistoryWithUser)
+                                     /*messageHistoryWithUser.forEach { message in
+                                      self.accountInfo.messages[user]!.append(message)
+                                      }*/
+                                     }*/
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                Thread.sleep(forTimeInterval: 1.5)
+            }
+        }
+    }
     
     var body: some View {
         if !self.showAccount {
@@ -168,7 +309,8 @@ struct ChatView: View {
                                 friendSearch: $friendSearch,
                                 userHasSignedIn: $userHasSignedIn,
                                 prop: prop,
-                                backgroundColor: Color.EZNotesLightBlack
+                                backgroundColor: Color.EZNotesLightBlack,
+                                showUserProfilePreview: $showUserProfilePreview
                             )
                             
                             if self.accountInfo.allChats.isEmpty {
@@ -568,92 +710,24 @@ struct ChatView: View {
                         }
                     })
                 )
+                .onChange(of: self.scenePhase) { /* MARK: Ensure consistent requests stop being sent to the user when the user leaves the app. */
+                    if self.scenePhase == .background {
+                        self.fetchData = false
+                    }
+                    
+                    if self.scenePhase == .active {
+                        if !self.fetchData {
+                            self.fetchData = true
+                            
+                            /* MARK: Restart the process where the app gets the users friend requests/friends/incoming friend requests and messages. */
+                            self.fetchClientsFriendData()
+                        }
+                    }
+                }
                 .onAppear {
                     if self.accountInfo.friends.isEmpty {
-                        self.loadingAllMessages = true
-                        Task {
-                            //if self.accountInfo.friends.isEmpty {
-                            await self.accountInfo.getFriends(accountID: self.accountInfo.accountID) { statusCode, resp in
-                                guard resp != nil && statusCode == 200 else {
-                                    self.loadingAllMessages = false
-                                    
-                                    return
-                                }
-                                
-                                if let resp = resp as? [String: [String: Any]] {
-                                    for user in resp.keys {
-                                        guard resp[user] != nil else { continue }
-                                        
-                                        if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
-                                            if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
-                                                self.accountInfo.friends[user] = Image(
-                                                    uiImage: UIImage(
-                                                        data: userPFPData
-                                                    )!
-                                                )
-                                            } else {
-                                                self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
-                                            }
-                                        } else {
-                                            self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
-                                        }
-                                    }
-                                }
-                                
-                                if !self.accountInfo.friends.isEmpty {
-                                    RequestAction<GetClientsMessagesData>(parameters: GetClientsMessagesData(
-                                        AccountId: self.accountInfo.accountID
-                                    )).perform(action: get_clients_messages_req) { statusCode, resp in
-                                        self.loadingAllMessages = false
-                                        
-                                        guard resp != nil && statusCode == 200 else {
-                                            if let resp = resp { print(resp) }
-                                            return
-                                        }
-                                        
-                                        if let resp = resp as? [String: Array<[String: String]>] {
-                                            resp.keys.forEach { user in
-                                                if let friendImage = self.accountInfo.friends[user] {
-                                                    self.accountInfo.allChats.append([user: friendImage])
-                                                } else {
-                                                    self.accountInfo.allChats.append([user: Image(systemName: "person.crop.circle.fill")])
-                                                }
-                                                
-                                                /* MARK: Automatically assume there is no chat history with `user`. */
-                                                if !self.accountInfo.messages.keys.contains(user) {
-                                                    self.accountInfo.messages[user] = []
-                                                }
-                                                
-                                                if !resp[user]!.isEmpty {
-                                                    
-                                                    resp[user]!.forEach { message in
-                                                        let messageData = FriendMessageDetails(
-                                                            MessageID: message["MessageID"]!,
-                                                            ContentType: message["ContentType"]!,
-                                                            MessageContent: message["MessageContent"]!,
-                                                            From: message["From"]!,
-                                                            dateSent: ISO8601DateFormatter().date(from: message["dateSent"]!)!
-                                                        )
-                                                        
-                                                        if !self.accountInfo.messages[user]!.contains(where: { $0.MessageID == messageData.MessageID }) {
-                                                            self.accountInfo.messages[user]!.append(messageData)
-                                                        }
-                                                    }
-                                                    
-                                                    /*if let messageHistoryWithUser = resp[user]! as? Array<FriendMessageDetails> {
-                                                     print(messageHistoryWithUser)
-                                                     /*messageHistoryWithUser.forEach { message in
-                                                      self.accountInfo.messages[user]!.append(message)
-                                                      }*/
-                                                     }*/
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            //}
-                        }
+                        //self.loadingAllMessages = true
+                        
                     } else {
                         RequestAction<GetClientsMessagesData>(parameters: GetClientsMessagesData(
                             AccountId: self.accountInfo.accountID
@@ -708,79 +782,11 @@ struct ChatView: View {
                         }
                     }
                     
-                    DispatchQueue.global(qos: .background).async {
-                        /* TODO: Send requests to server every 1s to consistently get new messages. */
-                        while(self.fetchMessages) {
-                            RequestAction<GetClientsMessagesData>(parameters: GetClientsMessagesData(
-                                AccountId: self.accountInfo.accountID
-                            )).perform(action: get_clients_messages_req) { statusCode, resp in
-                                guard resp != nil && statusCode == 200 else {
-                                    if let resp = resp { print(resp, "\tLOL!") }
-                                    return
-                                }
-                                
-                                if let resp = resp as? [String: Array<[String: String]>] {
-                                    resp.keys.forEach { user in
-                                        if !self.accountInfo.friends.keys.contains(user) {
-                                            for chat in self.accountInfo.allChats {
-                                                print(chat)
-                                                if chat.keys.contains(user) {
-                                                    self.accountInfo.allChats.removeAll(where: { $0 == chat })
-                                                    break
-                                                }
-                                            }
-                                            
-                                            self.accountInfo.messages.removeValue(forKey: user)
-                                        } else {
-                                            if let friendImage = self.accountInfo.friends[user] {
-                                                if !self.accountInfo.allChats.contains(where: { $0 == [user: friendImage] }) {
-                                                    self.accountInfo.allChats.append([user: friendImage])
-                                                }
-                                            } else {
-                                                if !self.accountInfo.allChats.contains(where: { $0 == [user: Image(systemName: "person.crop.circle.fill")] }) {
-                                                    self.accountInfo.allChats.append([user: Image(systemName: "person.crop.circle.fill")])
-                                                }
-                                            }
-                                            
-                                            /* MARK: Automatically assume there is no chat history with `user`. */
-                                            if !self.accountInfo.messages.keys.contains(user) {
-                                                self.accountInfo.messages[user] = []
-                                            }
-                                            
-                                            if !resp[user]!.isEmpty {
-                                                
-                                                resp[user]!.forEach { message in
-                                                    let messageData = FriendMessageDetails(
-                                                        MessageID: message["MessageID"]!,
-                                                        ContentType: message["ContentType"]!,
-                                                        MessageContent: message["MessageContent"]!,
-                                                        From: message["From"]!,
-                                                        dateSent: ISO8601DateFormatter().date(from: message["dateSent"]!)!
-                                                    )
-                                                    
-                                                    if !self.accountInfo.messages[user]!.contains(where: { $0 == messageData }) && messageData.From != "client" {
-                                                        self.accountInfo.messages[user]!.append(messageData)
-                                                    }
-                                                }
-                                                
-                                                /*if let messageHistoryWithUser = resp[user]! as? Array<FriendMessageDetails> {
-                                                 print(messageHistoryWithUser)
-                                                 /*messageHistoryWithUser.forEach { message in
-                                                  self.accountInfo.messages[user]!.append(message)
-                                                  }*/
-                                                 }*/
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            Thread.sleep(forTimeInterval: 1.5)
-                        }
-                    }
+                    /* MARK: This will run each time the view appears. However, if the user exits the app it will end due to the scene change. After the user comes back to the app, the scene will change to `active` and the `.onChange` above will handle restarting this process. */
+                    self.fetchClientsFriendData()
                 }
                 .onDisappear {
-                    self.fetchMessages = false
+                    self.fetchData = false
                 }
                 .popover(isPresented: $newChatPopup) {
                     VStack {
@@ -851,12 +857,22 @@ struct ChatView: View {
                                 }
                             )
                             .onChange(of: self.newChatSearch) {
+                                self.newChatSearchResults.removeAll()
+                                
                                 if self.newChatSearch.isEmpty || self.newChatSearch == "" {
                                     self.showAllClientsFriends = true
                                     return
                                 }
                                 
                                 if self.showAllClientsFriends { self.showAllClientsFriends = false }
+                                
+                                for user in self.accountInfo.friends.keys {
+                                    if user.contains(self.newChatSearch) {
+                                        self.newChatSearchResults[user] = self.accountInfo.friends[user]!
+                                    }
+                                }
+                                
+                                print(self.newChatSearchResults)
                             }
                             .padding([.top, .bottom])
                         }
@@ -870,82 +886,174 @@ struct ChatView: View {
                             .frame(maxWidth: prop.size.width - 40, alignment: .leading)
                             .font(Font.custom("Poppins-SemiBold", size: 18))
                             .foregroundStyle(.white)
-                    
-                        ScrollView(.vertical, showsIndicators: false) {
-                            VStack {
-                                if self.showAllClientsFriends {
-                                    ForEach(Array(self.accountInfo.friends.enumerated()), id: \.offset) { index, value in
-                                        Button(action: {
-                                            RequestAction<StartNewChatData>(parameters: StartNewChatData(
-                                                AccountId: self.accountInfo.accountID,
-                                                StartChatWith: value.key
-                                            )).perform(action: start_chat_req) { statusCode, resp in
-                                                guard resp != nil && statusCode == 200 else {
-                                                    guard let resp = resp, resp.keys.contains("ErrorCode") else { return }
-                                                    
-                                                    if resp["ErrorCode"]! as! Int == 0x4545 {
-                                                        /* MARK: The chat exists.. launch it. */
+                        
+                        if !self.accountInfo.friends.isEmpty {
+                            if !self.showAllClientsFriends && self.newChatSearchResults.isEmpty {
+                                Text("No Results")
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                    .font(Font.custom("Poppins-Regular", size: 16))
+                                    .foregroundStyle(.white)
+                            } else {
+                                ScrollView(.vertical, showsIndicators: false) {
+                                    VStack {
+                                        if self.showAllClientsFriends {
+                                            ForEach(Array(self.accountInfo.friends.enumerated()), id: \.offset) { index, value in
+                                                Button(action: {
+                                                    RequestAction<StartNewChatData>(parameters: StartNewChatData(
+                                                        AccountId: self.accountInfo.accountID,
+                                                        StartChatWith: value.key
+                                                    )).perform(action: start_chat_req) { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            guard let resp = resp, resp.keys.contains("ErrorCode") else { return }
+                                                            
+                                                            if resp["ErrorCode"]! as! Int == 0x4545 {
+                                                                /* MARK: The chat exists.. launch it. */
+                                                                self.chattingWith = value.key
+                                                                self.usersBeingChattedWithPfp = self.accountInfo.friends[value.key]!
+                                                                self.chatSelected = true
+                                                                self.newChatPopup = false
+                                                                return
+                                                            }
+                                                            
+                                                            return /* TODO: Handle error*/
+                                                        }
+                                                        
+                                                        self.accountInfo.allChats.append([value.key: self.accountInfo.friends[value.key]!])
+                                                        self.accountInfo.messages[value.key] = []
+                                                        
                                                         self.chattingWith = value.key
                                                         self.usersBeingChattedWithPfp = self.accountInfo.friends[value.key]!
                                                         self.chatSelected = true
                                                         self.newChatPopup = false
-                                                        return
                                                     }
-                                                    
-                                                    return /* TODO: Handle error*/
+                                                }) {
+                                                    HStack {
+                                                        ZStack {
+                                                            Circle()
+                                                                .fill(Color.EZNotesBlue)
+                                                            
+                                                            /*Image(systemName: "person.crop.circle.fill")*/
+                                                            self.accountInfo.friends[value.key]!
+                                                                .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
+                                                                .scaledToFill()
+                                                                .frame(maxWidth: 35, maxHeight: 35)
+                                                                .clipShape(.circle)
+                                                                .foregroundStyle(.white)
+                                                        }
+                                                        .frame(width: 38, height: 38)
+                                                        
+                                                        Text(value.key)
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                                            .foregroundStyle(.white)
+                                                    }
+                                                    .padding(8)
                                                 }
-                                                
-                                                self.accountInfo.allChats.append([value.key: self.accountInfo.friends[value.key]!])
-                                                self.accountInfo.messages[value.key] = []
-                                                
-                                                self.chattingWith = value.key
-                                                self.usersBeingChattedWithPfp = self.accountInfo.friends[value.key]!
-                                                self.chatSelected = true
-                                                self.newChatPopup = false
+                                                .buttonStyle(NoLongPressButtonStyle())
                                             }
-                                        }) {
-                                            HStack {
-                                                ZStack {
-                                                    Circle()
-                                                        .fill(Color.EZNotesBlue)
-                                                    
-                                                    /*Image(systemName: "person.crop.circle.fill")*/
-                                                    self.accountInfo.friends[value.key]!
-                                                        .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
-                                                        .scaledToFill()
-                                                        .frame(maxWidth: 35, maxHeight: 35)
-                                                        .clipShape(.circle)
-                                                        .foregroundStyle(.white)
+                                        } else {
+                                            ForEach(Array(self.newChatSearchResults.enumerated()), id: \.offset) { index, value in
+                                                Button(action: {
+                                                    RequestAction<StartNewChatData>(parameters: StartNewChatData(
+                                                        AccountId: self.accountInfo.accountID,
+                                                        StartChatWith: value.key
+                                                    )).perform(action: start_chat_req) { statusCode, resp in
+                                                        guard resp != nil && statusCode == 200 else {
+                                                            guard let resp = resp, resp.keys.contains("ErrorCode") else { return }
+                                                            
+                                                            if resp["ErrorCode"]! as! Int == 0x4545 {
+                                                                /* MARK: The chat exists.. launch it. */
+                                                                self.chattingWith = value.key
+                                                                self.usersBeingChattedWithPfp = self.accountInfo.friends[value.key]!
+                                                                self.chatSelected = true
+                                                                self.newChatPopup = false
+                                                                return
+                                                            }
+                                                            
+                                                            return /* TODO: Handle error*/
+                                                        }
+                                                        
+                                                        self.accountInfo.allChats.append([value.key: self.accountInfo.friends[value.key]!])
+                                                        self.accountInfo.messages[value.key] = []
+                                                        
+                                                        self.chattingWith = value.key
+                                                        self.usersBeingChattedWithPfp = self.accountInfo.friends[value.key]!
+                                                        self.chatSelected = true
+                                                        self.newChatPopup = false
+                                                    }
+                                                }) {
+                                                    HStack {
+                                                        ZStack {
+                                                            Circle()
+                                                                .fill(Color.EZNotesBlue)
+                                                            
+                                                            /*Image(systemName: "person.crop.circle.fill")*/
+                                                            self.accountInfo.friends[value.key]!
+                                                                .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
+                                                                .scaledToFill()
+                                                                .frame(maxWidth: 35, maxHeight: 35)
+                                                                .clipShape(.circle)
+                                                                .foregroundStyle(.white)
+                                                        }
+                                                        .frame(width: 38, height: 38)
+                                                        
+                                                        Text(value.key)
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                                            .foregroundStyle(.white)
+                                                    }
+                                                    .padding(8)
                                                 }
-                                                .frame(width: 38, height: 38)
-                                                
-                                                Text(value.key)
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
-                                                    .foregroundStyle(.white)
+                                                .buttonStyle(NoLongPressButtonStyle())
                                             }
-                                            .padding(8)
                                         }
-                                        .buttonStyle(NoLongPressButtonStyle())
                                     }
-                                } else {
-                                    /* TODO: Iterate through all the users that are found by the search and display them. */
+                                    .padding(6)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(Color.EZNotesLightBlack.opacity(0.4))//(Color.EZNotesBlack.opacity(0.6))
+                                    )
+                                    .cornerRadius(15)
+                                    .padding(.bottom, 30)
                                 }
+                                .frame(maxWidth: prop.size.width - 40)
                             }
-                            .padding(6)
-                            .background(
-                                RoundedRectangle(cornerRadius: 15)
-                                    .fill(Color.EZNotesLightBlack.opacity(0.4))//(Color.EZNotesBlack.opacity(0.6))
-                            )
-                            .cornerRadius(15)
-                            .padding(.bottom, 30)
+                        } else {
+                            Text("No Friends")
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                .font(Font.custom("Poppins-Regular", size: 16))
+                                .foregroundStyle(.white)
+                            
+                            Button(action: {
+                                self.showUserProfilePreview = true
+                                self.newChatPopup = false
+                            }) {
+                                HStack {
+                                    Text("Add Friend")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .padding([.top, .bottom], 8)
+                                        .foregroundStyle(.black)
+                                        .setFontSizeAndWeight(weight: .bold, size: 18)
+                                        .minimumScaleFactor(0.5)
+                                }
+                                .frame(maxWidth: prop.size.width - 20)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(.white)
+                                )
+                                .cornerRadius(15)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
                         }
-                        .frame(maxWidth: prop.size.width - 40)
                         
                         Spacer()
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(.black)
+                    .onTapGesture {
+                        /* MARK: Ensure there is a way for the user to exit the focus of the search bar. This `.onTapGesture` ensures that if the user taps anywhere (with the exception of the searchbar itself), the keyboard will go away. */
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
                 }
             }
         } else {

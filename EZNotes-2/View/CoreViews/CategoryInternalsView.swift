@@ -60,7 +60,7 @@ private struct ShowLongAndShortNameSets: View {
                                     Image(systemName: "chevron.forward")
                                         .resizable()
                                         .frame(width: 10, height: 15)
-                                        .foregroundStyle(.gray)
+                                        .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .gray)
                                 }
                                 .frame(maxWidth: 20, alignment: .trailing)
                                 .padding(.trailing, 15)
@@ -240,7 +240,9 @@ struct CategoryInternalsView: View {
     @State private var createNewSet: Bool = false
     @State private var createNewSetByImage: Bool = false
     @State private var newSetName: String = ""
+    @FocusState private var newSetNameFocused: Bool
     @State private var newSetNotes: String = ""
+    @FocusState private var newSetNotesFocused: Bool
     @State private var error: CIError = .None
     
     /* MARK: Variables regarding search bar. */
@@ -399,7 +401,7 @@ struct CategoryInternalsView: View {
                     VStack {
                         Spacer()
                         
-                        VStack {
+                        /*VStack {
                             HStack {
                                 ZStack {
                                     Button(action: {
@@ -592,12 +594,173 @@ struct CategoryInternalsView: View {
                         .onTapGesture {
                             /* MARK: Do nothing, just capture the tap gesture event so the one on the parent view doesn't get triggered and close out the entire view. */
                             return
+                        }*/
+                        
+                        VStack {
+                            if self.error == .NewSetNameEmpty || self.error == .NewSetNotesEmpty {
+                                Text(self.error == .NewSetNameEmpty
+                                     ? "The set name is empty. Ensure you apply a name to the new set."
+                                     : "The notes for the set **\(self.newSetName)** you are creating are empty.")
+                                .frame(maxWidth: prop.size.width - 80, alignment: .center)
+                                .foregroundStyle(Color.EZNotesRed)
+                                .font(
+                                    .system(
+                                        size: prop.isIpad || prop.isLargerScreen
+                                        ? 15
+                                        : 13
+                                    )
+                                )
+                                .multilineTextAlignment(.center)
+                                .padding(.bottom, 15)
+                            }
+                            
+                            if self.newSetNameFocused {
+                                HStack {
+                                    Spacer()
+                                    
+                                    Button(action: { self.newSetNameFocused = false }) {
+                                        Text("Done")
+                                            .font(Font.custom("Poppins-SemiBold", size: 16))
+                                            .foregroundStyle(Color.EZNotesBlue)
+                                    }
+                                }
+                                .padding(.horizontal)//([.trailing, .leading])
+                            }
+                            //VStack {
+                                HStack {
+                                    TextField(
+                                        "",
+                                        text: $newSetName,
+                                        axis: .vertical
+                                    )
+                                    .frame(
+                                        maxWidth: .infinity
+                                    )
+                                    .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
+                                    .focused($newSetNameFocused)
+                                    .autocorrectionDisabled(true)
+                                    .lineLimit(2)
+                                    .overlay(
+                                        HStack {
+                                            if self.newSetName.isEmpty && !self.newSetNameFocused {
+                                                Text("Set name...")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
+                                                    .padding(.leading, 10)
+                                            }
+                                        }
+                                        .onTapGesture { self.newSetNameFocused = true }
+                                    )
+                                    .onChange(of: self.newSetName) {
+                                        if self.newSetName.count > 30 { /* MARK: Testing number. User created category names cannot surpass 30 characters. */
+                                            self.newSetName = String(self.newSetName.prefix(30))
+                                        }
+                                    }
+                                    
+                                    
+                                    ZStack {
+                                        Image(systemName: "chevron.forward")
+                                            .resizable()
+                                            .frame(width: 10, height: 15)
+                                            .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .gray)
+                                    }
+                                    .frame(maxWidth: 20, alignment: .trailing)
+                                    .padding(.trailing, 15)
+                                }
+                                //.frame(maxWidth: .infinity)
+                                .padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
+                                          ? [.top, .bottom, .leading, .trailing]
+                                          : [.top, .leading, .trailing],*/
+                                    8//self.categoryData.setAndNotes[self.categoryName]!.count == 1 ? 8 : 4
+                                )
+                            //}
+                            .frame(maxWidth: prop.size.width - 20)
+                            .padding(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
+                            )
+                            .cornerRadius(15)
+                            .padding([.leading, .trailing])
+                            
+                            if self.newSetNotesFocused {
+                                HStack {
+                                    Spacer()
+                                    
+                                    Button(action: { self.newSetNotesFocused = false }) {
+                                        Text("Done")
+                                            .font(Font.custom("Poppins-SemiBold", size: 16))
+                                            .foregroundStyle(Color.EZNotesBlue)
+                                    }
+                                }
+                                .padding(.horizontal)//([.trailing, .leading])
+                            }
+                            
+                            TextField(
+                                "Write your notes...",
+                                text: $newSetNotes,
+                                axis: .vertical
+                            )
+                            .frame(minHeight: textHeight(for: self.newSetNotes, width: UIScreen.main.bounds.width), alignment: .leading)
+                            .padding([.leading], 15)
+                            .padding(7)
+                            .background(Color(.systemGray5))
+                            .cornerRadius(7.5)
+                            .lineLimit(5...20)
+                            .border(width: 1, edges: [.bottom], color: self.error == .NewSetNotesEmpty ? Color.EZNotesRed : Color.clear)
+                            .cornerRadius(15)
+                            .padding([.leading, .trailing])
+                            .focused($newSetNotesFocused)
+                            
+                            Button(action: {
+                                if self.newSetName.isEmpty { self.error = .NewSetNameEmpty; return }
+                                if self.newSetNotes.isEmpty { self.error = .NewSetNotesEmpty; return }
+                                
+                                self.error = .None
+                                
+                                self.categoryData.categoriesAndSets[self.categoryName]!.append(self.newSetName)
+                                self.categoryData.setAndNotes[self.categoryName]!.append([self.newSetName: self.newSetNotes])
+                                
+                                writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                
+                                if self.settings.trackUserCreatedSets {
+                                    self.categoryData.userCreatedSetNames.append(self.newSetName)
+                                    writeUserCreatedSetNames(userCreatedSetNames: self.categoryData.userCreatedSetNames)
+                                    
+                                    if self.newSetName.count > 15 { self.userCreatedLongSetNames.append(self.newSetName) }
+                                    else { self.userCreatedShortSetNames.append(self.newSetName) }
+                                } else {
+                                    if self.newSetName.count > 15 { self.longerSetNames.append(self.newSetName) }
+                                    else { self.shorterSetNames.append(self.newSetName) }
+                                }
+                                
+                                self.newSetName.removeAll()
+                                self.newSetNotes.removeAll()
+                                
+                                /* MARK: Ensure the popup goes away. */
+                                self.createNewSet = false
+                                self.testPopup = false
+                            }) {
+                                HStack {
+                                    Text("Create")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .foregroundStyle(.black)
+                                        .setFontSizeAndWeight(weight: .bold, size: 18)
+                                }
+                                .padding(8)
+                                .background(.white)
+                                .cornerRadius(15)
+                                .padding([.leading, .trailing])
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
                         }
+                        .onTapGesture { return }
                         
                         Spacer()
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.EZNotesLightBlack.opacity(0.7))
+                    .background(.black.opacity(0.7))
                     .onTapGesture {
                         self.createNewSet = false
                     }

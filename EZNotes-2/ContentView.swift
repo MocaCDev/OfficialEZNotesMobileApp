@@ -394,6 +394,89 @@ struct ContentView: View {
                     //DispatchQueue.global(qos: .background).async {
                     
                 }*/
+                .onChange(of: self.scenePhase) {
+                    if self.scenePhase == .active {
+                        Task {
+                            //if self.accountInfo.friends.isEmpty {
+                            await self.accountInfo.getFriends(accountID: self.accountInfo.accountID) { statusCode, resp in
+                                guard resp != nil && statusCode == 200 else {
+                                    return
+                                }
+                                
+                                if let resp = resp as? [String: [String: Any]] {
+                                    for user in resp.keys {
+                                        guard resp[user] != nil else { continue }
+                                        
+                                        if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
+                                            if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
+                                                self.accountInfo.friends[user] = Image(
+                                                    uiImage: UIImage(
+                                                        data: userPFPData
+                                                    )!
+                                                )
+                                            } else {
+                                                self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
+                                            }
+                                        } else {
+                                            self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
+                                        }
+                                    }
+                                }
+                                
+                                if !self.accountInfo.friends.isEmpty {
+                                    RequestAction<GetClientsMessagesData>(parameters: GetClientsMessagesData(
+                                        AccountId: self.accountInfo.accountID
+                                    )).perform(action: get_clients_messages_req) { statusCode, resp in
+                                        guard resp != nil && statusCode == 200 else {
+                                            if let resp = resp { print(resp) }
+                                            return
+                                        }
+                                        
+                                        if let resp = resp as? [String: Array<[String: String]>] {
+                                            resp.keys.forEach { user in
+                                                if let friendImage = self.accountInfo.friends[user] {
+                                                    self.accountInfo.allChats.append([user: friendImage])
+                                                } else {
+                                                    self.accountInfo.allChats.append([user: Image(systemName: "person.crop.circle.fill")])
+                                                }
+                                                
+                                                /* MARK: Automatically assume there is no chat history with `user`. */
+                                                if !self.accountInfo.messages.keys.contains(user) {
+                                                    self.accountInfo.messages[user] = []
+                                                }
+                                                
+                                                if !resp[user]!.isEmpty {
+                                                    
+                                                    resp[user]!.forEach { message in
+                                                        let messageData = FriendMessageDetails(
+                                                            MessageID: message["MessageID"]!,
+                                                            ContentType: message["ContentType"]!,
+                                                            MessageContent: message["MessageContent"]!,
+                                                            From: message["From"]!,
+                                                            dateSent: ISO8601DateFormatter().date(from: message["dateSent"]!)!
+                                                        )
+                                                        
+                                                        if !self.accountInfo.messages[user]!.contains(where: { $0.MessageID == messageData.MessageID }) {
+                                                            self.accountInfo.messages[user]!.append(messageData)
+                                                        }
+                                                    }
+                                                    
+                                                    /*if let messageHistoryWithUser = resp[user]! as? Array<FriendMessageDetails> {
+                                                     print(messageHistoryWithUser)
+                                                     /*messageHistoryWithUser.forEach { message in
+                                                      self.accountInfo.messages[user]!.append(message)
+                                                      }*/
+                                                     }*/
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            //}
+                        }
+                    }
+                }
                 .onAppear(perform: { /* MARK: The below code is placed in the `.onAppear`, regardless if the user logged in, signed up or just re-launched the app. All of the users data, unless further noticed, will be stored in `UserDefaults`. */
                     // else {
                     //Task {
@@ -442,6 +525,86 @@ struct ContentView: View {
                         
                         if udKeyExists(key: "account_id") {
                             accountInfo.setAccountID(accountID: getUDValue(key: "account_id"))
+                            
+                            Task {
+                                //if self.accountInfo.friends.isEmpty {
+                                await self.accountInfo.getFriends(accountID: self.accountInfo.accountID) { statusCode, resp in
+                                    guard resp != nil && statusCode == 200 else {
+                                        return
+                                    }
+                                    
+                                    if let resp = resp as? [String: [String: Any]] {
+                                        for user in resp.keys {
+                                            guard resp[user] != nil else { continue }
+                                            
+                                            if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
+                                                if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
+                                                    self.accountInfo.friends[user] = Image(
+                                                        uiImage: UIImage(
+                                                            data: userPFPData
+                                                        )!
+                                                    )
+                                                } else {
+                                                    self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
+                                                }
+                                            } else {
+                                                self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
+                                            }
+                                        }
+                                    }
+                                    
+                                    if !self.accountInfo.friends.isEmpty {
+                                        RequestAction<GetClientsMessagesData>(parameters: GetClientsMessagesData(
+                                            AccountId: self.accountInfo.accountID
+                                        )).perform(action: get_clients_messages_req) { statusCode, resp in
+                                            guard resp != nil && statusCode == 200 else {
+                                                if let resp = resp { print(resp) }
+                                                return
+                                            }
+                                            
+                                            if let resp = resp as? [String: Array<[String: String]>] {
+                                                resp.keys.forEach { user in
+                                                    if let friendImage = self.accountInfo.friends[user] {
+                                                        self.accountInfo.allChats.append([user: friendImage])
+                                                    } else {
+                                                        self.accountInfo.allChats.append([user: Image(systemName: "person.crop.circle.fill")])
+                                                    }
+                                                    
+                                                    /* MARK: Automatically assume there is no chat history with `user`. */
+                                                    if !self.accountInfo.messages.keys.contains(user) {
+                                                        self.accountInfo.messages[user] = []
+                                                    }
+                                                    
+                                                    if !resp[user]!.isEmpty {
+                                                        
+                                                        resp[user]!.forEach { message in
+                                                            let messageData = FriendMessageDetails(
+                                                                MessageID: message["MessageID"]!,
+                                                                ContentType: message["ContentType"]!,
+                                                                MessageContent: message["MessageContent"]!,
+                                                                From: message["From"]!,
+                                                                dateSent: ISO8601DateFormatter().date(from: message["dateSent"]!)!
+                                                            )
+                                                            
+                                                            if !self.accountInfo.messages[user]!.contains(where: { $0.MessageID == messageData.MessageID }) {
+                                                                self.accountInfo.messages[user]!.append(messageData)
+                                                            }
+                                                        }
+                                                        
+                                                        /*if let messageHistoryWithUser = resp[user]! as? Array<FriendMessageDetails> {
+                                                         print(messageHistoryWithUser)
+                                                         /*messageHistoryWithUser.forEach { message in
+                                                          self.accountInfo.messages[user]!.append(message)
+                                                          }*/
+                                                         }*/
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                //}
+                            }
                             
                             if self.accountInfo.username == "" {
                                 /* MARK: Upon any error ocurring whilst getting the users username by account ID, we will assume the user cannot be found and, therefore, show a "User Not Found" error. */
