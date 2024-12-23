@@ -11,6 +11,7 @@ enum CIError: Error {
     case None
     case NewSetNameEmpty
     case NewSetNotesEmpty
+    case NewSetNameExists
 }
 
 private struct ShowLongAndShortNameSets: View {
@@ -597,10 +598,12 @@ struct CategoryInternalsView: View {
                         }*/
                         
                         VStack {
-                            if self.error == .NewSetNameEmpty || self.error == .NewSetNotesEmpty {
+                            if self.error == .NewSetNameEmpty || self.error == .NewSetNotesEmpty || self.error == .NewSetNameExists {
                                 Text(self.error == .NewSetNameEmpty
-                                     ? "The set name is empty. Ensure you apply a name to the new set."
-                                     : "The notes for the set **\(self.newSetName)** you are creating are empty.")
+                                     ? "The set name is empty. Ensure you apply a name to the new set"
+                                     : self.error == .NewSetNotesEmpty
+                                        ? "The notes for the set **\(self.newSetName)** you are creating are empty"
+                                        : "The set **\(self.newSetName)** already exists")
                                 .frame(maxWidth: prop.size.width - 80, alignment: .center)
                                 .foregroundStyle(Color.EZNotesRed)
                                 .font(
@@ -614,7 +617,7 @@ struct CategoryInternalsView: View {
                                 .padding(.bottom, 15)
                             }
                             
-                            if self.newSetNameFocused {
+                            /*if self.newSetNameFocused {
                                 HStack {
                                     Spacer()
                                     
@@ -625,7 +628,7 @@ struct CategoryInternalsView: View {
                                     }
                                 }
                                 .padding(.horizontal)//([.trailing, .leading])
-                            }
+                            }*/
                             //VStack {
                                 HStack {
                                     TextField(
@@ -648,39 +651,53 @@ struct CategoryInternalsView: View {
                                                     .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
                                                     .padding(.leading, 10)
                                             }
+                                            
+                                            if self.newSetNameFocused {
+                                                Spacer()
+                                                
+                                                Button(action: { self.newSetNameFocused = false }) {
+                                                    Text("Done")
+                                                        .font(Font.custom("Poppins-SemiBold", size: 16))
+                                                        .foregroundStyle(Color.EZNotesBlue)
+                                                }
+                                            }
                                         }
                                         .onTapGesture { self.newSetNameFocused = true }
                                     )
                                     .onChange(of: self.newSetName) {
+                                        if self.error != .None { self.error = .None }
+                                        
                                         if self.newSetName.count > 30 { /* MARK: Testing number. User created category names cannot surpass 30 characters. */
                                             self.newSetName = String(self.newSetName.prefix(30))
                                         }
                                     }
+                                    .padding(.bottom, 10) /* MARK: Push the below border down by 10 pixels. */
+                                    .border(width: 1, edges: [.bottom], color: self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
                                     
                                     
-                                    ZStack {
+                                    /*ZStack {
                                         Image(systemName: "chevron.forward")
                                             .resizable()
                                             .frame(width: 10, height: 15)
                                             .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .gray)
                                     }
                                     .frame(maxWidth: 20, alignment: .trailing)
-                                    .padding(.trailing, 15)
+                                    .padding(.trailing, 15)*/
                                 }
                                 //.frame(maxWidth: .infinity)
-                                .padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
+                                /*.padding(/*index == self.setAndNotes[self.categoryName]!.count - 1
                                           ? [.top, .bottom, .leading, .trailing]
                                           : [.top, .leading, .trailing],*/
                                     8//self.categoryData.setAndNotes[self.categoryName]!.count == 1 ? 8 : 4
-                                )
+                                )*/
                             //}
                             .frame(maxWidth: prop.size.width - 20)
                             .padding(10)
-                            .background(
+                            /*.background(
                                 RoundedRectangle(cornerRadius: 15)
                                     .fill(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)
                             )
-                            .cornerRadius(15)
+                            .cornerRadius(15)*/
                             .padding([.leading, .trailing])
                             
                             if self.newSetNotesFocused {
@@ -704,7 +721,7 @@ struct CategoryInternalsView: View {
                             .frame(minHeight: textHeight(for: self.newSetNotes, width: UIScreen.main.bounds.width), alignment: .leading)
                             .padding([.leading], 15)
                             .padding(7)
-                            .background(Color(.systemGray5))
+                            //.background(Color(.systemGray5))
                             .cornerRadius(7.5)
                             .lineLimit(5...20)
                             .border(width: 1, edges: [.bottom], color: self.error == .NewSetNotesEmpty ? Color.EZNotesRed : Color.clear)
@@ -715,6 +732,10 @@ struct CategoryInternalsView: View {
                             Button(action: {
                                 if self.newSetName.isEmpty { self.error = .NewSetNameEmpty; return }
                                 if self.newSetNotes.isEmpty { self.error = .NewSetNotesEmpty; return }
+                                if self.categoryData.setAndNotes[self.categoryName]!.contains(where: { $0.keys.first! == self.newSetName }) {
+                                    self.error = .NewSetNameExists
+                                    return
+                                }
                                 
                                 self.error = .None
                                 
@@ -755,6 +776,11 @@ struct CategoryInternalsView: View {
                             }
                             .buttonStyle(NoLongPressButtonStyle())
                         }
+                        .padding(6)
+                        .padding(.vertical)
+                        .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+                        .cornerRadius(15)
+                        .padding(.horizontal)
                         .onTapGesture { return }
                         
                         Spacer()
