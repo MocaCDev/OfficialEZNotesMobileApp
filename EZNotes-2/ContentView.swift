@@ -119,9 +119,667 @@ struct ContentView: View {
     @State private var createOneCategory: Bool = false
     @State private var errorType: String = "" /* TODO: Change this. */
     
+    /* MARK: States for the "startup screen" which prompts the login prompt for the user. */
+    @State private var loginUsername: String = ""
+    @State private var loginPassword: String = ""
+    @FocusState public var loginPasswordFieldInFocus: Bool
+    @State public var loginError: Bool = false
+    
+    @State private var isLoggingIn: Bool = true
+    @State private var signupSection: String = ""
+    
     var body: some View {
         if !userHasSignedIn {
-            StartupScreen(
+            ResponsiveView { prop in
+                ZStack {
+                    VStack {
+                        Image("Logo")
+                            .logoImageModifier(prop: prop)
+                        
+                        Spacer()
+                    }
+                    
+                    /*VStack {
+                        Spacer()
+                        
+                        VStack {
+                            Text("Hello,")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.bottom, 5)
+                                .foregroundStyle(.white)
+                                .font(
+                                    .system(
+                                        size: prop.isIpad
+                                            ? 90
+                                            : prop.isLargerScreen
+                                                ? 30
+                                                : 20
+                                    )
+                                )
+                                .fontWeight(.bold)
+                            
+                            Text("What are we doing?")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 18 : 16))
+                                .foregroundStyle(.white)
+                                .padding(.bottom, 20)
+                            
+                            Button(action: { }) {
+                                HStack {
+                                    Text("Logging In")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
+                                        .foregroundStyle(.white)
+                                        .padding(.leading, 15)
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .resizableImage(width: 10, height: 15)
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 15)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(Color.EZNotesLightBlack)
+                                )
+                                .cornerRadius(15)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            
+                            Button(action: { }) {
+                                HStack {
+                                    Text("Signing Up")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
+                                        .foregroundStyle(.white)
+                                        .padding(.leading, 15)
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .resizableImage(width: 10, height: 15)
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 15)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(Color.EZNotesLightBlack)
+                                )
+                                .cornerRadius(15)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                        }
+                        .frame(maxWidth: prop.size.width - 70)
+                        .padding()
+                        
+                        Spacer()
+                    }*/
+                    
+                    VStack {
+                        HStack {
+                            if !self.isLoggingIn {
+                                Button(action: {
+                                    /* TODO: Check `signupSection` and depending either go to the last section or retreat back to the "main screen". */
+                                    self.isLoggingIn = true
+                                    self.signupSection = ""
+                                }) {
+                                    Image(systemName: "arrow.backward")
+                                        .resizable()
+                                        .frame(width: 15, height: 15)
+                                        .foregroundStyle(.white)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                .padding(.trailing, 10) /* MARK: Ensure spacing between the text and the back button. */
+                            }
+                            
+                            Text(self.isLoggingIn
+                                 ? "Login"
+                                 : self.signupSection == "usecase"
+                                 ? "Select Usage"
+                                 : self.signupSection == "select_state_and_college"
+                                 ? "Select State/College"
+                                 : self.signupSection == "select_major_field"
+                                 ? "Select Major Field"
+                                 : self.signupSection == "select_major"
+                                 ? "Select Major"
+                                 : self.signupSection == "code_input"
+                                 ? "Input Code"
+                                 : "Select Plan")
+                            .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                            .padding(.bottom, 5)
+                            .foregroundStyle(.white)
+                            .font(
+                                .system(
+                                    size: prop.isIpad
+                                    ? 90
+                                    : prop.isLargerScreen
+                                    ? 35
+                                    : 25
+                                )
+                            )
+                            .fontWeight(.bold)
+                        }
+                        .frame(maxWidth: prop.size.width - 40)
+                        
+                        if self.isLoggingIn {
+                            ZStack {
+                                Color.EZNotesLightBlack
+                                    .cornerRadius(15)
+                                    .blur(radius: 14.5)
+                                //.padding(5.5)
+                                
+                                VStack {
+                                    if self.loginError {
+                                        Text("Email, Username or Password is incorrect")
+                                            .frame(maxWidth: prop.size.width - 100, alignment: .center)
+                                            .foregroundStyle(Color.EZNotesRed)
+                                            .font(
+                                                .system(
+                                                    size: prop.isIpad || prop.isLargerScreen
+                                                    ? 15
+                                                    : 13
+                                                )
+                                            )
+                                            .multilineTextAlignment(.center)
+                                    }
+                                    
+                                    VStack {
+                                        Text("Username or Email")
+                                            .frame(
+                                                width: prop.isIpad
+                                                ? UIDevice.current.orientation.isLandscape
+                                                ? prop.size.width - 800
+                                                : prop.size.width - 450
+                                                : prop.size.width - 80,
+                                                height: 5,
+                                                alignment: .leading
+                                            )
+                                            .padding(.top)
+                                            .font(
+                                                .system(
+                                                    size: prop.isLargerScreen ? 18 : 13
+                                                )
+                                            )
+                                            .foregroundStyle(.white)
+                                            .fontWeight(.medium)
+                                        
+                                        TextField("Username or Email...", text: $loginUsername)
+                                            .frame(
+                                                width: prop.isIpad
+                                                ? UIDevice.current.orientation.isLandscape
+                                                ? prop.size.width - 800
+                                                : prop.size.width - 450
+                                                : prop.size.width - 100,
+                                                height: 40
+                                            )
+                                            .padding(.leading, prop.isLargerScreen ? 15 : 5)
+                                            .background(
+                                                Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.clear)
+                                                    .borderBottomWLColor(isError: self.loginError)
+                                            )
+                                            .foregroundStyle(Color.EZNotesBlue)
+                                            .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
+                                            .tint(Color.EZNotesBlue)
+                                            .font(.system(size: 18))
+                                            .fontWeight(.medium)
+                                            .autocapitalization(.none)
+                                            .disableAutocorrection(true)
+                                            .keyboardType(.alphabet)
+                                        
+                                        ZStack {
+                                            HStack {
+                                                /* TODO: Implement "Forgot Username" section. It will require the user to have remembered the email address used for the account. */
+                                                Button(action: { print("Forgot Username") }) {
+                                                    Text("Forgot Username?")
+                                                        .frame(alignment: .leading)
+                                                        .foregroundStyle(Color.EZNotesBlue)
+                                                        .font(Font.custom("Poppins-Regular", size: 14))
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                                
+                                                Divider()
+                                                    .background(Color.white)
+                                                    .frame(maxHeight: 10)
+                                                
+                                                /* TODO: Implement "Forgot Email" section. It will require the user to have remembered the username used for the account. */
+                                                Button(action: { print("Forgot Email") }) {
+                                                    Text("Forgot Email?")
+                                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                                        .foregroundStyle(Color.EZNotesBlue)
+                                                        .font(Font.custom("Poppins-Regular", size: 13))
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                        }
+                                        .frame(maxWidth: prop.isIpad
+                                               ? UIDevice.current.orientation.isLandscape
+                                               ? prop.size.width - 800
+                                               : prop.size.width - 450
+                                               : prop.size.width - 80)
+                                        .padding(.bottom, 8)
+                                        
+                                        Text("Password")
+                                            .frame(
+                                                width: prop.isIpad
+                                                ? UIDevice.current.orientation.isLandscape
+                                                ? prop.size.width - 800
+                                                : prop.size.width - 450
+                                                : prop.size.width - 80,
+                                                height: 5,
+                                                alignment: .leading
+                                            )
+                                            .padding(.top, 10)
+                                            .font(
+                                                .system(
+                                                    size: prop.isLargerScreen ? 18 : 13
+                                                )
+                                            )
+                                            .foregroundStyle(.white)
+                                            .fontWeight(.medium)
+                                        
+                                        SecureField("Password...", text: $loginPassword)
+                                            .frame(
+                                                width: prop.isIpad
+                                                ? UIDevice.current.orientation.isLandscape
+                                                ? prop.size.width - 800
+                                                : prop.size.width - 450
+                                                : prop.size.width - 100,
+                                                height: 40
+                                            )
+                                            .padding(.leading, prop.isLargerScreen ? 15 : 5)
+                                            .background(
+                                                Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
+                                                    .borderBottomWLColor(isError: self.loginError)
+                                            )
+                                            .foregroundStyle(Color.EZNotesBlue)
+                                            .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
+                                            .tint(Color.EZNotesBlue)
+                                            .font(.system(size: 18))
+                                            .fontWeight(.medium)
+                                            .focused($loginPasswordFieldInFocus)
+                                            .autocapitalization(.none)
+                                            .disableAutocorrection(true)
+                                        
+                                        ZStack {
+                                            Button(action: { print("Forgot Password") }) {
+                                                Text("Forgot Password?")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .foregroundStyle(Color.EZNotesBlue)
+                                                    .font(Font.custom("Poppins-Regular", size: 13))
+                                            }
+                                            .buttonStyle(NoLongPressButtonStyle())
+                                        }
+                                        .frame(maxWidth: prop.isIpad
+                                               ? UIDevice.current.orientation.isLandscape
+                                               ? prop.size.width - 800
+                                               : prop.size.width - 450
+                                               : prop.size.width - 80)
+                                        
+                                        Button(action: {
+                                            self.isLoggingIn = false
+                                            
+                                            /* TODO: Depending on the last "state" of the sign up section, configure the view accordingly here. */
+                                            self.signupSection = "usecase"
+                                        }) {
+                                            HStack {
+                                                Text("Sign In")
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                    .padding([.top, .bottom], 8)
+                                                    .foregroundStyle(.white)
+                                                    .setFontSizeAndWeight(weight: .bold, size: prop.isLargerScreen ? 18 : 16)
+                                            }
+                                            .frame(maxWidth: prop.size.width - 70) /* MARK: Make it 30 pixels shorter. */
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.clear)
+                                                    .stroke(Color.white, lineWidth: 0.5)
+                                            )
+                                            .cornerRadius(15)
+                                            .padding(.top)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
+                                    .padding(8)
+                                    //.padding(.top, prop.isLargerScreen ? 25 : 20)
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .padding(8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(.black)
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 15))
+                                .padding(3)
+                            }
+                            .frame(maxWidth: prop.size.width - 40, maxHeight: 300)
+                            .padding()
+                            .padding(.top, 10)
+                            
+                            Text("Or")
+                                .frame(
+                                    maxWidth: .infinity,
+                                    alignment: .center
+                                )
+                                .padding(.vertical) /* MARK: Since the above `ZStack` adds padding to all sides, we only need to add padding to `.bottom` here. */
+                                .font(
+                                    .system(
+                                        size: prop.isLargerScreen ? 18 : 13
+                                    )
+                                )
+                                .foregroundStyle(.white)
+                                .fontWeight(.medium)
+                            
+                            Button(action: {
+                                self.isLoggingIn = false
+                                
+                                /* TODO: Depending on the last "state" of the sign up section, configure the view accordingly here. */
+                                self.signupSection = "usecase"
+                            }) {
+                                HStack {
+                                    Text("Sign Up")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .padding([.top, .bottom], 8)
+                                        .foregroundStyle(.black)
+                                        .setFontSizeAndWeight(weight: .bold, size: prop.isLargerScreen ? 22 : 20)
+                                }
+                                .frame(maxWidth: prop.size.width - 40)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(.white)
+                                )
+                                .cornerRadius(15)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                        } else {
+                            switch(self.signupSection) {
+                            case "usecase":
+                                VStack {
+                                    Button(action: {
+                                        assignUDKey(key: "usecase", value: "school")
+                                        //self.section = "credentials"
+                                        //assignUDKey(key: "last_signup_section", value: self.section)
+                                    }) {
+                                        HStack {
+                                            VStack {
+                                                Text("School")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 24 : 20))
+                                                    .foregroundStyle(.white)
+                                                
+                                                Text("Tailored to your school needs.")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 8)
+                                            .padding([.top, .bottom])
+                                            
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 20)
+                                                .foregroundStyle(.white)
+                                                .padding(.trailing, 15)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding()
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesLightBlack)
+                                        )
+                                        .cornerRadius(15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Button(action: {
+                                        assignUDKey(key: "usecase", value: "work")
+                                        //self.section = "credentials"
+                                        //assignUDKey(key: "last_signup_section", value: self.section)
+                                    }) {
+                                        HStack {
+                                            VStack {
+                                                Text("Work")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 24 : 20))
+                                                    .foregroundStyle(.white)
+                                                
+                                                Text("Tailored to your everyday needs.")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 8)
+                                            .padding([.top, .bottom])
+                                            
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 20)
+                                                .foregroundStyle(.white)
+                                                .padding(.trailing, 15)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding()
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesLightBlack)
+                                        )
+                                        .cornerRadius(15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Button(action: {
+                                        assignUDKey(key: "usecase", value: "general")
+                                        //self.section = "credentials"
+                                        //assignUDKey(key: "last_signup_section", value: self.section)
+                                    }) {
+                                        HStack {
+                                            VStack {
+                                                Text("General")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 24 : 20))
+                                                    .foregroundStyle(.white)
+                                                
+                                                Text("Tailored to anything you may need help with.")
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 8)
+                                            .padding([.top, .bottom])
+                                            
+                                            Image(systemName: "chevron.right")
+                                                .resizable()
+                                                .frame(width: 10, height: 20)
+                                                .foregroundStyle(.white)
+                                                .padding(.trailing, 15)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding()
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesLightBlack)
+                                        )
+                                        .cornerRadius(15)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                }
+                                .frame(maxWidth: prop.size.width - 40)
+                                .padding(.top, 10)
+                            default: VStack { }.onAppear { self.signupSection = "usecase" }
+                            }
+                        }
+                        /*.padding()
+                        .padding(.vertical)
+                        .background(
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(.black)//Color.EZNotesBlack)
+                                .shadow(color: Color.EZNotesBlue, radius: 2.5)
+                        )//.background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+                        .padding(3)
+                        .clipShape(RoundedRectangle(cornerRadius: 15))
+                        .padding(.horizontal)*/
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.black)//Color.EZNotesBlack)
+                /*VStack {
+                    
+                    //VStack {
+                        Image("Logo")
+                            .logoImageModifier(prop: prop)
+                        
+                        VStack {
+                            Text("Hello,")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.bottom, 5)
+                                .foregroundStyle(.white)
+                                .font(
+                                    .system(
+                                        size: prop.isIpad
+                                            ? 90
+                                            : prop.isLargerScreen
+                                                ? 30
+                                                : 20
+                                    )
+                                )
+                                .fontWeight(.bold)
+                            
+                            Text("What are we doing?")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 18 : 16))
+                                .foregroundStyle(.white)
+                                .padding(.bottom, 20)
+                            
+                            Button(action: { }) {
+                                HStack {
+                                    Text("Login")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                        .foregroundStyle(.white)
+                                        .padding(.leading, 15)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(Color.EZNotesLightBlack)
+                                )
+                                .cornerRadius(15)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            
+                            Button(action: { }) {
+                                HStack {
+                                    Text("Signup")
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                        .foregroundStyle(.white)
+                                        .padding(.leading, 15)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(Color.EZNotesLightBlack)
+                                )
+                                .cornerRadius(15)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                        }
+                        .frame(maxWidth: prop.size.width - 80)
+                        .padding()
+                        
+                        /*Spacer()
+                        
+                        ZStack {
+                            /*MeshGradient(width: 3, height: 3, points: [
+                                .init(0, 0.5), .init(0.5, 0), .init(1, 0),
+                                .init(0.0, 0.3), .init(0, 0.3), .init(1, 0.3),
+                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                            ], colors: [
+                                Color.EZNotesBlue, Color.EZNotesOrange, Color.EZNotesBlue,
+                                Color.EZNotesBlue, Color.EZNotesBlue, Color.EZNotesGreen,
+                                Color.EZNotesOrange, Color.EZNotesOrange, Color.EZNotesRed
+                                /*Color.EZNotesBlue, .indigo, Color.EZNotesOrange,
+                                 Color.EZNotesOrange, .mint, Color.EZNotesBlue,
+                                 Color.EZNotesBlack, Color.EZNotesBlack, Color.EZNotesBlack*/
+                            ])
+                            .frame(
+                                maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width - 40 : prop.size.width - 20,
+                                maxHeight: prop.isIpad ? 500 : 350,
+                                alignment: .top
+                            )
+                            .mask(
+                                VStack {
+                                    Text("No Pen, No Pencil")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .contrast(10)
+                                        .shadow(color: .white, radius: 2.5)
+                                        .fontWeight(.heavy)
+                                        .font(Font.custom("Poppins-Regular", size: prop.isIpad
+                                                          ? 65
+                                                          : prop.size.height / 2.5 > 300
+                                                          ? 40
+                                                          : 30)
+                                        )
+                                        .multilineTextAlignment(.center)
+                                    
+                                    Text("Never miss a detail—your notes are taken, sorted, and ready automatically for you.")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .contrast(10)
+                                        .shadow(color: .white, radius: 2.5)
+                                        .fontWeight(.heavy)
+                                        .font(Font.custom("Poppins-ExtraLight", size: prop.isIpad
+                                                          ? 28
+                                                          : prop.size.height / 2.5 > 300
+                                                          ? 18
+                                                          : 14)
+                                        )
+                                        .multilineTextAlignment(.center)
+                                }
+                            )*/
+                            Image("Test-Bg-3")
+                                .resizable()
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            //.frame(maxWidth: prop.size.height / 2.5 > 300 ? .infinity : 100, maxHeight: prop.size.height / 2.5 > 300 ? .infinity : 100)
+                                //.aspectRatio(1, contentMode: .fill)
+                                .overlay(Color.EZNotesBlack.opacity(0.6))
+                                .blur(radius: 2.5)
+                            
+                            VStack {
+                                
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(.vertical)
+                            .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+                            .clipShape(RoundedRectangle(cornerRadius: 15))
+                            
+                        }
+                        .frame(maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width - 40 : prop.size.width - 60, maxHeight: 260, alignment: .center)//(maxWidth: prop.size.height / 2.5 > 300 ? prop.size.width - 40 : prop.size.width - 20, maxHeight: 320)
+                        /*.background(
+                            Image("Test-Bg-3")
+                                .resizable()
+                            //.frame(maxWidth: prop.size.height / 2.5 > 300 ? .infinity : 100, maxHeight: prop.size.height / 2.5 > 300 ? .infinity : 100)
+                                .aspectRatio(1, contentMode: .fill)
+                                .overlay(Color.EZNotesBlack.opacity(0.6))
+                                .blur(radius: 2.5)
+                        )*/
+                        .padding(.top, prop.size.height / 2.5 > 300 ? 0 : 20)
+                        
+                        Spacer()*/
+                    //}
+                    //.frame(maxWidth: .infinity, alignment: .top)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.EZNotesBlack)*/
+            }
+            /*StartupScreen(
                 userHasSignedIn: $userHasSignedIn,
                 userNotFound: $userNotFound,
                 goBackToLogin: $goBackToLogin//,
@@ -155,7 +813,7 @@ struct ContentView: View {
                     UserDefaults.standard.set("not_enabled", forKey: "faceID_enabled")
                     UserDefaults.standard.set(false, forKey: "faceID_initialized")
                 }
-            })
+            })*/
         } else {
             ResponsiveView { prop in
                 VStack {

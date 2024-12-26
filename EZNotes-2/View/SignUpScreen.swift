@@ -241,6 +241,30 @@ struct SignUpScreen : View, KeyboardReadable {
     @FocusState private var emailTextfieldFocus: Bool
     @FocusState private var passwordTextfieldFocus: Bool
     
+    @State private var keyboardHeight: CGFloat = 0
+    private func addKeyboardObservers() {
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillShowNotification,
+            object: nil,
+            queue: .main) { notification in
+                if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                    self.keyboardHeight = keyboardFrame.height - 10
+                }
+            }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillHideNotification,
+            object: nil,
+            queue: .main) { _ in
+                self.keyboardHeight = 0
+            }
+    }
+
+    private func removeKeyboardObservers() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             if !self.alreadySignedUp {
@@ -1604,6 +1628,7 @@ struct SignUpScreen : View, KeyboardReadable {
                                 RoundedRectangle(cornerRadius: 15)
                                     .fill(.white)
                             )
+                            .padding(.bottom, self.keyboardHeight == 0 ? 0 : self.keyboardHeight)
                         }
                         .padding(.bottom, self.section == "main"
                                  ? 10
@@ -1681,6 +1706,13 @@ struct SignUpScreen : View, KeyboardReadable {
         .edgesIgnoringSafeArea(self.section == "main" ? .init() : .bottom)
         .background(Color.EZNotesBlack)
         .onAppear {
+            addKeyboardObservers()
+            
+            if !udKeyExists(key: "usecase") {
+                self.section = "main"
+                return
+            }
+            
             /* MARK: If the key "username" exists in `UserDefaults`, then there has been an account created on the device. */
             /* MARK: This will not work if users wipe data from the app. */
             if udKeyExists(key: "username") {
@@ -1780,6 +1812,10 @@ struct SignUpScreen : View, KeyboardReadable {
                 
                 //if UserDefaults.standard.object(forKey: "temp_major") != nil { self.major = UserDefaults.standard.string(forKey: "temp_major")! }*/
             }
+        }
+        .onDisappear {
+            // Remove keyboard observers when the view disappears
+            removeKeyboardObservers()
         }
     }
 }

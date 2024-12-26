@@ -27,6 +27,7 @@ public func removeAllSignUpTempKeys() -> Void {
     removeUDKey(key: "temp_email")
     removeUDKey(key: "temp_password")
     removeUDKey(key: "temp_account_id")
+    removeUDKey(key: "usecase")
 }
 
 public func udRemoveAllAccountInfoKeys() -> Void {

@@ -1144,6 +1144,7 @@ struct HomeView: View {
                                 .frame(maxWidth: prop.size.width - 40)
                                 .padding(6)
                                 .padding(.vertical)
+                                .padding(.top, 10) /* MARK: I don't know why, but adding 10 more pixels of padding to the top makes it look better. */
                                 .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
                                 .cornerRadius(15)
                                 .onTapGesture {

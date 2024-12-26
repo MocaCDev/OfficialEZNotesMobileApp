@@ -41,7 +41,7 @@ private struct mainView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                VStack {
+                /*VStack {
                     Button(action: {
                         self.loadingTopics = true
                         
@@ -96,14 +96,14 @@ private struct mainView: View {
                     .buttonStyle(NoLongPressButtonStyle())
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.top, 20)
+                .padding(.top, 20)*/
                 
                 VStack {
-                    Text("Chat History:")
+                    /*Text("Chat History:")
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.leading, 15)
                         .foregroundStyle(.white)
-                        .font(.system(size: prop.isLargerScreen ? 26 : 22, weight: .medium))
+                        .font(.system(size: prop.isLargerScreen ? 26 : 22, weight: .medium))*/
                     
                     if self.messageModel.tempStoredChats.count == 0 {
                         Text("No Chat History")
@@ -245,6 +245,63 @@ private struct mainView: View {
                         }
                         .frame(maxWidth: .infinity)
                     }
+                    
+                    VStack {
+                        Button(action: {
+                            self.loadingTopics = true
+                            
+                            RequestAction<GetCustomTopicsData>(parameters: GetCustomTopicsData(Major: self.accountInfo.major))
+                                .perform(action: get_custom_topics_req) { statusCode, resp in
+                                    self.loadingTopics = false
+                                    guard resp != nil && statusCode == 200 else {
+                                        if let resp = resp { print(resp) }
+                                        self.error = .ErrorLoadingTopics
+                                        return
+                                    }
+                                    
+                                    self.generatedTopics = resp!["Topics"] as! [String]
+                                    
+                                    /* MARK: This will make `mainView` dissapear and make the view that shows all the generated topics show. This is controlled view `AIChat` view. */
+                                    self.aiChatSection = "select_topic"
+                                    /*let images = resp!["Images"] as! [String: Any]
+                                     
+                                     for (key, value) in images {
+                                     self.generatedTopicsImages[key] = Data(base64Encoded: value as! String)
+                                     }
+                                     
+                                     print(self.generatedTopics)*/
+                                }
+                        }) {
+                            HStack {
+                                Spacer()
+                                
+                                HStack {
+                                    ZStack {
+                                        Image(systemName: "plus.message.fill")
+                                            .resizable()
+                                            .frame(width: 20, height: 20)
+                                            .foregroundStyle(Color.EZNotesBlack)
+                                    }
+                                    .frame(maxWidth: 20, alignment: .center)
+                                    
+                                    Text("Create Chat")
+                                        .frame(alignment: .center)
+                                        .foregroundStyle(Color.EZNotesBlack)
+                                        .font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .medium))
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                
+                                Spacer()
+                            }
+                            .frame(maxWidth: prop.size.width - 80)
+                            .padding(10)
+                            .background(Color.EZNotesBlue)
+                            .cornerRadius(15)
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.top, 20)
