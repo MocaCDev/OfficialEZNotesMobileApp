@@ -123,10 +123,46 @@ struct ContentView: View {
     @State private var loginUsername: String = ""
     @State private var loginPassword: String = ""
     @FocusState public var loginPasswordFieldInFocus: Bool
+    @FocusState public var loginUsernameFieldInFocus: Bool
     @State public var loginError: Bool = false
+    
+    /* MARK: States for signing up. */
+    @State private var signupUsername: String = ""
+    @FocusState private var signupUsernameFieldInFocus: Bool
+    @State private var signupEmail: String = ""
+    @FocusState private var signupEmailFieldInFocus: Bool
+    @State private var signupPassword: String = ""
+    @FocusState private var signupPasswordFieldInFocus: Bool
+    
+    @State private var signupUsernameError: Bool = false
+    @State private var signupEmailError: Bool = false
+    @State private var signupPasswordError: Bool = false
     
     @State private var isLoggingIn: Bool = true
     @State private var signupSection: String = ""
+    
+    @State private var signupError: SignUpScreenErrors = .None
+    @State private var loadingColleges: Bool = false
+    @State private var loadingMajorFields: Bool = false
+    @State private var loadingMajors: Bool = false
+    @State private var colleges: Array<String> = []
+    @State private var collegeIsOther: Bool = false
+    @State private var majorFields: Array<String> = []
+    @State private var majorFieldIsOther: Bool = false
+    @State private var majors: Array<String> = []
+    @State private var majorIsOther: Bool = false
+    @State private var userExists: Bool = false
+    
+    let states = [
+        "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
+        "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa",
+        "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
+        "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire",
+        "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+        "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
+        "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia",
+        "Wisconsin", "Wyoming"
+    ]
     
     var body: some View {
         if !userHasSignedIn {
@@ -221,8 +257,19 @@ struct ContentView: View {
                             if !self.isLoggingIn {
                                 Button(action: {
                                     /* TODO: Check `signupSection` and depending either go to the last section or retreat back to the "main screen". */
-                                    self.isLoggingIn = true
-                                    self.signupSection = ""
+                                    if self.signupSection == "usecase" {
+                                        self.isLoggingIn = true
+                                        return
+                                    }
+                                    
+                                    switch(self.signupSection) {
+                                    case "credentials": self.signupSection = "usecase";break
+                                    case "select_state": self.signupSection = "credentials";break
+                                    case "select_college": self.signupSection = "select_state";break
+                                    case "select_major_field": self.signupSection = "select_college";break
+                                    case "select_major": self.signupSection = "select_major_field";break
+                                    default: self.signupSection = "usecase";break
+                                    }
                                 }) {
                                     Image(systemName: "arrow.backward")
                                         .resizable()
@@ -233,32 +280,67 @@ struct ContentView: View {
                                 .padding(.trailing, 10) /* MARK: Ensure spacing between the text and the back button. */
                             }
                             
-                            Text(self.isLoggingIn
-                                 ? "Login"
-                                 : self.signupSection == "usecase"
-                                 ? "Select Usage"
-                                 : self.signupSection == "select_state_and_college"
-                                 ? "Select State/College"
-                                 : self.signupSection == "select_major_field"
-                                 ? "Select Major Field"
-                                 : self.signupSection == "select_major"
-                                 ? "Select Major"
-                                 : self.signupSection == "code_input"
-                                 ? "Input Code"
-                                 : "Select Plan")
-                            .frame(maxWidth: prop.size.width - 50, alignment: .leading)
-                            .padding(.bottom, 5)
-                            .foregroundStyle(.white)
-                            .font(
-                                .system(
-                                    size: prop.isIpad
-                                    ? 90
-                                    : prop.isLargerScreen
-                                    ? 35
-                                    : 25
+                            VStack {
+                                Text(self.isLoggingIn
+                                     ? "Login"
+                                     : self.signupSection == "usecase"
+                                     ? "Select Usage"
+                                     : self.signupSection == "credentials"
+                                     ? "Enter Credentials"
+                                     : self.signupSection == "select_state_and_college"
+                                     ? "Select State/College"
+                                     : self.signupSection == "select_major_field"
+                                     ? "Select Major Field"
+                                     : self.signupSection == "select_major"
+                                     ? "Select Major"
+                                     : self.signupSection == "code_input"
+                                     ? "Input Code"
+                                     : "Select Plan")
+                                .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                .padding(.bottom, 5)
+                                .foregroundStyle(.white)
+                                .font(
+                                    .system(
+                                        size: prop.isIpad
+                                        ? 90
+                                        : prop.isLargerScreen
+                                        ? 35
+                                        : 25
+                                    )
                                 )
-                            )
-                            .fontWeight(.bold)
+                                .fontWeight(.bold)
+                                
+                                if !self.isLoggingIn {
+                                    if self.signupError != .None {
+                                        Text(self.signupError == .TooShortUsername
+                                             ? "Username too short"
+                                             : self.signupError == .TooShortPassword
+                                                ? "Password too short"
+                                                : self.signupError == .InvalidEmail
+                                                    ? "Invalid email"
+                                                    : self.signupError == .UserExists
+                                                        ? "Username exists"
+                                                        : self.signupError == .EmailExists
+                                                            ? "Email exists"
+                                                            : self.signupError == .ServerError
+                                                                ? "Something went wrong..."
+                                                                : self.signupError == .WrongCode
+                                                                    ? "Wrong code. Try again"
+                                                                    : self.signupError == .NoSuchCollege
+                                                                        ? "No such college exists"
+                                                                        : "Something went wrong...")
+                                        .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                        .padding(.bottom, 5)
+                                        .foregroundStyle(Color.EZNotesRed)
+                                        .font(
+                                            .system(
+                                                size: 13
+                                            )
+                                        )
+                                        .fontWeight(.medium)
+                                    }
+                                }
+                            }
                         }
                         .frame(maxWidth: prop.size.width - 40)
                         
@@ -285,7 +367,7 @@ struct ContentView: View {
                                     }
                                     
                                     VStack {
-                                        Text("Username or Email")
+                                        /*Text("Username or Email")
                                             .frame(
                                                 width: prop.isIpad
                                                 ? UIDevice.current.orientation.isLandscape
@@ -302,9 +384,9 @@ struct ContentView: View {
                                                 )
                                             )
                                             .foregroundStyle(.white)
-                                            .fontWeight(.medium)
+                                            .fontWeight(.medium)*/
                                         
-                                        TextField("Username or Email...", text: $loginUsername)
+                                        TextField("", text: $loginUsername)
                                             .frame(
                                                 width: prop.isIpad
                                                 ? UIDevice.current.orientation.isLandscape
@@ -313,17 +395,35 @@ struct ContentView: View {
                                                 : prop.size.width - 100,
                                                 height: 40
                                             )
-                                            .padding(.leading, prop.isLargerScreen ? 15 : 5)
+                                            .padding(.leading, prop.isLargerScreen ? 10 : 5)
                                             .background(
                                                 Rectangle()//RoundedRectangle(cornerRadius: 15)
                                                     .fill(.clear)
-                                                    .borderBottomWLColor(isError: self.loginError)
+                                                    .borderBottomWLColor(isError: self.loginError, width: 0.5)
+                                            )
+                                            .overlay(
+                                                HStack {
+                                                    if self.loginUsername.isEmpty || !self.loginUsernameFieldInFocus {
+                                                        Text("Username or Email")
+                                                            .font(
+                                                                .system(
+                                                                    size: prop.isLargerScreen ? 18 : 13,
+                                                                    weight: .medium
+                                                                )
+                                                            )
+                                                            .foregroundStyle(Color(.systemGray2))
+                                                            .padding(.leading, 10)
+                                                            .onTapGesture { self.loginUsernameFieldInFocus = true }
+                                                        Spacer()
+                                                    }
+                                                }
                                             )
                                             .foregroundStyle(Color.EZNotesBlue)
                                             .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
                                             .tint(Color.EZNotesBlue)
                                             .font(.system(size: 18))
                                             .fontWeight(.medium)
+                                            .focused($loginUsernameFieldInFocus)
                                             .autocapitalization(.none)
                                             .disableAutocorrection(true)
                                             .keyboardType(.alphabet)
@@ -361,7 +461,7 @@ struct ContentView: View {
                                                : prop.size.width - 80)
                                         .padding(.bottom, 8)
                                         
-                                        Text("Password")
+                                        /*Text("Password")
                                             .frame(
                                                 width: prop.isIpad
                                                 ? UIDevice.current.orientation.isLandscape
@@ -378,9 +478,9 @@ struct ContentView: View {
                                                 )
                                             )
                                             .foregroundStyle(.white)
-                                            .fontWeight(.medium)
+                                            .fontWeight(.medium)*/
                                         
-                                        SecureField("Password...", text: $loginPassword)
+                                        SecureField("", text: $loginPassword)
                                             .frame(
                                                 width: prop.isIpad
                                                 ? UIDevice.current.orientation.isLandscape
@@ -389,11 +489,28 @@ struct ContentView: View {
                                                 : prop.size.width - 100,
                                                 height: 40
                                             )
-                                            .padding(.leading, prop.isLargerScreen ? 15 : 5)
+                                            .padding(.leading, prop.isLargerScreen ? 10 : 5)
                                             .background(
                                                 Rectangle()//RoundedRectangle(cornerRadius: 15)
                                                     .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                                    .borderBottomWLColor(isError: self.loginError)
+                                                    .borderBottomWLColor(isError: self.loginError, width: 0.5)
+                                            )
+                                            .overlay(
+                                                HStack {
+                                                    if self.loginPassword.isEmpty || !self.loginPasswordFieldInFocus {
+                                                        Text("Password...")
+                                                            .font(
+                                                                .system(
+                                                                    size: prop.isLargerScreen ? 18 : 13,
+                                                                    weight: .medium
+                                                                )
+                                                            )
+                                                            .foregroundStyle(Color(.systemGray2))
+                                                            .padding(.leading, 10)
+                                                            .onTapGesture { self.loginPasswordFieldInFocus = true }
+                                                        Spacer()
+                                                    }
+                                                }
                                             )
                                             .foregroundStyle(Color.EZNotesBlue)
                                             .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
@@ -420,17 +537,13 @@ struct ContentView: View {
                                                : prop.size.width - 80)
                                         
                                         Button(action: {
-                                            self.isLoggingIn = false
-                                            
-                                            /* TODO: Depending on the last "state" of the sign up section, configure the view accordingly here. */
-                                            self.signupSection = "usecase"
                                         }) {
                                             HStack {
                                                 Text("Sign In")
                                                     .frame(maxWidth: .infinity, alignment: .center)
-                                                    .padding([.top, .bottom], 8)
+                                                    .padding(.vertical, 9.5)
                                                     .foregroundStyle(.white)
-                                                    .setFontSizeAndWeight(weight: .bold, size: prop.isLargerScreen ? 18 : 16)
+                                                    .setFontSizeAndWeight(weight: .medium, size: prop.isLargerScreen ? 20 : 18)
                                             }
                                             .frame(maxWidth: prop.size.width - 70) /* MARK: Make it 30 pixels shorter. */
                                             .background(
@@ -443,11 +556,12 @@ struct ContentView: View {
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                     }
-                                    .padding(8)
+                                    .padding(.horizontal)
+                                    //.padding(8)
                                     //.padding(.top, prop.isLargerScreen ? 25 : 20)
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .padding(8)
+                                .padding(4.5)
                                 .background(
                                     RoundedRectangle(cornerRadius: 15)
                                         .fill(.black)
@@ -457,14 +571,14 @@ struct ContentView: View {
                             }
                             .frame(maxWidth: prop.size.width - 40, maxHeight: 300)
                             .padding()
-                            .padding(.top, 10)
+                            .padding(.top, 5)
                             
                             Text("Or")
                                 .frame(
                                     maxWidth: .infinity,
                                     alignment: .center
                                 )
-                                .padding(.vertical) /* MARK: Since the above `ZStack` adds padding to all sides, we only need to add padding to `.bottom` here. */
+                                .padding(.bottom) /* MARK: Since the above `ZStack` adds padding to all sides, we only need to add padding to `.bottom` here. */
                                 .font(
                                     .system(
                                         size: prop.isLargerScreen ? 18 : 13
@@ -477,14 +591,163 @@ struct ContentView: View {
                                 self.isLoggingIn = false
                                 
                                 /* TODO: Depending on the last "state" of the sign up section, configure the view accordingly here. */
-                                self.signupSection = "usecase"
+                                if udKeyExists(key: "usecase") {
+                                    /* MARK: Check to see if all of the credentials needed to create an account exists. */
+                                    if !udKeyExists(key: "username") { self.signupSection = "credentials"; return }
+                                    if !udKeyExists(key: "email") { self.signupSection = "credentials"; return }
+                                    if !udKeyExists(key: "password") { self.signupSection = "credentials"; return }
+                                    
+                                    /* MARK: Check the usecase. Depending, we will check what happens next. */
+                                    if getUDValue(key: "usecase") == "school" {
+                                        if !udKeyExists(key: "state") { self.section = "select_state"; return }
+                                        if !udKeyExists(key: "college") {
+                                            /* MARK: Regenerate the array of colleges to be displayed. */
+                                            RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(
+                                                State: getUDValue(key: "state")
+                                            )).perform(action: get_colleges) { statusCode, resp in
+                                                    self.loadingColleges = false
+                                                    
+                                                    guard
+                                                        resp != nil,
+                                                        resp!.keys.contains("Colleges"),
+                                                        statusCode == 200
+                                                    else {
+                                                        self.signupError = .ServerError//self.error = .ServerError // self.serverError = true
+                                                        return
+                                                    }
+                                                    
+                                                    let respColleges = resp!["Colleges"] as! [String]
+                                                    
+                                                    for c in respColleges {
+                                                        if !self.colleges.contains(c) { self.colleges.append(c) }
+                                                    }
+                                                    
+                                                    self.colleges.append("Other")
+                                                    //self.college = self.colleges[0]
+                                                }
+                                            
+                                            self.signupSection = "select_college"
+                                            return
+                                        }
+                                        if !udKeyExists(key: "major_field") {
+                                            /* MARK: Regenerate all of the major fields to be displayed. */
+                                            RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+                                                State: getUDValue(key: "state"),
+                                                College: getUDValue(key: "college")
+                                            )).perform(action: get_custom_college_fields_req) { statusCode, resp in
+                                                self.loadingMajorFields = false
+                                                
+                                                //if let resp = resp { print(resp) }
+                                                guard
+                                                    resp != nil,
+                                                    statusCode == 200
+                                                else {
+                                                    guard let resp = resp else {
+                                                        self.signupError = .ServerError // self.serverError = true
+                                                        return
+                                                    }
+                                                    
+                                                    guard resp.keys.contains("Message") else {
+                                                        self.signupError = .ServerError // self.serverError = true
+                                                        return
+                                                    }
+                                                    
+                                                    /*if resp["Message"] as! String == "no_such_college_in_state" {
+                                                        self.signupError = .NoSuchCollege
+                                                        return
+                                                    }*/
+                                                    
+                                                    self.signupError = .ServerError // self.serverError = true
+                                                    return
+                                                }
+                                                
+                                                guard resp!.keys.contains("Fields") else {
+                                                    self.signupError = .ServerError // self.serverError = true
+                                                    return
+                                                }
+                                                
+                                                self.majorFields = resp!["Fields"] as! [String]
+                                                self.majorFields.append("Other")
+                                                //self.majorField = self.majorFields[0]
+                                            }
+                                            
+                                            self.signupSection = "select_major_field"
+                                            return
+                                        }
+                                        if !udKeyExists(key: "major") {
+                                            /* MARK: Regenerate all majors to be displayed. */
+                                            RequestAction<GetMajorsRequestData>(
+                                                parameters: GetMajorsRequestData(
+                                                    College: getUDValue(key: "college"),
+                                                    MajorField: getUDValue(key: "major_field")
+                                                ))
+                                            .perform(action: get_majors_req) { statusCode, resp in
+                                                self.loadingMajors = false
+                                                
+                                                guard resp != nil && statusCode == 200 else {
+                                                    self.signupError = .ServerError // self.serverError = true
+                                                    return
+                                                }
+                                                
+                                                self.majors = resp!["Majors"] as! [String]
+                                                self.majors.append("Other")
+                                                //self.major = self.majors[0]
+                                            }
+                                            
+                                            self.signupSection = "select_major"
+                                            return
+                                        }
+                                    }
+                                    
+                                    if !udKeyExists(key: "account_id") {
+                                        /* TODO: Resend email with code. Present the "Registering Account..." view. */
+                                        RequestAction<SignUpRequestData>(
+                                            parameters: SignUpRequestData(
+                                                Username: getUDValue(key: "username"),//username,
+                                                Email: getUDValue(key: "email"),//email,
+                                                Password: getUDValue(key: "password"),//password,
+                                                College: udKeyExists(key: "college") ? getUDValue(key: "college") : "N/A",//college,
+                                                State: udKeyExists(key: "state") ? getUDValue(key: "state") : "N/A",//state,
+                                                Field: udKeyExists(key: "major_field") ? getUDValue(key: "major_field") : "N/A",//majorField,
+                                                Major: udKeyExists(key: "major") ? getUDValue(key: "major") : "N/A",//major,
+                                                IP: getLocalIPAddress(),
+                                                Usecase: getUDValue(key: "usecase")
+                                            )
+                                        ).perform(action: complete_signup1_req) { statusCode, resp in
+                                            guard resp != nil && statusCode == 200 else {
+                                                if let resp = resp {
+                                                    if resp["ErrorCode"] as! Int == 0x6970 {
+                                                        self.signupSection = "credentials"
+                                                        self.userExists = true
+                                                        return
+                                                    }
+                                                }
+                                                
+                                                self.signupError = .ServerError // self.serverError = true
+                                                return
+                                            }
+                                            
+                                            if self.userExists { self.userExists = false }
+                                            //if self.makeContentRed { self.makeContentRed = false }
+                                            
+                                            assignUDKey(key: "account_id", value: resp!["Message"] as! String)
+                                            
+                                            self.signupSection = "code_input"
+                                        }
+                                        return
+                                    } else {
+                                        self.signupSection = "enter_code"
+                                    }
+                                } else {
+                                    self.signupSection = "usecase"
+                                }
                             }) {
                                 HStack {
                                     Text("Sign Up")
                                         .frame(maxWidth: .infinity, alignment: .center)
-                                        .padding([.top, .bottom], 8)
+                                        .padding(.vertical, 9.5)
                                         .foregroundStyle(.black)
-                                        .setFontSizeAndWeight(weight: .bold, size: prop.isLargerScreen ? 22 : 20)
+                                        .setFontSizeAndWeight(weight: .medium, size: prop.isLargerScreen ? 22 : 20)
                                 }
                                 .frame(maxWidth: prop.size.width - 40)
                                 .background(
@@ -500,8 +763,7 @@ struct ContentView: View {
                                 VStack {
                                     Button(action: {
                                         assignUDKey(key: "usecase", value: "school")
-                                        //self.section = "credentials"
-                                        //assignUDKey(key: "last_signup_section", value: self.section)
+                                        self.signupSection = "credentials"
                                     }) {
                                         HStack {
                                             VStack {
@@ -537,8 +799,7 @@ struct ContentView: View {
                                     
                                     Button(action: {
                                         assignUDKey(key: "usecase", value: "work")
-                                        //self.section = "credentials"
-                                        //assignUDKey(key: "last_signup_section", value: self.section)
+                                        self.signupSection = "credentials"
                                     }) {
                                         HStack {
                                             VStack {
@@ -574,8 +835,7 @@ struct ContentView: View {
                                     
                                     Button(action: {
                                         assignUDKey(key: "usecase", value: "general")
-                                        //self.section = "credentials"
-                                        //assignUDKey(key: "last_signup_section", value: self.section)
+                                        self.signupSection = "credentials"
                                     }) {
                                         HStack {
                                             VStack {
@@ -611,7 +871,164 @@ struct ContentView: View {
                                 }
                                 .frame(maxWidth: prop.size.width - 40)
                                 .padding(.top, 10)
+                            case "credentials":
+                                VStack {
+                                    TextField("", text: $signupUsername)
+                                        .frame(
+                                            maxWidth: .infinity,/*prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                            ? prop.size.width - 800
+                                            : prop.size.width - 450
+                                            : prop.size.width - 100,*/
+                                            maxHeight: 40
+                                        )
+                                        .padding(.leading, prop.isLargerScreen ? 10 : 5)
+                                        .background(
+                                            Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                .fill(.clear)
+                                                .borderBottomWLColor(isError: self.signupUsernameError, width: 0.5)
+                                        )
+                                        .overlay(
+                                            HStack {
+                                                if self.signupUsername.isEmpty || !self.signupUsernameFieldInFocus {
+                                                    Text(self.signupUsername.isEmpty ? "Username..." : "")
+                                                        .font(
+                                                            .system(
+                                                                size: prop.isLargerScreen ? 18 : 13,
+                                                                weight: .bold
+                                                            )
+                                                        )
+                                                        .foregroundStyle(Color(.systemGray2))
+                                                        .padding(.leading, 10)
+                                                        .onTapGesture { self.signupUsernameFieldInFocus = true }
+                                                    Spacer()
+                                                }
+                                            }
+                                        )
+                                        .foregroundStyle(Color.EZNotesBlue)
+                                        .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
+                                        .tint(Color.EZNotesBlue)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.medium)
+                                        .focused($signupUsernameFieldInFocus)
+                                        .autocapitalization(.none)
+                                        .disableAutocorrection(true)
+                                        .keyboardType(.alphabet)
+                                    
+                                    TextField("", text: $signupEmail)
+                                        .frame(
+                                            maxWidth: .infinity,/*prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                            ? prop.size.width - 800
+                                            : prop.size.width - 450
+                                            : prop.size.width - 100,*/
+                                            maxHeight: 40
+                                        )
+                                        .padding(.leading, prop.isLargerScreen ? 10 : 5)
+                                        .background(
+                                            Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                .fill(.clear)
+                                                .borderBottomWLColor(isError: self.signupEmailError, width: 0.5)
+                                        )
+                                        .overlay(
+                                            HStack {
+                                                if self.signupEmail.isEmpty || !self.signupEmailFieldInFocus {
+                                                    Text(self.signupEmail.isEmpty ? "Email..." : "")
+                                                        .font(
+                                                            .system(
+                                                                size: prop.isLargerScreen ? 18 : 13,
+                                                                weight: .bold
+                                                            )
+                                                        )
+                                                        .foregroundStyle(Color(.systemGray2))
+                                                        .padding(.leading, 10)
+                                                        .onTapGesture { self.signupEmailFieldInFocus = true }
+                                                    Spacer()
+                                                }
+                                            }
+                                        )
+                                        .foregroundStyle(Color.EZNotesBlue)
+                                        .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
+                                        .tint(Color.EZNotesBlue)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.medium)
+                                        .focused($signupEmailFieldInFocus)
+                                        .autocapitalization(.none)
+                                        .disableAutocorrection(true)
+                                        .keyboardType(.alphabet)
+                                    
+                                    SecureField("", text: $signupPassword)
+                                        .frame(
+                                            maxWidth: .infinity,/*prop.isIpad
+                                            ? UIDevice.current.orientation.isLandscape
+                                            ? prop.size.width - 800
+                                            : prop.size.width - 450
+                                            : prop.size.width - 100,*/
+                                            maxHeight: 40
+                                        )
+                                        .padding(.leading, prop.isLargerScreen ? 10 : 5)
+                                        .background(
+                                            Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                                .fill(.clear)
+                                                .borderBottomWLColor(isError: self.signupPasswordError, width: 0.5)
+                                        )
+                                        .overlay(
+                                            HStack {
+                                                if self.signupPassword.isEmpty || !self.signupPasswordFieldInFocus {
+                                                    Text("Password...")
+                                                        .font(
+                                                            .system(
+                                                                size: prop.isLargerScreen ? 18 : 13,
+                                                                weight: .bold
+                                                            )
+                                                        )
+                                                        .foregroundStyle(Color(.systemGray2))
+                                                        .padding(.leading, 10)
+                                                        .onTapGesture { self.signupPasswordFieldInFocus = true }
+                                                    Spacer()
+                                                }
+                                            }
+                                        )
+                                        .foregroundStyle(Color.EZNotesBlue)
+                                        .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
+                                        .tint(Color.EZNotesBlue)
+                                        .font(.system(size: 18))
+                                        .fontWeight(.medium)
+                                        .focused($signupPasswordFieldInFocus)
+                                        .autocapitalization(.none)
+                                        .disableAutocorrection(true)
+                                        .keyboardType(.alphabet)
+                                        .padding(.bottom)
+                                }
+                                .frame(maxWidth: prop.size.width - 25)
                             default: VStack { }.onAppear { self.signupSection = "usecase" }
+                            }
+                            
+                            if self.signupSection != "usecase" && self.signupSection != "select_plan" {
+                                Button(action: {
+                                    if self.section == "credentials" {
+                                        if self.signupUsername.isEmpty { self.signupError = .TooShortUsername; return }
+                                        if self.signupEmail.isEmpty { self.signupError = .InvalidEmail; return }
+                                        if self.signupPassword.isEmpty { self.signupError = .TooShortPassword; return }
+                                        
+                                    }
+                                }) {
+                                    HStack {
+                                        Text("Continue")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .padding(.vertical, 9.5)
+                                            .foregroundStyle(.black)
+                                            .setFontSizeAndWeight(weight: .medium, size: prop.isLargerScreen ? 22 : 20)
+                                    }
+                                    .frame(maxWidth: prop.size.width - 40)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(.white)
+                                    )
+                                    .cornerRadius(15)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                                .padding(.top)
                             }
                         }
                         /*.padding()

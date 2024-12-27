@@ -22,10 +22,10 @@ public extension View {
     }
     
     /* MARK: `borderBottomWLColor` - Border Bottom With LinearGradient Color. */
-    func borderBottomWLColor(isError: Bool) -> some View {
+    func borderBottomWLColor(isError: Bool, width: CGFloat = 1) -> some View {
         self
             .border(
-                width: 1,
+                width: width,
                 edges: [.bottom],
                 lcolor: !isError ? LinearGradient(
                     gradient: Gradient(

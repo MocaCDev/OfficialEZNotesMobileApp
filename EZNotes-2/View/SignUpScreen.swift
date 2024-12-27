@@ -16,6 +16,7 @@ enum SignUpScreenErrors {
     case EmailExists
     case ServerError
     case WrongCode
+    case NoSuchCollege
 }
 
 struct SignUpScreen : View, KeyboardReadable {
