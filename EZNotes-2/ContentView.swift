@@ -167,7 +167,7 @@ struct ContentView: View {
     var body: some View {
         if !userHasSignedIn {
             ResponsiveView { prop in
-                ZStack {
+                /*ZStack {
                     VStack {
                         Image("Logo")
                             .logoImageModifier(prop: prop)
@@ -1044,7 +1044,206 @@ struct ContentView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(.black)//Color.EZNotesBlack)
+                .background(.black)//Color.EZNotesBlack)*/
+                ZStack {
+                    Image("MainScreenBg")
+                        .resizable()
+                        .scaledToFill()
+                        .overlay(.black.opacity(0.5))
+                        .ignoresSafeArea()
+                        .zIndex(0)
+                    
+                    VStack {
+                        HStack {
+                            Spacer()
+                            
+                            Image("Logo")
+                                .logoImageModifier(prop: prop)
+                            
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity)
+                        
+                        Text("Welcome Back!")
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 22 : 20))
+                            .lineSpacing(1.5)
+                            .foregroundStyle(.white)
+                            .padding(.vertical)
+                        
+                        VStack {
+                            Spacer()
+                            
+                            TextField("", text: $loginUsername)
+                                .frame(width: prop.size.width - 70)
+                                .padding(.vertical, 6.5)
+                                .background(
+                                    Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                        .fill(.clear)
+                                        .borderBottomWLColor(isError: self.loginError, width: 0.5)
+                                )
+                                .overlay(
+                                    HStack {
+                                        if self.loginUsername.isEmpty || !self.loginUsernameFieldInFocus {
+                                            Text("Username or Email")
+                                                .font(
+                                                    .system(
+                                                        size: prop.isLargerScreen ? 18 : 13,
+                                                        weight: .medium
+                                                    )
+                                                )
+                                                .foregroundStyle(Color(.systemGray2))
+                                                .padding(.leading, 5)
+                                                .onTapGesture { self.loginUsernameFieldInFocus = true }
+                                            Spacer()
+                                        }
+                                    }
+                                )
+                                .foregroundStyle(Color.EZNotesBlue)
+                                //.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
+                                .tint(Color.EZNotesBlue)
+                                .font(.system(size: 18))
+                                .fontWeight(.medium)
+                                .focused($loginUsernameFieldInFocus)
+                                .autocapitalization(.none)
+                                .disableAutocorrection(true)
+                                .keyboardType(.alphabet)
+                            
+                            SecureField("", text: $loginPassword)
+                                .frame(
+                                    maxWidth: prop.size.width - 70
+                                )
+                                .padding(.vertical, 6.5)
+                                .background(
+                                    Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                        .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
+                                        .borderBottomWLColor(isError: self.loginError, width: 0.5)
+                                )
+                                .overlay(
+                                    HStack {
+                                        if self.loginPassword.isEmpty || !self.loginPasswordFieldInFocus {
+                                            Text("Password")
+                                                .font(
+                                                    .system(
+                                                        size: prop.isLargerScreen ? 18 : 13,
+                                                        weight: .medium
+                                                    )
+                                                )
+                                                .foregroundStyle(Color(.systemGray2))
+                                                .padding(.leading, 5)
+                                                .onTapGesture { self.loginPasswordFieldInFocus = true }
+                                            Spacer()
+                                        }
+                                    }
+                                )
+                                .foregroundStyle(Color.EZNotesBlue)
+                                .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
+                                .tint(Color.EZNotesBlue)
+                                .font(.system(size: 18))
+                                .fontWeight(.medium)
+                                .focused($loginPasswordFieldInFocus)
+                                .autocapitalization(.none)
+                                .disableAutocorrection(true)
+                                .padding(.vertical)
+                            
+                            Button(action: { }) {
+                                Text("Login")
+                                    .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
+                                    .foregroundStyle(.black)
+                                    .padding(12)
+                                    .background(Color.EZNotesBlue)
+                                    .cornerRadius(15)
+                                    .padding(.horizontal)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .padding(.top)
+                            .padding(.top)
+                            
+                            Button(action: { }) {
+                                Text("Sign Up")
+                                    .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
+                                    .foregroundStyle(.black)
+                                    .padding(12)
+                                    .background(Color.EZNotesOrange)
+                                    .cornerRadius(15)
+                                    .padding(.horizontal)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .padding(.vertical)
+                            .padding(.bottom)
+                            
+                            Button(action: { }) {
+                                Text("Having trouble signing in?")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .foregroundStyle(.gray)
+                            }
+                            
+                            Spacer()
+                        }
+                        .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+                        .padding(.bottom)
+                        .padding(.bottom)
+                        
+                        /*VStack {
+                            Button(action: { }) {
+                                Text("Login")
+                                    .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
+                                    .foregroundStyle(.black)
+                                    .padding(12)
+                                    .background(Color.EZNotesBlue)
+                                    .cornerRadius(15)
+                                    .padding(.horizontal)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            
+                            Button(action: { }) {
+                                Text("Sign Up")
+                                    .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
+                                    .foregroundStyle(.black)
+                                    .padding(12)
+                                    .background(Color.EZNotesOrange)
+                                    .cornerRadius(15)
+                                    .padding(.horizontal)
+                            }
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .padding(.bottom)
+                            
+                            Button(action: { }) {
+                                Text("Having trouble signing in?")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .foregroundStyle(.gray)
+                            }
+                        }
+                        .frame(maxWidth: prop.size.width - 40, maxHeight: prop.size.height / 1.5)*/
+                        
+                        //Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .zIndex(1)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                /*.onAppear {
+                    self.loginPasswordFieldInFocus = false
+                    self.loginUsernameFieldInFocus = false
+                    self.signupUsernameFieldInFocus = false
+                    self.signupEmailFieldInFocus = false
+                    self.signupPasswordFieldInFocus = false
+                }
+                .edgesIgnoringSafeArea(!self.loginPasswordFieldInFocus &&
+                                       !self.loginUsernameFieldInFocus &&
+                                       !self.signupUsernameFieldInFocus &&
+                                       !self.signupEmailFieldInFocus &&
+                                       !self.signupPasswordFieldInFocus ? .bottom : .init())*/
+                .background(.black)
+                /*.edgesIgnoringSafeArea(!self.loginPasswordFieldInFocus &&
+                                       !self.loginUsernameFieldInFocus &&
+                                       !self.signupUsernameFieldInFocus &&
+                                       !self.signupEmailFieldInFocus &&
+                                       !self.signupPasswordFieldInFocus ? .bottom : .init())*/
                 /*VStack {
                     
                     //VStack {
