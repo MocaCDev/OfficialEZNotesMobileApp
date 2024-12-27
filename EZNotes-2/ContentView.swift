@@ -1046,7 +1046,7 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(.black)//Color.EZNotesBlack)*/
                 ZStack {
-                    Image("MainScreenBg")
+                    Image("Background")
                         .resizable()
                         .scaledToFill()
                         .overlay(.black.opacity(0.5))
@@ -1066,10 +1066,10 @@ struct ContentView: View {
                         
                         Text("Welcome Back!")
                             .frame(maxWidth: .infinity, alignment: .center)
-                            .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 22 : 20))
+                            .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 26 : 24))
                             .lineSpacing(1.5)
                             .foregroundStyle(.white)
-                            .padding(.vertical)
+                            .padding(.top)
                         
                         VStack {
                             Spacer()
@@ -1153,7 +1153,7 @@ struct ContentView: View {
                                     .foregroundStyle(.black)
                                     .padding(12)
                                     .background(Color.EZNotesBlue)
-                                    .cornerRadius(15)
+                                    .cornerRadius(20)
                                     .padding(.horizontal)
                             }
                             .buttonStyle(NoLongPressButtonStyle())
@@ -1167,7 +1167,7 @@ struct ContentView: View {
                                     .foregroundStyle(.black)
                                     .padding(12)
                                     .background(Color.EZNotesOrange)
-                                    .cornerRadius(15)
+                                    .cornerRadius(20)
                                     .padding(.horizontal)
                             }
                             .buttonStyle(NoLongPressButtonStyle())
