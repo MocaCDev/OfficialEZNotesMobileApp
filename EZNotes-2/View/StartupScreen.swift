@@ -40,22 +40,14 @@ extension Image {
         self.resizable()
             .font(.callout)
             .frame(
-                maxWidth: prop.isIpad
-                    ? prop.isLandscape
-                        ? 150
-                        : 200
-                    : prop.size.width / 2.5 > 300
+                maxWidth: prop.isLargerScreen
                         ? 150
                         : 120,
-                maxHeight: prop.isIpad
-                    ? prop.isLandscape
-                        ? 150
-                        : 200
-                    : prop.size.width / 2.5 > 300
+                maxHeight: prop.isLargerScreen
                         ? 150
                         : 120
             )
-            .padding(
+            /*.padding(
                 [.top],
                 prop.isIpad
                     ? 80/*prop.size.height / 2.5 > 500
@@ -63,7 +55,7 @@ extension Image {
                         : -15*/
                     : prop.size.height / 2.5 > 300
                         ? 0
-                        : 50)
+                        : 50)*/
     }
 }
 

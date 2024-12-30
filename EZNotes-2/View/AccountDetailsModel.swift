@@ -19,6 +19,7 @@ class AccountDetails: ObservableObject {
     @Published var email: String
     @Published var college: String
     @Published var major: String
+    @Published var major_field: String
     @Published var state: String
     @Published var accountID: String
     @Published var usage: String
@@ -64,6 +65,7 @@ class AccountDetails: ObservableObject {
         email = ""
         college = ""
         major = ""
+        major_field = ""
         state = ""
         accountID = ""
         usage = ""
@@ -112,6 +114,7 @@ class AccountDetails: ObservableObject {
         email = ""
         college = ""
         major = ""
+        major_field = ""
         state = ""
         accountID = ""
         usage = ""
@@ -130,6 +133,7 @@ class AccountDetails: ObservableObject {
     final public func setEmail(email: String) { self.email = email }
     final public func setCollegeName(collegeName: String) { self.college = collegeName }
     final public func setMajorName(majorName: String) { self.major = majorName }
+    final public func setMajorField(field: String) { self.major_field = field }
     final public func setAccountID(accountID: String) { self.accountID = accountID }
     final public func setUsage(usage: String) { self.usage = usage }
     final public func setClientSubID(subID: String) { self.subID = subID }
