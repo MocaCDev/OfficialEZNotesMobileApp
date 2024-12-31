@@ -7,6 +7,9 @@
 import SwiftUI
 
 struct ResponsiveView<Content: View>: View {
+    var eventTypeToIgnore: SafeAreaRegions = .init() /* MARK: Ignore any. */
+    var edgesToIgnore: Edge.Set = .init()
+    
     var content: (Properties)->Content
     
     /* MARK: Needed to keep responsive sizes consistent with the devices geometry. */
@@ -57,6 +60,7 @@ struct ResponsiveView<Content: View>: View {
                 alignment: .center
             )
         }
+        .ignoresSafeArea(self.eventTypeToIgnore, edges: self.edgesToIgnore)
     }
 }
 
