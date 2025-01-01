@@ -1940,14 +1940,79 @@ struct ContentView: View {
                                        !self.signupPasswordFieldInFocus ? .bottom : .init())*/
                 VStack {
                     HStack {
-                        Spacer()
+                        if !self.isLoggingIn { ZStack { }.frame(maxWidth: 20, alignment: .leading) }
+                        else { Spacer() }
                         
-                        Image("Logo")
-                            .logoImageModifier(prop: prop)
+                        ZStack {
+                            Image("JustLogo")
+                                .logoImageModifier(prop: prop)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
                         
-                        Spacer()
+                        if !self.isLoggingIn {
+                            ZStack {
+                                Menu {
+                                    if self.signupError == .ServerError {
+                                        Button(action: { print("Report Problem") }) {
+                                            Label("Report Problem", systemImage: "sun.max.trianglebadge.exclamationmark")
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
+                                    
+                                    if self.section == "code_input" {
+                                        Button(action: {
+                                            //self.state.removeAll()
+                                            self.colleges.removeAll()
+                                            self.majorFields.removeAll()
+                                            //self.major.removeAll()
+                                            
+                                            /* MARK: Remove the sign up process in the backend. */
+                                            RequestAction<DeleteSignupProcessData>(
+                                                parameters: DeleteSignupProcessData(
+                                                    AccountID: getUDValue(key: "account_id") /* MARK: If the current section is "code_input", an account ID has been generated for the client. */
+                                                )
+                                            )
+                                            .perform(action: delete_signup_process_req) { statusCode, resp in
+                                                guard resp != nil && statusCode == 200 else {
+                                                    /* MARK: There should never be an error when deleting the process in the backend. */
+                                                    if let resp = resp { print(resp) }
+                                                    return
+                                                }
+                                            }
+                                            
+                                            self.signupSection = "usecase"
+                                        }) {
+                                            Label("Restart Signup", systemImage: "arrow.trianglehead.counterclockwise")
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
+                                    
+                                    /* MARK: Once the user gets to `code_input` or `select_plan`, they will not be eligible to go to the login screen. */
+                                    if self.section != "select_plan" && self.section != "code_input" {
+                                        Button(action: { self.isLoggingIn = true }) {
+                                            Label("Back to Login", systemImage: "chevron.forward")
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
+                                    
+                                    Button(action: { print("Get Help") }) {
+                                        Label("I need help", systemImage: "questionmark")
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    //Button(action: { print("Restart") }) { Text("Restart Signup") }
+                                    //Button(action: { print("Get help") }) { Text("I need help") }
+                                } label: {
+                                    Label("", systemImage: "ellipsis")
+                                        .font(.title2)
+                                        .foregroundColor(.white)
+                                        .rotationEffect(Angle(degrees: 90))
+                                        .padding()
+                                }
+                            }
+                            .frame(maxWidth: 20, alignment: .trailing)
+                        } else { Spacer() }
                     }
-                    .frame(maxWidth: .infinity)
+                    //.frame(maxHeight: prop.isLargerScreen ? 150 : 120)
                     
                     if self.isLoggingIn {
                         VStack {
@@ -1956,8 +2021,8 @@ struct ContentView: View {
                                 .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 26 : 24))
                                 .lineSpacing(1.5)
                                 .foregroundStyle(.white)
-                                .padding(.top, prop.isLargerScreen ? 16 : 4)
-                                .padding(.bottom, prop.isLargerScreen ? 32 : 20)
+                                //.padding(.top, prop.isLargerScreen ? 16 : 4)
+                                .padding(.bottom, prop.isLargerScreen ? 40 : 28)
                             
                             if self.loginError == .ServerError {
                                 Text("Something went wrong. Try again.")
@@ -2223,6 +2288,8 @@ struct ContentView: View {
                                 Button(action: {
                                     self.isLoggingIn = false
                                     
+                                    self.signupSection = "hang_tight_screen" /* MARK: Show this screen by default while the app attempts to figure out where the user left off in the sign up process, if possible. */
+                                    
                                     /* TODO: Depending on the last "state" of the sign up section, configure the view accordingly here. */
                                     if udKeyExists(key: "usecase") {
                                         /* MARK: Check to see if all of the credentials needed to create an account exists. */
@@ -2230,9 +2297,14 @@ struct ContentView: View {
                                         if !udKeyExists(key: "email") { self.signupSection = "credentials"; return }
                                         if !udKeyExists(key: "password") { self.signupSection = "credentials"; return }
                                         
+                                        /* MARK: If all of the above keys exist, assign them just in case the user goes back to the "Credentials" view. */
+                                        self.signupUsername = getUDValue(key: "username")
+                                        self.signupEmail = getUDValue(key: "email")
+                                        self.signupPassword = getUDValue(key: "password")
+                                        
                                         /* MARK: Check the usecase. Depending, we will check what happens next. */
                                         if getUDValue(key: "usecase") == "school" {
-                                            if !udKeyExists(key: "state") { self.section = "select_state"; return }
+                                            if !udKeyExists(key: "state") { self.signupSection = "select_state"; return }
                                             if !udKeyExists(key: "college") {
                                                 /* MARK: Regenerate the array of colleges to be displayed. */
                                                 RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(
@@ -2241,25 +2313,29 @@ struct ContentView: View {
                                                     self.loadingColleges = false
                                                     
                                                     guard
-                                                        resp != nil,
-                                                        resp!.keys.contains("Colleges"),
+                                                        let resp = resp,
+                                                        resp.keys.contains("Colleges"),
                                                         statusCode == 200
                                                     else {
                                                         self.signupError = .ServerError//self.error = .ServerError // self.serverError = true
                                                         return
                                                     }
                                                     
-                                                    let respColleges = resp!["Colleges"] as! [String]
-                                                    
-                                                    for c in respColleges {
-                                                        if !self.colleges.contains(c) { self.colleges.append(c) }
+                                                    if let colleges = resp["Colleges"]! as? [String] {
+                                                        for c in colleges {
+                                                            if !self.colleges.contains(c) { self.colleges.append(c) }
+                                                        }
+                                                        
+                                                        self.colleges.append("Other")
+                                                        self.signupSection = "select_college"
+                                                        return
                                                     }
                                                     
-                                                    self.colleges.append("Other")
-                                                    //self.college = self.colleges[0]
+                                                    self.signupSection = "usecase"
+                                                    self.signupError = .ServerError
+                                                    return
                                                 }
                                                 
-                                                self.signupSection = "select_college"
                                                 return
                                             }
                                             if !udKeyExists(key: "major_field") {
@@ -2268,43 +2344,52 @@ struct ContentView: View {
                                                     State: getUDValue(key: "state"),
                                                     College: getUDValue(key: "college")
                                                 )).perform(action: get_custom_college_fields_req) { statusCode, resp in
-                                                    self.loadingMajorFields = false
                                                     
                                                     //if let resp = resp { print(resp) }
                                                     guard
-                                                        resp != nil,
+                                                        let resp = resp,
+                                                        resp.keys.contains("Fields"),
                                                         statusCode == 200
                                                     else {
-                                                        guard let resp = resp else {
+                                                        /*guard let resp = resp else {
+                                                            self.signupSection = "usecase"
+                                                            
                                                             self.signupError = .ServerError // self.serverError = true
                                                             return
                                                         }
                                                         
                                                         guard resp.keys.contains("Message") else {
+                                                            self.signupSection = "usecase"
+                                                            
                                                             self.signupError = .ServerError // self.serverError = true
                                                             return
-                                                        }
+                                                        }*/
+                                                        self.signupSection = "usecase"
                                                         
+                                                        self.signupError = .ServerError // self.serverError = true
+                                                        return
                                                         /*if resp["Message"] as! String == "no_such_college_in_state" {
                                                          self.signupError = .NoSuchCollege
                                                          return
                                                          }*/
                                                         
-                                                        self.signupError = .ServerError // self.serverError = true
+                                                        //self.signupError = .ServerError // self.serverError = true
+                                                        //return
+                                                    }
+                                                    
+                                                    if let fields = resp["Fields"]! as? [String] {
+                                                        self.majorFields = fields
+                                                        self.majorFields.append("Other")
+                                                        
+                                                        self.signupSection = "select_major_field"
                                                         return
                                                     }
                                                     
-                                                    guard resp!.keys.contains("Fields") else {
-                                                        self.signupError = .ServerError // self.serverError = true
-                                                        return
-                                                    }
-                                                    
-                                                    self.majorFields = resp!["Fields"] as! [String]
-                                                    self.majorFields.append("Other")
-                                                    //self.majorField = self.majorFields[0]
+                                                    self.signupSection = "usecase"
+                                                    self.signupError = .ServerError
+                                                    return
                                                 }
                                                 
-                                                self.signupSection = "select_major_field"
                                                 return
                                             }
                                             if !udKeyExists(key: "major") {
@@ -2315,24 +2400,34 @@ struct ContentView: View {
                                                         MajorField: getUDValue(key: "major_field")
                                                     ))
                                                 .perform(action: get_majors_req) { statusCode, resp in
-                                                    self.loadingMajors = false
                                                     
-                                                    guard resp != nil && statusCode == 200 else {
-                                                        self.signupError = .ServerError // self.serverError = true
+                                                    guard
+                                                        let resp = resp,
+                                                        resp.keys.contains("Majors"),
+                                                        statusCode == 200
+                                                    else {
+                                                        self.signupSection = "usecase"
+                                                        self.signupError = .ServerError
                                                         return
                                                     }
                                                     
-                                                    self.majors = resp!["Majors"] as! [String]
-                                                    self.majors.append("Other")
-                                                    //self.major = self.majors[0]
+                                                    if let majors = resp["Majors"]! as? [String] {
+                                                        self.majors = majors
+                                                        self.majors.append("Other")
+                                                        self.signupSection = "select_major"
+                                                        return
+                                                    }
+                                                    
+                                                    self.signupSection = "usecase"
+                                                    self.signupError = .ServerError
+                                                    return
                                                 }
                                                 
-                                                self.signupSection = "select_major"
                                                 return
                                             }
                                         }
                                         
-                                        if !udKeyExists(key: "account_id") {
+                                        /*if !udKeyExists(key: "account_id") {
                                             /* TODO: Resend email with code. Present the "Registering Account..." view. */
                                             RequestAction<SignUpRequestData>(
                                                 parameters: SignUpRequestData(
@@ -2369,8 +2464,8 @@ struct ContentView: View {
                                             }
                                             return
                                         } else {
-                                            self.signupSection = "enter_code"
-                                        }
+                                            self.signupSection = "code_input"
+                                        }*/
                                     } else {
                                         self.signupSection = "usecase"
                                     }
@@ -2388,29 +2483,39 @@ struct ContentView: View {
                             Spacer()
                         }
                     } else {
-                        Text(self.signupSection == "usecase"
-                             ? "Select Usage"
-                             : self.signupSection == "credentials"
-                                ? "Enter Your Credentials"
-                                : self.signupSection == "select_state"
-                                    ? "Select State"
-                                    : self.signupSection == "select_college"
-                                        ? "Select College"
-                                        : self.signupSection == "select_major_field"
-                                            ? "Select Field of Study"
-                                            : self.signupSection == "select_major"
-                                                ? "Select Major"
-                                                : self.signupSection == "code_input"
-                                                    ? "Enter Code"
-                                                    : self.signupSection == "select_plan"
-                                                        ? "Select Plan"
-                                                        : "Select Usage" /* MARK: Default. */)
+                        if self.signupSection != "hang_tight_screen" {
+                            Text(self.signupSection == "usecase"
+                                 ? "Select Usage"
+                                 : self.signupSection == "credentials"
+                                 ? "Enter Your Credentials"
+                                 : self.signupSection == "select_state"
+                                 ? "Select State"
+                                 : self.signupSection == "select_college"
+                                 ? "Select College"
+                                 : self.signupSection == "select_major_field"
+                                 ? "Select Field of Study"
+                                 : self.signupSection == "select_major"
+                                 ? "Select Major"
+                                 : self.signupSection == "code_input"
+                                 ? "Enter Code"
+                                 : self.signupSection == "select_plan"
+                                 ? "Select Plan"
+                                 : "Select Usage" /* MARK: Default. */)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 26 : 24))
                             .lineSpacing(1.5)
                             .foregroundStyle(.white)
                             .padding(.top, prop.isLargerScreen ? 16 : 0)
-                            .padding(.bottom, prop.isLargerScreen ? 32 : 20)
+                            .padding(.bottom, self.signupSection != "select_state" &&
+                                     self.signupSection != "select_college" &&
+                                     self.signupSection != "select_major_field" &&
+                                     self.signupSection != "select_major"
+                                     ?
+                                        prop.isLargerScreen
+                                            ? 32
+                                            : 20
+                                     : 0)
+                        }
                         
                         if self.signupError == .ServerError {
                             Text("Something went wrong. Try again")
@@ -2424,6 +2529,7 @@ struct ContentView: View {
                             )
                             .fontWeight(.medium)
                         }
+                            
                         
                         switch(self.signupSection) {
                         case "usecase":
@@ -2761,53 +2867,169 @@ struct ContentView: View {
                             .frame(maxWidth: prop.size.width - 40)
                         case "select_state":
                             VStack {
-                                ScrollView(.vertical, showsIndicators: false) {
-                                    LazyVGrid(columns: self.stateColumns) {
-                                        ForEach(self.states, id: \.self) { value in
-                                            Button(action: { }) {
-                                                HStack {
-                                                    Text(value)
-                                                        .frame(maxWidth: .infinity, alignment: .center)
-                                                        .padding([.leading, .top, .bottom], 5)
-                                                        .foregroundStyle(.white)
-                                                        .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
-                                                        .fontWeight(.bold)
-                                                        .minimumScaleFactor(0.8)
-                                                        .multilineTextAlignment(.leading)
-                                                    
-                                                    /*if self.state != "" {
-                                                        ZStack {
-                                                            Image(systemName: "chevron.right")
-                                                                .resizable()
-                                                                .frame(width: 10, height: 15)
-                                                        }
-                                                        .frame(maxWidth: 35, alignment: .trailing)
-                                                        .foregroundStyle(.gray)
-                                                        .padding(.trailing, 10)
-                                                    }*/
-                                                }
-                                                .frame(maxWidth: .infinity)
-                                                .padding(10)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 15)
-                                                            .fill(Color.EZNotesLightBlack.opacity(0.65))
-                                                            .shadow(color: Color.black, radius: 1.5)
-                                                )
+                                LazyVGridScrollViewForArray(
+                                    config: LazyVGridScrollViewConfiguration(
+                                        lazyVGridColumns: self.stateColumns
+                                    ),
+                                    data: self.states
+                                ) { value in
+                                    Button(action: {
+                                        assignUDKey(key: "state", value: value)
+                                        
+                                        /* MARK: Before going onto the next step of the signup process (selecting a college), we need to generate a list of colleges for the user to choose from. */
+                                        RequestAction<GetCollegesRequestData>(
+                                            parameters: GetCollegesRequestData(
+                                                State: value
+                                            )
+                                        ).perform(action: get_colleges) { statusCode, resp in
+                                            guard
+                                                let resp = resp,
+                                                resp.keys.contains("Colleges"),
+                                                statusCode == 200
+                                            else {
+                                                if let resp = resp { print(resp) }
+                                                self.signupError = .ServerError
+                                                return
                                             }
-                                            .buttonStyle(NoLongPressButtonStyle())
+                                            
+                                            if let colleges = resp["Colleges"]! as? [String] {
+                                                self.colleges = colleges
+                                                
+                                                self.signupSection = "select_college" /* MARK: The next view to show after selecting the state is the "Select College" view. */
+                                                return
+                                            }
+                                            
+                                            self.signupError = .ServerError
+                                            return
                                         }
+                                    }) {
+                                        HStack {
+                                            Text(value)
+                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                .padding([.leading, .top, .bottom], 5)
+                                                .foregroundStyle(.white)
+                                                .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                .fontWeight(.bold)
+                                                .minimumScaleFactor(0.8)
+                                                .multilineTextAlignment(.leading)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(prop.isLargerScreen ? 10 : 8) /* MARK: Make the "cards" slightly smaller for smaller screens. */
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                    .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                    .shadow(color: Color.black, radius: 1.5)
+                                        )
                                     }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .padding(.bottom, 8)
                                 }
                             }
                             .frame(maxWidth: prop.size.width - 40)
                         case "select_college":
                             VStack {
-                                
+                                LazyVGridScrollViewForArray(
+                                    data: self.colleges
+                                ) { value in
+                                    Button(action: {
+                                        assignUDKey(key: "college", value: value)
+                                        
+                                        self.signupSection = "hang_tight_screen"
+                                        
+                                        /* MARK: Get major fields for the college that the user has selected. */
+                                        RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+                                            State: getUDValue(key: "state"), /* MARK: If we are in this view, "state" should exist in `UserDefaults`. */
+                                            College: value
+                                        ))
+                                        .perform(action: get_custom_college_fields_req) { statusCode, resp in
+                                            guard
+                                                let resp = resp,
+                                                resp.keys.contains("Fields"),
+                                                statusCode == 200
+                                            else {
+                                                self.signupError = .ServerError
+                                                return
+                                            }
+                                            
+                                            if let majorFields = resp["Fields"]! as? [String] {
+                                                self.majorFields = majorFields
+                                                
+                                                self.signupSection = "select_major_field"
+                                                return
+                                            }
+                                            
+                                            self.signupError = .ServerError
+                                            return
+                                        }
+                                    }) {
+                                        HStack {
+                                            Text(value)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .padding([.leading, .top, .bottom], 5)
+                                                .foregroundStyle(.white)
+                                                .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                .fontWeight(.bold)
+                                                .minimumScaleFactor(0.6)
+                                                .multilineTextAlignment(.leading)
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizable()
+                                                    .frame(width: 10, height: 15)
+                                            }
+                                            .frame(maxWidth: 20, alignment: .trailing)
+                                            .foregroundStyle(.gray)
+                                            .padding(.trailing, 10)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(prop.isLargerScreen ? 10 : 8) /* MARK: Make the "cards" slightly smaller for smaller screens. */
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                    .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                    .shadow(color: Color.black, radius: 1.5)
+                                        )
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .padding(.bottom, 8)
+                                }
                             }
                             .frame(maxWidth: prop.size.width - 40)
                         case "select_major_field":
                             VStack {
-                                
+                                LazyVGridScrollViewForArray(
+                                    data: self.majorFields
+                                ) { value in
+                                    Button(action: { }) {
+                                        HStack {
+                                            Text(value)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .padding([.leading, .top, .bottom], 5)
+                                                .foregroundStyle(.white)
+                                                .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                .fontWeight(.bold)
+                                                .minimumScaleFactor(0.6)
+                                                .multilineTextAlignment(.leading)
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizable()
+                                                    .frame(width: 10, height: 15)
+                                            }
+                                            .frame(maxWidth: 20, alignment: .trailing)
+                                            .foregroundStyle(.gray)
+                                            .padding(.trailing, 10)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(prop.isLargerScreen ? 10 : 8) /* MARK: Make the "cards" slightly smaller for smaller screens. */
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                    .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                    .shadow(color: Color.black, radius: 1.5)
+                                        )
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .padding(.bottom, 8)
+                                }
                             }
                             .frame(maxWidth: prop.size.width - 40)
                         case "select_major":
@@ -2834,12 +3056,17 @@ struct ContentView: View {
                                 Spacer()
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        case "hang_tight_screen":
+                            VStack {
+                                LoadingView(message: "Hang Tight...")
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                         default: VStack { }.onAppear { self.signupSection = "usecase" }
                         }
                         
                         Spacer()
                         
-                        if self.signupSection == "credentials" || self.signupSection == "code_input" {
+                        if (self.signupSection == "credentials" || self.signupSection == "code_input") && self.signupSection != "hang_tight_screen" {
                             Button(action: {
                                 switch(self.signupSection) {
                                 case "credentials":
@@ -2857,6 +3084,11 @@ struct ContentView: View {
                                         self.signupError = .TooShortPassword
                                         return
                                     }
+                                    
+                                    /* MARK: If all above checks succeed, save the credentials to `UserDefaults`. */
+                                    assignUDKey(key: "username", value: self.signupUsername)
+                                    assignUDKey(key: "email", value: self.signupEmail)
+                                    assignUDKey(key: "password", value: self.signupPassword)
                                     
                                     if getUDValue(key: "usecase") != "school" {
                                         /* MARK: If the usecase is not school, go ahead and send a request to the server to register the account. There is no further information needed. If the usecase is school, then we will prompt the user to select their state, college, major field and major. */
@@ -2930,7 +3162,6 @@ struct ContentView: View {
                                     )).perform(action: complete_signup2_req) { statusCode, resp in
                                         /* TODO: Check "ErrorCode" value in `resp` to see what exactly went wrong instead of just assuming the code is wrong. */
                                         guard
-                                            let resp = resp,
                                             statusCode == 200
                                         else {
                                             self.signupSection = "code_input" /* MARK: Ensure we "go back" to the last section if the code is wrong */
@@ -2955,40 +3186,80 @@ struct ContentView: View {
                             .buttonStyle(NoLongPressButtonStyle())
                         }
                         
-                        Button(action: {
-                            switch(self.signupSection) {
-                            case "usecase":
-                                self.isLoggingIn = true
-                                break
-                            case "credentials":
-                                self.signupSection = "usecase"
-                                break
-                            case "select_state":
-                                self.signupSection = "credentials"
-                                break
-                            case "select_college":
-                                self.signupSection = "select_state"
-                                break
-                            case "select_major_field":
-                                self.signupSection = "select_college"
-                                break
-                            case "select_major":
-                                self.signupSection = "select_major_field"
-                                break
-                            default: VStack { }.onAppear { self.signupSection = "usecase" }
+                        if self.signupSection != "hang_tight_screen" {
+                            Button(action: {
+                                /* MARK: Ensure errors are cleared out if the user goes back. */
+                                if self.signupError != .None { self.signupError = .None }
+                                
+                                switch(self.signupSection) {
+                                case "usecase":
+                                    self.isLoggingIn = true
+                                    break
+                                case "credentials":
+                                    self.signupSection = "usecase"
+                                    break
+                                case "select_state":
+                                    self.signupSection = "credentials"
+                                    break
+                                case "select_college":
+                                    self.signupSection = "select_state"
+                                    break
+                                case "select_major_field":
+                                    self.signupSection = "hang_tight_screen"
+                                    
+                                    /* MARK: Check if `colleges` array is empty. If it is, we need to populate it before "going back". */
+                                    if self.colleges.isEmpty {
+                                        RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(
+                                            State: getUDValue(key: "state")
+                                        )).perform(action: get_colleges) { statusCode, resp in
+                                            self.loadingColleges = false
+                                            
+                                            guard
+                                                let resp = resp,
+                                                resp.keys.contains("Colleges"),
+                                                statusCode == 200
+                                            else {
+                                                self.signupSection = "select_major_field"
+                                                
+                                                self.signupError = .ServerError//self.error = .ServerError // self.serverError = true
+                                                return
+                                            }
+                                            
+                                            if let colleges = resp["Colleges"]! as? [String] {
+                                                for c in colleges {
+                                                    if !self.colleges.contains(c) { self.colleges.append(c) }
+                                                }
+                                                
+                                                self.colleges.append("Other")
+                                                return
+                                            }
+                                            
+                                            self.signupSection = "select_major_field"
+                                            self.signupError = .ServerError
+                                            return
+                                        }
+                                    }
+                                    
+                                    self.signupSection = "select_college"
+                                    break
+                                case "select_major":
+                                    self.signupSection = "select_major_field"
+                                    break
+                                default: VStack { }.onAppear { self.signupSection = "usecase" }
+                                }
+                            }) {
+                                Text("Go Back")
+                                    .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
+                                    .foregroundStyle(.black)
+                                    .padding(10)
+                                    .background(Color.EZNotesBlue)
+                                    .cornerRadius(20)
+                                    .padding(.horizontal)
                             }
-                        }) {
-                            Text("Go Back")
-                                .frame(maxWidth: prop.size.width - 40, alignment: .center)
-                                .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
-                                .foregroundStyle(.black)
-                                .padding(10)
-                                .background(Color.EZNotesBlue)
-                                .cornerRadius(20)
-                                .padding(.horizontal)
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .padding(.bottom, prop.isLargerScreen ? 30 : 12)
                         }
-                        .buttonStyle(NoLongPressButtonStyle())
-                        .padding(.bottom, prop.isLargerScreen ? 30 : 12)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
