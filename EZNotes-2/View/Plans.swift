@@ -31,7 +31,7 @@ public struct Plans: View {
     var email: String
     var accountID: String
     var isLargerScreen: Bool
-    var action: () -> Void /* TODO: Is this needed? */
+    var action: ()->Void /* TODO: Is this needed? */
     
     /* MARK: Plan names; used to determine what plan name to display in the payment information popup. */
     private let planNames: [String: String] = [

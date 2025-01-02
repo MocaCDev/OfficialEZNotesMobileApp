@@ -179,6 +179,14 @@ struct ContentView: View {
         GridItem(.flexible())
     ]
     
+    /* MARK: Makes assigning `signuperror` and `signupSection` easier. */
+    private func setSignupErrorAndSection(error: SignUpScreenErrors = .None, section: String) -> Void {
+        self.signupError = error
+        self.signupSection = section
+    }
+    
+    @State private var loggingIn: Bool = false
+    
     var body: some View {
         if !userHasSignedIn {
             ResponsiveView(eventTypeToIgnore: .keyboard, edgesToIgnore: [.bottom]) { prop in
@@ -203,12 +211,20 @@ struct ContentView: View {
                                         .buttonStyle(NoLongPressButtonStyle())
                                     }
                                     
-                                    if self.section == "code_input" {
+                                    if self.signupSection != "usecase" && self.signupSection != "select_plan" { /* MARK: Although restarting the sign up process via this menu on the "Credentials" view is useless, it doesn't hurt to have it as a feature. */
                                         Button(action: {
-                                            //self.state.removeAll()
                                             self.colleges.removeAll()
                                             self.majorFields.removeAll()
-                                            //self.major.removeAll()
+                                            self.majors.removeAll()
+                                            
+                                            /*removeUDKey(key: "username")
+                                            removeUDKey(key: "email")
+                                            removeUDKey(key: "password")
+                                            removeUDKey(key: "account_id")
+                                            removeUDKey(key: "state")
+                                            removeUDKey(key: "college")
+                                            removeUDKey(key: "major_field")
+                                            removeUDKey(key: "major")*/
                                             
                                             /* MARK: Remove the sign up process in the backend. */
                                             RequestAction<DeleteSignupProcessData>(
@@ -224,6 +240,9 @@ struct ContentView: View {
                                                 }
                                             }
                                             
+                                            /* MARK: Ensure all keys in `UserDefaults` that have been assigned throughout the signup process get removed. */
+                                            udRemoveAllAccountInfoKeys()
+                                            
                                             self.signupSection = "usecase"
                                         }) {
                                             Label("Restart Signup", systemImage: "arrow.trianglehead.counterclockwise")
@@ -232,7 +251,7 @@ struct ContentView: View {
                                     }
                                     
                                     /* MARK: Once the user gets to `code_input` or `select_plan`, they will not be eligible to go to the login screen. */
-                                    if self.section != "select_plan" && self.section != "code_input" {
+                                    if self.signupSection != "select_plan" && self.signupSection != "code_input" {
                                         Button(action: { self.isLoggingIn = true }) {
                                             Label("Back to Login", systemImage: "chevron.forward")
                                         }
@@ -425,9 +444,13 @@ struct ContentView: View {
                                 if self.loginUsername.isEmpty { self.loginError = .EmptyUsername; return }
                                 if self.loginPassword.isEmpty { self.loginError = .EmptyPassword; return }
                                 
+                                self.loggingIn = true
+                                
                                 RequestAction<LoginRequestData>(parameters: LoginRequestData(
                                     Username: self.loginUsername, Password: self.loginPassword
                                 )).perform(action: complete_login_req) { statusCode, resp in
+                                    self.loggingIn = false
+                                    
                                     guard resp != nil && statusCode == 200 else {
                                         guard
                                             let resp = resp,
@@ -488,7 +511,7 @@ struct ContentView: View {
                                     
                                     self.loginError = .None /* MARK: Ensure the `loginError` value is `.None` so no errors show. */
                                     
-                                    assignUDKey(key: "username", value: resp["Useranme"]! as! String)
+                                    assignUDKey(key: "username", value: resp["Username"]! as! String)
                                     self.accountInfo.setUsername(username: getUDValue(key: "username"))
                                     
                                     assignUDKey(key: "email", value: resp["Email"]! as! String)
@@ -503,16 +526,21 @@ struct ContentView: View {
                                     // self.setLoginStatus()
                                 }
                             }) {
-                                Text("Login")
-                                    .frame(maxWidth: prop.size.width - 40, alignment: .center)
-                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
-                                    .foregroundStyle(.black)
-                                    .padding(10)
-                                    .background(Color.EZNotesBlue)
-                                    .cornerRadius(20)
-                                    .padding(.horizontal)
+                                if !self.loggingIn {
+                                    Text("Login")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
+                                        .foregroundStyle(.black)
+                                } else {
+                                    LoadingView(tint: Color.EZNotesBlack)
+                                }
                             }
+                            .frame(maxWidth: prop.size.width - 40)
                             .buttonStyle(NoLongPressButtonStyle())
+                            .padding(10)
+                            .background(Color.EZNotesBlue)
+                            .cornerRadius(20)
+                            .padding(.horizontal)
                             .padding(.top, 10)
                             .padding(.bottom)
                             
@@ -710,6 +738,7 @@ struct ContentView: View {
                                             }
                                             return
                                         } else {
+                                            if udKeyExists(key: "selecting_plan") { self.signupSection = "select_plan"; return }
                                             self.signupSection = "code_input"
                                         }
                                     } else {
@@ -731,6 +760,13 @@ struct ContentView: View {
                             .padding(.top, 8)
                             
                             Spacer()
+                        }
+                        .onAppear {
+                            /* MARK: If the key `selecting_plan` exists in `UserDefaults`, force the user back to the screen where they have to select a plan. */
+                            if udKeyExists(key: "selecting_plan") {
+                                self.isLoggingIn = false
+                                self.signupSection = "select_plan"
+                            }
                         }
                     } else {
                         if self.signupSection != "hang_tight_screen" {
@@ -976,7 +1012,7 @@ struct ContentView: View {
                                 if self.signupError == .TooShortUsername || self.signupError == .UserExists {
                                     Text(self.signupError == .TooShortUsername
                                          ? "Username is too short. Must be 4 characters or longer"
-                                         : "User exists. If this is your account, login")
+                                         : "Username already exists")
                                     .frame(maxWidth: prop.size.width - 70, alignment: .leading)
                                     .padding(.bottom, 5)
                                     .foregroundStyle(Color.EZNotesRed)
@@ -1036,13 +1072,13 @@ struct ContentView: View {
                                     .autocapitalization(.none)
                                     .disableAutocorrection(true)
                                     .keyboardType(.alphabet)
-                                    .padding(.vertical, self.signupError != .TooShortUsername && self.signupError != .UserExists ? 16 : 0)
+                                    .padding(.vertical, (self.signupError != .InvalidEmail && self.signupError != .EmailExists) && (self.signupError != .TooShortUsername && self.signupError != .UserExists) ? 16 : 0)
                                     .padding(.bottom, self.signupError == .TooShortUsername || self.signupError == .UserExists ? 16 : 0)
                                 
                                 if self.signupError == .InvalidEmail || self.signupError == .EmailExists {
                                     Text(self.signupError == .InvalidEmail
                                          ? "Invalid email"
-                                         : "Email exists. If this is your email, login.")
+                                         : "Email is already in use")
                                     .frame(maxWidth: prop.size.width - 70, alignment: .leading)
                                     .padding(.bottom, 5)
                                     .foregroundStyle(Color.EZNotesRed)
@@ -1118,9 +1154,6 @@ struct ContentView: View {
                                 }
                             }
                             .frame(maxWidth: prop.size.width - 40)
-                            .onAppear {
-                                if self.signupError != .None { self.signupError = .None }
-                            }
                         case "select_state":
                             VStack {
                                 LazyVGridScrollViewForArray(
@@ -1262,7 +1295,27 @@ struct ContentView: View {
                                         
                                         self.signupSection = "hang_tight_screen"
                                         
-                                        /* TODO: Finish this up. */
+                                        /* MARK: Generate majors for the major field selected. */
+                                        RequestAction<GetMajorsRequestData>(parameters: GetMajorsRequestData(
+                                            College: getUDValue(key: "college"),
+                                            MajorField: value
+                                        )).perform(action: get_majors_req) { statusCode, resp in
+                                            guard
+                                                let resp = resp,
+                                                let majors = resp["Majors"] as? [String],
+                                                statusCode == 200
+                                            else {
+                                                self.signupSection = "select_major_field"
+                                                self.signupError = .ServerError
+                                                return
+                                            }
+                                            
+                                            self.majors = majors
+                                            self.majors.append("Other")
+                                            
+                                            self.signupSection = "select_major"
+                                            return
+                                        }
                                     }) {
                                         HStack {
                                             Text(value)
@@ -1298,7 +1351,101 @@ struct ContentView: View {
                             .frame(maxWidth: prop.size.width - 40)
                         case "select_major":
                             VStack {
-                                /* TODO: Get this implemented. */
+                                LazyVGridScrollViewForArray(data: self.majors) { value in
+                                    Button(action: {
+                                        assignUDKey(key: "major", value: value)
+                                        
+                                        self.signupSection = "hang_tight_screen"
+                                        
+                                        RequestAction<SignUpRequestData>(parameters: SignUpRequestData(
+                                            Username: self.signupUsername,
+                                            Email: self.signupEmail,
+                                            Password: self.signupPassword,
+                                            College: getUDValue(key: "college"),
+                                            State: getUDValue(key: "state"),
+                                            Field: getUDValue(key: "major_field"),
+                                            Major: getUDValue(key: "major"),
+                                            IP: getLocalIPAddress(),
+                                            Usecase: getUDValue(key: "usecase")
+                                        )).perform(action: complete_signup1_req) { statusCode, resp in
+                                            guard
+                                                let resp = resp,
+                                                statusCode == 200
+                                            else {
+                                                self.signupSection = "select_major" /* MARK: Simply go to the "last" section if an error occurred. */
+                                                
+                                                if
+                                                    let resp = resp,
+                                                    let errorCode = resp["ErrorCode"]! as? Int
+                                                {
+                                                    if errorCode == 0x6970 {
+                                                        self.signupError = .UserExists
+                                                        return
+                                                    }
+                                                    
+                                                    if errorCode == 0x7877 {
+                                                        self.signupError = .InvalidEmail
+                                                        return
+                                                    }
+                                                    
+                                                    if errorCode == 0x6979 {
+                                                        self.signupError = .EmailExists
+                                                        return
+                                                    }
+                                                }
+                                                
+                                                /* TODO: I believe the "ErrorCode" value in `resp` entails what went wrong in the request. One of the codes will enable us to decipher whether the user/email exists. */
+                                                self.signupError = .ServerError
+                                                return
+                                            }
+                                            
+                                            guard
+                                                resp.keys.contains("Message"),
+                                                let accountId = resp["Message"]! as? String
+                                            else {
+                                                self.signupSection = "select_major"
+                                                self.signupError = .ServerError
+                                                return
+                                            }
+                                            
+                                            assignUDKey(key: "account_id", value: accountId)
+                                            
+                                            /* MARK: Redirect user to put in a code that was sent to their email. */
+                                            self.signupSection = "code_input"
+                                            
+                                            return
+                                        }
+                                    }) {
+                                        HStack {
+                                            Text(value)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .padding([.leading, .top, .bottom], 5)
+                                                .foregroundStyle(.white)
+                                                .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                .fontWeight(.bold)
+                                                .minimumScaleFactor(0.6)
+                                                .multilineTextAlignment(.leading)
+                                            
+                                            ZStack {
+                                                Image(systemName: "chevron.right")
+                                                    .resizable()
+                                                    .frame(width: 10, height: 15)
+                                            }
+                                            .frame(maxWidth: 20, alignment: .trailing)
+                                            .foregroundStyle(.gray)
+                                            .padding(.trailing, 10)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(prop.isLargerScreen ? 10 : 8) /* MARK: Make the "cards" slightly smaller for smaller screens. */
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                    .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                    .shadow(color: Color.black, radius: 1.5)
+                                        )
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .padding(.bottom, 8)
+                                }
                             }
                             .frame(maxWidth: prop.size.width - 40)
                         case "code_input":
@@ -1336,7 +1483,7 @@ struct ContentView: View {
                                                     )
                                                     .foregroundStyle(Color(.systemGray2))
                                                     .padding(.leading, 10)
-                                                    .onTapGesture { self.signupUsernameFieldInFocus = true }
+                                                    .onTapGesture { self.signupConfirmCodeFieldInFocus = true }
                                                 Spacer()
                                             }
                                         }
@@ -1347,7 +1494,7 @@ struct ContentView: View {
                                 .tint(Color.EZNotesBlue)
                                 .font(.system(size: 18))
                                 .fontWeight(.medium)
-                                .focused($signupUsernameFieldInFocus)
+                                .focused($signupConfirmCodeFieldInFocus)
                                 .autocapitalization(.none)
                                 .disableAutocorrection(true)
                                 .keyboardType(.alphabet)
@@ -1356,7 +1503,17 @@ struct ContentView: View {
                             .frame(maxWidth: prop.size.width - 40)
                         case "select_plan":
                             VStack {
-                                
+                                Plans(
+                                    prop: prop,
+                                    email: getUDValue(key: "email"),
+                                    accountID: getUDValue(key: "account_id"),
+                                    isLargerScreen: prop.isLargerScreen,
+                                    action: {
+                                        self.userHasSignedIn = true
+                                        assignUDKey(key: "logged_in", value: true)
+                                        removeUDKey(key: "selecting_plan") /* MARK: Ensure `selecting_plan` gets removed from `UserDefaults` as it is no longer needed. */
+                                    }
+                                )
                             }
                             .frame(maxWidth: prop.size.width - 40)
                         case "registering_account": /* MARK: Nothing more than a loading screen. */
@@ -1379,94 +1536,139 @@ struct ContentView: View {
                         
                         Spacer()
                         
-                        if (self.signupSection == "credentials" || self.signupSection == "code_input") && self.signupSection != "hang_tight_screen" {
+                        if (self.signupSection == "credentials" || self.signupSection == "code_input") && (self.signupSection != "hang_tight_screen" && self.signupSection != "select_plan") {
                             Button(action: {
                                 switch(self.signupSection) {
                                 case "credentials":
-                                    if self.signupUsername.isEmpty || self.signupUsername.count < 4 {
-                                        self.signupError = .TooShortUsername
-                                        return
-                                    }
-                                    
-                                    if self.signupEmail.isEmpty || !self.signupEmail.contains("@") {
-                                        self.signupError = .InvalidEmail
-                                        return
-                                    }
-                                    
-                                    if self.signupPassword.isEmpty || self.signupPassword.count < 8 {
-                                        self.signupError = .TooShortPassword
-                                        return
-                                    }
-                                    
                                     self.signupSection = "hang_tight_screen"
                                     
-                                    /* MARK: If all above checks succeed, save the credentials to `UserDefaults`. */
-                                    assignUDKey(key: "username", value: self.signupUsername)
-                                    assignUDKey(key: "email", value: self.signupEmail)
-                                    assignUDKey(key: "password", value: self.signupPassword)
+                                    if self.signupUsername.isEmpty || self.signupUsername.count < 4 {
+                                        setSignupErrorAndSection(error: .TooShortUsername, section: "credentials")
+                                        return
+                                    }
                                     
-                                    if getUDValue(key: "usecase") != "school" {
-                                        /* MARK: If the usecase is not school, go ahead and send a request to the server to register the account. There is no further information needed. If the usecase is school, then we will prompt the user to select their state, college, major field and major. */
-                                        RequestAction<SignUpRequestData>(parameters: SignUpRequestData(
-                                            Username: self.signupUsername,
-                                            Email: self.signupEmail,
-                                            Password: self.signupPassword,
-                                            College: "N/A",
-                                            State: "N/A",
-                                            Field: "N/A",
-                                            Major: "N/A",
-                                            IP: getLocalIPAddress(),
-                                            Usecase: getUDValue(key: "usecase")
-                                        )).perform(action: complete_signup1_req) { statusCode, resp in
-                                            guard
-                                                let resp = resp,
-                                                statusCode == 200
-                                            else {
-                                                if
-                                                    let resp = resp,
-                                                    let errorCode = resp["ErrorCode"]! as? Int
-                                                {
-                                                    if errorCode == 0x6970 {
-                                                        self.signupError = .UserExists
-                                                        return
-                                                    }
-                                                    
-                                                    if errorCode == 0x7877 {
-                                                        self.signupError = .InvalidEmail
-                                                        return
-                                                    }
-                                                    
-                                                    if errorCode == 0x6979 {
-                                                        self.signupError = .EmailExists
-                                                        return
-                                                    }
-                                                }
-                                                
-                                                /* TODO: I believe the "ErrorCode" value in `resp` entails what went wrong in the request. One of the codes will enable us to decipher whether the user/email exists. */
-                                                self.signupError = .ServerError
-                                                return
-                                            }
-                                            
-                                            guard
-                                                resp.keys.contains("Message"),
-                                                let accountId = resp["Message"]! as? String
-                                            else {
-                                                self.signupError = .ServerError
-                                                return
-                                            }
-                                            
-                                            assignUDKey(key: "account_id", value: accountId)
-                                            
-                                            /* MARK: Redirect user to put in a code that was sent to their email. */
-                                            self.signupSection = "code_input"
-                                            
+                                    /* MARK: Ensure the username does not exist in the database. */
+                                    RequestAction<CheckUsernameRequestData>(parameters: CheckUsernameRequestData(
+                                        Username: self.signupUsername
+                                    )).perform(action: check_username_req) { statusCode, resp in
+                                        if statusCode != 200 {
+                                            setSignupErrorAndSection(error: .UserExists, section: "credentials")
+                                            self.signupUsernameFieldInFocus = true /* MARK: Force username textfield into focus. */
                                             return
                                         }
                                         
-                                        return
-                                    } else {
-                                        self.signupSection = "select_state"
+                                        /* MARK: If the username does not exist, proceed with checking the email. */
+                                        if self.signupEmail.isEmpty || !self.signupEmail.contains("@") {
+                                            setSignupErrorAndSection(error: .InvalidEmail, section: "credentials")
+                                            self.signupEmailFieldInFocus = true /* MARK: Force email textfield into focus. */
+                                            return
+                                        }
+                                        
+                                        let emailSegments = self.signupEmail.split(separator: "@")
+                                        
+                                        if let domainSegments = emailSegments.last?.split(separator: ".") {
+                                            if !["org", "com", "gov", "net"].contains(domainSegments.last!) {
+                                                setSignupErrorAndSection(error: .InvalidEmail, section: "credentials")
+                                                self.signupEmailFieldInFocus = true /* MARK: Force email textfield into focus. */
+                                                return
+                                            }
+                                        } else {
+                                            setSignupErrorAndSection(error: .InvalidEmail, section: "credentials")
+                                            self.signupEmailFieldInFocus = true /* MARK: Force email textfield into focus. */
+                                            return
+                                        }
+                                        
+                                        /* MARK: Ensure the email does not exist in the database. */
+                                        RequestAction<CheckEmailRequestData>(parameters: CheckEmailRequestData(
+                                            Email: self.signupEmail
+                                        )).perform(action: check_email_req) { statusCode, resp in
+                                            if statusCode != 200 {
+                                                setSignupErrorAndSection(error: .EmailExists, section: "credentials")
+                                                self.signupEmailFieldInFocus = true /* MARK: Force email textfield into focus. */
+                                                return
+                                            }
+                                            
+                                            /* MARK: If the email does not exist, proceed with checking the password. */
+                                            if self.signupPassword.isEmpty || self.signupPassword.count < 8 {
+                                                setSignupErrorAndSection(error: .TooShortPassword, section: "credentials")
+                                                self.signupPasswordFieldInFocus = true /* MARK: Force password textfield into focus. */
+                                                return
+                                            }
+                                            
+                                            /* MARK: If the password prerequisites check out, proceed with figuring out what to do next after credentials based on the users selected usecase. */
+                                            
+                                            /* MARK: If all above checks succeed, save the credentials to `UserDefaults`. */
+                                            assignUDKey(key: "username", value: self.signupUsername)
+                                            assignUDKey(key: "email", value: self.signupEmail)
+                                            assignUDKey(key: "password", value: self.signupPassword)
+                                            
+                                            if getUDValue(key: "usecase") != "school" {
+                                                /* MARK: If the usecase is not school, go ahead and send a request to the server to register the account. There is no further information needed. If the usecase is school, then we will prompt the user to select their state, college, major field and major. */
+                                                RequestAction<SignUpRequestData>(parameters: SignUpRequestData(
+                                                    Username: self.signupUsername,
+                                                    Email: self.signupEmail,
+                                                    Password: self.signupPassword,
+                                                    College: "N/A",
+                                                    State: "N/A",
+                                                    Field: "N/A",
+                                                    Major: "N/A",
+                                                    IP: getLocalIPAddress(),
+                                                    Usecase: getUDValue(key: "usecase")
+                                                )).perform(action: complete_signup1_req) { statusCode, resp in
+                                                    guard
+                                                        let resp = resp,
+                                                        statusCode == 200
+                                                    else {
+                                                        if
+                                                            let resp = resp,
+                                                            let errorCode = resp["ErrorCode"]! as? Int
+                                                        {
+                                                            /*if errorCode == 0x6970 {
+                                                                setSignupErrorAndSection(error: .UserExists, section: "credentials")
+                                                                self.signupError = .UserExists
+                                                                return
+                                                            }*/
+                                                            
+                                                            if errorCode == 0x7877 {
+                                                                setSignupErrorAndSection(error: .InvalidEmail, section: "credentials")
+                                                                self.signupEmailFieldInFocus = true /* MARK: Force email textfield into focus. */
+                                                                return
+                                                            }
+                                                            
+                                                            /*if errorCode == 0x6979 {
+                                                                self.signupError = .EmailExists
+                                                                return
+                                                            }*/
+                                                        }
+                                                        
+                                                        /* TODO: I believe the "ErrorCode" value in `resp` entails what went wrong in the request. One of the codes will enable us to decipher whether the user/email exists. */
+                                                        setSignupErrorAndSection(error: .ServerError, section: "credentials")
+                                                        return
+                                                    }
+                                                    
+                                                    guard
+                                                        resp.keys.contains("Message"),
+                                                        let accountId = resp["Message"]! as? String
+                                                    else {
+                                                        setSignupErrorAndSection(error: .ServerError, section: "credentials")
+                                                        return
+                                                    }
+                                                    
+                                                    assignUDKey(key: "account_id", value: accountId)
+                                                    
+                                                    /* MARK: Redirect user to put in a code that was sent to their email. */
+                                                    setSignupErrorAndSection(error: .None, section: "code_input")
+                                                    
+                                                    return
+                                                }
+                                                
+                                                return
+                                            } else {
+                                                setSignupErrorAndSection(section: "select_state")
+                                            }
+                                        }
                                     }
+                                    
                                     break
                                 case "code_input":
                                     self.signupSection = "registering_account"
@@ -1479,12 +1681,12 @@ struct ContentView: View {
                                         guard
                                             statusCode == 200
                                         else {
-                                            self.signupSection = "code_input" /* MARK: Ensure we "go back" to the last section if the code is wrong */
-                                            self.signupError = .WrongCode
+                                            setSignupErrorAndSection(error: .WrongCode, section: "code_input") /* MARK: Ensure we "go back" to the last section if the code is wrong */
                                             return
                                         }
                                         
-                                        self.signupSection = "select_plan"
+                                        setSignupErrorAndSection(section: "select_plan")
+                                        assignUDKey(key: "selecting_plan", value: true) /* MARK: Needed as there is no other way to track whether the user left the app selecting a plan or not. */
                                     }
                                 default: break
                                 }
@@ -1501,7 +1703,7 @@ struct ContentView: View {
                             .buttonStyle(NoLongPressButtonStyle())
                         }
                         
-                        if self.signupSection != "hang_tight_screen" {
+                        if self.signupSection != "hang_tight_screen" && self.signupSection != "select_plan" {
                             Button(action: {
                                 /* MARK: Ensure errors are cleared out if the user goes back. */
                                 if self.signupError != .None { self.signupError = .None }
@@ -1534,9 +1736,7 @@ struct ContentView: View {
                                                 resp.keys.contains("Colleges"),
                                                 statusCode == 200
                                             else {
-                                                self.signupSection = "select_major_field"
-                                                
-                                                self.signupError = .ServerError//self.error = .ServerError // self.serverError = true
+                                                setSignupErrorAndSection(error: .ServerError, section: "select_major_field")
                                                 return
                                             }
                                             
@@ -1549,8 +1749,7 @@ struct ContentView: View {
                                                 return
                                             }
                                             
-                                            self.signupSection = "select_major_field"
-                                            self.signupError = .ServerError
+                                            setSignupErrorAndSection(error: .ServerError, section: "select_major_field")
                                             return
                                         }
                                     }
@@ -1575,13 +1774,11 @@ struct ContentView: View {
                                                 resp.keys.contains("ErrorCode"),
                                                 let errorCode = resp["ErrorCode"] as? Int
                                             else {
-                                                self.signupSection = "usecase"
-                                                self.signupError = .ErrorOccurred
+                                                setSignupErrorAndSection(error: .ErrorOccurred, section: "usecase")
                                                 return
                                             }
                                             
-                                            self.signupSection = "usecase"
-                                            self.signupError = .ForceRestart
+                                            setSignupErrorAndSection(error: .ForceRestart, section: "usecase")
                                             
                                             if errorCode != 0x0223 {
                                                 /* MARK: If the error code is not 0x0223, then there was an error. Else, the users account data wasn't found for some reason so the app will force them to restart*/
@@ -1593,7 +1790,7 @@ struct ContentView: View {
                                         
                                         if getUDValue(key: "usecase") == "school" { self.signupSection = "select_major"; return }
                                         
-                                        self.signupSection = "credentials"
+                                        setSignupErrorAndSection(section: "credentials")
                                         return
                                     }
                                     
@@ -1833,17 +2030,183 @@ struct ContentView: View {
                         RequestAction<ReqPlaceholder>(
                             parameters: ReqPlaceholder()
                         )
-                        .perform(action: check_server_active_req)
-                        { statusCode, resp in
+                        .perform(action: check_server_active_req) { statusCode, resp in
                             guard resp != nil && statusCode == 200 else {
                                 self.topBanner = .NetworkCheckFailure
                                 return
+                            }
+                            
+                            /* MARK: First, check to see if `account_id` exists in `UserDefaults`. If it doesn't, something went wrong. */
+                            if !udKeyExists(key: "account_id") {
+                                self.userHasSignedIn = false
+                                self.userNotFound = true
+                                assignUDKey(key: "logged_in", value: false)
+                                return
+                            }
+                            
+                            self.accountInfo.setAccountID(accountID: getUDValue(key: "account_id"))
+                            
+                            /* MARK: If all is well, check to see if `username` is in `UserDefaults`. If it isn't, force user to homescreen and display "User Not Found" error, forcing user to log back in. If it is, double check that the username exists in the database. */
+                            if !udKeyExists(key: "username") {
+                                self.userHasSignedIn = false
+                                self.userNotFound = true
+                                assignUDKey(key: "logged_in", value: false)
+                                return
+                            }
+                            
+                            RequestAction<CheckUsernameRequestData>(parameters: CheckUsernameRequestData(
+                                Username: getUDValue(key: "username")
+                            )).perform(action: check_username_req) { statusCode, resp in
+                                /* MARK: If `statusCode` is not 200, that means the username exists otherwise it does not. If it does not, we need to throw an error. */
+                                if statusCode == 200 {
+                                    self.userHasSignedIn = false
+                                    self.userNotFound = true
+                                    assignUDKey(key: "logged_in", value: false)
+                                    return
+                                }
+                                
+                                /* MARK: If all is well, get the value of `username` in `UserDefaults` and assign it to `username` in `accountInfo`. */
+                                self.accountInfo.setUsername(username: getUDValue(key: "username"))
+                                
+                                if udKeyExists(key: "usecase") {
+                                    self.accountInfo.setUsage(usage: getUDValue(key: "usecase"))
+                                }
+                                
+                                if udKeyExists(key: "email") {
+                                    self.accountInfo.setEmail(email: getUDValue(key: "email"))
+                                }
+                                
+                                if udKeyExists(key: "college") {
+                                    self.accountInfo.setCollegeName(collegeName: getUDValue(key: "college"))
+                                }
+                                
+                                if udKeyExists(key: "major") {
+                                    self.accountInfo.setMajorName(majorName: getUDValue(key: "major"))
+                                }
+                                
+                                if udKeyExists(key: "major_field") {
+                                    self.accountInfo.setMajorField(field: getUDValue(key: "major_field"))
+                                }
+                                
+                                if udKeyExists(key: "state") {
+                                    self.accountInfo.setCollegeState(collegeState: getUDValue(key: "state"))
+                                }
+                                
+                                PFP(accountID: self.accountInfo.accountID)
+                                    .requestGetPFP() { statusCode, pfp, resp in
+                                        guard pfp != nil && statusCode == 200 else {
+                                            guard resp != nil else { return }
+                                            
+                                            /* MARK: If `ErrorCode` is 0x6966 means the user was not found in the database. */
+                                            if resp!["ErrorCode"] as! Int == 0x6966 {
+                                                /* MARK: If the error code is `0x6966`, remove all the data over the user from `UserDefaults`, ensure the "User Not Found" banner will show and "redirect" the user back to the home screen. */
+                                                udRemoveAllAccountInfoKeys()
+                                                
+                                                self.userHasSignedIn = false
+                                                self.userNotFound = true
+                                            }
+                                            
+                                            return
+                                        }
+                                        
+                                        accountInfo.setProfilePicture(pfp: UIImage(data: pfp!)!)
+                                    }
+                                //}
+                                
+                                //DispatchQueue.global(qos: .background).async {
+                                PFP(accountID: self.accountInfo.accountID)
+                                    .requestGetPFPBg() { statusCode, pfp_bg in
+                                        guard pfp_bg != nil && statusCode == 200 else { return }
+                                        
+                                        accountInfo.setProfilePictureBackground(bg: UIImage(data: pfp_bg!)!)
+                                    }
+                                
+                                /* MARK: I do not believe we need to use `Task` here. */
+                                Task {
+                                    //if self.accountInfo.friends.isEmpty {
+                                    await self.accountInfo.getFriends(accountID: self.accountInfo.accountID) { statusCode, resp in
+                                        guard resp != nil && statusCode == 200 else {
+                                            return
+                                        }
+                                        
+                                        if let resp = resp as? [String: [String: Any]] {
+                                            for user in resp.keys {
+                                                guard resp[user] != nil else { continue }
+                                                
+                                                if let pfpEncodedData: String = resp[user]!["PFP"] as? String {
+                                                    if let userPFPData: Data = Data(base64Encoded: pfpEncodedData) {
+                                                        self.accountInfo.friends[user] = Image(
+                                                            uiImage: UIImage(
+                                                                data: userPFPData
+                                                            )!
+                                                        )
+                                                    } else {
+                                                        self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
+                                                    }
+                                                } else {
+                                                    self.accountInfo.friends[user] = Image(systemName: "person.crop.circle.fill")
+                                                }
+                                            }
+                                        }
+                                        
+                                        if !self.accountInfo.friends.isEmpty {
+                                            RequestAction<GetClientsMessagesData>(parameters: GetClientsMessagesData(
+                                                AccountId: self.accountInfo.accountID
+                                            )).perform(action: get_clients_messages_req) { statusCode, resp in
+                                                guard resp != nil && statusCode == 200 else {
+                                                    if let resp = resp { print(resp) }
+                                                    return
+                                                }
+                                                
+                                                if let resp = resp as? [String: Array<[String: String]>] {
+                                                    resp.keys.forEach { user in
+                                                        if let friendImage = self.accountInfo.friends[user] {
+                                                            self.accountInfo.allChats.append([user: friendImage])
+                                                        } else {
+                                                            self.accountInfo.allChats.append([user: Image(systemName: "person.crop.circle.fill")])
+                                                        }
+                                                        
+                                                        /* MARK: Automatically assume there is no chat history with `user`. */
+                                                        if !self.accountInfo.messages.keys.contains(user) {
+                                                            self.accountInfo.messages[user] = []
+                                                        }
+                                                        
+                                                        if !resp[user]!.isEmpty {
+                                                            
+                                                            resp[user]!.forEach { message in
+                                                                let messageData = FriendMessageDetails(
+                                                                    MessageID: message["MessageID"]!,
+                                                                    ContentType: message["ContentType"]!,
+                                                                    MessageContent: message["MessageContent"]!,
+                                                                    From: message["From"]!,
+                                                                    dateSent: ISO8601DateFormatter().date(from: message["dateSent"]!)!
+                                                                )
+                                                                
+                                                                if !self.accountInfo.messages[user]!.contains(where: { $0.MessageID == messageData.MessageID }) {
+                                                                    self.accountInfo.messages[user]!.append(messageData)
+                                                                }
+                                                            }
+                                                            
+                                                            /*if let messageHistoryWithUser = resp[user]! as? Array<FriendMessageDetails> {
+                                                             print(messageHistoryWithUser)
+                                                             /*messageHistoryWithUser.forEach { message in
+                                                              self.accountInfo.messages[user]!.append(message)
+                                                              }*/
+                                                             }*/
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    //}
+                                }
                             }
                         }
                         
                         /* MARK: If `topBanner` is `networkCheckFailure`, which will be set above, just exit from the rest of this code. */
                         /* TODO: We need to figure out a way to ensure that the rest of the `accountInfo` gets assigned when the server is responsive again. */
-                        if self.topBanner == .NetworkCheckFailure { return }
+                        /*if self.topBanner == .NetworkCheckFailure { return }
                         //}
                         
                         /* MARK: If this `.onAppear` runs, there should be a key `username` in `UserDefaults.standard`. If there isn't, then there is a problem.
@@ -2022,7 +2385,7 @@ struct ContentView: View {
                         
                         /*if UserDefaults.standard.object(forKey: "client_sub_id") != nil {
                             accountInfo.setClientSubID(subID: UserDefaults.standard.string(forKey: "client_sub_id")!)
-                        }*/
+                        }*/*/
                     //}
                     
                     /*if UserDefaults.standard.string(forKey: "faceID_enabled") == "enabled" {

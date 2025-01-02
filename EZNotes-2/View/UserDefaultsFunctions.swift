@@ -34,6 +34,7 @@ public func udRemoveAllAccountInfoKeys() -> Void {
     removeUDKey(key: "username")
     removeUDKey(key: "email")
     removeUDKey(key: "password")
+    removeUDKey(key: "account_id")
     removeUDKey(key: "college")
     removeUDKey(key: "major")
     removeUDKey(key: "major_field")

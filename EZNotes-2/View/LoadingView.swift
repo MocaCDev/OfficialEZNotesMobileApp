@@ -7,16 +7,19 @@
 import SwiftUI
 
 struct LoadingView: View {
-    var message: String
+    var message: String = ""
+    var tint: Color = Color.EZNotesBlue
     
     var body: some View {
-        Text(self.message)
-            .frame(maxWidth: .infinity, alignment: .center)
-            .foregroundStyle(.white)
-            .setFontSizeAndWeight(weight: .medium, size: 14)
-            .minimumScaleFactor(0.5)
+        if !self.message.isEmpty {
+            Text(self.message)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .foregroundStyle(.white)
+                .setFontSizeAndWeight(weight: .medium, size: 14)
+                .minimumScaleFactor(0.5)
+        }
         
         ProgressView()
-            .tint(Color.EZNotesBlue)
+            .tint(self.tint)
     }
 }

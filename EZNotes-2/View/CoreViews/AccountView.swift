@@ -2048,6 +2048,23 @@ struct Account: View {
                     RequestAction<GetAccountDescriptionData>(parameters: GetAccountDescriptionData(
                         AccountId: self.accountInfo.accountID
                     )).perform(action: get_account_description_req) { statusCode, resp in
+                        
+                        /* MARK: After the above request is done, check if `accountTags` is empty. If `accountDescription` is empty, odds are `accountTags` will be too - however, that won't always be the case hence the if statement. */
+                        /* MARK: Below request is performed inside this block of code to ensure the request is sent after the above request is sent to avoid overloading the server. */
+                        if self.accountInfo.accountTags.isEmpty {
+                            RequestAction<GetTagsData>(parameters: GetTagsData(
+                                AccountId: self.accountInfo.accountID
+                            )).perform(action: get_tags_req) { statusCode, resp in
+                                guard resp != nil && statusCode == 200 else {
+                                    return
+                                }
+                                
+                                if let resp = resp as? [String: Array<String>] {
+                                    self.accountInfo.accountTags = resp["Tags"]!
+                                }
+                            }
+                        }
+                        
                         guard resp != nil && statusCode == 200 else {
                             if self.accountInfo.usage == "school" {
                                 self.accountInfo.accountDescription = "Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**"
@@ -2076,7 +2093,7 @@ struct Account: View {
                     }
                 }
                 
-                if self.accountInfo.accountTags.isEmpty {
+                /*if self.accountInfo.accountTags.isEmpty {
                     RequestAction<GetTagsData>(parameters: GetTagsData(
                         AccountId: self.accountInfo.accountID
                     )).perform(action: get_tags_req) { statusCode, resp in
@@ -2088,7 +2105,7 @@ struct Account: View {
                             self.accountInfo.accountTags = resp["Tags"]!
                         }
                     }
-                }
+                }*/
                 /*if udKeyExists(key: "account_description") {
                  self.accountDescription = getUDValue(key: "account_description")
                  } else {
