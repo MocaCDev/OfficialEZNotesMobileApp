@@ -1694,6 +1694,13 @@ struct CheckBox: ToggleStyle {
     }
 }
 
+enum TopNavChatErrors {
+    case None
+    case ErrorAcceptingFriendRequest
+    case CannotAddYourself
+    case ErrorSendingFriendRequest
+}
+
 struct TopNavChat: View {
     @EnvironmentObject private var accountInfo: AccountDetails
     //@ObservedObject public var accountInfo: AccountDetails
@@ -1711,6 +1718,8 @@ struct TopNavChat: View {
     @State private var rickRoll: Bool = false
     @State private var userSearched: String = ""
     @FocusState private var userSearchBarFocused: Bool
+    
+    @State private var error: TopNavChatErrors = .None
     
     /* MARK: Friends/friend requests/pending states. */
     @State private var defaultUsers: [String: Image] = [:] /* MARK: Stores users that show in the "Add" section without the user searching. */
@@ -2519,6 +2528,23 @@ struct TopNavChat: View {
                                     if !self.noUsersToShow && !self.noSearchResults {
                                         if !self.loadingView {
                                             ScrollView(.vertical, showsIndicators: false) {
+                                                if self.error == .CannotAddYourself || self.error == .ErrorSendingFriendRequest {
+                                                    Text(self.error == .ErrorSendingFriendRequest
+                                                         ? "Failed to send friend request. Try again"
+                                                         : "You cannot add yourself as a friend")
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                    .foregroundStyle(Color.EZNotesRed)
+                                                    .font(
+                                                        .system(
+                                                            size: 13,
+                                                            weight: .bold
+                                                        )
+                                                    )
+                                                    .multilineTextAlignment(.center)
+                                                    .padding(.leading, 10)
+                                                    .padding(.top)
+                                                }
+                                                
                                                 VStack {
                                                     if self.usersSearched.isEmpty {
                                                         ForEach(Array(self.defaultUsers.enumerated()), id: \.offset) { index, value in
@@ -2638,8 +2664,21 @@ struct TopNavChat: View {
                                                                                     self.addingFriend = false
                                                                                     self.sendingFriendRequestsTo.removeAll(where: { $0 == value.key })
                                                                                     
-                                                                                    guard resp != nil && statusCode == 200 else {
-                                                                                        print("Error")
+                                                                                    guard
+                                                                                        resp != nil,
+                                                                                        statusCode == 200
+                                                                                    else {
+                                                                                        if let resp = resp {
+                                                                                            if let errorCode = resp["ErrorCode"] as? Int {
+                                                                                                if errorCode == 0x7779 {
+                                                                                                    self.error = .CannotAddYourself
+                                                                                                    return
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                        
+                                                                                        
+                                                                                        self.error = .ErrorSendingFriendRequest
                                                                                         return
                                                                                     }
                                                                                     
@@ -2898,8 +2937,20 @@ struct TopNavChat: View {
                                                                                     self.addingFriend = false
                                                                                     self.sendingFriendRequestsTo.removeAll(where: { $0 == value.key })
                                                                                     
-                                                                                    guard resp != nil && statusCode == 200 else {
-                                                                                        print("Error")
+                                                                                    guard
+                                                                                        resp != nil,
+                                                                                        statusCode == 200
+                                                                                    else {
+                                                                                        if let resp = resp {
+                                                                                            if let errorCode = resp["ErrorCode"] as? Int {
+                                                                                                if errorCode == 0x7779 {
+                                                                                                    self.error = .CannotAddYourself
+                                                                                                    return
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                        
+                                                                                        self.error = .ErrorSendingFriendRequest
                                                                                         return
                                                                                     }
                                                                                     
@@ -3349,6 +3400,23 @@ struct TopNavChat: View {
                             }*/
                         case "pending":
                             VStack {
+                                if self.error == .ErrorAcceptingFriendRequest {
+                                    Text(self.error == .ErrorAcceptingFriendRequest
+                                         ? "Failed to accept friend request. Try again"
+                                         : "Something went wrong. Try again")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .foregroundStyle(Color.EZNotesRed)
+                                    .font(
+                                        .system(
+                                            size: 13,
+                                            weight: .bold
+                                        )
+                                    )
+                                    .multilineTextAlignment(.center)
+                                    .padding(.leading, 10)
+                                    .padding(.top)
+                                }
+                                
                                 if !self.accountInfo.pendingRequests.isEmpty {
                                     ScrollView(.vertical, showsIndicators: false) {
                                         ForEach(Array(self.accountInfo.pendingRequests.enumerated()), id: \.offset) { index, value in
@@ -3386,6 +3454,7 @@ struct TopNavChat: View {
                                                             self.acceptingFriendRequest = false
                                                             
                                                             guard resp != nil && statusCode == 200 else {
+                                                                self.error = .ErrorAcceptingFriendRequest
                                                                 //self.accountInfo.friends[value.key] = Image(systemName: "person.crop.circle.fill")
                                                                 return /* TODO: Handle errors. */
                                                             }
@@ -3860,6 +3929,8 @@ struct TopNavChat: View {
                 }
                 .onAppear {
                     self.constantlyUpdateIncomingFriendRequests = true
+                    
+                    if self.error != .None { self.error = .None }
                     
                     DispatchQueue.global(qos: .background).async {
                         while self.constantlyUpdateIncomingFriendRequests {
