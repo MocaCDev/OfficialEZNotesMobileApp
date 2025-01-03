@@ -531,117 +531,114 @@ struct UsersProfile: View {
                 .padding(.leading, self.isUserPreview ? 20 : 0)
                 .padding(.top, 10)
             
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack {
-                    if self.isUserPreview {
-                        ForEach(self.usersTags, id: \.self) { tag in
-                            HStack {
-                                Text(tag)
-                                    .frame(alignment: .center)
-                                    .padding([.top, .bottom], 4)
-                                    .padding([.leading, .trailing], 8.5)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
-                                        //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
-                                    )
-                                    .font(Font.custom("Poppins-SemiBold", size: 14))
-                                    .foregroundStyle(.white)
-                                    .padding([.top, .bottom], 1.5)
+            HStack {
+                Button(action: { self.addMoreTags = true }) {
+                    HStack {
+                        Image(systemName: "plus")
+                            .resizable()
+                            .frame(width: 15, height: 15)
+                            .foregroundStyle(.white)
+                    }
+                    .frame(alignment: .leading)
+                    .padding(.leading, 20)//.padding([.leading, .trailing], 8.5)
+                }
+                
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack {
+                        if self.isUserPreview {
+                            ForEach(self.usersTags, id: \.self) { tag in
+                                HStack {
+                                    Text(tag)
+                                        .frame(alignment: .center)
+                                        .padding([.top, .bottom], 4)
+                                        .padding([.leading, .trailing], 8.5)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesLightBlack.opacity(0.8))
+                                            //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
+                                        )
+                                        .font(Font.custom("Poppins-SemiBold", size: 14))
+                                        .foregroundStyle(.white)
+                                        .padding([.top, .bottom], 1.5)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    } else {
-                        ForEach(self.accountInfo.accountTags, id: \.self) { tag in
-                            HStack {
-                                Text(tag)
-                                    .frame(alignment: .center)
-                                    .padding([.top, .bottom], 4)
-                                    .padding([.leading, .trailing], 8.5)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
-                                        //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
-                                    )
-                                    .font(Font.custom("Poppins-SemiBold", size: 14))
-                                    .foregroundStyle(.white)
-                                    .padding([.top, .bottom], 1.5)
+                        } else {
+                            ForEach(self.accountInfo.accountTags, id: \.self) { tag in
+                                HStack {
+                                    Text(tag)
+                                        .frame(alignment: .center)
+                                        .padding([.top, .bottom], 4)
+                                        .padding([.leading, .trailing], 8.5)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(Color.EZNotesLightBlack.opacity(0.8))
+                                            //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
+                                        )
+                                        .font(Font.custom("Poppins-SemiBold", size: 14))
+                                        .foregroundStyle(.white)
+                                        .padding([.top, .bottom], 1.5)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        /*if self.accountInfo.usage == "school" {
-                            HStack {
-                                Text(self.accountInfo.college)
-                                    .frame(alignment: .center)
-                                    .padding([.top, .bottom], 4)
-                                    .padding([.leading, .trailing], 8.5)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
-                                        //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
-                                    )
-                                    .font(Font.custom("Poppins-SemiBold", size: 14))
-                                    .foregroundStyle(.white)
-                                    .padding([.top, .bottom], 1.5)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            HStack {
-                                Text(self.accountInfo.major)
-                                    .frame(alignment: .center)
-                                    .padding([.top, .bottom], 4)
-                                    .padding([.leading, .trailing], 8.5)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
-                                        //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
-                                    )
-                                    .font(Font.custom("Poppins-SemiBold", size: 14))
-                                    .foregroundStyle(.white)
-                                    .padding([.top, .bottom], 1.5)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            HStack {
-                                Text(self.accountInfo.state)
-                                    .frame(alignment: .center)
-                                    .padding([.top, .bottom], 4)
-                                    .padding([.leading, .trailing], 8.5)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
-                                        //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
-                                    )
-                                    .font(Font.custom("Poppins-SemiBold", size: 14))
-                                    .foregroundStyle(.white)
-                                    .padding([.top, .bottom], 1.5)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }*/
-                        
-                        Button(action: { self.addMoreTags = true }) {
-                            HStack {
-                                Image(systemName: "plus")
-                                    .resizable()
-                                    .frame(width: 15, height: 15)
-                                    .foregroundStyle(.white)
-                                
-                                Text("Add Tag")
-                                    .frame(alignment: .center)
-                                    .font(Font.custom("Poppins-SemiBold", size: 14))
-                                    .foregroundStyle(.white)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding([.leading, .trailing], 8.5)
+                            /*if self.accountInfo.usage == "school" {
+                             HStack {
+                             Text(self.accountInfo.college)
+                             .frame(alignment: .center)
+                             .padding([.top, .bottom], 4)
+                             .padding([.leading, .trailing], 8.5)
+                             .background(
+                             RoundedRectangle(cornerRadius: 15)
+                             .fill(Color.EZNotesLightBlack.opacity(0.8))
+                             //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
+                             )
+                             .font(Font.custom("Poppins-SemiBold", size: 14))
+                             .foregroundStyle(.white)
+                             .padding([.top, .bottom], 1.5)
+                             }
+                             .frame(maxWidth: .infinity, alignment: .leading)
+                             
+                             HStack {
+                             Text(self.accountInfo.major)
+                             .frame(alignment: .center)
+                             .padding([.top, .bottom], 4)
+                             .padding([.leading, .trailing], 8.5)
+                             .background(
+                             RoundedRectangle(cornerRadius: 15)
+                             .fill(Color.EZNotesLightBlack.opacity(0.8))
+                             //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
+                             )
+                             .font(Font.custom("Poppins-SemiBold", size: 14))
+                             .foregroundStyle(.white)
+                             .padding([.top, .bottom], 1.5)
+                             }
+                             .frame(maxWidth: .infinity, alignment: .leading)
+                             
+                             HStack {
+                             Text(self.accountInfo.state)
+                             .frame(alignment: .center)
+                             .padding([.top, .bottom], 4)
+                             .padding([.leading, .trailing], 8.5)
+                             .background(
+                             RoundedRectangle(cornerRadius: 15)
+                             .fill(Color.EZNotesLightBlack.opacity(0.8))
+                             //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
+                             )
+                             .font(Font.custom("Poppins-SemiBold", size: 14))
+                             .foregroundStyle(.white)
+                             .padding([.top, .bottom], 1.5)
+                             }
+                             .frame(maxWidth: .infinity, alignment: .leading)
+                             }*/
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.trailing, 10)
+                    .padding(.leading, 2)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.trailing, 10)
-                .padding(.leading, 2)
+                .frame(maxWidth: .infinity)
+                //.padding(.leading, 20)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.leading, 20)
         }
     }
 }

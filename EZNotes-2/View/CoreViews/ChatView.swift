@@ -111,7 +111,7 @@ struct ChatView: View {
     @State private var showUserProfilePreview: Bool = false
     
     private func fetchClientsFriendData() -> Void {
-        DispatchQueue.global(qos: .background).async {
+        DispatchQueue.global(qos: .background).async { /* TODO: Is the below code being in a background thread needed? I think it just enables a more feasible user experience so for now, keep it. But, nonetheless, figure out if it is really useful or not. */
             while(self.fetchData) {
                 /* MARK: We want to consistenly update the outgoing requests for the user. In the case the end user accepts, we want to ensure that the apps data is up to date. */
                 RequestAction<GetClientsFriendRequestsData>(parameters: GetClientsFriendRequestsData(
@@ -200,12 +200,10 @@ struct ChatView: View {
                                 
                                 self.accountInfo.messages.removeValue(forKey: user)
                             } else {
-                                if let friendImage = self.accountInfo.friends[user] {
-                                    if !self.accountInfo.allChats.contains(where: { $0 == [user: friendImage] }) {
+                                if !self.accountInfo.allChats.contains(where: { $0.first?.key == user }) {
+                                    if let friendImage = self.accountInfo.friends[user] {
                                         self.accountInfo.allChats.append([user: friendImage])
-                                    }
-                                } else {
-                                    if !self.accountInfo.allChats.contains(where: { $0 == [user: Image(systemName: "person.crop.circle.fill")] }) {
+                                    } else {
                                         self.accountInfo.allChats.append([user: Image(systemName: "person.crop.circle.fill")])
                                     }
                                 }
@@ -216,7 +214,6 @@ struct ChatView: View {
                                 }
                                 
                                 if !resp[user]!.isEmpty {
-                                    
                                     resp[user]!.forEach { message in
                                         let messageData = FriendMessageDetails(
                                             MessageID: message["MessageID"]!,
@@ -439,7 +436,7 @@ struct ChatView: View {
                                                         
                                                         Text(self.accountInfo.messages.keys.contains(value.keys.first!)
                                                              ? !self.accountInfo.messages[value.keys.first!]!.isEmpty
-                                                             ? self.accountInfo.messages[value.keys.first!]!.last!.MessageContent
+                                                             ? "\(self.accountInfo.messages[value.keys.first!]!.last!.From == "client" ? "You" : value.keys.first!): \(self.accountInfo.messages[value.keys.first!]!.last!.MessageContent)"
                                                              : "No Messages"
                                                              : "No Messages")
                                                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -739,13 +736,15 @@ struct ChatView: View {
                             
                             if let resp = resp as? [String: Array<[String: String]>] {
                                 resp.keys.forEach { user in
-                                    if let friendImage = self.accountInfo.friends[user] {
-                                        if !self.accountInfo.allChats.contains(where: { $0 == [user: friendImage] }) {
+                                    if !self.accountInfo.allChats.contains(where: { $0.first?.key == user }) {
+                                        if let friendImage = self.accountInfo.friends[user] {
+                                            //if !self.accountInfo.allChats.contains(where: { $0.first?.key == user }) {//if !self.accountInfo.allChats.contains(where: { $0 == [user: friendImage] }) {
                                             self.accountInfo.allChats.append([user: friendImage])
-                                        }
-                                    } else {
-                                        if !self.accountInfo.allChats.contains(where: { $0 == [user: Image(systemName: "person.crop.circle.fill")] }) {
+                                            //}
+                                        } else {
+                                            //if !self.accountInfo.allChats.contains(where: { $0.first?.key == user }) {//[user: Image(systemName: "person.crop.circle.fill")] }) {
                                             self.accountInfo.allChats.append([user: Image(systemName: "person.crop.circle.fill")])
+                                            //}
                                         }
                                     }
                                     
@@ -769,13 +768,6 @@ struct ChatView: View {
                                                 self.accountInfo.messages[user]!.append(messageData)
                                             }
                                         }
-                                        
-                                        /*if let messageHistoryWithUser = resp[user]! as? Array<FriendMessageDetails> {
-                                         print(messageHistoryWithUser)
-                                         /*messageHistoryWithUser.forEach { message in
-                                          self.accountInfo.messages[user]!.append(message)
-                                          }*/
-                                         }*/
                                     }
                                 }
                             }

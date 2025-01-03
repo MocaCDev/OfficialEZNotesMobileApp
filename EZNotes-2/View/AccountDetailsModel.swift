@@ -109,6 +109,75 @@ class AccountDetails: ObservableObject {
         }
     }
     
+    public func getUsage(accountID: String, completion: @escaping (Int, [String: Any]?) -> Void) async {
+        do {
+            let req: RequestAction<GetClientsUsecaseReq> = RequestAction<GetClientsUsecaseReq>(
+                parameters: GetClientsUsecaseReq(
+                    AccountID: accountID
+                )
+            )
+            
+            let reqInit = req.initSession(withRequest: get_clients_usecase_req)//, withDelegate: true, delegate: delegate)
+            
+            var request = reqInit.Request
+            let session = reqInit.Session
+            
+            request.addValue(req.parameters.AccountID, forHTTPHeaderField: "Account-Id")
+            
+            let (data, response) = try await session.data(for: request)
+            
+            req.handleResponse(response: response, data: data, completion: completion)
+        } catch {
+            print(error)
+        }
+    }
+    
+    public func getAccountDescription(accountID: String, completion: @escaping (Int, [String: Any]?) -> Void) async {
+        do {
+            let req: RequestAction<GetAccountDescriptionData> = RequestAction<GetAccountDescriptionData>(
+                parameters: GetAccountDescriptionData(
+                    AccountId: accountID
+                )
+            )
+            
+            let reqInit = req.initSession(withRequest: get_account_description_req)//, withDelegate: true, delegate: delegate)
+            
+            var request = reqInit.Request
+            let session = reqInit.Session
+            
+            request.addValue(req.parameters.AccountId, forHTTPHeaderField: "Account-Id")
+            
+            let (data, response) = try await session.data(for: request)
+            
+            req.handleResponse(response: response, data: data, completion: completion)
+        } catch {
+            print(error)
+        }
+    }
+    
+    public func getAccountTags(accountID: String, completion: @escaping (Int, [String: Any]?) -> Void) async {
+        do {
+            let req: RequestAction<GetTagsData> = RequestAction<GetTagsData>(
+                parameters: GetTagsData(
+                    AccountId: accountID
+                )
+            )
+            
+            let reqInit = req.initSession(withRequest: get_tags_req)//, withDelegate: true, delegate: delegate)
+            
+            var request = reqInit.Request
+            let session = reqInit.Session
+            
+            request.addValue(req.parameters.AccountId, forHTTPHeaderField: "Account-Id")
+            
+            let (data, response) = try await session.data(for: request)
+            
+            req.handleResponse(response: response, data: data, completion: completion)
+        } catch {
+            print(error)
+        }
+    }
+    
     final public func reset() {
         username = ""
         email = ""

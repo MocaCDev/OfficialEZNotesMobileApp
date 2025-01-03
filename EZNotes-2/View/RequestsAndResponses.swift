@@ -17,6 +17,10 @@ let server = "http://192.168.1.109:8088"
  * */
 struct ReqPlaceholder {}
 
+struct GetClientsUsecaseReq {
+    let AccountID: String
+}
+
 struct GetClientsMessagesData {
     let AccountId: String
 }
@@ -615,3 +619,8 @@ let get_clients_messages_req: CSIARequest = CSIARequest(
     reqData: GetClientsMessagesData.self
 )
 
+let get_clients_usecase_req: CSIARequest = CSIARequest(
+    url: "\(server)/get_usecase",
+    method: "get",
+    reqData: GetClientsUsecaseReq.self
+)

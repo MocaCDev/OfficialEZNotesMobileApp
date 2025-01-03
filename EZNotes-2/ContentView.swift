@@ -2149,7 +2149,7 @@ struct ContentView: View {
                                             }
                                         }
                                         
-                                        if !self.accountInfo.friends.isEmpty {
+                                        /*if !self.accountInfo.friends.isEmpty {
                                             RequestAction<GetClientsMessagesData>(parameters: GetClientsMessagesData(
                                                 AccountId: self.accountInfo.accountID
                                             )).perform(action: get_clients_messages_req) { statusCode, resp in
@@ -2161,9 +2161,13 @@ struct ContentView: View {
                                                 if let resp = resp as? [String: Array<[String: String]>] {
                                                     resp.keys.forEach { user in
                                                         if let friendImage = self.accountInfo.friends[user] {
-                                                            self.accountInfo.allChats.append([user: friendImage])
+                                                            if !self.accountInfo.allChats.contains(where: { $0.first?.key == user }) {
+                                                                self.accountInfo.allChats.append([user: friendImage])
+                                                            }
                                                         } else {
-                                                            self.accountInfo.allChats.append([user: Image(systemName: "person.crop.circle.fill")])
+                                                            if !self.accountInfo.allChats.contains(where: { $0.first?.key == user }) {
+                                                                self.accountInfo.allChats.append([user: Image(systemName: "person.crop.circle.fill")])
+                                                            }
                                                         }
                                                         
                                                         /* MARK: Automatically assume there is no chat history with `user`. */
@@ -2197,7 +2201,7 @@ struct ContentView: View {
                                                     }
                                                 }
                                             }
-                                        }
+                                        }*/
                                     }
                                     //}
                                 }

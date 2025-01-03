@@ -712,6 +712,10 @@ class RequestAction<T>: ObservableObject {
                 request.addValue(params.OldPassword, forHTTPHeaderField: "Old-Password")
                 request.addValue(params.NewPassword, forHTTPHeaderField: "New-Password")
                 break
+            case is GetClientsUsecaseReq.Type:
+                guard let params: GetClientsUsecaseReq = (parameters as? GetClientsUsecaseReq) else { return }
+                request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
+                break
             default: break
         }
         

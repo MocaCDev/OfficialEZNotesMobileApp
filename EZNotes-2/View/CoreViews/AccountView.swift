@@ -2044,51 +2044,52 @@ struct Account: View {
             )
             .background(.black)
             .onAppear {
-                if self.accountInfo.accountDescription == "" {
-                    RequestAction<GetAccountDescriptionData>(parameters: GetAccountDescriptionData(
-                        AccountId: self.accountInfo.accountID
-                    )).perform(action: get_account_description_req) { statusCode, resp in
-                        
-                        /* MARK: After the above request is done, check if `accountTags` is empty. If `accountDescription` is empty, odds are `accountTags` will be too - however, that won't always be the case hence the if statement. */
-                        /* MARK: Below request is performed inside this block of code to ensure the request is sent after the above request is sent to avoid overloading the server. */
-                        if self.accountInfo.accountTags.isEmpty {
-                            RequestAction<GetTagsData>(parameters: GetTagsData(
-                                AccountId: self.accountInfo.accountID
-                            )).perform(action: get_tags_req) { statusCode, resp in
-                                guard resp != nil && statusCode == 200 else {
+                Task {
+                    if self.accountInfo.usage == "" {
+                        if udKeyExists(key: "usecase") { self.accountInfo.setUsage(usage: getUDValue(key: "usecase")) }
+                        else {
+                            await self.accountInfo.getUsage(accountID: self.accountInfo.accountID) { statusCode, resp in
+                                guard
+                                    let resp = resp,
+                                    statusCode == 200,
+                                    let usage = resp["Usage"] as? String
+                                else {
                                     return
                                 }
                                 
-                                if let resp = resp as? [String: Array<String>] {
-                                    self.accountInfo.accountTags = resp["Tags"]!
-                                }
+                                self.accountInfo.setUsage(usage: usage)
+                                assignUDKey(key: "usecase", value: usage)
                             }
                         }
-                        
-                        guard resp != nil && statusCode == 200 else {
-                            if self.accountInfo.usage == "school" {
-                                self.accountInfo.accountDescription = "Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**"
-                            } else { self.accountInfo.accountDescription = "No Description" }
-                            return
-                        }
-                        
-                        if let resp = resp {
+                    }
+                    
+                    if self.accountInfo.accountDescription == "" {
+                        await self.accountInfo.getAccountDescription(accountID: self.accountInfo.accountID) { statusCode, resp in
                             guard
-                                let desc = resp["AccountDescription"] as? String,
-                                desc != ""
+                                let resp = resp,
+                                statusCode == 200,
+                                let description = resp["AccountDescription"] as? String
                             else {
                                 if self.accountInfo.usage == "school" {
                                     self.accountInfo.accountDescription = "Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**"
                                 } else { self.accountInfo.accountDescription = "No Description" }
-                                
                                 return
                             }
                             
-                            self.accountInfo.accountDescription = desc
-                        } else {
-                            if self.accountInfo.usage == "school" {
-                                self.accountInfo.accountDescription = "Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**"
-                            } else { self.accountInfo.accountDescription = "No Description" }
+                            self.accountInfo.accountDescription = description
+                        }
+                    }
+                    
+                    if self.accountInfo.accountTags.isEmpty {
+                        await self.accountInfo.getAccountTags(accountID: self.accountInfo.accountID) { statusCode, resp in
+                            guard
+                                let resp = resp as? [String: Array<String>],
+                                let tags = resp["Tags"]
+                            else {
+                                return
+                            }
+                            
+                            self.accountInfo.accountTags = tags
                         }
                     }
                 }
