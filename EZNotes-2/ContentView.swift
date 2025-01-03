@@ -130,18 +130,28 @@ struct ContentView: View {
     
     /* MARK: States for the "startup screen" which prompts the login prompt for the user. */
     @State private var loginUsername: String = ""
+    @FocusState public var loginUsernameFieldInFocus: Bool
+    @State private var loginUsernameTextOpacity: CGFloat = 0
+    
     @State private var loginPassword: String = ""
     @FocusState public var loginPasswordFieldInFocus: Bool
-    @FocusState public var loginUsernameFieldInFocus: Bool
+    @State private var loginPasswordTextOpacity: CGFloat = 0
+    
     @State public var loginError: LoginErrors = .None
     
     /* MARK: States for signing up. */
     @State private var signupUsername: String = ""
     @FocusState private var signupUsernameFieldInFocus: Bool
+    @State private var usernameTextOpacity: CGFloat = 0
+    
     @State private var signupEmail: String = ""
     @FocusState private var signupEmailFieldInFocus: Bool
+    @State private var emailTextOpacity: CGFloat = 0
+    
     @State private var signupPassword: String = ""
     @FocusState private var signupPasswordFieldInFocus: Bool
+    @State private var passwordTextOpacity: CGFloat = 0
+    
     @State private var signupConfirmCode: String = ""
     @FocusState private var signupConfirmCodeFieldInFocus: Bool
     
@@ -216,6 +226,9 @@ struct ContentView: View {
                                             self.colleges.removeAll()
                                             self.majorFields.removeAll()
                                             self.majors.removeAll()
+                                            self.signupUsername.removeAll()
+                                            self.signupEmail.removeAll()
+                                            self.signupPassword.removeAll()
                                             
                                             /*removeUDKey(key: "username")
                                             removeUDKey(key: "email")
@@ -227,16 +240,18 @@ struct ContentView: View {
                                             removeUDKey(key: "major")*/
                                             
                                             /* MARK: Remove the sign up process in the backend. */
-                                            RequestAction<DeleteSignupProcessData>(
-                                                parameters: DeleteSignupProcessData(
-                                                    AccountID: getUDValue(key: "account_id") /* MARK: If the current section is "code_input", an account ID has been generated for the client. */
+                                            if udKeyExists(key: "account_id") {
+                                                RequestAction<DeleteSignupProcessData>(
+                                                    parameters: DeleteSignupProcessData(
+                                                        AccountID: getUDValue(key: "account_id") /* MARK: If the current section is "code_input", an account ID has been generated for the client. */
+                                                    )
                                                 )
-                                            )
-                                            .perform(action: delete_signup_process_req) { statusCode, resp in
-                                                guard resp != nil && statusCode == 200 else {
-                                                    /* MARK: There should never be an error when deleting the process in the backend. */
-                                                    if let resp = resp { print(resp) }
-                                                    return
+                                                .perform(action: delete_signup_process_req) { statusCode, resp in
+                                                    guard resp != nil && statusCode == 200 else {
+                                                        /* MARK: There should never be an error when deleting the process in the backend. */
+                                                        if let resp = resp { print(resp) }
+                                                        return
+                                                    }
                                                 }
                                             }
                                             
@@ -275,7 +290,7 @@ struct ContentView: View {
                             .frame(maxWidth: 20, alignment: .trailing)
                         } else { Spacer() }
                     }
-                    //.frame(maxHeight: prop.isLargerScreen ? 150 : 120)
+                    .frame(maxHeight: prop.isLargerScreen ? 150 : 120)
                     
                     if self.isLoggingIn {
                         VStack {
@@ -285,7 +300,7 @@ struct ContentView: View {
                                 .lineSpacing(1.5)
                                 .foregroundStyle(.white)
                                 //.padding(.top, prop.isLargerScreen ? 16 : 4)
-                                .padding(.bottom, prop.isLargerScreen ? 40 : 28)
+                                .padding(.bottom, prop.isLargerScreen ? 30 : 18)
                             
                             if self.loginError == .ServerError {
                                 Text("Something went wrong. Try again.")
@@ -300,6 +315,13 @@ struct ContentView: View {
                                     .multilineTextAlignment(.center)
                                     .padding(.bottom, 6)
                             }
+                            
+                            Text("Username")
+                                .frame(width: prop.size.width - 70, alignment: .leading)
+                                .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                .foregroundStyle(.white)
+                                .opacity(self.loginUsernameTextOpacity)
+                                .animation(.easeIn(duration: 0.8), value: self.loginUsernameTextOpacity)
                             
                             TextField("", text: $loginUsername)
                                 .frame(width: prop.size.width - 70)
@@ -350,7 +372,10 @@ struct ContentView: View {
                                 .keyboardType(.alphabet)
                                 .onChange(of: self.loginUsername) {
                                     if self.loginError == .EmptyUsername && !self.loginUsername.isEmpty { self.loginError = .None }
+                                    if !self.loginUsername.isEmpty { self.loginUsernameTextOpacity = 1 }
+                                    else { self.loginUsernameTextOpacity = 0 }
                                 }
+                                .padding(.top, -6)
                             
                             if self.loginError == .InvalidUserError || self.loginError == .EmptyUsername {
                                 Text(self.loginError == .InvalidUserError
@@ -367,6 +392,14 @@ struct ContentView: View {
                                 .multilineTextAlignment(.leading)
                                 .padding(.top, 6)
                             }
+                            
+                            Text("Password")
+                                .frame(width: prop.size.width - 70, alignment: .leading)
+                                .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                .foregroundStyle(.white)
+                                .opacity(self.loginPasswordTextOpacity)
+                                .animation(.easeIn(duration: 0.8), value: self.loginPasswordTextOpacity)
+                                .padding(.top, self.loginPasswordTextOpacity != 0 ? 14 : 0)//.padding(.top, self.loginPasswordTextOpacity != 0 ? 12 : 0)//, self.loginError == .InvalidPasswordError || self.loginError == .EmptyPassword ? 12 : 0)
                             
                             SecureField("", text: $loginPassword)
                                 .frame(
@@ -416,11 +449,13 @@ struct ContentView: View {
                                 .focused($loginPasswordFieldInFocus)
                                 .autocapitalization(.none)
                                 .disableAutocorrection(true)
-                                .padding(.vertical, self.loginError != .InvalidPasswordError && self.loginError != .EmptyPassword ? 16 : 0)
-                                .padding(.top, self.loginError == .InvalidPasswordError || self.loginError == .EmptyPassword ? 12 : 0)
+                                //.padding(.vertical, self.loginError != .InvalidPasswordError && self.loginError != .EmptyPassword ? 16 : 0)
                                 .onChange(of: self.loginPassword) {
                                     if self.loginError == .EmptyPassword && !self.loginPassword.isEmpty { self.loginError = .None }
+                                    if !self.loginPassword.isEmpty { self.loginPasswordTextOpacity = 1 }
+                                    else { self.loginPasswordTextOpacity = 0 }
                                 }
+                                .padding(.top, -6)
                             
                             if self.loginError == .InvalidPasswordError || self.loginError == .EmptyPassword {
                                 Text(self.loginError == .InvalidPasswordError
@@ -761,12 +796,16 @@ struct ContentView: View {
                             
                             Spacer()
                         }
+                        .padding(.top, prop.isLargerScreen ? 0 : -22)
                         .onAppear {
                             /* MARK: If the key `selecting_plan` exists in `UserDefaults`, force the user back to the screen where they have to select a plan. */
                             if udKeyExists(key: "selecting_plan") {
                                 self.isLoggingIn = false
                                 self.signupSection = "select_plan"
                             }
+                            
+                            if !self.loginUsername.isEmpty { self.loginUsernameTextOpacity = 1 }
+                            if !self.loginPassword.isEmpty { self.loginPasswordTextOpacity = 1 }
                         }
                     } else {
                         if self.signupSection != "hang_tight_screen" {
@@ -960,13 +999,25 @@ struct ContentView: View {
                             .frame(maxWidth: prop.size.width - 40)
                         case "credentials":
                             VStack {
+                                Text("Username")
+                                    .frame(width: prop.size.width - 70, alignment: .leading)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                    .foregroundStyle(.white)
+                                    .opacity(self.usernameTextOpacity)
+                                    .animation(.easeIn(duration: 0.8), value: self.usernameTextOpacity)
+                                
                                 TextField("", text: $signupUsername)
                                     .frame(width: prop.size.width - 70)
                                     .padding(.vertical, 6.5)
                                     .background(
                                         Rectangle()//RoundedRectangle(cornerRadius: 15)
                                             .fill(.clear)
-                                            .borderBottomWLColor(isError: self.signupError == .TooShortUsername || self.signupError == .UserExists, width: 0.5)
+                                            .borderBottomWLMutableByFocus(
+                                                isError: self.signupError == .TooShortUsername || self.signupError == .UserExists,
+                                                inFocus: self.signupUsernameFieldInFocus,
+                                                width: 0.5
+                                            )
+                                            //.borderBottomWLColor(isError: self.signupError == .TooShortUsername || self.signupError == .UserExists, width: 0.5)
                                     )
                                     .overlay(
                                         HStack {
@@ -1008,6 +1059,13 @@ struct ContentView: View {
                                     .autocapitalization(.none)
                                     .disableAutocorrection(true)
                                     .keyboardType(.alphabet)
+                                    .onChange(of: self.signupUsername) {
+                                        if !self.signupUsername.isEmpty {
+                                            self.usernameTextOpacity = 1
+                                        } else {
+                                            self.usernameTextOpacity = 0
+                                        }
+                                    }
                                 
                                 if self.signupError == .TooShortUsername || self.signupError == .UserExists {
                                     Text(self.signupError == .TooShortUsername
@@ -1024,13 +1082,26 @@ struct ContentView: View {
                                     .fontWeight(.medium)
                                 }
                                 
+                                Text("Email")
+                                    .frame(width: prop.size.width - 70, alignment: .leading)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                    .foregroundStyle(.white)
+                                    .opacity(self.emailTextOpacity)
+                                    .animation(.easeIn(duration: 0.8), value: self.emailTextOpacity)
+                                    .padding(.top, (self.signupError != .InvalidEmail && self.signupError != .EmailExists) && (self.signupError != .TooShortUsername && self.signupError != .UserExists) ? 16 : 0)
+                                
                                 TextField("", text: $signupEmail)
                                     .frame(width: prop.size.width - 70)
                                     .padding(.vertical, 6.5)
                                     .background(
                                         Rectangle()//RoundedRectangle(cornerRadius: 15)
                                             .fill(.clear)
-                                            .borderBottomWLColor(isError: self.signupError == .InvalidEmail || self.signupError == .EmailExists, width: 0.5)
+                                            .borderBottomWLMutableByFocus(
+                                                isError: self.signupError == .InvalidEmail || self.signupError == .EmailExists,
+                                                inFocus: self.signupEmailFieldInFocus,
+                                                width: 0.5
+                                            )
+                                            //.borderBottomWLColor(isError: self.signupError == .InvalidEmail || self.signupError == .EmailExists, width: 0.5)
                                     )
                                     .overlay(
                                         HStack {
@@ -1064,7 +1135,7 @@ struct ContentView: View {
                                         }
                                     )
                                     .foregroundStyle(Color.EZNotesBlue)
-                                    .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
+                                    .padding([.leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
                                     .tint(Color.EZNotesBlue)
                                     .font(.system(size: 18))
                                     .fontWeight(.medium)
@@ -1072,8 +1143,15 @@ struct ContentView: View {
                                     .autocapitalization(.none)
                                     .disableAutocorrection(true)
                                     .keyboardType(.alphabet)
-                                    .padding(.vertical, (self.signupError != .InvalidEmail && self.signupError != .EmailExists) && (self.signupError != .TooShortUsername && self.signupError != .UserExists) ? 16 : 0)
-                                    .padding(.bottom, self.signupError == .TooShortUsername || self.signupError == .UserExists ? 16 : 0)
+                                    //.padding(.vertical, (self.signupError != .InvalidEmail && self.signupError != .EmailExists) && (self.signupError != .TooShortUsername && self.signupError != .UserExists) ? 16 : 0)
+                                    .padding(.bottom)//self.signupError == .TooShortUsername || self.signupError == .UserExists ? 16 : 0)
+                                    .onChange(of: self.signupEmail) {
+                                        if !self.signupEmail.isEmpty {
+                                            self.emailTextOpacity = 1
+                                        } else {
+                                            self.emailTextOpacity = 0
+                                        }
+                                    }
                                 
                                 if self.signupError == .InvalidEmail || self.signupError == .EmailExists {
                                     Text(self.signupError == .InvalidEmail
@@ -1090,13 +1168,25 @@ struct ContentView: View {
                                     .fontWeight(.medium)
                                 }
                                 
+                                Text("Password")
+                                    .frame(width: prop.size.width - 70, alignment: .leading)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                    .foregroundStyle(.white)
+                                    .opacity(self.passwordTextOpacity)
+                                    .animation(.easeIn(duration: 0.8), value: self.passwordTextOpacity)
+                                
                                 SecureField("", text: $signupPassword)
                                     .frame(width: prop.size.width - 70)
                                     .padding(.vertical, 6.5)
                                     .background(
                                         Rectangle()//RoundedRectangle(cornerRadius: 15)
                                             .fill(.clear)
-                                            .borderBottomWLColor(isError: self.signupError == .TooShortPassword, width: 0.5)
+                                            .borderBottomWLMutableByFocus(
+                                                isError: self.signupError == .TooShortPassword,
+                                                inFocus: self.signupPasswordFieldInFocus,
+                                                width: 0.5
+                                            )
+                                            //.borderBottomWLColor(isError: self.signupError == .TooShortPassword, width: 0.5)
                                     )
                                     .overlay(
                                         HStack {
@@ -1130,7 +1220,7 @@ struct ContentView: View {
                                         }
                                     )
                                     .foregroundStyle(Color.EZNotesBlue)
-                                    .padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
+                                    .padding([.leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
                                     .tint(Color.EZNotesBlue)
                                     .font(.system(size: 18))
                                     .fontWeight(.medium)
@@ -1139,6 +1229,13 @@ struct ContentView: View {
                                     .disableAutocorrection(true)
                                     .keyboardType(.alphabet)
                                     .padding(.bottom)
+                                    .onChange(of: self.signupPassword) {
+                                        if !self.signupPassword.isEmpty {
+                                            self.passwordTextOpacity = 1
+                                        } else {
+                                            self.passwordTextOpacity = 0
+                                        }
+                                    }
                                 
                                 if self.signupError == .TooShortPassword {
                                     Text("Password is too short. It must be 8 characters or longer")
@@ -1154,6 +1251,11 @@ struct ContentView: View {
                                 }
                             }
                             .frame(maxWidth: prop.size.width - 40)
+                            .onAppear {
+                                if !self.signupUsername.isEmpty { self.usernameTextOpacity = 1 }
+                                if !self.signupEmail.isEmpty { self.emailTextOpacity = 1 }
+                                if !self.signupPassword.isEmpty { self.passwordTextOpacity = 1 }
+                            }
                         case "select_state":
                             VStack {
                                 LazyVGridScrollViewForArray(
@@ -1185,6 +1287,7 @@ struct ContentView: View {
                                             
                                             if let colleges = resp["Colleges"]! as? [String] {
                                                 self.colleges = colleges
+                                                self.colleges.append("Other")
                                                 
                                                 self.signupSection = "select_college" /* MARK: The next view to show after selecting the state is the "Select College" view. */
                                                 return
@@ -1219,69 +1322,78 @@ struct ContentView: View {
                             .frame(maxWidth: prop.size.width - 40)
                         case "select_college":
                             VStack {
-                                LazyVGridScrollViewForArray(
-                                    data: self.colleges
-                                ) { value in
-                                    Button(action: {
-                                        assignUDKey(key: "college", value: value)
-                                        
-                                        self.signupSection = "hang_tight_screen"
-                                        
-                                        /* MARK: Get major fields for the college that the user has selected. */
-                                        RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
-                                            State: getUDValue(key: "state"), /* MARK: If we are in this view, "state" should exist in `UserDefaults`. */
-                                            College: value
-                                        ))
-                                        .perform(action: get_custom_college_fields_req) { statusCode, resp in
-                                            guard
-                                                let resp = resp,
-                                                resp.keys.contains("Fields"),
-                                                statusCode == 200
-                                            else {
+                                if !self.collegeIsOther {
+                                    LazyVGridScrollViewForArray(
+                                        data: self.colleges
+                                    ) { value in
+                                        Button(action: {
+                                            if value == "Other" {
+                                                self.collegeIsOther = true
+                                                return
+                                            }
+                                            
+                                            assignUDKey(key: "college", value: value)
+                                            
+                                            self.signupSection = "hang_tight_screen"
+                                            
+                                            /* MARK: Get major fields for the college that the user has selected. */
+                                            RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+                                                State: getUDValue(key: "state"), /* MARK: If we are in this view, "state" should exist in `UserDefaults`. */
+                                                College: value
+                                            ))
+                                            .perform(action: get_custom_college_fields_req) { statusCode, resp in
+                                                guard
+                                                    let resp = resp,
+                                                    resp.keys.contains("Fields"),
+                                                    statusCode == 200
+                                                else {
+                                                    self.signupError = .ServerError
+                                                    return
+                                                }
+                                                
+                                                if let majorFields = resp["Fields"]! as? [String] {
+                                                    self.majorFields = majorFields
+                                                    
+                                                    self.signupSection = "select_major_field"
+                                                    return
+                                                }
+                                                
                                                 self.signupError = .ServerError
                                                 return
                                             }
-                                            
-                                            if let majorFields = resp["Fields"]! as? [String] {
-                                                self.majorFields = majorFields
+                                        }) {
+                                            HStack {
+                                                Text(value)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding([.leading, .top, .bottom], 5)
+                                                    .foregroundStyle(.white)
+                                                    .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
+                                                    .fontWeight(.bold)
+                                                    .minimumScaleFactor(0.6)
+                                                    .multilineTextAlignment(.leading)
                                                 
-                                                self.signupSection = "select_major_field"
-                                                return
+                                                ZStack {
+                                                    Image(systemName: "chevron.right")
+                                                        .resizable()
+                                                        .frame(width: 10, height: 15)
+                                                }
+                                                .frame(maxWidth: 20, alignment: .trailing)
+                                                .foregroundStyle(.gray)
+                                                .padding(.trailing, 10)
                                             }
-                                            
-                                            self.signupError = .ServerError
-                                            return
-                                        }
-                                    }) {
-                                        HStack {
-                                            Text(value)
-                                                .frame(maxWidth: .infinity, alignment: .leading)
-                                                .padding([.leading, .top, .bottom], 5)
-                                                .foregroundStyle(.white)
-                                                .font(Font.custom("Poppins-SemiBold", size: 18))//.setFontSizeAndWeight(weight: .semibold, size: 20)
-                                                .fontWeight(.bold)
-                                                .minimumScaleFactor(0.6)
-                                                .multilineTextAlignment(.leading)
-                                            
-                                            ZStack {
-                                                Image(systemName: "chevron.right")
-                                                    .resizable()
-                                                    .frame(width: 10, height: 15)
-                                            }
-                                            .frame(maxWidth: 20, alignment: .trailing)
-                                            .foregroundStyle(.gray)
-                                            .padding(.trailing, 10)
-                                        }
-                                        .frame(maxWidth: .infinity)
-                                        .padding(prop.isLargerScreen ? 10 : 8) /* MARK: Make the "cards" slightly smaller for smaller screens. */
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 15)
+                                            .frame(maxWidth: .infinity)
+                                            .padding(prop.isLargerScreen ? 10 : 8) /* MARK: Make the "cards" slightly smaller for smaller screens. */
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
                                                     .fill(Color.EZNotesLightBlack.opacity(0.65))
                                                     .shadow(color: Color.black, radius: 1.5)
-                                        )
+                                            )
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                        .padding(.bottom, 8)
                                     }
-                                    .buttonStyle(NoLongPressButtonStyle())
-                                    .padding(.bottom, 8)
+                                } else {
+                                    Text("Enter the name of your college below")
                                 }
                             }
                             .frame(maxWidth: prop.size.width - 40)

@@ -1720,6 +1720,7 @@ struct TopNavChat: View {
     @FocusState private var userSearchBarFocused: Bool
     
     @State private var error: TopNavChatErrors = .None
+    @State private var errorPopupYOffset: CGFloat = 0
     
     /* MARK: Friends/friend requests/pending states. */
     @State private var defaultUsers: [String: Image] = [:] /* MARK: Stores users that show in the "Add" section without the user searching. */
@@ -2306,6 +2307,52 @@ struct TopNavChat: View {
                         switch(self.selectedView) {
                         case "add":
                             ZStack {
+                                if self.error == .CannotAddYourself || self.error == .ErrorSendingFriendRequest {
+                                    VStack {
+                                        Spacer()
+                                        
+                                        HStack {
+                                            Text(self.error == .ErrorSendingFriendRequest
+                                                 ? "Failed to send friend request. Try again"
+                                                 : "You cannot add yourself as a friend")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .foregroundStyle(Color.EZNotesRed)
+                                            .font(
+                                                .system(
+                                                    size: prop.isLargerScreen ? 18 : 16,
+                                                    weight: .medium
+                                                )
+                                            )
+                                            .multilineTextAlignment(.center)
+                                            .padding(.leading, 10)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding()
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(.black)//(Color.EZNotesLightBlack.opacity(0.7))
+                                                .shadow(color: Color.EZNotesLightBlack, radius: 12.5)//.stroke(Color.white, lineWidth: 1)
+                                        )
+                                        .padding(4)
+                                        //.clipShape(RoundedRectangle(cornerRadius: 15))
+                                        .padding(.horizontal)
+                                        .offset(y: self.errorPopupYOffset)
+                                        .animation(.easeIn(duration: 3), value: self.errorPopupYOffset)
+                                    }
+                                    .onAppear {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                                            //withAnimation(.easeIn(duration: 3)) {
+                                                self.errorPopupYOffset = prop.size.height // Animate to desired position
+                                            //}
+                                            
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                                self.error = .None
+                                                self.errorPopupYOffset = 0
+                                            }
+                                        }
+                                    }
+                                }
+                                
                                 if self.performingSearch {
                                     VStack { /* MARK: `VStack` needing to ensure the content in `LoadingView` does not sit on top of each other. */
                                         LoadingView(message: "Searching...")
@@ -2528,23 +2575,6 @@ struct TopNavChat: View {
                                     if !self.noUsersToShow && !self.noSearchResults {
                                         if !self.loadingView {
                                             ScrollView(.vertical, showsIndicators: false) {
-                                                if self.error == .CannotAddYourself || self.error == .ErrorSendingFriendRequest {
-                                                    Text(self.error == .ErrorSendingFriendRequest
-                                                         ? "Failed to send friend request. Try again"
-                                                         : "You cannot add yourself as a friend")
-                                                    .frame(maxWidth: .infinity, alignment: .center)
-                                                    .foregroundStyle(Color.EZNotesRed)
-                                                    .font(
-                                                        .system(
-                                                            size: 13,
-                                                            weight: .bold
-                                                        )
-                                                    )
-                                                    .multilineTextAlignment(.center)
-                                                    .padding(.leading, 10)
-                                                    .padding(.top)
-                                                }
-                                                
                                                 VStack {
                                                     if self.usersSearched.isEmpty {
                                                         ForEach(Array(self.defaultUsers.enumerated()), id: \.offset) { index, value in
@@ -3399,179 +3429,131 @@ struct TopNavChat: View {
                                 //self.noUsersToShow = true
                             }*/
                         case "pending":
-                            VStack {
+                            ZStack {
                                 if self.error == .ErrorAcceptingFriendRequest {
-                                    Text(self.error == .ErrorAcceptingFriendRequest
-                                         ? "Failed to accept friend request. Try again"
-                                         : "Something went wrong. Try again")
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .foregroundStyle(Color.EZNotesRed)
-                                    .font(
-                                        .system(
-                                            size: 13,
-                                            weight: .bold
+                                    VStack {
+                                        Spacer()
+                                        
+                                        HStack {
+                                            Text(self.error == .ErrorAcceptingFriendRequest
+                                                 ? "Failed to accept friend request. Try again"
+                                                 : "Something went wrong. Try again")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .foregroundStyle(Color.EZNotesRed)
+                                            .font(
+                                                .system(
+                                                    size: prop.isLargerScreen ? 18 : 16,
+                                                    weight: .medium
+                                                )
+                                            )
+                                            .multilineTextAlignment(.center)
+                                            .padding(.leading, 10)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40)
+                                        .padding()
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(.black)//(Color.EZNotesLightBlack.opacity(0.7))
+                                                .shadow(color: Color.EZNotesLightBlack, radius: 12.5)//.stroke(Color.white, lineWidth: 1)
                                         )
-                                    )
-                                    .multilineTextAlignment(.center)
-                                    .padding(.leading, 10)
-                                    .padding(.top)
-                                }
-                                
-                                if !self.accountInfo.pendingRequests.isEmpty {
-                                    ScrollView(.vertical, showsIndicators: false) {
-                                        ForEach(Array(self.accountInfo.pendingRequests.enumerated()), id: \.offset) { index, value in
-                                            if !self.accountInfo.friends.keys.contains(value.key) { /* MARK: Precautionary check to ensure we don't show a pending user after they are accepted. */
-                                                HStack {
-                                                    ZStack {
-                                                        Circle()
-                                                            .fill(Color.EZNotesBlue)
-                                                        
-                                                        /*Image(systemName: "person.crop.circle.fill")*/
-                                                        self.accountInfo.pendingRequests[value.key]!
-                                                            .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
-                                                            .scaledToFill()
-                                                            .frame(maxWidth: 35, maxHeight: 35)
-                                                            .clipShape(.circle)
-                                                            .foregroundStyle(.white)
-                                                    }
-                                                    .frame(width: 38, height: 38)
-                                                    .padding([.leading], 10)
-                                                    
-                                                    Text(value.key)
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
-                                                        .foregroundStyle(.white)
-                                                    
-                                                    Button(action: {
-                                                        self.acceptingFriendRequest = true
-                                                        self.usersBeingAccepted.append(value.key)
-                                                        
-                                                        RequestAction<AcceptFriendRequestData>(parameters: AcceptFriendRequestData(
-                                                            AccountId: self.accountInfo.accountID,
-                                                            AcceptFrom: value.key
-                                                        )).perform(action: accept_friend_request_req) { statusCode, resp in
-                                                            self.usersBeingAccepted.removeAll(where: { $0 == value.key })
-                                                            self.acceptingFriendRequest = false
-                                                            
-                                                            guard resp != nil && statusCode == 200 else {
-                                                                self.error = .ErrorAcceptingFriendRequest
-                                                                //self.accountInfo.friends[value.key] = Image(systemName: "person.crop.circle.fill")
-                                                                return /* TODO: Handle errors. */
-                                                            }
-                                                            
-                                                            self.accountInfo.pendingRequests.removeValue(forKey: value.key)
-                                                            
-                                                            if let resp = resp {
-                                                                guard
-                                                                    let f = ResponseHelper().populateUsers(resp: resp)
-                                                                else {
-                                                                    self.accountInfo.friends[value.key] = Image(systemName: "person.crop.circle.fill")
-                                                                    return
-                                                                }
-                                                                
-                                                                self.accountInfo.friends[value.key] = f[value.key]
-                                                            }
-                                                        }
-                                                    }) {
-                                                        if self.acceptingFriendRequest && self.usersBeingAccepted.contains(value.key) {
-                                                            LoadingView(message: "")
-                                                        } else {
-                                                            HStack {
-                                                                Text("Accept")
-                                                                    .frame(alignment: .center)
-                                                                    .font(.system(size: 16, weight: .medium))
-                                                                    .foregroundStyle(.black)
-                                                            }
-                                                            .padding(4) /* MARK: Add a bit more padding. I don't know why, but it looks off compared to the "+ Add". */
-                                                            //.padding([.top, .bottom], 2)
-                                                            .padding([.leading, .trailing], 12)
-                                                            .background(Color.EZNotesBlue)
-                                                            .cornerRadius(15)
-                                                            .padding(.trailing, 10)
-                                                        }
-                                                    }
-                                                    .buttonStyle(NoLongPressButtonStyle())
-                                                }
-                                                .padding(8)
+                                        .padding(4) /* MARK: Ensure there are "bright" spots to the shadow applie to the above `RoundedRectangle`. */
+                                        //.clipShape(RoundedRectangle(cornerRadius: 15))
+                                        .padding(.horizontal)
+                                        .offset(y: self.errorPopupYOffset)
+                                        .animation(.easeIn(duration: 3), value: self.errorPopupYOffset)
+                                    }
+                                    .onAppear {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                                            //withAnimation(.easeIn(duration: 3)) {
+                                                self.errorPopupYOffset = prop.size.height // Animate to desired position
+                                            //}
+                                            
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                                self.error = .None
+                                                self.errorPopupYOffset = 0
                                             }
                                         }
                                     }
-                                } else {
-                                    Text("Nothing to see here")
-                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                        .foregroundStyle(.white)
-                                        .font(Font.custom("Poppins-Regular", size: 16))
-                                        .minimumScaleFactor(0.5)
                                 }
-                                /*if !self.loadingView {
-                                    if !self.noUsersToShow {
+                                
+                                VStack {
+                                    if !self.accountInfo.pendingRequests.isEmpty {
                                         ScrollView(.vertical, showsIndicators: false) {
-                                            ForEach(Array(self.clientsPendingRequests.enumerated()), id: \.offset) { index, value in
-                                                HStack {
-                                                    ZStack {
-                                                        Circle()
-                                                            .fill(Color.EZNotesBlue)
+                                            ForEach(Array(self.accountInfo.pendingRequests.enumerated()), id: \.offset) { index, value in
+                                                if !self.accountInfo.friends.keys.contains(value.key) { /* MARK: Precautionary check to ensure we don't show a pending user after they are accepted. */
+                                                    HStack {
+                                                        ZStack {
+                                                            Circle()
+                                                                .fill(Color.EZNotesBlue)
+                                                            
+                                                            /*Image(systemName: "person.crop.circle.fill")*/
+                                                            self.accountInfo.pendingRequests[value.key]!
+                                                                .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
+                                                                .scaledToFill()
+                                                                .frame(maxWidth: 35, maxHeight: 35)
+                                                                .clipShape(.circle)
+                                                                .foregroundStyle(.white)
+                                                        }
+                                                        .frame(width: 38, height: 38)
+                                                        .padding([.leading], 10)
                                                         
-                                                        /*Image(systemName: "person.crop.circle.fill")*/
-                                                        self.clientsPendingRequests[value.key]!
-                                                            .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
-                                                            .scaledToFill()
-                                                            .frame(maxWidth: 35, maxHeight: 35)
-                                                            .clipShape(.circle)
+                                                        Text(value.key)
+                                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
                                                             .foregroundStyle(.white)
-                                                    }
-                                                    .frame(width: 38, height: 38)
-                                                    .padding([.leading], 10)
-                                                    
-                                                    Text(value.key)
-                                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
-                                                        .foregroundStyle(.white)
-                                                    
-                                                    Button(action: {
-                                                        self.acceptingFriendRequest = true
-                                                        self.usersBeingAccepted.append(value.key)
                                                         
-                                                        RequestAction<AcceptFriendRequestData>(parameters: AcceptFriendRequestData(
-                                                            AccountId: self.accountInfo.accountID,
-                                                            AcceptFrom: value.key
-                                                        )).perform(action: accept_friend_request_req) { statusCode, resp in
-                                                            guard resp != nil && statusCode == 200 else {
-                                                                //self.accountInfo.friends[value.key] = Image(systemName: "person.crop.circle.fill")
-                                                                return /* TODO: Handle errors. */
-                                                            }
+                                                        Button(action: {
+                                                            self.acceptingFriendRequest = true
+                                                            self.usersBeingAccepted.append(value.key)
                                                             
-                                                            self.clientsPendingRequests.removeValue(forKey: value.key)
-                                                            
-                                                            if let resp = resp {
-                                                                guard let f = ResponseHelper.populateUsers(resp: resp) else {
-                                                                    self.accountInfo.friends[value.key] = Image(systemName: "person.crop.circle.fill")
-                                                                    return
+                                                            RequestAction<AcceptFriendRequestData>(parameters: AcceptFriendRequestData(
+                                                                AccountId: self.accountInfo.accountID,
+                                                                AcceptFrom: value.key
+                                                            )).perform(action: accept_friend_request_req) { statusCode, resp in
+                                                                self.usersBeingAccepted.removeAll(where: { $0 == value.key })
+                                                                self.acceptingFriendRequest = false
+                                                                
+                                                                guard resp != nil && statusCode == 200 else {
+                                                                    self.error = .ErrorAcceptingFriendRequest
+                                                                    //self.accountInfo.friends[value.key] = Image(systemName: "person.crop.circle.fill")
+                                                                    return /* TODO: Handle errors. */
                                                                 }
                                                                 
-                                                                self.accountInfo.friends[value.key] = f[value.key]
+                                                                self.accountInfo.pendingRequests.removeValue(forKey: value.key)
+                                                                
+                                                                if let resp = resp {
+                                                                    guard
+                                                                        let f = ResponseHelper().populateUsers(resp: resp)
+                                                                    else {
+                                                                        self.accountInfo.friends[value.key] = Image(systemName: "person.crop.circle.fill")
+                                                                        return
+                                                                    }
+                                                                    
+                                                                    self.accountInfo.friends[value.key] = f[value.key]
+                                                                }
+                                                            }
+                                                        }) {
+                                                            if self.acceptingFriendRequest && self.usersBeingAccepted.contains(value.key) {
+                                                                LoadingView(message: "")
+                                                            } else {
+                                                                HStack {
+                                                                    Text("Accept")
+                                                                        .frame(alignment: .center)
+                                                                        .font(.system(size: 16, weight: .medium))
+                                                                        .foregroundStyle(.black)
+                                                                }
+                                                                .padding(4) /* MARK: Add a bit more padding. I don't know why, but it looks off compared to the "+ Add". */
+                                                                //.padding([.top, .bottom], 2)
+                                                                .padding([.leading, .trailing], 12)
+                                                                .background(Color.EZNotesBlue)
+                                                                .cornerRadius(15)
+                                                                .padding(.trailing, 10)
                                                             }
                                                         }
-                                                    }) {
-                                                        if self.acceptingFriendRequest && self.usersBeingAccepted.contains(value.key) {
-                                                            LoadingView(message: "")
-                                                        } else {
-                                                            HStack {
-                                                                Text("Accept")
-                                                                    .frame(alignment: .center)
-                                                                    .font(.system(size: 14, weight: .medium))
-                                                                    .foregroundStyle(.black)
-                                                            }
-                                                            .padding([.top, .bottom], 4) /* MARK: Add a bit more padding. I don't know why, but it looks off compared to the "+ Add". */
-                                                            .padding([.leading, .trailing], 8)
-                                                            .background(Color.EZNotesBlue)
-                                                            .cornerRadius(15)
-                                                            .padding(.trailing, 10)
-                                                        }
+                                                        .buttonStyle(NoLongPressButtonStyle())
                                                     }
-                                                    .buttonStyle(NoLongPressButtonStyle())
+                                                    .padding(8)
                                                 }
-                                                .padding(8)
                                             }
                                         }
                                     } else {
@@ -3581,9 +3563,89 @@ struct TopNavChat: View {
                                             .font(Font.custom("Poppins-Regular", size: 16))
                                             .minimumScaleFactor(0.5)
                                     }
-                                } else {
-                                    LoadingView(message: "Loading pending requests...")
-                                }*/
+                                    /*if !self.loadingView {
+                                     if !self.noUsersToShow {
+                                     ScrollView(.vertical, showsIndicators: false) {
+                                     ForEach(Array(self.clientsPendingRequests.enumerated()), id: \.offset) { index, value in
+                                     HStack {
+                                     ZStack {
+                                     Circle()
+                                     .fill(Color.EZNotesBlue)
+                                     
+                                     /*Image(systemName: "person.crop.circle.fill")*/
+                                     self.clientsPendingRequests[value.key]!
+                                     .resizable()//.resizableImageFill(maxWidth: 35, maxHeight: 35)
+                                     .scaledToFill()
+                                     .frame(maxWidth: 35, maxHeight: 35)
+                                     .clipShape(.circle)
+                                     .foregroundStyle(.white)
+                                     }
+                                     .frame(width: 38, height: 38)
+                                     .padding([.leading], 10)
+                                     
+                                     Text(value.key)
+                                     .frame(maxWidth: .infinity, alignment: .leading)
+                                     .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                     .foregroundStyle(.white)
+                                     
+                                     Button(action: {
+                                     self.acceptingFriendRequest = true
+                                     self.usersBeingAccepted.append(value.key)
+                                     
+                                     RequestAction<AcceptFriendRequestData>(parameters: AcceptFriendRequestData(
+                                     AccountId: self.accountInfo.accountID,
+                                     AcceptFrom: value.key
+                                     )).perform(action: accept_friend_request_req) { statusCode, resp in
+                                     guard resp != nil && statusCode == 200 else {
+                                     //self.accountInfo.friends[value.key] = Image(systemName: "person.crop.circle.fill")
+                                     return /* TODO: Handle errors. */
+                                     }
+                                     
+                                     self.clientsPendingRequests.removeValue(forKey: value.key)
+                                     
+                                     if let resp = resp {
+                                     guard let f = ResponseHelper.populateUsers(resp: resp) else {
+                                     self.accountInfo.friends[value.key] = Image(systemName: "person.crop.circle.fill")
+                                     return
+                                     }
+                                     
+                                     self.accountInfo.friends[value.key] = f[value.key]
+                                     }
+                                     }
+                                     }) {
+                                     if self.acceptingFriendRequest && self.usersBeingAccepted.contains(value.key) {
+                                     LoadingView(message: "")
+                                     } else {
+                                     HStack {
+                                     Text("Accept")
+                                     .frame(alignment: .center)
+                                     .font(.system(size: 14, weight: .medium))
+                                     .foregroundStyle(.black)
+                                     }
+                                     .padding([.top, .bottom], 4) /* MARK: Add a bit more padding. I don't know why, but it looks off compared to the "+ Add". */
+                                     .padding([.leading, .trailing], 8)
+                                     .background(Color.EZNotesBlue)
+                                     .cornerRadius(15)
+                                     .padding(.trailing, 10)
+                                     }
+                                     }
+                                     .buttonStyle(NoLongPressButtonStyle())
+                                     }
+                                     .padding(8)
+                                     }
+                                     }
+                                     } else {
+                                     Text("Nothing to see here")
+                                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                     .foregroundStyle(.white)
+                                     .font(Font.custom("Poppins-Regular", size: 16))
+                                     .minimumScaleFactor(0.5)
+                                     }
+                                     } else {
+                                     LoadingView(message: "Loading pending requests...")
+                                     }*/
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             /*.onAppear {

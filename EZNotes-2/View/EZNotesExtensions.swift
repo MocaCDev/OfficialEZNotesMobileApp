@@ -43,6 +43,37 @@ public extension View {
             )
     }
     
+    /* MARK: For textfields. */
+    func borderBottomWLMutableByFocus(isError: Bool, inFocus: Bool, width: CGFloat = 1) -> some View {
+        self.border(
+            width: width,
+            edges: [.bottom],
+            lcolor: isError
+                ? LinearGradient(
+                    gradient: Gradient(
+                        colors: [Color.EZNotesRed, Color.EZNotesRed]
+                    ),
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                : inFocus
+                    ? LinearGradient(
+                        gradient: Gradient(
+                            colors: [Color.EZNotesBlue, Color.EZNotesOrange]
+                        ),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    : LinearGradient(
+                        gradient: Gradient(
+                            colors: [Color.EZNotesLightBlack, Color.EZNotesLightBlack]
+                        ),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+            )
+    }
+    
     internal func topNavSettings(prop: Properties, backgroundColor: Color) -> some View {
         self
             .frame(
