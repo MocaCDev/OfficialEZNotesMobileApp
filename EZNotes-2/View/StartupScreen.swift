@@ -42,10 +42,10 @@ extension Image {
             .frame(
                 maxWidth: prop.isLargerScreen
                         ? 150
-                        : 120,
+                : prop.isMediumScreen ? 120 : 100,
                 maxHeight: prop.isLargerScreen
                         ? 150
-                        : 120
+                : prop.isMediumScreen ? 120 : 100
             )
             /*.padding(
                 [.top],
