@@ -66,7 +66,7 @@ public extension View {
                     )
                     : LinearGradient(
                         gradient: Gradient(
-                            colors: [Color.EZNotesLightBlack, Color.EZNotesLightBlack]
+                            colors: [.white, .white]
                         ),
                         startPoint: .leading,
                         endPoint: .trailing

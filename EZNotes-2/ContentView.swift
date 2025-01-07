@@ -154,6 +154,7 @@ struct ContentView: View {
     
     @State private var signupConfirmCode: String = ""
     @FocusState private var signupConfirmCodeFieldInFocus: Bool
+    @State private var confirmCodeTextOpacity: CGFloat = 0
     
     @State private var signupUsernameError: Bool = false
     @State private var signupEmailError: Bool = false
@@ -201,7 +202,7 @@ struct ContentView: View {
     private func setupKeyboardListeners() {
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
             if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                keyboardHeight = keyboardFrame.height - 112
+                keyboardHeight = keyboardFrame.height - 86
             }
         }
         
@@ -309,16 +310,49 @@ struct ContentView: View {
                         } else { Spacer() }
                     }
                     .frame(maxHeight: prop.isLargerScreen ? 150 : 120)
+                    .ignoresSafeArea(.keyboard, edges: .bottom)
+                    
+                    HStack {
+                        Button(action: { self.isLoggingIn = true }) {
+                            Text("Log In")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 22 : 20))
+                                .textCase(.uppercase)
+                                .foregroundStyle(.white)
+                                .padding(.vertical, 6)
+                                .border(width: 1, edges: [.bottom], color: self.isLoggingIn ? .white : Color.EZNotesBlue)
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        
+                        Button(action: { self.isLoggingIn = false }) {
+                            Text("Sign Up")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 22 : 20))
+                                .textCase(.uppercase)
+                                .foregroundStyle(.white)
+                                .padding(.vertical, 6)
+                                .border(width: 1, edges: [.bottom], color: !self.isLoggingIn ? .white : Color.EZNotesBlue)
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                    }
+                    .frame(maxWidth: prop.size.width - 40)
+                    .background(
+                        Rectangle()
+                            .fill(.clear)
+                            .border(width: 1, edges: [.bottom], color: Color.EZNotesBlue)
+                    )
+                    .padding(.top, prop.isLargerScreen ? -18 : -14)
+                    .ignoresSafeArea(.keyboard, edges: .bottom)
                     
                     if self.isLoggingIn {
                         VStack {
-                            Text("Welcome Back!")
+                            /*Text("Welcome Back!")
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 26 : 24))
                                 .lineSpacing(1.5)
                                 .foregroundStyle(.white)
                                 //.padding(.top, prop.isLargerScreen ? 16 : 4)
-                                .padding(.bottom, prop.isLargerScreen ? 30 : 18)
+                                .padding(.bottom, prop.isLargerScreen ? 30 : 18)*/
                             
                             if self.loginError == .ServerError {
                                 Text("Something went wrong. Try again.")
@@ -334,37 +368,33 @@ struct ContentView: View {
                                     .padding(.bottom, 6)
                             }
                             
-                            Text("Username or Email")
-                                .frame(width: prop.size.width - 70, alignment: .leading)
-                                .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
-                                .foregroundStyle(.white)
-                                .opacity(self.loginUsernameTextOpacity)
-                                .animation(.easeIn(duration: 0.8), value: self.loginUsernameTextOpacity)
+                            VStack {
+                                Text("Username or Email")
+                                    .frame(width: prop.size.width - 70, alignment: .leading)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                    .foregroundStyle(.white)
+                                    .opacity(self.loginUsernameTextOpacity)
+                                    .animation(.easeIn(duration: 0.8), value: self.loginUsernameTextOpacity)
+                                    .padding(.top, self.loginError != .EmptyUsername && self.loginError != .InvalidUserError ? self.loginUsernameTextOpacity == 1
+                                             ? 8
+                                             : 0
+                                        : 0)
                             
-                            TextField("", text: $loginUsername)
-                                .frame(width: prop.size.width - 70)
-                                .padding(.vertical, 6.5)
-                                .background(
-                                    Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                        .fill(.clear)
-                                        .borderBottomWLColor(isError: self.loginError == .InvalidUserError || self.loginError == .EmptyUsername, width: 0.5)
-                                )
-                                .overlay(
-                                    HStack {
-                                        if self.loginUsername.isEmpty && !self.loginUsernameFieldInFocus {
-                                            Text("Username or Email")
-                                                .font(
-                                                    .system(
-                                                        size: prop.isLargerScreen ? 18 : 15,
-                                                        weight: .medium
-                                                    )
-                                                )
-                                                .foregroundStyle(Color(.systemGray2))
-                                                .padding(.leading, 5)
-                                                .onTapGesture { self.loginUsernameFieldInFocus = true }
-                                            Spacer()
-                                        } else {
-                                            if self.loginUsername.isEmpty {
+                                TextField("", text: $loginUsername)
+                                    .frame(width: prop.size.width - 70)
+                                    .padding(.bottom, 6.5)
+                                    .background(
+                                        Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                            .fill(.clear)
+                                            .borderBottomWLMutableByFocus(
+                                                isError: self.loginError == .InvalidUserError || self.loginError == .EmptyUsername,
+                                                inFocus: self.loginUsernameFieldInFocus,
+                                                width: 0.5
+                                            )//.borderBottomWLColor(isError: self.loginError == .InvalidUserError || self.loginError == .EmptyUsername, width: 0.5)
+                                    )
+                                    .overlay(
+                                        HStack {
+                                            if self.loginUsername.isEmpty && !self.loginUsernameFieldInFocus {
                                                 Text("Username or Email")
                                                     .font(
                                                         .system(
@@ -374,77 +404,84 @@ struct ContentView: View {
                                                     )
                                                     .foregroundStyle(Color(.systemGray2))
                                                     .padding(.leading, 5)
+                                                    .padding(.bottom, 6.5)
                                                     .onTapGesture { self.loginUsernameFieldInFocus = true }
                                                 Spacer()
+                                            } else {
+                                                if self.loginUsername.isEmpty {
+                                                    Text("Username or Email")
+                                                        .font(
+                                                            .system(
+                                                                size: prop.isLargerScreen ? 18 : 15,
+                                                                weight: .medium
+                                                            )
+                                                        )
+                                                        .foregroundStyle(Color(.systemGray2))
+                                                        .padding(.leading, 5)
+                                                        .padding(.bottom, 6.5)
+                                                        .onTapGesture { self.loginUsernameFieldInFocus = true }
+                                                    Spacer()
+                                                }
                                             }
                                         }
-                                    }
-                                )
-                                .foregroundStyle(Color.EZNotesBlue)
-                            //.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
-                                .tint(Color.EZNotesBlue)
-                                .font(Font.custom("Poppins-SemiBold", size: 18))
-                                .focused($loginUsernameFieldInFocus)
-                                .autocapitalization(.none)
-                                .disableAutocorrection(true)
-                                .keyboardType(.alphabet)
-                                .onChange(of: self.loginUsername) {
-                                    if self.loginError == .EmptyUsername && !self.loginUsername.isEmpty { self.loginError = .None }
-                                    if !self.loginUsername.isEmpty { self.loginUsernameTextOpacity = 1 }
-                                    else { self.loginUsernameTextOpacity = 0 }
-                                }
-                                .padding(.top, -6)
-                            
-                            if self.loginError == .InvalidUserError || self.loginError == .EmptyUsername {
-                                Text(self.loginError == .InvalidUserError
-                                     ? "The username/email provided doesn't exist. Try again"
-                                     : "Fill in the above field")
-                                .frame(maxWidth: prop.size.width - 70, alignment: .leading)
-                                .lineLimit(1...2)
-                                .font(
-                                    .system(
-                                        size: prop.isLargerScreen ? 18 : 15
                                     )
-                                )
-                                .foregroundStyle(Color.EZNotesRed)
-                                .multilineTextAlignment(.leading)
-                                .padding(.top, 6)
-                            }
-                            
-                            Text("Password")
-                                .frame(width: prop.size.width - 70, alignment: .leading)
-                                .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
-                                .foregroundStyle(.white)
-                                .opacity(self.loginPasswordTextOpacity)
-                                .animation(.easeIn(duration: 0.8), value: self.loginPasswordTextOpacity)
+                                    .foregroundStyle(Color.EZNotesBlue)
+                                //.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
+                                    .tint(Color.EZNotesBlue)
+                                    .font(Font.custom("Poppins-SemiBold", size: 18))
+                                    .focused($loginUsernameFieldInFocus)
+                                    .autocapitalization(.none)
+                                    .disableAutocorrection(true)
+                                    .keyboardType(.alphabet)
+                                    .onChange(of: self.loginUsername) {
+                                        if self.loginError == .EmptyUsername && !self.loginUsername.isEmpty { self.loginError = .None }
+                                        if !self.loginUsername.isEmpty { self.loginUsernameTextOpacity = 1 }
+                                        else { self.loginUsernameTextOpacity = 0 }
+                                    }
+                                    .padding(.top, -6)
+                                
+                                if self.loginError == .InvalidUserError || self.loginError == .EmptyUsername {
+                                    Text(self.loginError == .InvalidUserError
+                                         ? "The username/email provided doesn't exist. Try again"
+                                         : "Fill in the above field")
+                                    .frame(maxWidth: prop.size.width - 70, alignment: .leading)
+                                    .lineLimit(1...2)
+                                    .font(
+                                        .system(
+                                            size: 13//prop.isLargerScreen ? 18 : 15
+                                        )
+                                    )
+                                    .foregroundStyle(Color.EZNotesRed)
+                                    .multilineTextAlignment(.leading)
+                                    //.padding(.top, 6)
+                                }
+                                
+                                Text("Password")
+                                    .frame(width: prop.size.width - 70, alignment: .leading)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                    .foregroundStyle(.white)
+                                    .opacity(self.loginPasswordTextOpacity)
+                                    .animation(.easeIn(duration: 0.8), value: self.loginPasswordTextOpacity)
+                                    .padding(.top, self.loginError != .EmptyPassword && self.loginError != .InvalidPasswordError ? self.loginPasswordTextOpacity == 1 ? 8 : 0 : 0)
                                 //.padding(.top, self.loginPasswordTextOpacity != 0 ? 14 : 0)//.padding(.top, self.loginPasswordTextOpacity != 0 ? 12 : 0)//, self.loginError == .InvalidPasswordError || self.loginError == .EmptyPassword ? 12 : 0)
-                            
-                            SecureField("", text: $loginPassword)
-                                .frame(
-                                    maxWidth: prop.size.width - 70
-                                )
-                                .padding(.vertical, 6.5)
-                                .background(
-                                    Rectangle()//RoundedRectangle(cornerRadius: 15)
-                                        .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
-                                        .borderBottomWLColor(isError: self.loginError == .InvalidPasswordError || self.loginError == .EmptyPassword, width: 0.5)
-                                )
-                                .overlay(
-                                    HStack {
-                                        if self.loginPassword.isEmpty && !self.loginPasswordFieldInFocus {
-                                            Text("Password")
-                                                .font(
-                                                    .system(
-                                                        size: prop.isLargerScreen ? 18 : 15,
-                                                        weight: .medium
-                                                    )
-                                                )
-                                                .foregroundStyle(Color(.systemGray2))
-                                                .padding(.leading, 5)
-                                                .onTapGesture { self.loginPasswordFieldInFocus = true }
-                                            Spacer()
-                                        } else {
-                                            if self.loginPassword.isEmpty {
+                                
+                                SecureField("", text: $loginPassword)
+                                    .frame(
+                                        maxWidth: prop.size.width - 70
+                                    )
+                                    .padding(.bottom, 6.5)
+                                    .background(
+                                        Rectangle()//RoundedRectangle(cornerRadius: 15)
+                                            .fill(.clear)//(Color.EZNotesLightBlack.opacity(0.6))
+                                            .borderBottomWLMutableByFocus(
+                                                isError: self.loginError == .InvalidPasswordError || self.loginError == .EmptyPassword,
+                                                inFocus: self.loginPasswordFieldInFocus,
+                                                width: 0.5
+                                            )//.borderBottomWLColor(isError: self.loginError == .InvalidPasswordError || self.loginError == .EmptyPassword, width: 0.5)
+                                    )
+                                    .overlay(
+                                        HStack {
+                                            if self.loginPassword.isEmpty && !self.loginPasswordFieldInFocus {
                                                 Text("Password")
                                                     .font(
                                                         .system(
@@ -454,42 +491,58 @@ struct ContentView: View {
                                                     )
                                                     .foregroundStyle(Color(.systemGray2))
                                                     .padding(.leading, 5)
+                                                    .padding(.bottom, 6.5)
                                                     .onTapGesture { self.loginPasswordFieldInFocus = true }
                                                 Spacer()
+                                            } else {
+                                                if self.loginPassword.isEmpty {
+                                                    Text("Password")
+                                                        .font(
+                                                            .system(
+                                                                size: prop.isLargerScreen ? 18 : 15,
+                                                                weight: .medium
+                                                            )
+                                                        )
+                                                        .foregroundStyle(Color(.systemGray2))
+                                                        .padding(.leading, 5)
+                                                        .onTapGesture { self.loginPasswordFieldInFocus = true }
+                                                    Spacer()
+                                                }
                                             }
                                         }
-                                    }
-                                )
-                                .foregroundStyle(Color.EZNotesBlue)
-                            //.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
-                                .tint(Color.EZNotesBlue)
-                                .font(Font.custom("Poppins-SemiBold", size: 18))
-                                .focused($loginPasswordFieldInFocus)
-                                .autocapitalization(.none)
-                                .disableAutocorrection(true)
-                                //.padding(.vertical, self.loginError != .InvalidPasswordError && self.loginError != .EmptyPassword ? 16 : 0)
-                                .onChange(of: self.loginPassword) {
-                                    if self.loginError == .EmptyPassword && !self.loginPassword.isEmpty { self.loginError = .None }
-                                    if !self.loginPassword.isEmpty { self.loginPasswordTextOpacity = 1 }
-                                    else { self.loginPasswordTextOpacity = 0 }
-                                }
-                                .padding(.top, -6)
-                            
-                            if self.loginError == .InvalidPasswordError || self.loginError == .EmptyPassword {
-                                Text(self.loginError == .InvalidPasswordError
-                                     ? "Incorrect password. Try again"
-                                     : "Fill in the above field")
-                                .frame(maxWidth: prop.size.width - 70, alignment: .leading)
-                                .lineLimit(1...2)
-                                .font(
-                                    .system(
-                                        size: prop.isLargerScreen ? 18 : 15
                                     )
-                                )
-                                .foregroundStyle(Color.EZNotesRed)
-                                .multilineTextAlignment(.leading)
-                                .padding(.top, 6)
+                                    .foregroundStyle(Color.EZNotesBlue)
+                                //.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 4)//.padding([.top, .leading, .trailing], prop.isLargerScreen ? 10 : 8)
+                                    .tint(Color.EZNotesBlue)
+                                    .font(Font.custom("Poppins-SemiBold", size: 18))
+                                    .focused($loginPasswordFieldInFocus)
+                                    .autocapitalization(.none)
+                                    .disableAutocorrection(true)
+                                //.padding(.vertical, self.loginError != .InvalidPasswordError && self.loginError != .EmptyPassword ? 16 : 0)
+                                    .onChange(of: self.loginPassword) {
+                                        if self.loginError == .EmptyPassword && !self.loginPassword.isEmpty { self.loginError = .None }
+                                        if !self.loginPassword.isEmpty { self.loginPasswordTextOpacity = 1 }
+                                        else { self.loginPasswordTextOpacity = 0 }
+                                    }
+                                    .padding(.top, -6)
+                                
+                                if self.loginError == .InvalidPasswordError || self.loginError == .EmptyPassword {
+                                    Text(self.loginError == .InvalidPasswordError
+                                         ? "Incorrect password. Try again"
+                                         : "Fill in the above field")
+                                    .frame(maxWidth: prop.size.width - 70, alignment: .leading)
+                                    .lineLimit(1...2)
+                                    .font(
+                                        .system(
+                                            size: 13//prop.isLargerScreen ? 18 : 15
+                                        )
+                                    )
+                                    .foregroundStyle(Color.EZNotesRed)
+                                    .multilineTextAlignment(.leading)
+                                    //.padding(.top, 6)
+                                }
                             }
+                            .padding(.top, prop.isLargerScreen ? 24 : prop.isMediumScreen || prop.isSmallScreen ? 18 : 0)
                             
                             Button(action: {
                                 self.loginError = .None /* MARK: Ensure the `loginError` value is `.None` to ensure no errors show. */
@@ -582,19 +635,24 @@ struct ContentView: View {
                                 if !self.loggingIn {
                                     Text("Login")
                                         .frame(maxWidth: .infinity, alignment: .center)
-                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
+                                        .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 22 : 20))
                                         .foregroundStyle(.black)
                                 } else {
                                     LoadingView(tint: Color.EZNotesBlack)
                                 }
                             }
-                            .frame(maxWidth: prop.size.width - 40)
+                            .frame(maxWidth: prop.size.width - 180)
                             .buttonStyle(NoLongPressButtonStyle())
-                            .padding(10)
-                            .background(Color.EZNotesBlue)
-                            .cornerRadius(20)
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 25)
+                                    .fill(Color.EZNotesBlue)
+                                    .shadow(color: Color.EZNotesBlue, radius: 6.5, x: 3, y: -6.5)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
+                            .padding(3)
                             .padding(.horizontal)
-                            .padding(.top, 10)
+                            .padding(.top, prop.isLargerScreen ? 20 : 10)
                             .padding(.bottom)
                             
                             Button(action: { }) {
@@ -604,7 +662,7 @@ struct ContentView: View {
                                     .foregroundStyle(.gray)
                             }
                             
-                            HStack {
+                            /*HStack {
                                 if !udKeyExists(key: "usecase") { /* MARK: If this key exists, that means the user has started the sign up process. */
                                     Text("Don't have an account?")
                                         .frame(alignment: .leading)
@@ -810,7 +868,7 @@ struct ContentView: View {
                                     .frame(width: 3.5, height: 6.5)
                             }
                             .frame(maxWidth: .infinity)
-                            .padding(.top, 8)
+                            .padding(.top, 8)*/
                             
                             Spacer()
                         }
@@ -827,7 +885,7 @@ struct ContentView: View {
                         }
                     } else {
                         VStack {
-                            if self.signupSection != "hang_tight_screen" {
+                            if self.signupSection != "hang_tight_screen" && self.signupSection != "code_input" && self.signupSection != "credentials" {
                                 Text(self.signupSection == "usecase"
                                      ? "Select Usage"
                                      : self.signupSection == "credentials"
@@ -840,17 +898,16 @@ struct ContentView: View {
                                      ? "Select Field of Study"
                                      : self.signupSection == "select_major"
                                      ? "Select Major"
-                                     : self.signupSection == "code_input"
-                                     ? "Enter Code"
                                      : self.signupSection == "select_plan"
                                      ? "Select Plan"
                                      : "Select Usage" /* MARK: Default. */)
-                                .frame(maxWidth: .infinity, alignment: .center)
+                                .frame(maxWidth: prop.size.width - 40, alignment: .leading)
                                 .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 26 : prop.isMediumScreen ? 24 : 18))
                                 .lineSpacing(1.5)
                                 .foregroundStyle(.white)
-                                .padding(.top, prop.isLargerScreen ? 10 : prop.isSmallScreen ? -16 : 0)
-                                .padding(.bottom, self.signupSection != "select_state" &&
+                                .padding(.vertical, 8)
+                                //.padding(.top, -16)//, prop.isLargerScreen ? -16 : prop.isSmallScreen || prop.isMediumScreen ? -16 : 0)
+                                /*.padding(.bottom, self.signupSection != "select_state" &&
                                          self.signupSection != "select_college" &&
                                          self.signupSection != "select_major_field" &&
                                          self.signupSection != "select_major" &&
@@ -860,7 +917,7 @@ struct ContentView: View {
                                             self.signupError != .ForceRestart
                                          )
                                          ? prop.isLargerScreen ? 18 : 0
-                                         : 0)
+                                         : 0)*/
                             }
                             
                             if self.signupError == .ServerError || self.signupError == .ErrorOccurred || self.signupError == .ForceRestart {
@@ -881,17 +938,17 @@ struct ContentView: View {
                                 .padding(.vertical)
                             } else {
                                 if self.signupSection == "code_input" {
-                                    Text("A code has been sent to \((getUDValue(key: "email")) as String)")
-                                        .frame(maxWidth: prop.size.width - 50, alignment: .center)
-                                        .padding(.bottom, 5)
+                                    Text("A code has been sent to *\((getUDValue(key: "email")) as String)*")
+                                        .frame(maxWidth: prop.size.width - 50, alignment: .leading)
+                                        .padding(.top)
                                         .foregroundStyle(.white)
                                         .font(
                                             .system(
-                                                size: 13
+                                                size: prop.isLargerScreen ? 16 : 13,
+                                                weight: .medium
                                             )
                                         )
-                                        .fontWeight(.medium)
-                                        .multilineTextAlignment(.center)
+                                        .multilineTextAlignment(.leading)
                                 }
                             }
                             
@@ -930,7 +987,8 @@ struct ContentView: View {
                                         .padding(.horizontal, !prop.isLargerScreen ? 8 : 0) /* MARK: "Extend" the width of the "card" on smaller screens since the overall padding around the content is smaller. */
                                         .background(
                                             RoundedRectangle(cornerRadius: 15)
-                                                .fill(Color.EZNotesLightBlack)
+                                                .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                //.shadow(color: Color.black, radius: 1.5)
                                         )
                                         .cornerRadius(15)
                                     }
@@ -967,7 +1025,8 @@ struct ContentView: View {
                                         .padding(.horizontal, !prop.isLargerScreen ? 8 : 0) /* MARK: "Extend" the width of the "card" on smaller screens since the overall padding around the content is smaller. */
                                         .background(
                                             RoundedRectangle(cornerRadius: 15)
-                                                .fill(Color.EZNotesLightBlack)
+                                                .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                //.shadow(color: Color.black, radius: 1.5)
                                         )
                                         .cornerRadius(15)
                                     }
@@ -1006,7 +1065,8 @@ struct ContentView: View {
                                         .padding(.horizontal, !prop.isLargerScreen ? 8 : 0) /* MARK: "Extend" the width of the "card" on smaller screens since the overall padding around the content is smaller. */
                                         .background(
                                             RoundedRectangle(cornerRadius: 15)
-                                                .fill(Color.EZNotesLightBlack)
+                                                .fill(Color.EZNotesLightBlack.opacity(0.65))
+                                                //.shadow(color: Color.black, radius: 1.5)
                                         )
                                         .cornerRadius(15)
                                     }
@@ -1016,16 +1076,16 @@ struct ContentView: View {
                             case "credentials":
                                 VStack {
                                     Text("Username")
-                                        .frame(width: prop.size.width - 70, alignment: .leading)
+                                        .frame(maxWidth: prop.size.width - 70, alignment: .leading)
                                         .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
                                         .foregroundStyle(.white)
                                         .opacity(self.usernameTextOpacity)
                                         .animation(.easeIn(duration: 0.8), value: self.usernameTextOpacity)
-                                        .padding(.top, prop.isSmallScreen ? 10 : 0)
+                                        .padding(.top, self.signupError != .TooShortUsername ? self.usernameTextOpacity == 1 ? 8 : 0 : 0)//.padding(.top, prop.isSmallScreen || prop.isMediumScreen ? 6 : 0)
                                     
                                     TextField("", text: $signupUsername)
                                         .frame(width: prop.size.width - 70)
-                                        .padding(.vertical, 6.5)
+                                        .padding(.bottom, 6.5)//(.vertical, 6.5)
                                         .background(
                                             Rectangle()//RoundedRectangle(cornerRadius: 15)
                                                 .fill(.clear)
@@ -1047,7 +1107,8 @@ struct ContentView: View {
                                                             )
                                                         )
                                                         .foregroundStyle(Color(.systemGray2))
-                                                        .padding(.leading, 10)
+                                                        .padding(.leading, 5)
+                                                        .padding(.bottom, 6.5) /* MARK: Exists to follow the padding on the actual textfield. */
                                                         .onTapGesture { self.signupUsernameFieldInFocus = true }
                                                     Spacer()
                                                 } else {
@@ -1060,7 +1121,8 @@ struct ContentView: View {
                                                                 )
                                                             )
                                                             .foregroundStyle(Color(.systemGray2))
-                                                            .padding(.leading, 10)
+                                                            .padding(.leading, 5)
+                                                            .padding(.bottom, 6.5) /* MARK: Exists to follow the padding on the actual textfield. */
                                                             .onTapGesture { self.signupUsernameFieldInFocus = true }
                                                         Spacer()
                                                     }
@@ -1077,6 +1139,16 @@ struct ContentView: View {
                                         .disableAutocorrection(true)
                                         .keyboardType(.alphabet)
                                         .onChange(of: self.signupUsername) {
+                                            if self.signupError != .None {
+                                                /* MARK: If the error is over the username being too short, ensure the username is within the constraints of that given prerequisite before removing the error. */
+                                                if self.signupError == .TooShortUsername {
+                                                    if self.signupUsername.count >= 4 { self.signupError = .None }
+                                                } else {
+                                                    /* MARK: If the error is something else, remove it after the username textfield text has been changed. */
+                                                    self.signupError = .None
+                                                }
+                                            }
+                                            
                                             if !self.signupUsername.isEmpty {
                                                 self.usernameTextOpacity = 1
                                             } else {
@@ -1100,16 +1172,16 @@ struct ContentView: View {
                                     }
                                     
                                     Text("Email")
-                                        .frame(width: prop.size.width - 70, alignment: .leading)
+                                        .frame(maxWidth: prop.size.width - 70, alignment: .leading)
                                         .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
                                         .foregroundStyle(.white)
                                         .opacity(self.emailTextOpacity)
                                         .animation(.easeIn(duration: 0.8), value: self.emailTextOpacity)
-                                        .padding(.top, (self.signupError != .InvalidEmail && self.signupError != .EmailExists) && (self.signupError != .TooShortUsername && self.signupError != .UserExists) ? self.emailTextOpacity == 1 ? 16 : 0 : 0)
+                                        .padding(.top, (self.signupError != .InvalidEmail && self.signupError != .EmailExists) && (self.signupError != .TooShortUsername && self.signupError != .UserExists) ? self.emailTextOpacity == 1 ? 8 : 0 : 0)
                                     
                                     TextField("", text: $signupEmail)
                                         .frame(width: prop.size.width - 70)
-                                        .padding(.vertical, 6.5)
+                                        .padding(.bottom, 6.5)//(.vertical, 6.5)
                                         .background(
                                             Rectangle()//RoundedRectangle(cornerRadius: 15)
                                                 .fill(.clear)
@@ -1131,7 +1203,8 @@ struct ContentView: View {
                                                             )
                                                         )
                                                         .foregroundStyle(Color(.systemGray2))
-                                                        .padding(.leading, 10)
+                                                        .padding(.leading, 5)
+                                                        .padding(.bottom, 6.5) /* MARK: Exists to follow the padding on the actual textfield. */
                                                         .onTapGesture { self.signupEmailFieldInFocus = true }
                                                     Spacer()
                                                 } else {
@@ -1144,7 +1217,8 @@ struct ContentView: View {
                                                                 )
                                                             )
                                                             .foregroundStyle(Color(.systemGray2))
-                                                            .padding(.leading, 10)
+                                                            .padding(.leading, 5)
+                                                            .padding(.bottom, 6.5) /* MARK: Exists to follow the padding on the actual textfield. */
                                                             .onTapGesture { self.signupEmailFieldInFocus = true }
                                                         Spacer()
                                                     }
@@ -1161,8 +1235,24 @@ struct ContentView: View {
                                         .disableAutocorrection(true)
                                         .keyboardType(.alphabet)
                                     //.padding(.vertical, (self.signupError != .InvalidEmail && self.signupError != .EmailExists) && (self.signupError != .TooShortUsername && self.signupError != .UserExists) ? 16 : 0)
-                                        //.padding(.bottom)//self.signupError == .TooShortUsername || self.signupError == .UserExists ? 16 : 0)
+                                    //.padding(.bottom)//self.signupError == .TooShortUsername || self.signupError == .UserExists ? 16 : 0)
                                         .onChange(of: self.signupEmail) {
+                                            if self.signupError != .None {
+                                                if self.signupError == .InvalidEmail {
+                                                    if self.signupEmail.contains("@") {
+                                                        let emailSegments = self.signupEmail.split(separator: "@")
+                                                        
+                                                        if let domainSegments = emailSegments.last?.split(separator: ".") {
+                                                            if ["org", "com", "gov", "net"].contains(domainSegments.last!) {
+                                                                self.signupError = .None
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    self.signupError = .None
+                                                }
+                                            }
+                                            
                                             if !self.signupEmail.isEmpty {
                                                 self.emailTextOpacity = 1
                                             } else {
@@ -1191,11 +1281,11 @@ struct ContentView: View {
                                         .foregroundStyle(.white)
                                         .opacity(self.passwordTextOpacity)
                                         .animation(.easeIn(duration: 0.8), value: self.passwordTextOpacity)
-                                        .padding(.top, self.signupError != .TooShortPassword ? self.passwordTextOpacity == 1 ? 16 : 0 : 0)
+                                        .padding(.top, self.signupError != .TooShortPassword ? self.passwordTextOpacity == 1 ? 8 : 0 : 0)
                                     
                                     SecureField("", text: $signupPassword)
                                         .frame(width: prop.size.width - 70)
-                                        .padding(.vertical, 6.5)
+                                        .padding(.bottom, 6.5)//(.vertical, 6.5)
                                         .background(
                                             Rectangle()//RoundedRectangle(cornerRadius: 15)
                                                 .fill(.clear)
@@ -1217,7 +1307,8 @@ struct ContentView: View {
                                                             )
                                                         )
                                                         .foregroundStyle(Color(.systemGray2))
-                                                        .padding(.leading, 10)
+                                                        .padding(.leading, 5)
+                                                        .padding(.bottom, 6.5) /* MARK: Exists to follow the padding on the actual textfield. */
                                                         .onTapGesture { self.signupPasswordFieldInFocus = true }
                                                     Spacer()
                                                 } else {
@@ -1230,7 +1321,8 @@ struct ContentView: View {
                                                                 )
                                                             )
                                                             .foregroundStyle(Color(.systemGray2))
-                                                            .padding(.leading, 10)
+                                                            .padding(.leading, 5)
+                                                            .padding(.bottom, 6.5) /* MARK: Exists to follow the padding on the actual textfield. */
                                                             .onTapGesture { self.signupPasswordFieldInFocus = true }
                                                         Spacer()
                                                     }
@@ -1246,8 +1338,14 @@ struct ContentView: View {
                                         .autocapitalization(.none)
                                         .disableAutocorrection(true)
                                         .keyboardType(.alphabet)
-                                        .padding(.bottom)
+                                        .padding(.bottom, prop.isLargerScreen ? 16 : 4)
                                         .onChange(of: self.signupPassword) {
+                                            if self.signupError != .None {
+                                                if self.signupError == .TooShortPassword {
+                                                    if self.signupPassword.count >= 8 { self.signupError = .None }
+                                                } else { self.signupError = .None }
+                                            }
+                                            
                                             if !self.signupPassword.isEmpty {
                                                 self.passwordTextOpacity = 1
                                             } else {
@@ -1269,6 +1367,8 @@ struct ContentView: View {
                                     }
                                 }
                                 .frame(maxWidth: prop.size.width - 40)
+                                .padding(.top, prop.isLargerScreen ? 24 : prop.isMediumScreen || prop.isSmallScreen ? 18 : 0)
+                                //.padding(.top, prop.isLargerScreen ? 16 : prop.isMediumScreen ? 14 : 0)
                                 .onAppear {
                                     if !self.signupUsername.isEmpty { self.usernameTextOpacity = 1 }
                                     if !self.signupEmail.isEmpty { self.emailTextOpacity = 1 }
@@ -1330,8 +1430,9 @@ struct ContentView: View {
                                             .background(
                                                 RoundedRectangle(cornerRadius: 15)
                                                     .fill(Color.EZNotesLightBlack.opacity(0.65))
-                                                    .shadow(color: Color.black, radius: 1.5)
+                                                    //.shadow(color: Color.black, radius: 1.5)
                                             )
+                                            .padding(1.5)
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
                                         .padding(.bottom, 8)
@@ -1404,7 +1505,7 @@ struct ContentView: View {
                                                 .background(
                                                     RoundedRectangle(cornerRadius: 15)
                                                         .fill(Color.EZNotesLightBlack.opacity(0.65))
-                                                        .shadow(color: Color.black, radius: 1.5)
+                                                        //.shadow(color: Color.black, radius: 1.5)
                                                 )
                                             }
                                             .buttonStyle(NoLongPressButtonStyle())
@@ -1471,7 +1572,7 @@ struct ContentView: View {
                                             .background(
                                                 RoundedRectangle(cornerRadius: 15)
                                                     .fill(Color.EZNotesLightBlack.opacity(0.65))
-                                                    .shadow(color: Color.black, radius: 1.5)
+                                                    //.shadow(color: Color.black, radius: 1.5)
                                             )
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
@@ -1570,7 +1671,7 @@ struct ContentView: View {
                                             .background(
                                                 RoundedRectangle(cornerRadius: 15)
                                                     .fill(Color.EZNotesLightBlack.opacity(0.65))
-                                                    .shadow(color: Color.black, radius: 1.5)
+                                                    //.shadow(color: Color.black, radius: 1.5)
                                             )
                                         }
                                         .buttonStyle(NoLongPressButtonStyle())
@@ -1580,9 +1681,17 @@ struct ContentView: View {
                                 .frame(maxWidth: prop.size.width - 40)
                             case "code_input":
                                 VStack {
+                                    Text("Code")
+                                        .frame(width: prop.size.width - 70, alignment: .leading)
+                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 16 : 14))
+                                        .foregroundStyle(.white)
+                                        .opacity(self.confirmCodeTextOpacity)
+                                        .animation(.easeIn(duration: 0.8), value: self.confirmCodeTextOpacity)
+                                        .padding(.top, self.confirmCodeTextOpacity == 1 ? 8 : 0)
+                                    
                                     TextField("", text: $signupConfirmCode)
                                         .frame(width: prop.size.width - 70)
-                                        .padding(.vertical, 6.5)
+                                        .padding(.bottom, 6.5)
                                         .background(
                                             Rectangle()//RoundedRectangle(cornerRadius: 15)
                                                 .fill(.clear)
@@ -1627,10 +1736,38 @@ struct ContentView: View {
                                         .focused($signupConfirmCodeFieldInFocus)
                                         .autocapitalization(.none)
                                         .disableAutocorrection(true)
-                                        .keyboardType(.alphabet)
-                                        .padding(.top) /* MARK: Add padding to the top to ensure spacing between "A code has been sent to <email>" and the textfield. */
+                                        .keyboardType(.numberPad)
+                                        //.padding(.top) /* MARK: Add padding to the top to ensure spacing between "A code has been sent to <email>" and the textfield. */
+                                        .onChange(of: self.signupConfirmCode) {
+                                            if !self.signupConfirmCode.isEmpty { self.confirmCodeTextOpacity = 1 }
+                                            else { self.confirmCodeTextOpacity = 0 }
+                                            
+                                            if self.signupConfirmCode.count == 6 {
+                                                self.signupConfirmCodeFieldInFocus = false /* MARK: Force textfield to go out of focus at 6 characters. */
+                                            }
+                                            if self.signupConfirmCode.count >= 6 {
+                                                self.signupConfirmCode = String(self.signupConfirmCode.prefix(6))
+                                            }
+                                        }
+                                    
+                                    if self.signupError == .WrongCode {
+                                        Text("Wrong Code. Try again")
+                                            .frame(maxWidth: prop.size.width - 70, alignment: .leading)
+                                            .padding(.bottom, 5)
+                                            .foregroundStyle(Color.EZNotesRed)
+                                            .font(
+                                                .system(
+                                                    size: 13
+                                                )
+                                            )
+                                            .fontWeight(.medium)
+                                    }
                                 }
                                 .frame(maxWidth: prop.size.width - 40)
+                                .onAppear {
+                                    /* MARK: Although I am almost positive this is not needed, better safe than sorry. */
+                                    if !self.signupConfirmCode.isEmpty { self.confirmCodeTextOpacity = 1 }
+                                }
                             case "select_plan":
                                 VStack {
                                     Plans(
@@ -1834,7 +1971,7 @@ struct ContentView: View {
                                 .padding(.bottom, prop.isLargerScreen
                                          ? self.keyboardHeight
                                          : prop.isMediumScreen
-                                            ? self.keyboardHeight > 0 ? self.keyboardHeight + 40 : 0
+                                            ? self.keyboardHeight > 0 ? self.keyboardHeight + 10 : 0
                                             : 0) /* MARK: We only want to adjust where the "continue" button is if the screen is larger. */
                                 .onAppear {
                                     print(prop.isSmallScreen, prop.isMediumScreen, prop.isLargerScreen)
@@ -1959,9 +2096,11 @@ struct ContentView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .ignoresSafeArea(.keyboard, edges: .bottom) /* MARK: Ensure the overall view doesn't move with the keyboard. */
+                //.edgesIgnoringSafeArea(prop.isLargerScreen ? . : .init())//.ignoresSafeArea(edges: .all)//.ignoresSafeArea(.keyboard, edges: .all) /* MARK: Ensure the overall view doesn't move with the keyboard. */
+                //.ignoresSafeArea(.keyboard, edges: .all)
                 .background(
                     Image("Background")
+                        .overlay(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
                 )
                 .ignoresSafeArea(.keyboard, edges: .all) /* MARK: Ensure the background doesn't move with the keyboard. */
                 .background(.primary)
