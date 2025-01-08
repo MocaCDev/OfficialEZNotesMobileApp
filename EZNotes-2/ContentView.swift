@@ -310,6 +310,7 @@ struct ContentView: View {
                         } else { Spacer() }
                     }
                     .frame(maxHeight: prop.isLargerScreen ? 150 : 120)
+                    .padding(.top, 30)//, prop.isLargerScreen || prop.isMediumScreen ? 24 : )
                     .ignoresSafeArea(.keyboard, edges: .bottom)
                     
                     HStack {
@@ -730,124 +731,6 @@ struct ContentView: View {
                             }
                             .padding(.top, prop.isLargerScreen || prop.isSmallScreen ? 24 : prop.isMediumScreen ? 30 : 0)
                             
-                            Button(action: {
-                                self.loginError = .None /* MARK: Ensure the `loginError` value is `.None` to ensure no errors show. */
-                                
-                                if self.loginUsername.isEmpty { self.loginError = .EmptyUsername; return }
-                                if self.loginPassword.isEmpty { self.loginError = .EmptyPassword; return }
-                                
-                                self.loggingIn = true
-                                
-                                RequestAction<LoginRequestData>(parameters: LoginRequestData(
-                                    Username: self.loginUsername, Password: self.loginPassword
-                                )).perform(action: complete_login_req) { statusCode, resp in
-                                    self.loggingIn = false
-                                    
-                                    guard resp != nil && statusCode == 200 else {
-                                        guard
-                                            let resp = resp,
-                                            resp.keys.contains("ErrorCode"),
-                                            let errorCode = resp["ErrorCode"] as? Int
-                                        else {
-                                            self.loginError = .ServerError
-                                            return
-                                        }
-                                        
-                                        switch(errorCode) {
-                                        case 0x53: /* MARK: "invalid_user"; AKA, user does not exist. */
-                                            self.loginError = .InvalidUserError
-                                            break
-                                        case 0x54: /* MARK: "invalid_password". */
-                                            self.loginError = .InvalidPasswordError
-                                            break
-                                        default:
-                                            self.loginError = .ServerError
-                                            break
-                                        }
-                                        
-                                        return
-                                    }
-                                    
-                                    /* MARK: If we are here, the response was good; ensure that all the required data exists in the response. */
-                                    guard
-                                        let resp = resp,
-                                        resp.keys.contains("Username"),
-                                        resp.keys.contains("AccountID"),
-                                        resp.keys.contains("Email"),
-                                        resp.keys.contains("Usecase")
-                                    else {
-                                        self.loginError = .ServerError /* MARK: Error in the response; not particularly related to invalid username/email or password. Prompt user to try again. */
-                                        return
-                                    }
-                                    
-                                    /* MARK: Depending on the usecase, check for the according data in the response. */
-                                    switch(resp["Usecase"]! as! String) {
-                                    case "school":
-                                        guard
-                                            resp.keys.contains("Major"),
-                                            resp.keys.contains("Field"),
-                                            resp.keys.contains("State"),
-                                            resp.keys.contains("College")
-                                        else {
-                                            self.loginError = .ServerError
-                                            return
-                                        }
-                                        
-                                        assignUDKey(key: "major", value: resp["Major"]! as! String)
-                                        assignUDKey(key: "major_field", value: resp["Field"]! as! String)
-                                        assignUDKey(key: "state", value: resp["State"]! as! String)
-                                        assignUDKey(key: "college", value: resp["College"]! as! String)
-                                        break
-                                    default: break
-                                    }
-                                    
-                                    self.loginError = .None /* MARK: Ensure the `loginError` value is `.None` so no errors show. */
-                                    
-                                    assignUDKey(key: "username", value: resp["Username"]! as! String)
-                                    self.accountInfo.setUsername(username: getUDValue(key: "username"))
-                                    
-                                    assignUDKey(key: "email", value: resp["Email"]! as! String)
-                                    self.accountInfo.setEmail(email: getUDValue(key: "email"))
-                                    
-                                    assignUDKey(key: "account_id", value: resp["AccountID"]! as! String)
-                                    self.accountInfo.setAccountID(accountID: getUDValue(key: "account_id"))
-                                    
-                                    /* MARK: Log user in. */
-                                    assignUDKey(key: "logged_in", value: true)
-                                    self.userHasSignedIn = true
-                                    // self.setLoginStatus()
-                                }
-                            }) {
-                                if !self.loggingIn {
-                                    Text("Login")
-                                        .frame(maxWidth: .infinity, alignment: .center)
-                                        .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 22 : 20))
-                                        .foregroundStyle(.black)
-                                } else {
-                                    LoadingView(tint: Color.EZNotesBlack)
-                                }
-                            }
-                            .frame(maxWidth: prop.size.width - 180)
-                            .buttonStyle(NoLongPressButtonStyle())
-                            .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 25)
-                                    .fill(Color.EZNotesBlue)
-                                    .shadow(color: Color.EZNotesBlue, radius: 6.5)//, x: 3, y: -6.5)
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
-                            .padding(3)
-                            .padding(.horizontal)
-                            .padding(.top, prop.isLargerScreen ? 20 : 10)
-                            .padding(.bottom, prop.isLargerScreen ? 16 : 8)
-                            
-                            Button(action: { }) {
-                                Text("Having trouble signing in?")
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .font(Font.custom("Poppins-Regular", size: 14))
-                                    .foregroundStyle(.gray)
-                            }
-                            
                             /*HStack {
                                 if !udKeyExists(key: "usecase") { /* MARK: If this key exists, that means the user has started the sign up process. */
                                     Text("Don't have an account?")
@@ -1057,8 +940,151 @@ struct ContentView: View {
                             .padding(.top, 8)*/
                             
                             Spacer()
+                            
+                            VStack {
+                                Button(action: {
+                                    self.loginError = .None /* MARK: Ensure the `loginError` value is `.None` to ensure no errors show. */
+                                    
+                                    if self.loginUsername.isEmpty { self.loginError = .EmptyUsername; return }
+                                    if self.loginPassword.isEmpty { self.loginError = .EmptyPassword; return }
+                                    
+                                    /* MARK: Ensure that both of the textfields focus are set to false. */
+                                    self.loginUsernameFieldInFocus = false
+                                    self.loginPasswordFieldInFocus = false
+                                    
+                                    self.loggingIn = true
+                                    
+                                    RequestAction<LoginRequestData>(parameters: LoginRequestData(
+                                        Username: self.loginUsername, Password: self.loginPassword
+                                    )).perform(action: complete_login_req) { statusCode, resp in
+                                        self.loggingIn = false
+                                        
+                                        guard resp != nil && statusCode == 200 else {
+                                            guard
+                                                let resp = resp,
+                                                resp.keys.contains("ErrorCode"),
+                                                let errorCode = resp["ErrorCode"] as? Int
+                                            else {
+                                                self.loginError = .ServerError
+                                                return
+                                            }
+                                            
+                                            switch(errorCode) {
+                                            case 0x53: /* MARK: "invalid_user"; AKA, user does not exist. */
+                                                self.loginError = .InvalidUserError
+                                                break
+                                            case 0x54: /* MARK: "invalid_password". */
+                                                self.loginError = .InvalidPasswordError
+                                                break
+                                            default:
+                                                self.loginError = .ServerError
+                                                break
+                                            }
+                                            
+                                            return
+                                        }
+                                        
+                                        /* MARK: If we are here, the response was good; ensure that all the required data exists in the response. */
+                                        guard
+                                            let resp = resp,
+                                            resp.keys.contains("Username"),
+                                            resp.keys.contains("AccountID"),
+                                            resp.keys.contains("Email"),
+                                            resp.keys.contains("Usecase")
+                                        else {
+                                            self.loginError = .ServerError /* MARK: Error in the response; not particularly related to invalid username/email or password. Prompt user to try again. */
+                                            return
+                                        }
+                                        
+                                        /* MARK: Depending on the usecase, check for the according data in the response. */
+                                        switch(resp["Usecase"]! as! String) {
+                                        case "school":
+                                            guard
+                                                resp.keys.contains("Major"),
+                                                resp.keys.contains("Field"),
+                                                resp.keys.contains("State"),
+                                                resp.keys.contains("College")
+                                            else {
+                                                self.loginError = .ServerError
+                                                return
+                                            }
+                                            
+                                            assignUDKey(key: "major", value: resp["Major"]! as! String)
+                                            assignUDKey(key: "major_field", value: resp["Field"]! as! String)
+                                            assignUDKey(key: "state", value: resp["State"]! as! String)
+                                            assignUDKey(key: "college", value: resp["College"]! as! String)
+                                            break
+                                        default: break
+                                        }
+                                        
+                                        self.loginError = .None /* MARK: Ensure the `loginError` value is `.None` so no errors show. */
+                                        
+                                        assignUDKey(key: "username", value: resp["Username"]! as! String)
+                                        self.accountInfo.setUsername(username: getUDValue(key: "username"))
+                                        
+                                        assignUDKey(key: "email", value: resp["Email"]! as! String)
+                                        self.accountInfo.setEmail(email: getUDValue(key: "email"))
+                                        
+                                        assignUDKey(key: "account_id", value: resp["AccountID"]! as! String)
+                                        self.accountInfo.setAccountID(accountID: getUDValue(key: "account_id"))
+                                        
+                                        /* MARK: Log user in. */
+                                        assignUDKey(key: "logged_in", value: true)
+                                        self.userHasSignedIn = true
+                                        // self.setLoginStatus()
+                                    }
+                                }) {
+                                    if !self.loggingIn {
+                                        Text("Login")
+                                            .frame(maxWidth: .infinity, alignment: .center)
+                                            .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 22 : 20))
+                                            .foregroundStyle(.black)
+                                    } else {
+                                        LoadingView(tint: Color.EZNotesBlack)
+                                    }
+                                }
+                                .frame(maxWidth: prop.size.width - 180)
+                                .buttonStyle(NoLongPressButtonStyle())
+                                .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .fill(Color.EZNotesBlue)
+                                        .shadow(color: Color.EZNotesBlue, radius: 6.5)//, x: 3, y: -6.5)
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
+                                .padding(3)
+                                .padding(.horizontal)
+                                .padding(.top, prop.isLargerScreen ? 20 : 10)
+                                //.padding(.bottom, prop.isLargerScreen ? 16 : 8)
+                                
+                                Button(action: { }) {
+                                    Text("Having trouble signing in?")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .font(Font.custom("Poppins-Regular", size: 14))
+                                        .foregroundStyle(.gray)
+                                }
+                                .padding(.bottom, self.keyboardHeight == 0 ? 26 : 30)
+                                .padding(.vertical)
+                            }
+                            .padding(.bottom, self.keyboardHeight > 0
+                                     ? prop.isLargerScreen || prop.isMediumScreen
+                                        ? self.keyboardHeight
+                                        : self.loginUsernameTextOpacity == 1 && self.loginPasswordTextOpacity == 1
+                                            ? self.keyboardHeight - 8.5
+                                            : self.loginUsernameTextOpacity == 1 || self.loginPasswordTextOpacity == 1
+                                                ? self.keyboardHeight - 4
+                                                : self.keyboardHeight
+                                     : 0
+                                     /*self.keyboardHeight > 0
+                                     ? prop.isLargerScreen
+                                        ? self.loginUsernameTextOpacity == 1 || self.loginPasswordTextOpacity == 1 ? self.keyboardHeight + 42 : self.keyboardHeight + 46
+                                        : self.loginUsernameTextOpacity == 1
+                                            ? self.loginPasswordTextOpacity == 1 ? self.keyboardHeight + 23.5 : self.keyboardHeight + 28
+                                            : self.loginPasswordTextOpacity == 1 ? self.keyboardHeight + 27.5 : self.keyboardHeight + 32
+                                     : 0*/
+                            )
                         }
-                        .padding(.top, prop.isLargerScreen ? 0 : -22)
+                        .padding(.top, prop.isLargerScreen ? 0 : -16)//-22)
                         .onAppear {
                             /* MARK: If the key `selecting_plan` exists in `UserDefaults`, force the user back to the screen where they have to select a plan. */
                             if udKeyExists(key: "selecting_plan") {
@@ -1068,7 +1094,149 @@ struct ContentView: View {
                             
                             if !self.loginUsername.isEmpty { self.loginUsernameTextOpacity = 1 }
                             if !self.loginPassword.isEmpty { self.loginPasswordTextOpacity = 1 }
+                            
+                            self.setupKeyboardListeners()
                         }
+                        .onDisappear {
+                            self.removeKeyboardListeners()
+                        }
+                        
+                        /*Spacer()
+                        
+                        VStack {
+                            Button(action: {
+                                self.loginError = .None /* MARK: Ensure the `loginError` value is `.None` to ensure no errors show. */
+                                
+                                if self.loginUsername.isEmpty { self.loginError = .EmptyUsername; return }
+                                if self.loginPassword.isEmpty { self.loginError = .EmptyPassword; return }
+                                
+                                /* MARK: Ensure that both of the textfields focus are set to false. */
+                                self.loginUsernameFieldInFocus = false
+                                self.loginPasswordFieldInFocus = false
+                                
+                                self.loggingIn = true
+                                
+                                RequestAction<LoginRequestData>(parameters: LoginRequestData(
+                                    Username: self.loginUsername, Password: self.loginPassword
+                                )).perform(action: complete_login_req) { statusCode, resp in
+                                    self.loggingIn = false
+                                    
+                                    guard resp != nil && statusCode == 200 else {
+                                        guard
+                                            let resp = resp,
+                                            resp.keys.contains("ErrorCode"),
+                                            let errorCode = resp["ErrorCode"] as? Int
+                                        else {
+                                            self.loginError = .ServerError
+                                            return
+                                        }
+                                        
+                                        switch(errorCode) {
+                                        case 0x53: /* MARK: "invalid_user"; AKA, user does not exist. */
+                                            self.loginError = .InvalidUserError
+                                            break
+                                        case 0x54: /* MARK: "invalid_password". */
+                                            self.loginError = .InvalidPasswordError
+                                            break
+                                        default:
+                                            self.loginError = .ServerError
+                                            break
+                                        }
+                                        
+                                        return
+                                    }
+                                    
+                                    /* MARK: If we are here, the response was good; ensure that all the required data exists in the response. */
+                                    guard
+                                        let resp = resp,
+                                        resp.keys.contains("Username"),
+                                        resp.keys.contains("AccountID"),
+                                        resp.keys.contains("Email"),
+                                        resp.keys.contains("Usecase")
+                                    else {
+                                        self.loginError = .ServerError /* MARK: Error in the response; not particularly related to invalid username/email or password. Prompt user to try again. */
+                                        return
+                                    }
+                                    
+                                    /* MARK: Depending on the usecase, check for the according data in the response. */
+                                    switch(resp["Usecase"]! as! String) {
+                                    case "school":
+                                        guard
+                                            resp.keys.contains("Major"),
+                                            resp.keys.contains("Field"),
+                                            resp.keys.contains("State"),
+                                            resp.keys.contains("College")
+                                        else {
+                                            self.loginError = .ServerError
+                                            return
+                                        }
+                                        
+                                        assignUDKey(key: "major", value: resp["Major"]! as! String)
+                                        assignUDKey(key: "major_field", value: resp["Field"]! as! String)
+                                        assignUDKey(key: "state", value: resp["State"]! as! String)
+                                        assignUDKey(key: "college", value: resp["College"]! as! String)
+                                        break
+                                    default: break
+                                    }
+                                    
+                                    self.loginError = .None /* MARK: Ensure the `loginError` value is `.None` so no errors show. */
+                                    
+                                    assignUDKey(key: "username", value: resp["Username"]! as! String)
+                                    self.accountInfo.setUsername(username: getUDValue(key: "username"))
+                                    
+                                    assignUDKey(key: "email", value: resp["Email"]! as! String)
+                                    self.accountInfo.setEmail(email: getUDValue(key: "email"))
+                                    
+                                    assignUDKey(key: "account_id", value: resp["AccountID"]! as! String)
+                                    self.accountInfo.setAccountID(accountID: getUDValue(key: "account_id"))
+                                    
+                                    /* MARK: Log user in. */
+                                    assignUDKey(key: "logged_in", value: true)
+                                    self.userHasSignedIn = true
+                                    // self.setLoginStatus()
+                                }
+                            }) {
+                                if !self.loggingIn {
+                                    Text("Login")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 22 : 20))
+                                        .foregroundStyle(.black)
+                                } else {
+                                    LoadingView(tint: Color.EZNotesBlack)
+                                }
+                            }
+                            .frame(maxWidth: prop.size.width - 180)
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 25)
+                                    .fill(Color.EZNotesBlue)
+                                    .shadow(color: Color.EZNotesBlue, radius: 6.5)//, x: 3, y: -6.5)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
+                            .padding(3)
+                            .padding(.horizontal)
+                            .padding(.top, prop.isLargerScreen ? 20 : 10)
+                            //.padding(.bottom, prop.isLargerScreen ? 16 : 8)
+                            
+                            Button(action: { }) {
+                                Text("Having trouble signing in?")
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .font(Font.custom("Poppins-Regular", size: 14))
+                                    .foregroundStyle(.gray)
+                            }
+                            .padding(.bottom, 26)
+                            .padding(.vertical)
+                        }
+                        .padding(.bottom, self.keyboardHeight > 0
+                                 ? prop.isLargerScreen ? self.keyboardHeight + 46 : self.keyboardHeight + 42
+                                 : 0)
+                        .onAppear {
+                            self.setupKeyboardListeners()
+                        }
+                        .onDisappear {
+                            self.removeKeyboardListeners()
+                        }*/
                     } else {
                         VStack {
                             if self.signupSection != "hang_tight_screen" && self.signupSection != "code_input" && self.signupSection != "credentials" {
@@ -2283,13 +2451,14 @@ struct ContentView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 //.edgesIgnoringSafeArea(prop.isLargerScreen ? . : .init())//.ignoresSafeArea(edges: .all)//.ignoresSafeArea(.keyboard, edges: .all) /* MARK: Ensure the overall view doesn't move with the keyboard. */
-                //.ignoresSafeArea(.keyboard, edges: .all)
+                .ignoresSafeArea(.keyboard, edges: .all)
                 .background(
                     Image("TestBG2")//Image("Background")
                         .resizable()
-                        .aspectRatio(1, contentMode: .fill)//.scaledToFill()
-                        .overlay(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+                        .scaledToFill()//.aspectRatio(1, contentMode: .fill)//.scaledToFill()
+                        //.overlay(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
                 )
+                .edgesIgnoringSafeArea(.all)
                 .ignoresSafeArea(.keyboard, edges: .all) /* MARK: Ensure the background doesn't move with the keyboard. */
                 //.background(.primary)
             }
