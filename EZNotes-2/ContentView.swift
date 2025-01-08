@@ -310,7 +310,7 @@ struct ContentView: View {
                         } else { Spacer() }
                     }
                     .frame(maxHeight: prop.isLargerScreen ? 150 : 120)
-                    .padding(.top, 30)//, prop.isLargerScreen || prop.isMediumScreen ? 24 : )
+                    .padding(.top, prop.isLargerScreen ? 48 : 30)//, prop.isLargerScreen || prop.isMediumScreen ? 24 : )
                     .ignoresSafeArea(.keyboard, edges: .bottom)
                     
                     HStack {
