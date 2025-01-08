@@ -189,6 +189,86 @@ struct CategoryInternalsPlusButton: View {
             }
             
             HStack {
+                HStack {
+                    Button(action: {
+                        //self.categoryToDelete = self.categoryName
+                        //self.categoryAlert = true
+                        //self.alertType = .DeleteCategoryAlert
+                    }) {
+                        ZStack {
+                            Image(systemName: "trash")
+                                .resizable()
+                                .frame(width: 20, height: 20)
+                                .foregroundStyle(.red)
+                        }
+                        .frame(alignment: .leading)
+                        .padding(.trailing, 10)
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    Button(action: { }) {
+                        ZStack {
+                            Image(systemName: "pencil")
+                                .resizable()
+                                .frame(width: 15, height: 15)
+                                .foregroundStyle(Color.EZNotesBlue)
+                        }
+                        .frame(alignment: .leading)
+                        .padding(.trailing, 10)
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.trailing, 6)
+                    
+                    /*ShareLink(
+                        item: self.categoryBackground,
+                        subject: Text(self.categoryName),
+                        message: Text(
+                            self.categoryDescription != nil
+                                ? "\(self.categoryDescription!)\n\nCreated with the support of **EZNotes**"
+                                : ""
+                        ),
+                        preview: SharePreview(self.categoryName, image: self.categoryBackground))
+                    {//(item: URL(string: "https://apps.apple.com/us/app/light-speedometer/id6447198696")!) {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                            .foregroundStyle(Color.EZNotesBlue)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading) /* MARK: `maxWidth` is in this as it's the last element in the HStack, thus pushing all the other content over. */*/
+                    Button(action: { }) {
+                        ZStack {
+                            Image(systemName: "square.and.arrow.up")
+                                .resizable()
+                                .frame(width: 20, height: 25)
+                                .foregroundStyle(Color.EZNotesBlue)
+                        }
+                        .frame(alignment: .leading)
+                        .padding(.trailing, 10)
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.leading, 6)
+                    
+                    Button(action: { }) {
+                        ZStack {
+                            Image(systemName: "paperplane")
+                                .resizable()
+                                .frame(width: 20, height: 20)
+                                .foregroundStyle(Color.EZNotesBlue)
+                        }
+                        .frame(alignment: .leading)
+                        .padding(.trailing, 10)
+                    }
+                    .buttonStyle(NoLongPressButtonStyle())
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(20)
+                .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+                .cornerRadius(20)
+                .padding(.horizontal)
+                //.clipShape(RoundedRectangle(cornerRadius: 20))
+                
                 Spacer()
                 
                 Button(action: { self.testPopup.toggle() }) {

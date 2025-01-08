@@ -1318,6 +1318,8 @@ struct TopNavCategoryView: View {
     
     var prop: Properties
     var categoryName: String
+    var numberOfSets: Int
+    var creationDate: String
     var categoryBackground: Image
     var categoryBackgroundColor: Color
     var totalSets: Int
@@ -1338,12 +1340,12 @@ struct TopNavCategoryView: View {
                 self.categoryBackground
                     .resizable()
                     .scaledToFill()
-                    .frame(maxHeight: 125)
+                    .frame(maxHeight: prop.isLargerScreen ? 125 : prop.isMediumScreen ? 110 : 100)
                 //.aspectRatio(contentMode: .fill)
                     .clipped()
                     .overlay(Color.EZNotesBlack.opacity(0.6))
             }
-            .frame(maxWidth: .infinity, maxHeight: 135)
+            .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 125 : prop.isMediumScreen ? 110 : 100)
             .background(
                 Rectangle()
                     .shadow(color: self.categoryBackgroundColor, radius: 2.5, y: 2.5)
@@ -1361,7 +1363,7 @@ struct TopNavCategoryView: View {
                     .padding([.leading], 20)
                 }
                 .frame(maxWidth: 50, maxHeight: .infinity, alignment: .leading)
-                .padding(.top, prop.isLargerScreen ? 25 : -10)
+                .padding(.top, prop.isLargerScreen || prop.isMediumScreen ? 25 : 10)
                 
                 if self.topBanner.keys.contains(self.categoryName) && self.topBanner[self.categoryName]! != .None {
                     switch(self.topBanner[self.categoryName]!) {
@@ -1379,10 +1381,39 @@ struct TopNavCategoryView: View {
                         .background(Color.EZNotesLightBlack.opacity(0.8))
                         .cornerRadius(15)
                         .padding(.trailing, 10)
-                        .padding(.top, prop.isLargerScreen ? 25 : -10)
+                        .padding(.top, prop.isLargerScreen || prop.isMediumScreen ? 25 : 10)
                     default: VStack { }.onAppear { self.topBanner[self.categoryName] = .None }
                     }
-                } else { Spacer() }
+                } else {
+                    VStack {
+                        Text(self.categoryName)
+                            .frame(maxWidth: .infinity, alignment: .center)
+                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 22 : 18))
+                            .foregroundStyle(.white)
+                            .lineLimit(1...2)
+                            .multilineTextAlignment(.center)
+                            .truncationMode(.tail)
+                        
+                        HStack {
+                            Text("\(self.numberOfSets) \(self.numberOfSets > 1 ? "Sets" : self.numberOfSets == 0 ? "Sets" : "Set")")
+                                .frame(alignment: .leading)
+                                .foregroundStyle(.white)
+                                .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen ? 12.5 : 10.5)
+                            
+                            Divider()
+                                .background(.white)
+                            
+                            Text("Created \(self.creationDate)")
+                                .frame(alignment: .trailing)
+                                .foregroundStyle(.white)
+                                .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen ? 12.5 : 10.5)
+                        }
+                        .frame(maxHeight: 13)
+                        .padding(.top, -8)
+                    }
+                    .padding(.top, prop.isLargerScreen ? 35 : prop.isMediumScreen ? 25 : 10)
+                    .padding(.horizontal, 8)
+                }
                 
                 //Spacer()
                 
@@ -1399,11 +1430,11 @@ struct TopNavCategoryView: View {
                     .buttonStyle(NoLongPressButtonStyle())
                 }
                 .frame(maxWidth: 50, maxHeight: .infinity, alignment: .trailing)
-                .padding(.top, prop.isLargerScreen ? 25 : -10)
+                .padding(.top, prop.isLargerScreen || prop.isMediumScreen ? 25 : 10)//-10)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: 100, alignment: .top)
+        .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 125 : prop.isMediumScreen ? 110 : 100, alignment: .top)
         //.padding([.top], 5)//.background(Color.EZNotesBlack.opacity(0.95))
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .popover(isPresented: $aiChat) {

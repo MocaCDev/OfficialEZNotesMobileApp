@@ -624,6 +624,7 @@ class RequestAction<T>: ObservableObject {
                 request.httpBody = try? JSONSerialization.data(withJSONObject: jsonData)
                 break
             case is GenerateDescRequestData.Type:
+                print("YES")
                 guard let params: GenerateDescRequestData = (parameters as? GenerateDescRequestData) else { return }
                 request.addValue(params.Subject, forHTTPHeaderField: "Subject")
                 break

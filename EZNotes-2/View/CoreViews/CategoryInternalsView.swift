@@ -1221,6 +1221,8 @@ struct CategoryInternalsView: View {
                     TopNavCategoryView(
                         prop: self.prop,
                         categoryName: self.categoryName,
+                        numberOfSets: self.categoryData.categoriesAndSets[self.categoryName]!.count,
+                        creationDate: self.creationDate,
                         categoryBackground: self.categoryBackground,
                         categoryBackgroundColor: self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesLightBlack,
                         totalSets: self.categoryData.categoriesAndSets[self.categoryName]!.count,
@@ -1233,17 +1235,19 @@ struct CategoryInternalsView: View {
                         images_to_upload: self.images_to_upload
                     )
                     
-                    VStack {
+                    Spacer()
+                    
+                    /*VStack {
                         VStack {
                             HStack {
                                 Text(self.categoryName)
                                     .frame(alignment: .leading)
                                     .padding(.top, prop.isLargerScreen ? 20 : -24)
-                                    .padding(.bottom, prop.isLargerScreen ? 0 : 24)
+                                    .padding(.bottom, prop.isLargerScreen ? 0 : 283)
                                     .foregroundStyle(.white)
                                     .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 28 : 30))//.setFontSizeAndWeight(weight: .semibold, size: prop.isLargerScreen ? 35 : 30)
                                     .minimumScaleFactor(0.5)
-                                    .lineLimit(prop.isLargerScreen ? 2 : 1)
+                                    .lineLimit(2)//prop.isLargerScreen ? 2 : 1)
                                     .multilineTextAlignment(.leading)
                                 
                                 if self.categoryDescription != nil {
@@ -1269,6 +1273,10 @@ struct CategoryInternalsView: View {
                                                     )
                                                 ).perform(action: generate_desc_req) { statusCode, resp in
                                                     guard resp != nil && statusCode == 200 else {
+                                                        if let resp = resp {
+                                                            print(resp)
+                                                        }
+                                                        
                                                         self.generatingDesc = false
                                                         return
                                                     }
@@ -1694,7 +1702,7 @@ struct CategoryInternalsView: View {
                     .frame(maxWidth: prop.size.width - 30, maxHeight: .infinity, alignment: .top)
                     .padding()
                     //.padding(.top, -5)
-                    .cornerRadius(15)
+                    .cornerRadius(15)*/
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea(edges: [.top, .bottom])
