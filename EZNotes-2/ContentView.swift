@@ -202,7 +202,7 @@ struct ContentView: View {
     private func setupKeyboardListeners() {
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
             if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                if self.isLoggingIn {
+                /*if self.isLoggingIn {
                     keyboardHeight = keyboardFrame.height - 86
                 } else {
                     if keyboardFrame.height > keyboardHeight && keyboardHeight != 0 {
@@ -212,7 +212,14 @@ struct ContentView: View {
                     }
                     
                     keyboardHeight = keyboardFrame.height
+                }*/
+                if keyboardFrame.height > keyboardHeight && keyboardHeight != 0 {
+                    let difference = keyboardFrame.height - keyboardHeight
+                    keyboardHeight = keyboardFrame.height - difference
+                    return
                 }
+                
+                keyboardHeight = keyboardFrame.height
             }
         }
         
@@ -1071,7 +1078,7 @@ struct ContentView: View {
                                 .padding(.horizontal)
                                 .padding(.top, prop.isLargerScreen ? 20 : 10)
                                 //.padding(.bottom, prop.isLargerScreen ? 16 : 8)
-                                .padding(.bottom, self.keyboardHeight > 0
+                                .padding(.bottom, /*self.keyboardHeight > 0
                                          ? prop.isLargerScreen || prop.isMediumScreen
                                             ? self.loginUsernameTextOpacity == 1 && self.loginPasswordTextOpacity == 1
                                                 ? self.keyboardHeight - 70.5
@@ -1084,7 +1091,7 @@ struct ContentView: View {
                                                 : self.loginUsernameTextOpacity == 1 || self.loginPasswordTextOpacity == 1
                                                     ? self.keyboardHeight - 80
                                                     : self.keyboardHeight - 76
-                                         : 0
+                                                   : 0*/prop.isLargerScreen || prop.isMediumScreen ? self.keyboardHeight : 0
                                          /*self.keyboardHeight > 0
                                          ? prop.isLargerScreen
                                             ? self.loginUsernameTextOpacity == 1 || self.loginPasswordTextOpacity == 1 ? self.keyboardHeight + 42 : self.keyboardHeight + 46
@@ -1094,209 +1101,211 @@ struct ContentView: View {
                                          : 0*/
                                 )
                                 
-                                Button(action: {
-                                    self.isLoggingIn = false
-                                    
-                                    self.signupSection = "hang_tight_screen" /* MARK: Show this screen by default while the app attempts to figure out where the user left off in the sign up process, if possible. */
-                                    
-                                    /* TODO: Depending on the last "state" of the sign up section, configure the view accordingly here. */
-                                    if udKeyExists(key: "usecase") {
-                                        /* MARK: Check to see if all of the credentials needed to create an account exists. */
-                                        if !udKeyExists(key: "username") { self.signupSection = "credentials"; return }
-                                        if !udKeyExists(key: "email") { self.signupSection = "credentials"; return }
-                                        if !udKeyExists(key: "password") { self.signupSection = "credentials"; return }
+                                if !self.loggingIn { /* MARK: Hide the sign up button if the user clicks "Log In". */
+                                    Button(action: {
+                                        self.isLoggingIn = false
                                         
-                                        /* MARK: If all of the above keys exist, assign them just in case the user goes back to the "Credentials" view. */
-                                        self.signupUsername = getUDValue(key: "username")
-                                        self.signupEmail = getUDValue(key: "email")
-                                        self.signupPassword = getUDValue(key: "password")
+                                        self.signupSection = "hang_tight_screen" /* MARK: Show this screen by default while the app attempts to figure out where the user left off in the sign up process, if possible. */
                                         
-                                        /* MARK: Check the usecase. Depending, we will check what happens next. */
-                                        if getUDValue(key: "usecase") == "school" {
-                                            if !udKeyExists(key: "state") { self.signupSection = "select_state"; return }
-                                            if !udKeyExists(key: "college") {
-                                                /* MARK: Regenerate the array of colleges to be displayed. */
-                                                RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(
-                                                    State: getUDValue(key: "state")
-                                                )).perform(action: get_colleges) { statusCode, resp in
-                                                    self.loadingColleges = false
-                                                    
-                                                    guard
-                                                        let resp = resp,
-                                                        resp.keys.contains("Colleges"),
-                                                        statusCode == 200
-                                                    else {
-                                                        self.signupError = .ServerError//self.error = .ServerError // self.serverError = true
-                                                        return
-                                                    }
-                                                    
-                                                    if let colleges = resp["Colleges"]! as? [String] {
-                                                        for c in colleges {
-                                                            if !self.colleges.contains(c) { self.colleges.append(c) }
-                                                        }
+                                        /* TODO: Depending on the last "state" of the sign up section, configure the view accordingly here. */
+                                        if udKeyExists(key: "usecase") {
+                                            /* MARK: Check to see if all of the credentials needed to create an account exists. */
+                                            if !udKeyExists(key: "username") { self.signupSection = "credentials"; return }
+                                            if !udKeyExists(key: "email") { self.signupSection = "credentials"; return }
+                                            if !udKeyExists(key: "password") { self.signupSection = "credentials"; return }
+                                            
+                                            /* MARK: If all of the above keys exist, assign them just in case the user goes back to the "Credentials" view. */
+                                            self.signupUsername = getUDValue(key: "username")
+                                            self.signupEmail = getUDValue(key: "email")
+                                            self.signupPassword = getUDValue(key: "password")
+                                            
+                                            /* MARK: Check the usecase. Depending, we will check what happens next. */
+                                            if getUDValue(key: "usecase") == "school" {
+                                                if !udKeyExists(key: "state") { self.signupSection = "select_state"; return }
+                                                if !udKeyExists(key: "college") {
+                                                    /* MARK: Regenerate the array of colleges to be displayed. */
+                                                    RequestAction<GetCollegesRequestData>(parameters: GetCollegesRequestData(
+                                                        State: getUDValue(key: "state")
+                                                    )).perform(action: get_colleges) { statusCode, resp in
+                                                        self.loadingColleges = false
                                                         
-                                                        self.colleges.append("Other")
-                                                        self.signupSection = "select_college"
-                                                        return
-                                                    }
-                                                    
-                                                    self.signupSection = "usecase"
-                                                    self.signupError = .ServerError
-                                                    return
-                                                }
-                                                
-                                                return
-                                            }
-                                            if !udKeyExists(key: "major_field") {
-                                                /* MARK: Regenerate all of the major fields to be displayed. */
-                                                RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
-                                                    State: getUDValue(key: "state"),
-                                                    College: getUDValue(key: "college")
-                                                )).perform(action: get_custom_college_fields_req) { statusCode, resp in
-                                                    
-                                                    //if let resp = resp { print(resp) }
-                                                    guard
-                                                        let resp = resp,
-                                                        resp.keys.contains("Fields"),
-                                                        statusCode == 200
-                                                    else {
-                                                        /*guard let resp = resp else {
-                                                            self.signupSection = "usecase"
-                                                            
-                                                            self.signupError = .ServerError // self.serverError = true
+                                                        guard
+                                                            let resp = resp,
+                                                            resp.keys.contains("Colleges"),
+                                                            statusCode == 200
+                                                        else {
+                                                            self.signupError = .ServerError//self.error = .ServerError // self.serverError = true
                                                             return
                                                         }
                                                         
-                                                        guard resp.keys.contains("Message") else {
-                                                            self.signupSection = "usecase"
+                                                        if let colleges = resp["Colleges"]! as? [String] {
+                                                            for c in colleges {
+                                                                if !self.colleges.contains(c) { self.colleges.append(c) }
+                                                            }
                                                             
-                                                            self.signupError = .ServerError // self.serverError = true
+                                                            self.colleges.append("Other")
+                                                            self.signupSection = "select_college"
                                                             return
-                                                        }*/
-                                                        self.signupSection = "usecase"
+                                                        }
                                                         
-                                                        self.signupError = .ServerError // self.serverError = true
-                                                        return
-                                                        /*if resp["Message"] as! String == "no_such_college_in_state" {
-                                                         self.signupError = .NoSuchCollege
-                                                         return
-                                                         }*/
-                                                        
-                                                        //self.signupError = .ServerError // self.serverError = true
-                                                        //return
-                                                    }
-                                                    
-                                                    if let fields = resp["Fields"]! as? [String] {
-                                                        self.majorFields = fields
-                                                        self.majorFields.append("Other")
-                                                        
-                                                        self.signupSection = "select_major_field"
-                                                        return
-                                                    }
-                                                    
-                                                    self.signupSection = "usecase"
-                                                    self.signupError = .ServerError
-                                                    return
-                                                }
-                                                
-                                                return
-                                            }
-                                            if !udKeyExists(key: "major") {
-                                                /* MARK: Regenerate all majors to be displayed. */
-                                                RequestAction<GetMajorsRequestData>(
-                                                    parameters: GetMajorsRequestData(
-                                                        College: getUDValue(key: "college"),
-                                                        MajorField: getUDValue(key: "major_field")
-                                                    ))
-                                                .perform(action: get_majors_req) { statusCode, resp in
-                                                    
-                                                    guard
-                                                        let resp = resp,
-                                                        resp.keys.contains("Majors"),
-                                                        statusCode == 200
-                                                    else {
                                                         self.signupSection = "usecase"
                                                         self.signupError = .ServerError
                                                         return
                                                     }
                                                     
-                                                    if let majors = resp["Majors"]! as? [String] {
-                                                        self.majors = majors
-                                                        self.majors.append("Other")
-                                                        self.signupSection = "select_major"
+                                                    return
+                                                }
+                                                if !udKeyExists(key: "major_field") {
+                                                    /* MARK: Regenerate all of the major fields to be displayed. */
+                                                    RequestAction<GetCustomCollegeFieldsData>(parameters: GetCustomCollegeFieldsData(
+                                                        State: getUDValue(key: "state"),
+                                                        College: getUDValue(key: "college")
+                                                    )).perform(action: get_custom_college_fields_req) { statusCode, resp in
+                                                        
+                                                        //if let resp = resp { print(resp) }
+                                                        guard
+                                                            let resp = resp,
+                                                            resp.keys.contains("Fields"),
+                                                            statusCode == 200
+                                                        else {
+                                                            /*guard let resp = resp else {
+                                                             self.signupSection = "usecase"
+                                                             
+                                                             self.signupError = .ServerError // self.serverError = true
+                                                             return
+                                                             }
+                                                             
+                                                             guard resp.keys.contains("Message") else {
+                                                             self.signupSection = "usecase"
+                                                             
+                                                             self.signupError = .ServerError // self.serverError = true
+                                                             return
+                                                             }*/
+                                                            self.signupSection = "usecase"
+                                                            
+                                                            self.signupError = .ServerError // self.serverError = true
+                                                            return
+                                                            /*if resp["Message"] as! String == "no_such_college_in_state" {
+                                                             self.signupError = .NoSuchCollege
+                                                             return
+                                                             }*/
+                                                            
+                                                            //self.signupError = .ServerError // self.serverError = true
+                                                            //return
+                                                        }
+                                                        
+                                                        if let fields = resp["Fields"]! as? [String] {
+                                                            self.majorFields = fields
+                                                            self.majorFields.append("Other")
+                                                            
+                                                            self.signupSection = "select_major_field"
+                                                            return
+                                                        }
+                                                        
+                                                        self.signupSection = "usecase"
+                                                        self.signupError = .ServerError
                                                         return
                                                     }
                                                     
-                                                    self.signupSection = "usecase"
-                                                    self.signupError = .ServerError
                                                     return
                                                 }
-                                                
-                                                return
-                                            }
-                                        }
-                                        
-                                        if !udKeyExists(key: "account_id") {
-                                            /* TODO: Resend email with code. Present the "Registering Account..." view. */
-                                            RequestAction<SignUpRequestData>(
-                                                parameters: SignUpRequestData(
-                                                    Username: getUDValue(key: "username"),//username,
-                                                    Email: getUDValue(key: "email"),//email,
-                                                    Password: getUDValue(key: "password"),//password,
-                                                    College: udKeyExists(key: "college") ? getUDValue(key: "college") : "N/A",//college,
-                                                    State: udKeyExists(key: "state") ? getUDValue(key: "state") : "N/A",//state,
-                                                    Field: udKeyExists(key: "major_field") ? getUDValue(key: "major_field") : "N/A",//majorField,
-                                                    Major: udKeyExists(key: "major") ? getUDValue(key: "major") : "N/A",//major,
-                                                    IP: getLocalIPAddress(),
-                                                    Usecase: getUDValue(key: "usecase")
-                                                )
-                                            ).perform(action: complete_signup1_req) { statusCode, resp in
-                                                guard resp != nil && statusCode == 200 else {
-                                                    if let resp = resp {
-                                                        if resp["ErrorCode"] as! Int == 0x6970 {
-                                                            self.signupSection = "credentials"
-                                                            self.userExists = true
+                                                if !udKeyExists(key: "major") {
+                                                    /* MARK: Regenerate all majors to be displayed. */
+                                                    RequestAction<GetMajorsRequestData>(
+                                                        parameters: GetMajorsRequestData(
+                                                            College: getUDValue(key: "college"),
+                                                            MajorField: getUDValue(key: "major_field")
+                                                        ))
+                                                    .perform(action: get_majors_req) { statusCode, resp in
+                                                        
+                                                        guard
+                                                            let resp = resp,
+                                                            resp.keys.contains("Majors"),
+                                                            statusCode == 200
+                                                        else {
+                                                            self.signupSection = "usecase"
+                                                            self.signupError = .ServerError
                                                             return
                                                         }
+                                                        
+                                                        if let majors = resp["Majors"]! as? [String] {
+                                                            self.majors = majors
+                                                            self.majors.append("Other")
+                                                            self.signupSection = "select_major"
+                                                            return
+                                                        }
+                                                        
+                                                        self.signupSection = "usecase"
+                                                        self.signupError = .ServerError
+                                                        return
                                                     }
                                                     
-                                                    self.signupError = .ServerError // self.serverError = true
                                                     return
                                                 }
-                                                
-                                                if self.userExists { self.userExists = false }
-                                                //if self.makeContentRed { self.makeContentRed = false }
-                                                
-                                                assignUDKey(key: "account_id", value: resp!["Message"] as! String)
-                                                
+                                            }
+                                            
+                                            if !udKeyExists(key: "account_id") {
+                                                /* TODO: Resend email with code. Present the "Registering Account..." view. */
+                                                RequestAction<SignUpRequestData>(
+                                                    parameters: SignUpRequestData(
+                                                        Username: getUDValue(key: "username"),//username,
+                                                        Email: getUDValue(key: "email"),//email,
+                                                        Password: getUDValue(key: "password"),//password,
+                                                        College: udKeyExists(key: "college") ? getUDValue(key: "college") : "N/A",//college,
+                                                        State: udKeyExists(key: "state") ? getUDValue(key: "state") : "N/A",//state,
+                                                        Field: udKeyExists(key: "major_field") ? getUDValue(key: "major_field") : "N/A",//majorField,
+                                                        Major: udKeyExists(key: "major") ? getUDValue(key: "major") : "N/A",//major,
+                                                        IP: getLocalIPAddress(),
+                                                        Usecase: getUDValue(key: "usecase")
+                                                    )
+                                                ).perform(action: complete_signup1_req) { statusCode, resp in
+                                                    guard resp != nil && statusCode == 200 else {
+                                                        if let resp = resp {
+                                                            if resp["ErrorCode"] as! Int == 0x6970 {
+                                                                self.signupSection = "credentials"
+                                                                self.userExists = true
+                                                                return
+                                                            }
+                                                        }
+                                                        
+                                                        self.signupError = .ServerError // self.serverError = true
+                                                        return
+                                                    }
+                                                    
+                                                    if self.userExists { self.userExists = false }
+                                                    //if self.makeContentRed { self.makeContentRed = false }
+                                                    
+                                                    assignUDKey(key: "account_id", value: resp!["Message"] as! String)
+                                                    
+                                                    self.signupSection = "code_input"
+                                                }
+                                                return
+                                            } else {
+                                                if udKeyExists(key: "selecting_plan") { self.signupSection = "select_plan"; return }
                                                 self.signupSection = "code_input"
                                             }
-                                            return
                                         } else {
-                                            if udKeyExists(key: "selecting_plan") { self.signupSection = "select_plan"; return }
-                                            self.signupSection = "code_input"
+                                            self.signupSection = "usecase"
                                         }
-                                    } else {
-                                        self.signupSection = "usecase"
-                                    }
-                                }) {
-                                    Text("Sign Up")
+                                    }) {
+                                        Text("Sign Up")
                                             .frame(maxWidth: .infinity, alignment: .center)
                                             .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 22 : 20))
                                             .foregroundStyle(.black)
-                                    
+                                        
+                                    }
+                                    .frame(maxWidth: prop.size.width - 180)
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 25)
+                                            .fill(Color.EZNotesOrange)
+                                            .shadow(color: Color.EZNotesOrange, radius: 6.5)//, x: 3, y: -6.5)
+                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
+                                    .padding(3)
+                                    .padding(.horizontal)
                                 }
-                                .frame(maxWidth: prop.size.width - 180)
-                                .buttonStyle(NoLongPressButtonStyle())
-                                .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 25)
-                                        .fill(Color.EZNotesOrange)
-                                        .shadow(color: Color.EZNotesOrange, radius: 6.5)//, x: 3, y: -6.5)
-                                )
-                                .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
-                                .padding(3)
-                                .padding(.horizontal)
                                 
                                 Button(action: { }) {
                                     Text("Having trouble signing in?")
@@ -2543,25 +2552,38 @@ struct ContentView: View {
                                     }
                                 }) {
                                     Text("Continue")
-                                        .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 22 : 20))
+                                        .foregroundStyle(.black)
+                                        /*.frame(maxWidth: prop.size.width - 40, alignment: .center)
                                         .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
                                         .foregroundStyle(.black)
                                         .padding(10)
                                         .background(Color.EZNotesOrange)
                                         .cornerRadius(20)
-                                        .padding(.horizontal)
+                                        .padding(.horizontal)*/
                                 }
+                                .frame(maxWidth: prop.size.width - 180)
                                 .buttonStyle(NoLongPressButtonStyle())
-                                .padding(.bottom, self.keyboardHeight)
+                                .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .fill(Color.EZNotesOrange)
+                                        .shadow(color: Color.EZNotesOrange, radius: 6.5)//, x: 3, y: -6.5)
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
+                                .padding(3)
+                                .padding(.horizontal)
+                                .padding(.bottom, prop.isLargerScreen || prop.isMediumScreen ? self.keyboardHeight : 0)
                                 /*.padding(.bottom, prop.isLargerScreen
                                          ? self.keyboardHeight
                                          : prop.isMediumScreen
                                             ? self.keyboardHeight > 0 ? self.keyboardHeight + 10 : 0
                                             : 0)*/ /* MARK: We only want to adjust where the "continue" button is if the screen is larger. */
-                                .onAppear {
+                                /*.onAppear {
                                     print(prop.isSmallScreen, prop.isMediumScreen, prop.isLargerScreen)
                                     print(prop.size.height, prop.size.height / 2.5)
-                                }
+                                }*/
                             }
                             
                             if self.signupSection != "hang_tight_screen" && self.signupSection != "select_plan" {
@@ -2660,15 +2682,28 @@ struct ContentView: View {
                                     }
                                 }) {
                                     Text("Go Back")
-                                        .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 22 : 20))
+                                        .foregroundStyle(.black)
+                                        /*.frame(maxWidth: prop.size.width - 40, alignment: .center)
                                         .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
                                         .foregroundStyle(.black)
                                         .padding(10)
                                         .background(Color.EZNotesBlue)
                                         .cornerRadius(20)
-                                        .padding(.horizontal)
+                                        .padding(.horizontal)*/
                                 }
+                                .frame(maxWidth: prop.size.width - 180)
                                 .buttonStyle(NoLongPressButtonStyle())
+                                .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .fill(Color.EZNotesBlue)
+                                        .shadow(color: Color.EZNotesBlue, radius: 6.5)//, x: 3, y: -6.5)
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
+                                .padding(3)
+                                .padding(.horizontal)
                                 .padding(.bottom, prop.isLargerScreen || prop.isMediumScreen ? 30 : 12)
                             }
                         }

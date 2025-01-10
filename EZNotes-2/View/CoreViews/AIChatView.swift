@@ -293,12 +293,24 @@ private struct mainView: View {
                                 
                                 Spacer()
                             }
-                            .frame(maxWidth: prop.size.width - 80)
+                            
+                            /*.frame(maxWidth: prop.size.width - 80)
                             .padding(10)
                             .background(Color.EZNotesBlue)
-                            .cornerRadius(15)
+                            .cornerRadius(15)*/
                         }
                         .buttonStyle(NoLongPressButtonStyle())
+                        .frame(maxWidth: prop.size.width - 180)
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 25)
+                                .fill(Color.EZNotesBlue)
+                                .shadow(color: Color.EZNotesBlue, radius: 6.5)//, x: 3, y: -6.5)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
+                        .padding(3)
+                        .padding(.horizontal)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical)

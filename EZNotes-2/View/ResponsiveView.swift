@@ -68,7 +68,7 @@ struct ResponsiveView<Content: View>: View {
                     self.isMediumScreen = (size.height / 2.5 >= 177 && size.height / 2.5 < 180) || (size.height / 2.5 >= 147.2 && size.height / 2.5 <= 177)
                     self.isSmallScreen = !self.isLargerScreen && !self.isMediumScreen
                     
-                    print(self.isLargerScreen, self.isMediumScreen, self.isSmallScreen)
+                    //print(self.isLargerScreen, self.isMediumScreen, self.isSmallScreen)
                 } else {
                     if size.height == self.screenHeight {
                         self.isLargerScreen = size.height / 2.5 > 338

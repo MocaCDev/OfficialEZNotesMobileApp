@@ -27,6 +27,11 @@ struct UsersProfile: View {
     @Binding public var showAccount: Bool
     @Binding public var addMoreTags: Bool
     
+    @State private var addTag: Bool = false
+    @State private var addTagButtonRotationDegrees: CGFloat = 0
+    @State private var newTagName: String = ""
+    @FocusState private var newTagFieldInFocus: Bool
+    
     @State private var pfpUploadStatus: String = "none"
     @State private var pfpBgUploadStatus: String = "none"
     @State private var errorUploadingPFP: Bool = false
@@ -35,11 +40,15 @@ struct UsersProfile: View {
     @State private var pfpBackgroundPhotoPicked: PhotosPickerItem?
     @State private var changingProfilePic: Bool = false
     @State private var editDescription: Bool = false
+    @FocusState private var newAccountDescriptionFieldInFocus: Bool
     @State private var accountDescription: String = "No Description"
     @State private var newAccountDescription: String = ""
     
     /* MARK: Animation for the status bar the prompts whether or not the change of display or PFP was a success. */
     @State private var statusBarYOffset: CGFloat = 0
+    
+    @State private var tagHasBeenPressed: Bool = false
+    @State private var tagThatHasBeenPressed: String = ""
     
     var body: some View {
         VStack {
@@ -350,31 +359,79 @@ struct UsersProfile: View {
                     .setFontSizeAndWeight(weight: .medium, size: 14)
                 
                 HStack {
+                    /* MARK: Is the below if statement really needed? */
                     if self.accountInfo.usage == "school" {
                         if !self.editDescription {
-                            Text(self.accountInfo.accountDescription)//("Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**")
-                                .frame(alignment: .leading)
-                                .padding(.leading, 20)
-                                .padding(.top, 10)
-                                .foregroundStyle(.white)
-                                .font(Font.custom("Poppins-Regular", size: 12))
-                                .minimumScaleFactor(0.5)
-                                .multilineTextAlignment(.leading)
+                            if self.accountInfo.accountDescription == "" {
+                                Button(action: {
+                                    self.editDescription = true
+                                    self.newAccountDescriptionFieldInFocus = true
+                                }) {
+                                    Text("Add Description")
+                                        .frame(maxWidth: 200, alignment: .center)
+                                        .padding(.vertical, 5)
+                                        .foregroundStyle(.black)
+                                        .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 13 : 13)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(.white)
+                                                .strokeBorder(.white, lineWidth: 1)
+                                        )
+                                        .padding(.top, 10)
+                                        .padding(.leading, 20)
+                                }
+                                .buttonStyle(NoLongPressButtonStyle())
+                            } else {
+                                Text(self.accountInfo.accountDescription)//("Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**")
+                                    .frame(alignment: .leading)
+                                    .padding(.leading, 20)
+                                    .padding(.top, 10)
+                                    .foregroundStyle(.white)
+                                    .font(Font.custom("Poppins-Regular", size: 12))
+                                    .minimumScaleFactor(0.5)
+                                    .multilineTextAlignment(.leading)
+                                    .onTapGesture {
+                                        self.editDescription = true
+                                        self.newAccountDescriptionFieldInFocus = true
+                                    }
+                            }
                         } else {
                             VStack {
                                 TextField(
-                                    "Account description...",
+                                    "",
                                     text: $newAccountDescription,
                                     axis: .vertical
                                 )
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .lineLimit(2...4)
                                 .font(Font.custom("Poppins-Regular", size: 12))
-                                .padding(10)
-                                .background(Color.EZNotesLightBlack)//(Color(.systemGray6))
-                                .cornerRadius(15)
+                                .padding(.bottom, 10)//.padding(10)
+                                //.background(Color.EZNotesLightBlack)//(Color(.systemGray6))
+                                //.cornerRadius(15)
                                 .foregroundStyle(.white)
                                 .padding(.leading, 20)
+                                .focused($newAccountDescriptionFieldInFocus)
+                                .overlay(
+                                    VStack {
+                                        if !self.newAccountDescriptionFieldInFocus && self.newAccountDescription.isEmpty {
+                                            Text(self.accountInfo.accountDescription)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .padding(.leading, 20)
+                                                .padding(.bottom, 25)
+                                                .font(Font.custom("Poppins-Regular", size: 12))
+                                                .foregroundStyle(.white)
+                                        } else {
+                                            if self.newAccountDescription.isEmpty {
+                                                Text(self.accountInfo.accountDescription)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 20)
+                                                    .padding(.bottom, 25)
+                                                    .font(Font.custom("Poppins-Regular", size: 12))
+                                                    .foregroundStyle(.white)
+                                            }
+                                        }
+                                    }
+                                )
                                 .onChange(of: self.newAccountDescription) {
                                     if self.newAccountDescription.count > 80 {
                                         self.newAccountDescription = String(self.newAccountDescription.prefix(80))
@@ -400,29 +457,70 @@ struct UsersProfile: View {
                         }
                     } else {
                         if !self.editDescription {
-                            Text(self.accountInfo.accountDescription)
-                                .frame(alignment: .leading)
-                                .padding(.leading, 20)
-                                .padding(.top, 10)
-                                .foregroundStyle(self.accountInfo.accountDescription == "No Description" ? .gray : .white)
-                                .font(Font.custom("Poppins-Regular", size: 12))
-                                .minimumScaleFactor(0.5)
-                                .multilineTextAlignment(.leading)
+                            if self.accountInfo.accountDescription == "" {
+                                Text("Add Description")
+                                    .frame(maxWidth: 200, alignment: .center)
+                                    .padding(.vertical, 5)
+                                    .foregroundStyle(.black)
+                                    .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 13 : 13)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(.white)
+                                            .strokeBorder(.white, lineWidth: 1)
+                                    )
+                                    .padding(.top, 10)
+                                    .padding(.leading, 20)
+                            } else {
+                                Text(self.accountInfo.accountDescription)
+                                    .frame(alignment: .leading)
+                                    .padding(.leading, 20)
+                                    .padding(.top, 10)
+                                    .foregroundStyle(self.accountInfo.accountDescription == "No Description" ? .gray : .white)
+                                    .font(Font.custom("Poppins-Regular", size: 12))
+                                    .minimumScaleFactor(0.5)
+                                    .multilineTextAlignment(.leading)
+                                    .onTapGesture {
+                                        self.editDescription = true
+                                        self.newAccountDescriptionFieldInFocus = true
+                                    }
+                            }
                         } else {
                             VStack {
                                 TextField(
-                                    "Account description...",
+                                    "",
                                     text: $newAccountDescription,
                                     axis: .vertical
                                 )
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .lineLimit(2...4)
                                 .font(Font.custom("Poppins-Regular", size: 12))
-                                .padding(10)
-                                .background(Color.EZNotesLightBlack)//(Color(.systemGray6))
-                                .cornerRadius(15)
+                                .padding(.bottom, 10)//.padding(10)
+                                //.background(Color.EZNotesLightBlack)//(Color(.systemGray6))
+                                //.cornerRadius(15)
                                 .foregroundStyle(.white)
                                 .padding(.leading, 20)
+                                .focused($newAccountDescriptionFieldInFocus)
+                                .overlay(
+                                    VStack {
+                                        if !self.newAccountDescriptionFieldInFocus && self.newAccountDescription.isEmpty {
+                                            Text(self.accountInfo.accountDescription)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .padding(.leading, 20)
+                                                .padding(.bottom, 10)
+                                                .font(Font.custom("Poppins-Regular", size: 12))
+                                                .foregroundStyle(.white)
+                                        } else {
+                                            if self.newAccountDescription.isEmpty {
+                                                Text(self.accountInfo.accountDescription)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.leading, 20)
+                                                    .padding(.bottom, 10)
+                                                    .font(Font.custom("Poppins-Regular", size: 12))
+                                                    .foregroundStyle(.white)
+                                            }
+                                        }
+                                    }
+                                )
                                 .onChange(of: self.newAccountDescription) {
                                     if self.newAccountDescription.count > 80 {
                                         self.newAccountDescription = String(self.newAccountDescription.prefix(80))
@@ -448,26 +546,15 @@ struct UsersProfile: View {
                         }
                     }
                     
-                    if !self.editDescription {
-                        Button(action: {
-                            self.editDescription = true
-                            
-                            if self.accountDescription != "No Description" { self.newAccountDescription = self.accountDescription }
-                        }) {
-                            ZStack {
-                                Image(systemName: "pencil")
-                                    .resizable()
-                                    .frame(width: 15, height: 15)
-                                    .foregroundStyle(.white)
-                            }
-                            .frame(maxWidth: prop.isLargerScreen ? 80 : 60, alignment: .trailing)
-                            .padding(.trailing, 20)
-                            .padding(.top, 10)
-                        }
-                        .buttonStyle(NoLongPressButtonStyle())
-                    } else {
+                    if self.editDescription {
                         VStack {
                             Button(action: {
+                                if self.newAccountDescription.isEmpty {
+                                    self.editDescription = false
+                                    self.newAccountDescriptionFieldInFocus = false
+                                    return
+                                }
+                                
                                 /* TODO: Add `account_description` to database; add API endpoint to server that will be used to update the `account_description` column for the given user. For now, storing the account description in `UserDefaults` works. */
                                 assignUDKey(key: "account_description", value: self.newAccountDescription)
                                 
@@ -480,6 +567,7 @@ struct UsersProfile: View {
                                     self.editDescription = false
                                     
                                     guard resp != nil && statusCode == 200 else {
+                                        if let resp = resp { print(resp) }
                                         return /* TODO: Handle error. */
                                     }
                                     
@@ -532,12 +620,57 @@ struct UsersProfile: View {
                 .padding(.top, 10)
             
             HStack {
-                Button(action: { self.addMoreTags = true }) {
+                Button(action: {
+                    if !self.addTag {
+                        self.addTag = true
+                        self.newTagFieldInFocus = true
+                    } else {
+                        self.addTag = false
+                        self.newTagFieldInFocus = false
+                    }
+                }) {
                     HStack {
-                        Image(systemName: "plus")
-                            .resizable()
-                            .frame(width: 15, height: 15)
-                            .foregroundStyle(.white)
+                        if !self.accountInfo.accountTags.isEmpty {
+                            Image(systemName: "plus")
+                                .resizable()
+                                .frame(width: 15, height: 15)
+                                .foregroundStyle(.white)
+                                .rotationEffect(Angle(degrees: self.addTagButtonRotationDegrees))
+                                .animation(self.addTag ? .easeIn(duration: 0.5) : .easeOut(duration: 1), value: self.addTagButtonRotationDegrees)
+                                .onChange(of: self.addTag) {
+                                    withAnimation(self.addTag ? .easeIn(duration: 0.5) : .easeOut(duration: 1)) {
+                                        self.addTagButtonRotationDegrees = self.addTag ? 45 : 0
+                                    }
+                                }
+                        } else {
+                            if !self.addTag {
+                                Text("Add Tags")
+                                    .frame(maxWidth: 200, alignment: .center)
+                                    .padding(.vertical, 5)
+                                    .foregroundStyle(.black)
+                                    .setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 13 : 13)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(.white)
+                                            .strokeBorder(.white, lineWidth: 1)
+                                    )
+                                    .padding(.top, 10)
+                                    .padding(.leading, 20)
+                            } else {
+                                Image(systemName: "plus")
+                                    .resizable()
+                                    .frame(width: 15, height: 15)
+                                    .foregroundStyle(.white)
+                                    .rotationEffect(Angle(degrees: self.addTagButtonRotationDegrees))
+                                    .animation(self.addTag ? .easeIn(duration: 0.5) : .easeOut(duration: 1), value: self.addTagButtonRotationDegrees)
+                                    .onAppear {
+                                        self.addTagButtonRotationDegrees = 45
+                                    }
+                                    .onDisappear {
+                                        self.addTagButtonRotationDegrees = 0
+                                    }
+                            }
+                        }
                     }
                     .frame(alignment: .leading)
                     .padding(.leading, 20)//.padding([.leading, .trailing], 8.5)
@@ -564,6 +697,89 @@ struct UsersProfile: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         } else {
+                            if self.addTag {
+                                TextField("", text: $newTagName)
+                                    .frame(alignment: .center)
+                                    .padding([.top, .bottom], 4)
+                                    .padding(.leading, 8.5)
+                                    .padding(.trailing, self.newTagName.count < 10 ? 22 : 26)
+                                    .overlay(
+                                        HStack {
+                                            Spacer()
+                                            
+                                            Text("\(self.newTagName.count)/20")
+                                                .frame(alignment: .trailing)
+                                                .padding([.top, .bottom], 4)
+                                                .font(Font.custom("Poppins-Regular", size: 8))
+                                                .foregroundStyle(.white)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                    )
+                                    .padding(.trailing, 4)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 15)
+                                            .fill(Color.EZNotesLightBlack.opacity(0.8))
+                                        //.stroke(Color.EZNotesBlue, lineWidth: 0.5)
+                                    )
+                                    .font(Font.custom("Poppins-SemiBold", size: 14))
+                                    .foregroundStyle(.white)
+                                    .padding([.top, .bottom], 1.5)
+                                    .focused($newTagFieldInFocus)
+                                    .onChange(of: self.newTagName) {
+                                        if self.newTagName.count > 20 {
+                                            self.newTagName = String(self.newTagName.prefix(20))
+                                        }
+                                    }
+                                /*.onChange(of: self.newTagFieldInFocus) {
+                                 if !self.newTagFieldInFocus && self.newTagName.isEmpty {
+                                 self.addTag = false
+                                 self.newTagFieldInFocus = false
+                                 return
+                                 } else {
+                                 if !self.newTagFieldInFocus {
+                                 self.accountInfo.accountTags.append(self.newTagName)
+                                 self.addTag = false
+                                 self.newTagName.removeAll()
+                                 self.newTagFieldInFocus = false
+                                 }
+                                 }
+                                 }*/
+                                    .onSubmit {
+                                        /* MARK: Check if the user just clicked "return". */
+                                        if self.newTagName.isEmpty {
+                                            self.addTag = false
+                                            self.newTagFieldInFocus = false
+                                            return
+                                        }
+                                        
+                                        /* MARK: No two tags can be the same. */
+                                        if self.accountInfo.accountTags.contains(self.newTagName) {
+                                            self.addTag = false
+                                            self.newTagFieldInFocus = false
+                                            
+                                            self.newTagName.removeAll()
+                                            return
+                                        }
+                                        
+                                        RequestAction<SaveTagsData>(parameters: SaveTagsData(
+                                            AccountId: self.accountInfo.accountID,
+                                            Tags: self.newTagName
+                                        )).perform(action: save_tags_req) { statusCode, resp in
+                                            self.addTag = false
+                                            self.newTagFieldInFocus = false
+                                            
+                                            guard resp != nil && statusCode == 200 else {
+                                                self.newTagName.removeAll()
+                                                return /* TODO: Handle errors. */
+                                            }
+                                            
+                                            self.accountInfo.accountTags.append(self.newTagName)
+                                            
+                                            self.newTagName.removeAll()
+                                        }
+                                    }
+                            }
+                            
                             ForEach(self.accountInfo.accountTags, id: \.self) { tag in
                                 HStack {
                                     Text(tag)
@@ -578,8 +794,48 @@ struct UsersProfile: View {
                                         .font(Font.custom("Poppins-SemiBold", size: 14))
                                         .foregroundStyle(.white)
                                         .padding([.top, .bottom], 1.5)
+                                    
+                                    if self.tagHasBeenPressed && tag == self.tagThatHasBeenPressed {
+                                        Button(action: {
+                                            RequestAction<RemoveTagData>(parameters: RemoveTagData(
+                                                AccountId: self.accountInfo.accountID,
+                                                TagToRemove: self.tagThatHasBeenPressed
+                                            )).perform(action: remove_tag_req) { statusCode, resp in
+                                                guard
+                                                    resp != nil,
+                                                    statusCode == 200
+                                                else {
+                                                    return /* TODO: Handle errors. */
+                                                }
+                                                
+                                                self.accountInfo.accountTags.removeAll(where: { $0 == self.tagThatHasBeenPressed })
+                                                self.tagThatHasBeenPressed.removeAll()
+                                                self.tagHasBeenPressed = false
+                                            }
+                                        }) {
+                                            Image(systemName: "trash")
+                                                .resizable()
+                                                .frame(width: 15, height: 15)
+                                                .foregroundStyle(Color.EZNotesRed)
+                                        }
+                                        .buttonStyle(NoLongPressButtonStyle())
+                                    }
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                                .onTapGesture {
+                                    if self.tagHasBeenPressed {
+                                        if tag == self.tagThatHasBeenPressed {
+                                            self.tagHasBeenPressed = false
+                                            self.tagThatHasBeenPressed.removeAll()
+                                        } else {
+                                            self.tagThatHasBeenPressed = tag
+                                        }
+                                    }
+                                    else {
+                                        self.tagHasBeenPressed = true
+                                        self.tagThatHasBeenPressed = tag
+                                    }
+                                }
                             }
                             /*if self.accountInfo.usage == "school" {
                              HStack {

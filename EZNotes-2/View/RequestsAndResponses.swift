@@ -41,6 +41,11 @@ struct SaveTagsData {
     let Tags: String
 }
 
+struct RemoveTagData {
+    let AccountId: String
+    let TagToRemove: String
+}
+
 struct GetTagsData {
     let AccountId: String
 }
@@ -585,7 +590,7 @@ let get_account_description_req: CSIARequest = CSIARequest(
 
 let save_account_description_req: CSIARequest = CSIARequest(
     url: "\(server)/save_account_description",
-    method: "get",
+    method: "post",
     reqData: SaveAccountDescriptionData.self
 )
 
@@ -623,4 +628,10 @@ let get_clients_usecase_req: CSIARequest = CSIARequest(
     url: "\(server)/get_usecase",
     method: "get",
     reqData: GetClientsUsecaseReq.self
+)
+
+let remove_tag_req: CSIARequest = CSIARequest(
+    url: "\(server)/remove_tag",
+    method: "get",
+    reqData: RemoveTagData.self
 )

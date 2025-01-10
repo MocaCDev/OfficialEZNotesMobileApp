@@ -12,7 +12,10 @@ class EZNotesSubscriptionManager: ObservableObject {
     
     /* MARK: Users subscriptions. */
     @Published private(set) var userSubscriptionIDs = Set<String>()
+    @Published private(set) var userSubscriptionID: String? = nil
+    @Published private(set) var subscriptionName: String = "N/A"
     @Published private(set) var userProducts = Set<Product>()
+    @Published private(set) var subscriptionStatus: Product.SubscriptionInfo.Status? = nil
     
     /* MARK: Information over the plan details (monthly/yearly) depending on the `planView` in `Plans` view. */
     @Published private(set) var products: Array<Product> = []
@@ -127,13 +130,31 @@ class EZNotesSubscriptionManager: ObservableObject {
     
     //deinit { updates?.cancel() }
     
-    /* MARK: Figure out the name of the plan based on the ID. */
+    /* MARK: Methods for getting details about the users subscription. */
     public func getSubscriptionName() -> String? {
-        if self.userSubscriptionIDs.isEmpty { return  nil }
+        /*if self.userSubscriptionIDs.isEmpty { return nil }
         
         /* MARK: Return `Optional`, as the return type of the function is an optional. */
         if self.userSubscriptionIDs.first!.contains("basic") { return Optional("Basic Plan") }
+        else { return Optional("Pro Plan") }*/
+        guard
+            let subscriptionDetails = self.userProducts.first
+        else {
+            return nil
+        }
+        
+        if subscriptionDetails.displayName.contains("Basic") { return Optional("Basic Plan") }
         else { return Optional("Pro Plan") }
+    }
+    
+    public func getSubscriptionPrice() -> String? {
+        guard
+            let subscriptionDetails = self.userProducts.first
+        else {
+            return nil
+        }
+        
+        return Optional(subscriptionDetails.displayPrice)
     }
     
     public func configurePlans(isFor: String) -> Array<String> {
@@ -188,20 +209,101 @@ class EZNotesSubscriptionManager: ObservableObject {
         return false
     }
     
-    public func obtainCurrentSubscription() async {
-        for await result in Transaction.currentEntitlements {
-            guard case .verified(let transaction) = result else { continue }
+    public func obtainSubscriptionID() -> String? { return self.userSubscriptionID }
+    
+    public func doesSubscriptionAutoRenew() -> String? {
+        do {
+            guard
+                let json: [String: Any] = try JSONSerialization.jsonObject(with: self.subscriptionStatus!.renewalInfo.payloadData, options: []) as? [String : Any],
+                json.keys.contains("autoRenewStatus")
+            else {
+                return nil
+            }
             
-            if transaction.revocationDate == nil {
-                let _ = await MainActor.run { self.userSubscriptionIDs.insert(transaction.productID) }
-            } else {
-                let _ = await MainActor.run { self.userSubscriptionIDs.remove(transaction.productID) }
+            return json["autoRenewStatus"]! as! Int == 1 ? Optional("Yes") : Optional("No")
+        } catch {
+            print(error.localizedDescription)
+        }
+        
+        return nil
+    }
+    
+    func obtainBillingDueDate() -> String? {
+        
+        if self.subscriptionStatus != nil {
+            do {
+                let json: [String: Any] = try JSONSerialization.jsonObject(with: self.subscriptionStatus!.renewalInfo.payloadData, options: []) as! [String : Any]
+                
+                print(json)
+                
+                print(Date(timeIntervalSince1970: TimeInterval((json["renewalDate"]! as! Int) / 1000)).formatted(date: .long, time: .omitted))//(json["renewalDate"]! as! Date).formatted(date: .numeric, time: .omitted))
+                
+                return Optional(Date(timeIntervalSince1970: TimeInterval((json["renewalDate"]! as! Int) / 1000)).formatted(date: .long, time: .omitted))
+            } catch {
+                print(error)
             }
         }
         
+        /*do {
+            // Iterate through entitlements and verify each transaction
+            for await result in Transaction.currentEntitlements {
+                switch result {
+                case .verified(let transaction):
+                    // Check if this is the subscription we're interested in
+                    /*if transaction.productID == "com.example.app.subscription" {
+                        billingDueDate = transaction.expirationDate
+                        return // Stop once we find the relevant subscription
+                    }*/
+                    if transaction.productID.contains("eznotes") {
+                        let json: [String: Any] = try JSONSerialization.jsonObject(with: await transaction.subscriptionStatus!.renewalInfo.payloadData, options: []) as! [String : Any]
+                        
+                        //print(json)
+                        
+                        print(Date(timeIntervalSince1970: TimeInterval((json["renewalDate"]! as! Int) / 1000)).formatted(date: .long, time: .omitted))//(json["renewalDate"]! as! Date).formatted(date: .numeric, time: .omitted))
+                        
+                        return Optional(Date(timeIntervalSince1970: TimeInterval((json["renewalDate"]! as! Int) / 1000)).formatted(date: .long, time: .omitted))
+                    }
+                case .unverified(_, let error):
+                    print("Unverified transaction: \(error.localizedDescription)")
+                    break
+                    //return nil
+                }
+            }
+        } catch {
+            print("Failed to fetch billing due date: \(error.localizedDescription)")
+        }*/
+        
+        return nil
+    }
+    
+    public func obtainCurrentSubscriptionID() -> String? { return self.userSubscriptionID }
+    
+    public func obtainCurrentSubscription() async {
+        for await result in Transaction.currentEntitlements {
+            switch result {
+            case .verified(let transaction):
+                // Check if this is the subscription we're interested in
+                /*if transaction.productID == "com.example.app.subscription" {
+                    billingDueDate = transaction.expirationDate
+                    return // Stop once we find the relevant subscription
+                }*/
+                let status = await transaction.subscriptionStatus
+                
+                await MainActor.run { self.subscriptionStatus = status }
+                
+                if transaction.productID.contains("eznotes") {
+                    let _ = await MainActor.run { self.userSubscriptionID = transaction.productID }
+                }
+            case .unverified(_, let error):
+                print("Unverified transaction: \(error.localizedDescription)")
+            }
+            
+            //guard case .verified(let transaction) = result else { continue }
+        }
+        
         do {
-            if !self.userSubscriptionIDs.isEmpty {
-                let productDetails = try await Product.products(for: [self.userSubscriptionIDs.first!])
+            if self.userSubscriptionID != nil {
+                let productDetails = try await Product.products(for: [self.userSubscriptionID!])
                 
                 await MainActor.run {
                     self.userProducts = Set<Product>(productDetails)
@@ -210,6 +312,10 @@ class EZNotesSubscriptionManager: ObservableObject {
         } catch {
             print(error)
         }
+    }
+    
+    public func getSubscriptionDetails() -> Set<Product> {
+        return self.userProducts
     }
     
     /* MARK: "Listen" for payment updates on subscription. Needed just in case a subscription is deactivated, renewed etc from outside the app. */

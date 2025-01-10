@@ -1028,14 +1028,25 @@ struct ChatView: View {
                                         .setFontSizeAndWeight(weight: .bold, size: 18)
                                         .minimumScaleFactor(0.5)
                                 }
-                                .frame(maxWidth: prop.size.width - 20)
+                                /*.frame(maxWidth: prop.size.width - 20)
                                 .background(
                                     RoundedRectangle(cornerRadius: 15)
                                         .fill(.white)
                                 )
-                                .cornerRadius(15)
+                                .cornerRadius(15)*/
                             }
                             .buttonStyle(NoLongPressButtonStyle())
+                            .frame(maxWidth: prop.size.width - 180)
+                            .buttonStyle(NoLongPressButtonStyle())
+                            .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 25)
+                                    .fill(.white)
+                                    .shadow(color: Color.white, radius: 6.5)//, x: 3, y: -6.5)
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
+                            .padding(3)
+                            .padding(.horizontal)
                         }
                         
                         Spacer()

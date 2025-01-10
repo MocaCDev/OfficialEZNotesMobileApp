@@ -473,6 +473,11 @@ class RequestAction<T>: ObservableObject {
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
                 request.addValue(params.Tags, forHTTPHeaderField: "Tags")
                 break
+            case is RemoveTagData.Type:
+                guard let params: RemoveTagData = (parameters as? RemoveTagData) else { return }
+                request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.TagToRemove, forHTTPHeaderField: "Tag-To-Remove")
+                break
             case is GetTagsData.Type:
                 guard let params: GetTagsData = (parameters as? GetTagsData) else { return }
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
@@ -484,7 +489,11 @@ class RequestAction<T>: ObservableObject {
             case is SaveAccountDescriptionData.Type:
                 guard let params: SaveAccountDescriptionData = (parameters as? SaveAccountDescriptionData) else { return }
                 request.addValue(params.AccountId, forHTTPHeaderField: "Account-Id")
-                request.addValue(params.NewDescription, forHTTPHeaderField: "New-Description")
+                //request.addValue(params.NewDescription, forHTTPHeaderField: "New-Description")
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+                let jsonData: [String: String] = ["NewDescription": params.NewDescription]
+                request.httpBody = try? JSONSerialization.data(withJSONObject: jsonData)
                 break
             case is GetUsersFriendsData.Type:
                 guard let params: GetUsersFriendsData = (parameters as? GetUsersFriendsData) else { return }

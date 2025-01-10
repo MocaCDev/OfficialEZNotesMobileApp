@@ -65,7 +65,7 @@ struct Settings: View {
                     ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                 }
                 .frame(maxWidth: .infinity, maxHeight: 30)
-                .padding(.top, prop.isLargerScreen ? 55 : 0)
+                .padding(.top, prop.isLargerScreen ? 55 : prop.isMediumScreen ? 45 : 0)
                 
                 Spacer()
             }
@@ -338,7 +338,7 @@ struct Settings: View {
                 .padding(.bottom, -15)
             }
             .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-            .padding(.top, prop.isLargerScreen ? 90 : 50)
+            .padding(.top, prop.isLargerScreen ? 90 : prop.isMediumScreen ? 80 : 50)
             .zIndex(1)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

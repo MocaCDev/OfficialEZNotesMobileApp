@@ -114,7 +114,39 @@ struct PlusButton: View {
 }
 
 struct CategoryInternalsPlusButton: View {
+    @EnvironmentObject private var categoryData: CategoryData
+    
     var prop: Properties
+    
+    /* MARK: States, and variables, for "action" buttons (excluding the "+" button). */
+    var categoryBackground: Image
+    @Binding public var categoryName: String
+    @Binding public var categoryDescription: String?
+    @Binding public var launchCategory: Bool
+    
+    @Binding public var categoryBackgroundColor: Color?
+    @Binding public var categoryTitleColor: Color?
+    
+    @State private var categoryBeingEdited: String = ""
+    @State private var newCategoryDescription: String = ""
+    @State private var newCategoryDisplayColor: Color = Color.EZNotesLightBlack
+    @State private var newCategoryTextColor: Color = .white
+    @State private var editCategoryDetails: Bool = false
+    
+    @State private var categoryAlert: Bool = false
+    @State private var categoryToDelete: String = ""
+    @Binding public var alertType: AlertTypes
+    
+    @Binding public var showDescription: Bool
+    
+    private func resetAlert() {
+        if self.alertType == .DeleteCategoryAlert {
+            self.categoryToDelete.removeAll()
+        }
+        
+        self.categoryAlert = false
+        self.alertType = .None
+    }
     
     @Binding public var testPopup: Bool /* MARK: Rename this. This name is used in `HomeView.swift` as well. */
     @Binding public var createNewSet: Bool
@@ -191,9 +223,9 @@ struct CategoryInternalsPlusButton: View {
             HStack {
                 HStack {
                     Button(action: {
-                        //self.categoryToDelete = self.categoryName
-                        //self.categoryAlert = true
-                        //self.alertType = .DeleteCategoryAlert
+                        self.categoryToDelete = self.categoryName
+                        self.categoryAlert = true
+                        self.alertType = .DeleteCategoryAlert
                     }) {
                         ZStack {
                             Image(systemName: "trash")
@@ -206,12 +238,77 @@ struct CategoryInternalsPlusButton: View {
                     }
                     .buttonStyle(NoLongPressButtonStyle())
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .alert("Are you sure?", isPresented: $categoryAlert) {
+                        Button(action: {
+                            self.launchCategory = false
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                if self.categoryData.categoriesAndSets.count == 1 {
+                                    self.categoryData.categoriesAndSets.removeAll()
+                                    self.categoryData.setAndNotes.removeAll()
+                                    self.categoryData.categoryCustomTextColors.removeAll()
+                                    self.categoryData.categoryCustomColors.removeAll()
+                                    self.categoryData.categoryDescriptions.removeAll()
+                                } else {
+                                    self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
+                                    self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
+                                    
+                                    if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryToDelete) {
+                                        self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryToDelete)
+                                    }
+                                    
+                                    if self.categoryData.categoryCustomColors.keys.contains(self.categoryToDelete) {
+                                        self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryToDelete)
+                                    }
+                                    
+                                    if self.categoryData.categoryDescriptions.keys.contains(self.categoryToDelete) {
+                                        self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryToDelete)
+                                    }
+                                }
+                                
+                                /* MARK: Ensure the cache is up to date. */
+                                writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                writeCategoryTextColors(categoryTextColors: self.categoryData.categoryCustomTextColors)
+                                writeCategoryCustomColors(categoryCustomColors: self.categoryData.categoryCustomColors)
+                                writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
+                                
+                                resetAlert()
+                            }
+                            
+                            /* TODO: Add support for actually storing category information in the database. That will, thereby, prompt us to need to send a request to the server to delete the given category from the database. */
+                        }) {
+                            Text("Yes")
+                        }
+                        
+                        Button(action: { resetAlert() }) { Text("No") }
+                    } message: {
+                        Text(self.alertType == .DeleteCategoryAlert
+                             ? "Once deleted, the category **\"\(self.categoryToDelete)\"** will be removed from cloud or local storage and cannot be recovered."
+                             : "") /* TODO: Finish this. There will presumably be more alert types. */
+                    }
                     
-                    Button(action: { }) {
+                    Button(action: {
+                        if self.categoryData.categoryDescriptions.keys.contains(self.categoryName) {
+                            self.newCategoryDescription = self.categoryData.categoryDescriptions[self.categoryName]!
+                        } else { self.newCategoryDescription = "" }
+                        
+                        if self.categoryData.categoryCustomColors.keys.contains(self.categoryName) {
+                            self.newCategoryDisplayColor = self.categoryData.categoryCustomColors[self.categoryName]!
+                        } else { self.newCategoryDisplayColor = Color.EZNotesOrange }
+                        
+                        if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryName) {
+                            self.newCategoryTextColor = self.categoryData.categoryCustomTextColors[self.categoryName]!
+                        } else { self.newCategoryTextColor = .white }
+                        
+                        self.categoryBeingEdited = self.categoryName
+                        //self.categoryBeingEditedImage = self.categoryData.categoryImages[self.categoryName]!
+                        self.editCategoryDetails = true
+                    }) {
                         ZStack {
                             Image(systemName: "pencil")
                                 .resizable()
-                                .frame(width: 15, height: 15)
+                                .frame(width: 20, height: 20)
                                 .foregroundStyle(Color.EZNotesBlue)
                         }
                         .frame(alignment: .leading)
@@ -219,9 +316,24 @@ struct CategoryInternalsPlusButton: View {
                     }
                     .buttonStyle(NoLongPressButtonStyle())
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.trailing, 6)
+                    //.padding(.trailing, 6)
+                    .popover(isPresented: $editCategoryDetails) {
+                        EditCategory(
+                            prop: self.prop,
+                            categoryBeingEditedImage: self.categoryBackground,
+                            categoryBeingEdited: $categoryBeingEdited,
+                            categoryLaunched: $categoryName,
+                            categoryData: self.categoryData,
+                            newCategoryDisplayColor: $newCategoryDisplayColor,
+                            newCategoryTextColor: $newCategoryTextColor
+                        )
+                        .onDisappear {
+                            self.categoryBackgroundColor = self.categoryData.categoryCustomColors[self.categoryName]
+                            self.categoryTitleColor = self.categoryData.categoryCustomTextColors[self.categoryName]
+                        }
+                    }
                     
-                    /*ShareLink(
+                    ShareLink(
                         item: self.categoryBackground,
                         subject: Text(self.categoryName),
                         message: Text(
@@ -231,15 +343,17 @@ struct CategoryInternalsPlusButton: View {
                         ),
                         preview: SharePreview(self.categoryName, image: self.categoryBackground))
                     {//(item: URL(string: "https://apps.apple.com/us/app/light-speedometer/id6447198696")!) {
-                        Label("Share", systemImage: "square.and.arrow.up")
+                        Label("", systemImage: "square.and.arrow.up")
                             .foregroundStyle(Color.EZNotesBlue)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading) /* MARK: `maxWidth` is in this as it's the last element in the HStack, thus pushing all the other content over. */*/
+                    .frame(maxWidth: .infinity, alignment: .center) /* MARK: `maxWidth` is in this as it's the last element in the HStack, thus pushing all the other content over. */
+                    //.padding(.leading, 6)
+                    
                     Button(action: { }) {
                         ZStack {
-                            Image(systemName: "square.and.arrow.up")
+                            Image(systemName: "paperplane")
                                 .resizable()
-                                .frame(width: 20, height: 25)
+                                .frame(width: 20, height: 20)
                                 .foregroundStyle(Color.EZNotesBlue)
                         }
                         .frame(alignment: .leading)
@@ -247,11 +361,11 @@ struct CategoryInternalsPlusButton: View {
                     }
                     .buttonStyle(NoLongPressButtonStyle())
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.leading, 6)
+                    //.padding(.trailing, 6)
                     
-                    Button(action: { }) {
+                    Button(action: { self.showDescription = true }) {
                         ZStack {
-                            Image(systemName: "paperplane")
+                            Image(systemName: "info.square")
                                 .resizable()
                                 .frame(width: 20, height: 20)
                                 .foregroundStyle(Color.EZNotesBlue)
@@ -294,7 +408,7 @@ struct CategoryInternalsPlusButton: View {
                 .buttonStyle(NoLongPressButtonStyle())
             }
             .frame(maxWidth: .infinity, maxHeight: 60)
-            .padding(.bottom, prop.isLargerScreen ? 15 : 5)
+            .padding(.bottom, prop.isLargerScreen ? 25 : 15)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
     }

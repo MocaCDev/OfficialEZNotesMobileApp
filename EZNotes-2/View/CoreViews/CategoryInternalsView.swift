@@ -326,47 +326,58 @@ struct CategoryInternalsView: View {
                             HStack { }.frame(maxWidth: .infinity, maxHeight: 0.5).background(.white)
                                 .padding(.bottom, 15)
                             
-                            if !self.editDescription && !self.generatingNewDescription {
-                                Text(self.categoryDescription!)
+                            if self.categoryDescription != nil {
+                                if !self.editDescription && !self.generatingNewDescription {
+                                    Text(self.categoryDescription!)
+                                        .frame(maxWidth: .infinity, alignment: .center)//(maxWidth: prop.size.width - 60, alignment: .leading)
+                                        .padding([.bottom, .leading], 8) /* MARK: Pad the bottom to ensure space between the text and the sets information. Pad to the lefthand side (`.leading`) to have a indentation. */
+                                        .foregroundStyle(.white)
+                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 15 : 13))//.setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 15 : 13)
+                                        .minimumScaleFactor(0.5)
+                                        .multilineTextAlignment(.center)
+                                        .truncationMode(.tail)
+                                        .padding()
+                                } else {
+                                    if self.editDescription {
+                                        TextField("", text: $editDescriptionText)
+                                            .frame(maxWidth: .infinity, alignment: .center)//(maxWidth: prop.size.width - 60, alignment: .leading)
+                                            .padding([.bottom, .leading], 8)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 15 : 13))
+                                            .minimumScaleFactor(0.5)
+                                            .multilineTextAlignment(.center)
+                                            .focused($editDescriptionTextFocused)
+                                            .overlay(
+                                                VStack {
+                                                    if self.editDescriptionText.isEmpty || !self.editDescriptionTextFocused {
+                                                        Text(self.categoryDescription!)
+                                                            .frame(maxWidth: .infinity, alignment: .center)//(maxWidth: prop.size.width - 60, alignment: .leading)
+                                                            .padding([.bottom, .leading], 8) /* MARK: Pad the bottom to ensure space between the text and the sets information. Pad to the lefthand side (`.leading`) to have a indentation. */
+                                                            .foregroundStyle(.white)
+                                                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 15 : 13))//.setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 15 : 13)
+                                                            .minimumScaleFactor(0.5)
+                                                            .multilineTextAlignment(.center)
+                                                            .truncationMode(.tail)
+                                                            .padding()
+                                                            .onTapGesture {
+                                                                self.editDescriptionTextFocused = true
+                                                            }
+                                                    }
+                                                }
+                                            )
+                                    } else {
+                                        LoadingView(message: "Generating Description")
+                                    }
+                                }
+                            } else {
+                                Text("No Description")
                                     .frame(maxWidth: .infinity, alignment: .center)//(maxWidth: prop.size.width - 60, alignment: .leading)
                                     .padding([.bottom, .leading], 8) /* MARK: Pad the bottom to ensure space between the text and the sets information. Pad to the lefthand side (`.leading`) to have a indentation. */
                                     .foregroundStyle(.white)
-                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 15 : 13))//.setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 15 : 13)
-                                    .minimumScaleFactor(0.5)
+                                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 22 : 20))//.setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 15 : 13)
                                     .multilineTextAlignment(.center)
                                     .truncationMode(.tail)
                                     .padding()
-                            } else {
-                                if self.editDescription {
-                                    TextField("", text: $editDescriptionText)
-                                        .frame(maxWidth: .infinity, alignment: .center)//(maxWidth: prop.size.width - 60, alignment: .leading)
-                                        .padding([.bottom, .leading], 8)
-                                        .foregroundStyle(.white)
-                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 15 : 13))
-                                        .minimumScaleFactor(0.5)
-                                        .multilineTextAlignment(.center)
-                                        .focused($editDescriptionTextFocused)
-                                        .overlay(
-                                            VStack {
-                                                if self.editDescriptionText.isEmpty || !self.editDescriptionTextFocused {
-                                                    Text(self.categoryDescription!)
-                                                        .frame(maxWidth: .infinity, alignment: .center)//(maxWidth: prop.size.width - 60, alignment: .leading)
-                                                        .padding([.bottom, .leading], 8) /* MARK: Pad the bottom to ensure space between the text and the sets information. Pad to the lefthand side (`.leading`) to have a indentation. */
-                                                        .foregroundStyle(.white)
-                                                        .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 15 : 13))//.setFontSizeAndWeight(weight: .medium, size: prop.size.height / 2.5 > 300 ? 15 : 13)
-                                                        .minimumScaleFactor(0.5)
-                                                        .multilineTextAlignment(.center)
-                                                        .truncationMode(.tail)
-                                                        .padding()
-                                                        .onTapGesture {
-                                                            self.editDescriptionTextFocused = true
-                                                        }
-                                                }
-                                            }
-                                        )
-                                } else {
-                                    LoadingView(message: "Generating Description")
-                                }
                             }
                             
                             HStack {
@@ -826,6 +837,23 @@ struct CategoryInternalsView: View {
                         .onTapGesture { return }*/
                         
                         VStack {
+                            if self.error == .NewSetNameEmpty || self.error == .NewSetNotesEmpty {
+                                Text(self.error == .NewSetNameEmpty
+                                     ? "The set name is empty. Ensure you apply a name to the new set."
+                                     : "The notes for the set **\(self.newSetName)** you are creating are empty.")
+                                    .frame(maxWidth: prop.size.width - 80, alignment: .center)
+                                    .foregroundStyle(Color.EZNotesRed)
+                                    .font(
+                                        .system(
+                                            size: prop.isIpad || prop.isLargerScreen
+                                            ? 15
+                                            : 13
+                                        )
+                                    )
+                                    .multilineTextAlignment(.center)
+                                    .padding(.bottom, 15)
+                            }
+                            
                             HStack {
                                 TextField(
                                     "",
@@ -1621,7 +1649,68 @@ struct CategoryInternalsView: View {
                     )
                     .cornerRadius(20)
                     .padding(.top, 5.5)
-                    .padding(.bottom, -30)
+                    .padding(.bottom, -30)*/
+                    
+                    if self.settings.displayUserCreatedSetsSeparately {
+                        HStack {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack {
+                                    Button(action: { self.selectedView = "generated" }) {
+                                        HStack {
+                                            Text("Generated")
+                                                .frame(alignment: .center)
+                                                .padding([.top, .bottom], 4)
+                                                .padding([.leading, .trailing], 8.5)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(self.selectedView == "generated" ? Color.EZNotesBlue : .clear)
+                                                )
+                                                .foregroundStyle(self.selectedView == "generated" ? .black : .secondary)
+                                                .font(Font.custom("Poppins-SemiBold", size: 12))
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    
+                                    Button(action: { self.selectedView = "user_created" }) {
+                                        HStack {
+                                            Text("User Created")
+                                                .frame(alignment: .center)
+                                                .padding([.top, .bottom], 4)
+                                                .padding([.leading, .trailing], 8.5)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(self.selectedView == "user_created" ? Color.EZNotesBlue : .clear)
+                                                )
+                                                .foregroundStyle(self.selectedView == "user_created" ? .black : .secondary)
+                                                .font(Font.custom("Poppins-SemiBold", size: 12))
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 10)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 15)
+                        .padding(.top, 10)
+                        
+                        VStack { }.frame(maxWidth: prop.size.width - 20, maxHeight: 1.5).background(
+                            MeshGradient(width: 3, height: 3, points: [
+                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                            ], colors: [
+                                .indigo, .indigo, Color.EZNotesBlue,
+                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                            ])
+                        )
+                        .cornerRadius(20)
+                        .padding(.top, 5.5)
+                        .padding(.bottom, -30)
+                    }
                     
                     VStack {
                         VStack {
@@ -1702,7 +1791,7 @@ struct CategoryInternalsView: View {
                     .frame(maxWidth: prop.size.width - 30, maxHeight: .infinity, alignment: .top)
                     .padding()
                     //.padding(.top, -5)
-                    .cornerRadius(15)*/
+                    .cornerRadius(15)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea(edges: [.top, .bottom])
@@ -1712,6 +1801,14 @@ struct CategoryInternalsView: View {
                 
                 CategoryInternalsPlusButton(
                     prop: self.prop,
+                    categoryBackground: self.categoryBackground,
+                    categoryName: $categoryName,
+                    categoryDescription: $categoryDescription,
+                    launchCategory: $launchCategory,
+                    categoryBackgroundColor: $categoryBackgroundColor,
+                    categoryTitleColor: $categoryTitleColor,
+                    alertType: $alertType,
+                    showDescription: $showDescription,
                     testPopup: $testPopup,
                     createNewSet: $createNewSet,
                     createNewSetByImage: $createNewSetByImage

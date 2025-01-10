@@ -1360,6 +1360,11 @@ struct TopNavCategoryView: View {
                             .foregroundStyle(Color.EZNotesBlue)
                     }
                     .buttonStyle(NoLongPressButtonStyle())
+                    .padding(12)
+                    .background(
+                        Circle()
+                            .fill(Color.EZNotesBlack)
+                    )
                     .padding([.leading], 20)
                 }
                 .frame(maxWidth: 50, maxHeight: .infinity, alignment: .leading)
@@ -1417,19 +1422,27 @@ struct TopNavCategoryView: View {
                 
                 //Spacer()
                 
-                VStack {
+                ZStack {
                     Button(action: { self.aiChat = true }) {
                         Image("AI-Chat-Icon")
                             .resizable()
                             .frame(
-                                width: prop.isLargerScreen ? 35 : 30,
-                                height: prop.isLargerScreen ? 35 : 30
+                                width: 30,//prop.size.height / 2.5 > 300 ? 45 : 40,
+                                height: 30//prop.size.height / 2.5 > 300 ? 45 : 40
                             )
-                            .padding([.trailing], 20)
                     }
                     .buttonStyle(NoLongPressButtonStyle())
                 }
-                .frame(maxWidth: 50, maxHeight: .infinity, alignment: .trailing)
+                .frame(
+                    width: 30,//prop.size.height / 2.5 > 300 ? 45 : 40,
+                    height: 30//prop.size.height / 2.5 > 300 ? 45 : 40
+                )
+                .padding(6)
+                .background(
+                    Circle()
+                        .fill(Color.EZNotesBlack)
+                )
+                .padding([.trailing], 20)
                 .padding(.top, prop.isLargerScreen || prop.isMediumScreen ? 25 : 10)//-10)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
