@@ -1068,6 +1068,7 @@ struct Account: View {
                                         Spacer()
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .padding(.top, prop.isLargerScreen ? 55 : prop.isMediumScreen ? 45 : 40)
                                     
                                     VStack { /* MARK: `VStack` needed to ensure spacing between header and content of the view (`Plans`). */
                                         Plans(
@@ -1077,10 +1078,10 @@ struct Account: View {
                                             isLargerScreen: prop.isLargerScreen,
                                             action: doSomething
                                         )
-                                        .padding(.top, prop.isLargerScreen ? 80 : 40)//.padding([.top, .bottom], -15) /* MARK: Needed to make it looks like content come up from the bottom of the screen. */
+                                        .padding(.top, prop.isLargerScreen || prop.isMediumScreen ? 80 : 80)//.padding([.top, .bottom], -15) /* MARK: Needed to make it looks like content come up from the bottom of the screen. */
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .padding(.top, prop.isLargerScreen ? 90 : 50)
+                                    .padding(.top, prop.isLargerScreen || prop.isMediumScreen ? 90 : 50)
                                 }
                             case "change_username":
                                 /* TODO: `isLargerScreen` should be moved into a class where it becomes a published variable. */

@@ -53,7 +53,7 @@ struct Themes: View {
                     ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                 }
                 .frame(maxWidth: .infinity, maxHeight: 30)
-                .padding(.top, prop.isLargerScreen ? 55 : 0)
+                .padding(.top, prop.isLargerScreen ? 55 : prop.isMediumScreen ? 45 : 40)
                 
                 Spacer()
             }

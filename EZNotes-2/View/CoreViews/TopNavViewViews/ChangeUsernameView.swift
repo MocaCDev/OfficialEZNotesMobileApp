@@ -64,11 +64,11 @@ struct ChangeUsername: View {
                     ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                 }
                 .frame(maxWidth: .infinity, maxHeight: 30)
-                .padding(.top, prop.isLargerScreen ? 55 : 0)
                 
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.top, prop.isLargerScreen ? 55 : prop.isMediumScreen ? 45 : 40)
             
             VStack {
                 HStack {
@@ -78,7 +78,7 @@ struct ChangeUsername: View {
                         Text("Enter a new username below. You can only change your name twice a year.")
                             .frame(maxWidth: .infinity, alignment: .center)
                             .foregroundStyle(.white)
-                            .font(.system(size: prop.isLargerScreen ? 16 : 12, weight: .light))
+                            .font(.system(size: prop.isLargerScreen ? 16 : prop.isMediumScreen ? 14 : 12, weight: .light))
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -208,7 +208,7 @@ struct ChangeUsername: View {
                 }
             }
             .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-            .padding(.top, prop.isLargerScreen ? 90 : 50)
+            .padding(.top, prop.isLargerScreen ? 100 : prop.isMediumScreen ? 90 : 80)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .alert("Are you sure?", isPresented: $changeUsernameAlert) {

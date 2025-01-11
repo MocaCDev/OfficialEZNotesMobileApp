@@ -64,12 +64,11 @@ struct PlanDetails: View {
                     ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                 }
                 .frame(maxWidth: .infinity, maxHeight: 30)
-                //.padding(.top, prop.isLargerScreen ? 55 : prop.isMediumScreen ? 45 : 0)
+                .padding(.top, prop.isLargerScreen ? 55 : prop.isMediumScreen ? 45 : 40)
                 
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.top, prop.isLargerScreen ? 55 : prop.isMediumScreen ? 45 : 0)
             
             VStack {
                 if self.eznotesSubscriptionManager.userSubscriptionID == nil {
@@ -187,7 +186,7 @@ struct PlanDetails: View {
                 }
             }
             .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-            .padding(.top, prop.isLargerScreen ? 150 : prop.isMediumScreen ? 140 : 100)
+            .padding(.top, prop.isLargerScreen ? 150 : prop.isMediumScreen ? 140 : 120)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

@@ -103,7 +103,7 @@ struct ReportIssue: View {
                     ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                 }
                 .frame(maxWidth: .infinity, maxHeight: 30)
-                .padding(.top, prop.isLargerScreen ? 55 : 0)
+                .padding(.top, prop.isLargerScreen ? 55 : prop.isMediumScreen ? 45 : 40)
                 
                 Spacer()
             }
@@ -112,10 +112,10 @@ struct ReportIssue: View {
             VStack {
                 Text("Name")
                     .frame(maxWidth: prop.size.width - 60, alignment: .leading)
-                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
+                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen || prop.isMediumScreen ? 18 : 16))
                     .foregroundStyle(.white)
                     .opacity(self.nameTextOpacity)
-                    .animation(.easeIn(duration: 0.8), value: self.nameTextOpacity)
+                    .animation(self.nameTextOpacity == 1 ? .smooth(duration: 0.8) : .easeOut(duration: 0.8), value: self.nameTextOpacity)
                     .padding(.top, self.nameTextOpacity == 1 ? 8 : 0)
                 
                 TextField("", text: $name)
@@ -172,24 +172,23 @@ struct ReportIssue: View {
                             }
                         }
                     )
-                    .padding(.bottom, self.emailTextOpacity == 0 ? -26 : 0)
+                    .padding(.bottom, self.emailTextOpacity == 0 ? -26 : 8)
                     .padding(.top, self.nameTextOpacity == 1 ? -4 : 0)
                     .focused($nameFieldInFocus)
                     .onChange(of: self.name) {
                         if !self.name.isEmpty {
-                            self.nameTextOpacity = 1
+                            withAnimation(.smooth(duration: 0.8)) { self.nameTextOpacity = 1 }
                         } else {
-                            self.nameTextOpacity = 0
+                            withAnimation(.easeOut(duration: 0.8)) { self.nameTextOpacity = 0 }
                         }
                     }
                 
                 Text("Contact Email")
                     .frame(maxWidth: prop.size.width - 60, alignment: .leading)
-                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
+                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen || prop.isMediumScreen ? 18 : 16))
                     .foregroundStyle(.white)
                     .opacity(self.emailTextOpacity)
-                    .animation(.easeIn(duration: 0.8), value: self.emailTextOpacity)
-                    .padding(.top, self.emailTextOpacity == 1 ? 8 : 0)
+                    .animation(self.emailTextOpacity == 1 ? .smooth(duration: 0.8) : .easeOut(duration: 0.8), value: self.emailTextOpacity)
                 
                 TextField("", text: $emailToContact)
                     .frame(maxWidth: prop.size.width - 70)
@@ -250,15 +249,15 @@ struct ReportIssue: View {
                     .focused($emailFieldInFocus)
                     .onChange(of: self.emailToContact) {
                         if !self.emailToContact.isEmpty {
-                            self.emailTextOpacity = 1
+                            withAnimation(.smooth(duration: 0.8)) { self.emailTextOpacity = 1 }
                         } else {
-                            self.emailTextOpacity = 0
+                            withAnimation(.easeOut(duration: 0.8)) { self.emailTextOpacity = 0 }
                         }
                     }
                 
                 Text("Briefly explain your issue")
                     .frame(maxWidth: prop.size.width - 60, alignment: .leading)
-                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 20 : 18))
+                    .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen || prop.isMediumScreen ? 18 : 16))
                     .foregroundStyle(.white)
                     .overlay(
                         self.name.isEmpty || self.emailToContact.isEmpty ? AnyView(Color.black.opacity(0.8)) : AnyView(Color.clear)
@@ -266,7 +265,7 @@ struct ReportIssue: View {
                 
                 TextField("", text: $reportedProblem, axis: .vertical)
                     .frame(maxWidth: prop.size.width - 70)
-                    .lineLimit(prop.isLargerScreen || prop.isMediumScreen ? 5...10 : 5...7) /* MARK: This is not adherent to smaller screens. Change it. */
+                    .lineLimit(prop.isLargerScreen ? 5...10 : prop.isMediumScreen ? 5...7 : 4...4) /* MARK: This is not adherent to smaller screens. Change it. */
                     .font(.system(size: 15))
                     .foregroundStyle(.white)
                     /*.padding(.horizontal, 12)
@@ -325,7 +324,10 @@ struct ReportIssue: View {
                 //Spacer()
             }
             .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-            .padding(.top, prop.isLargerScreen ? 110 : prop.isMediumScreen ? 100 : 60)
+            .padding(.top, prop.isLargerScreen ? 110 : prop.isMediumScreen ? 100 : 90)
+            .onAppear {
+                self.nameFieldInFocus = true /* MARK: Automatically force focus on the name textfield. */
+            }
             
             VStack {
                 Spacer()

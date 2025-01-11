@@ -58,6 +58,7 @@ struct MoreAccountDetails: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.top, prop.isLargerScreen ? 55 : prop.isMediumScreen ? 45 : 40)
             
             VStack {
                 Spacer()

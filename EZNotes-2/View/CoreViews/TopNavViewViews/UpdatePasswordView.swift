@@ -67,7 +67,7 @@ struct UpdatePassword: View {
                     ZStack { }.frame(maxWidth: 20, alignment: .trailing).padding(.trailing, 25)
                 }
                 .frame(maxWidth: .infinity, maxHeight: 30)
-                .padding(.top, prop.isLargerScreen ? 55 : 0)
+                .padding(.top, prop.isLargerScreen ? 55 : prop.isMediumScreen ? 45 : 40)
                 
                 Spacer()
             }
@@ -102,7 +102,7 @@ struct UpdatePassword: View {
                             Text("Enter a new password below. The new password cannot be the same as your current password.")
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .foregroundStyle(.white)
-                                .font(.system(size: prop.isLargerScreen ? 16 : 12, weight: .light))
+                                .font(.system(size: prop.isLargerScreen ? 16 : prop.isMediumScreen ? 14 : 12, weight: .light))
                                 .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -276,7 +276,7 @@ struct UpdatePassword: View {
                 }
             }
             .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
-            .padding(.top, prop.isLargerScreen ? 90 : 50)
+            .padding(.top, prop.isLargerScreen ? 100 : prop.isMediumScreen ? 90 : 80)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .alert("Are you sure?", isPresented: $changePasswordAlert) {

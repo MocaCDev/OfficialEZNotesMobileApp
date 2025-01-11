@@ -1018,6 +1018,8 @@ struct ContentView: View {
                                             return
                                         }
                                         
+                                        assignUDKey(key: "usecase", value: resp["Usecase"]! as! String)
+                                        
                                         /* MARK: Depending on the usecase, check for the according data in the response. */
                                         switch(resp["Usecase"]! as! String) {
                                         case "school":

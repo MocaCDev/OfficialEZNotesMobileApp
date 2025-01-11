@@ -64,22 +64,25 @@ struct ResponsiveView<Content: View>: View {
             })
             .onChange(of: size.height) {
                 if size.height < self.lastHeight {
-                    self.isLargerScreen = size.height / 2.5 > 200 || size.height / 2.5 > 180
-                    self.isMediumScreen = (size.height / 2.5 >= 177 && size.height / 2.5 < 180) || (size.height / 2.5 >= 147.2 && size.height / 2.5 <= 177)
+                    print(size.height / 2.5)
+                    self.isLargerScreen = size.height / 2.5 > 201// || size.height / 2.5 > 180
+                    self.isMediumScreen = (size.height / 2.5 >= 177 && size.height / 2.5 < 201)// || (size.height / 2.5 >= 147.2 && size.height / 2.5 <= 177)
                     self.isSmallScreen = !self.isLargerScreen && !self.isMediumScreen
-                    
-                    //print(self.isLargerScreen, self.isMediumScreen, self.isSmallScreen)
                 } else {
                     if size.height == self.screenHeight {
                         self.isLargerScreen = size.height / 2.5 > 338
                         self.isMediumScreen = size.height / 2.5 >= 305.2 && size.height / 2.5 < 338
                         self.isSmallScreen = !self.isLargerScreen && !self.isMediumScreen
                     } else {
-                        self.isLargerScreen = size.height / 2.5 > 200
-                        self.isMediumScreen = size.height / 2.5 >= 177 && size.height / 2.5 < 200
+                        self.isLargerScreen = size.height / 2.5 > 201
+                        self.isMediumScreen = size.height / 2.5 >= 177 && size.height / 2.5 < 201
                         self.isSmallScreen = !self.isLargerScreen && !self.isMediumScreen
                     }
                 }
+                
+                self.lastHeight = size.height
+                
+                print("ILS: \(self.isLargerScreen), IMS: \(self.isMediumScreen), ISS: \(self.isSmallScreen)")
             }
             .frame(
                 width: size.width,
