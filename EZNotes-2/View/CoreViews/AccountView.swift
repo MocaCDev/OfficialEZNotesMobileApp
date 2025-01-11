@@ -1516,7 +1516,7 @@ struct Account: View {
                                     accountPopupSection: $accountPopupSection
                                 )
                             case "planDetails":
-                                ZStack {
+                                /*ZStack {
                                     VStack {
                                         VStack {
                                         }
@@ -2124,7 +2124,11 @@ struct Account: View {
                                     .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
                                     .padding(.top, prop.isLargerScreen ? 150 : prop.isMediumScreen ? 140 : 100)
                                 }
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)*/
+                                PlanDetails(
+                                    prop: prop,
+                                    accountPopupSection: $accountPopupSection
+                                )
                                 /*.onAppear {
                                     Task {
                                         await self.eznotesSubscriptionManager.fetchBillingDueDate()
