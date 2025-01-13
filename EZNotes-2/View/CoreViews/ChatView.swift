@@ -245,6 +245,9 @@ struct ChatView: View {
         }
     }
     
+    @State private var chatViewX: CGFloat = UIScreen.main.bounds.width
+    @State private var chatViewOpacity: CGFloat = 0
+    
     var body: some View {
         if !self.showAccount {
             ResponsiveView { prop in
@@ -265,7 +268,9 @@ struct ChatView: View {
                                     usersFriends: self.usersFriendCount,
                                     accountPopupSection: $launchedForUser, /* TODO: Figure something out with this, this is bad. */
                                     showAccount: $launchUserPreview, /* TODO: Figure something out with this, this is bad. */
-                                    addMoreTags: $launchUserPreview
+                                    addMoreTags: $launchUserPreview,
+                                    accountViewY: $keyboardHeight,
+                                    accountViewOpacity: $keyboardHeight
                                 )
                                 .padding(.top, 8)
                                 .padding(.bottom, 20)
@@ -488,6 +493,16 @@ struct ChatView: View {
                                 prop: prop
                             )
                         }
+                        .offset(x: self.chatViewX)
+                        .animation(.smooth(duration: 0.55), value: self.chatViewX)
+                        .opacity(self.chatViewOpacity)
+                        .animation(.smooth(duration: 0.6), value: self.chatViewOpacity)
+                        .onAppear {
+                            withAnimation(.smooth(duration: 0.55)) {
+                                self.chatViewX = 0
+                                self.chatViewOpacity = 1
+                             }
+                        }
                         .zIndex(self.launchUserPreview ? 0 : 1)
                     } else {
                         VStack {
@@ -703,7 +718,16 @@ struct ChatView: View {
                         if self.chatSelected { return }
                         
                         if value.translation.width > 0 {
-                            self.section = "upload"
+                            withAnimation(.smooth(duration: 0.55)) {
+                                self.chatViewX = UIScreen.main.bounds.width
+                                self.chatViewOpacity = 0
+                            }
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                self.section = "upload"
+                                //self.uploadViewX = 0
+                                //self.uploadViewOpacity = 1
+                            }
                         }
                     })
                 )

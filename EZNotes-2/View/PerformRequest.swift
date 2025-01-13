@@ -726,6 +726,18 @@ class RequestAction<T>: ObservableObject {
                 guard let params: GetClientsUsecaseReq = (parameters as? GetClientsUsecaseReq) else { return }
                 request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
                 break
+            case is ReportProblemData.Type:
+                guard let params: ReportProblemData = (parameters as? ReportProblemData) else { return }
+                request.addValue(params.AccountID, forHTTPHeaderField: "Account-Id")
+                request.addValue(params.ContactEmail, forHTTPHeaderField: "Contact-Email")
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                
+                let feedback: [String: String] = [
+                    "Feedback": params.ReportedProblem
+                ]
+                
+                request.httpBody = try? JSONSerialization.data(withJSONObject: feedback)
+                break
             default: break
         }
         

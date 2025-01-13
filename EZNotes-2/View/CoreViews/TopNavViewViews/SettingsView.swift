@@ -16,6 +16,8 @@ enum InfoType {
 
 struct Settings: View {
     @EnvironmentObject private var settings: SettingsConfigManager
+    @EnvironmentObject private var accountInfo: AccountDetails
+    
     var prop: Properties
     
     @State private var showInfoPopup: Bool = false
@@ -80,6 +82,101 @@ struct Settings: View {
                 VStack { }.frame(maxWidth: .infinity).padding(.top, 15)
                 
                 ScrollView(.vertical, showsIndicators: false) {
+                    HStack {
+                        Text("Account")
+                            .textCase(.uppercase)
+                            .frame(alignment: .leading)
+                            .foregroundStyle(.white)
+                            .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen ? 18 : 16))//.setFontSizeAndWeight(weight: .bold, size: 18)
+                            .minimumScaleFactor(0.5)
+                        //.padding(.bottom, 1)
+                        //.border(width: 1, edges: [.bottom], color: .secondary)
+                            .padding(.bottom, 5)
+                        
+                        VStack {
+                            Divider().background(MeshGradient(width: 3, height: 3, points: [
+                                .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                .init(0, 1), .init(0.5, 1), .init(1, 1)
+                            ], colors: [
+                                .indigo, .indigo, Color.EZNotesBlue,
+                                Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                            ])).frame(maxWidth: .infinity)
+                        }
+                    }
+                    
+                    VStack {
+                        HStack {
+                            VStack {
+                                Text("Change Username")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .font(.system(size: 18, design: .rounded))
+                                    .foregroundStyle(Color.white)
+                                
+                                Text("\(self.accountInfo.username)")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .font(Font.custom("Poppins-Regular", size: 14))
+                                    .foregroundStyle(Color.white)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                            //.padding(.leading, 15)
+                            
+                            ZStack {
+                                Image(systemName: "chevron.right")
+                                    .resizable()
+                                    .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
+                                    .foregroundStyle(.gray)
+                            }
+                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                            //.padding(.trailing, 25)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: 40)
+                        .padding(.trailing, 4)
+                        .padding(.top, 14)
+                        .padding(.bottom, 6)//.padding(.bottom, 5)
+                        
+                        Divider()
+                            .background(.white)
+                            .padding(.bottom, 10)
+                        
+                        HStack {
+                            Text("Update Password")
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                                //.padding(.leading, 15)
+                                .font(.system(size: 18, design: .rounded))
+                                .foregroundStyle(.white)
+                            
+                            ZStack {
+                                Image(systemName: "chevron.right")
+                                    .resizable()
+                                    .frame(width: 10, height: 15)//.resizableImage(width: 10, height: 15)
+                                    .foregroundStyle(.gray)
+                            }
+                            .frame(maxWidth: 15, maxHeight: 15, alignment: .trailing)
+                            //.padding(.trailing, 25)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: 40)
+                        .padding(.trailing, 4)
+                        .padding(.bottom, 14)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(.black)
+                            .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
+                    )
+                    .padding(.horizontal, 4.5)
+                    /*.padding([.leading, .trailing])
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(.black)
+                            .shadow(color: Color.EZNotesLightBlack, radius: 4.5)
+                    )
+                    .padding([.leading, .trailing], 4.5)
+                    .padding(.bottom, 10)*/
+                    
                     HStack {
                         Text("App")
                             .textCase(.uppercase)

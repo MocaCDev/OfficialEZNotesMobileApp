@@ -750,6 +750,22 @@ struct ShowNotes: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             }
                             
+                            Button(action: { self.showNotesSection = "study" }) {
+                                HStack {
+                                    Text("Study")
+                                        .frame(alignment: .center)
+                                        .padding([.top, .bottom], 4)
+                                        .padding([.leading, .trailing], 8.5)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .fill(self.showNotesSection == "study" ? Color.EZNotesBlue : .clear)
+                                        )
+                                        .foregroundStyle(self.showNotesSection == "study" ? .black : .secondary)
+                                        .font(Font.custom("Poppins-SemiBold", size: 12))
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            
                             Button(action: {
                                 self.showNotesSection = "save_changes"
                                 
@@ -823,6 +839,11 @@ struct ShowNotes: View {
                         categoryData: self.categoryData,//setAndNotes: $setAndNotes,
                         noteChatDetails: self.noteChatDetails
                     )
+                case "study":
+                    VStack {
+                        
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 case "change_font":
                     VStack {
                         ScrollView(.vertical, showsIndicators: false) {

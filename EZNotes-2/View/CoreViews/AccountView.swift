@@ -117,6 +117,9 @@ struct Account: View {
     @State private var makeBigger: Bool = false
     @State private var tagsToExtend: Array<String> = []
     
+    @State private var accountViewY: CGFloat = UIScreen.main.bounds.height
+    @State private var accountViewOpacity: CGFloat = 0
+    
     var body: some View {
         ZStack {
             if self.addMoreTags {
@@ -319,7 +322,9 @@ struct Account: View {
                         isUserPreview: false,
                         accountPopupSection: $accountPopupSection,
                         showAccount: $showAccount,
-                        addMoreTags: $addMoreTags
+                        addMoreTags: $addMoreTags,
+                        accountViewY: $accountViewY,
+                        accountViewOpacity: $accountViewOpacity
                     )
                 }
                 
@@ -327,7 +332,7 @@ struct Account: View {
                     VStack {
                         if self.accountPopupSection == "main" {
                             ScrollView(.vertical, showsIndicators: false) {
-                                Text("Account")
+                                /*Text("Account")
                                     .textCase(.uppercase) // Ensures the text is uppercased before styling.
                                     .font(Font.custom("Poppins-SemiBold", size: 18)) // Sets the font style and size.
                                     .minimumScaleFactor(0.5) // Adjusts scaling only if needed after applying the font.
@@ -622,7 +627,7 @@ struct Account: View {
                                 .padding(.top, -5)
                                 .padding(5) /* MARK: Ensure the shadow can be seen. */
                                 
-                                VStack { }.frame(maxWidth: .infinity, maxHeight: 20)
+                                VStack { }.frame(maxWidth: .infinity, maxHeight: 20)*/
                                 
                                 Text("Core Actions")
                                     .textCase(.uppercase) // Ensures the text is uppercased before styling.
@@ -2157,12 +2162,19 @@ struct Account: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .offset(y: self.accountViewY)
+            .animation(.smooth(duration: 0.55), value: self.accountViewY)
+            .opacity(self.accountViewOpacity)
+            .animation(.smooth(duration: 0.7), value: self.accountViewOpacity)
             .edgesIgnoringSafeArea([.top, .bottom]/*self.accountPopupSection == "main"
                                                    ? [.bottom, .top]
                                                    : prop.isLargerScreen ? [.bottom] : [.top, .bottom]*/
             )
             .background(.black)
             .onAppear {
+                withAnimation(.smooth(duration: 0.55)) { self.accountViewY = 0 }
+                withAnimation(.smooth(duration: 0.7)) { self.accountViewOpacity = 1 }
+                
                 Task {
                     if self.accountInfo.usage == "" {
                         if udKeyExists(key: "usecase") { self.accountInfo.setUsage(usage: getUDValue(key: "usecase")) }
@@ -2233,6 +2245,10 @@ struct Account: View {
                  self.accountInfo.accountDescription = "Majoring in **\(self.accountInfo.major)** at **\(self.accountInfo.college)**"
                  }
                  }*/
+            }
+            .onDisappear {
+                self.accountViewY = prop.size.height
+                self.accountViewOpacity = 0
             }
         }
     }

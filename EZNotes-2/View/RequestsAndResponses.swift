@@ -8,14 +8,20 @@ import Foundation
 import SwiftUI
 
 /* MARK: URLs used for requests. */
-//let server = "https://www.eznotes.space"
-let server = "http://192.168.1.109:8088"
+let server = "https://www.eznotes.space"
+//let server = "http://10.0.0.51:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
  * to be sent to the endpoint.
  * */
 struct ReqPlaceholder {}
+
+struct ReportProblemData {
+    let AccountID: String
+    let ContactEmail: String
+    let ReportedProblem: String
+}
 
 struct GetClientsUsecaseReq {
     let AccountID: String
@@ -634,4 +640,10 @@ let remove_tag_req: CSIARequest = CSIARequest(
     url: "\(server)/remove_tag",
     method: "get",
     reqData: RemoveTagData.self
+)
+
+let feedback_req: CSIARequest = CSIARequest(
+    url: "\(server)/feedback",
+    method: "post", /* MARK: Sends data in JSON format. */
+    reqData: ReportProblemData.self
 )

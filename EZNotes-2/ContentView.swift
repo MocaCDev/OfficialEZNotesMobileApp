@@ -2792,7 +2792,7 @@ struct ContentView: View {
                             section: $section,
                             prop: prop,
                             userHasSignedIn:$userHasSignedIn,
-                            model: self.model//,
+                            model: self.model
                             //images_to_upload: self.images_to_upload
                         )
                     case "upload_review":

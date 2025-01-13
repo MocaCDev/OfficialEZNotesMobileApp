@@ -1245,7 +1245,7 @@ struct CategoryInternalsView: View {
                 }
                 
                 //ScrollView(.vertical, showsIndicators: false) {
-                VStack {
+                /*VStack {
                     TopNavCategoryView(
                         prop: self.prop,
                         categoryName: self.categoryName,
@@ -1813,7 +1813,270 @@ struct CategoryInternalsView: View {
                     createNewSet: $createNewSet,
                     createNewSetByImage: $createNewSetByImage
                 )
-                .padding(.bottom, 20)
+                .padding(.bottom, 20)*/
+                VStack {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        ZStack {
+                            self.categoryBackground
+                                .resizable()
+                                .scaledToFill()
+                                .overlay(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+                            
+                            VStack {
+                                Spacer()
+                                
+                                VStack {
+                                    
+                                }
+                                .frame(maxHeight: 200)
+                                
+                                self.categoryBackground
+                                    .resizable()
+                                    .frame(width: 95, height: 95)
+                                    .scaledToFit()
+                                    .cornerRadius(10)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .shadow(color: Color.black, radius: 2.5)
+                                    )
+                                    .padding(2.5)
+                                
+                                Text(self.categoryName)
+                                    .frame(maxWidth: prop.size.width - 40, alignment: .center)
+                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen || prop.isMediumScreen ? 30 : 26))
+                                    .foregroundStyle(.white)
+                                    .multilineTextAlignment(.center)
+                                    .minimumScaleFactor(0.8)
+                                
+                                HStack {
+                                    Text("\(self.categoryData.categoriesAndSets[self.categoryName]!.count) \(self.categoryData.categoriesAndSets[self.categoryName]!.count > 1 ? "Sets" : self.categoryData.categoriesAndSets[self.categoryName]!.count == 0 ? "Sets" : "Set")")
+                                        .frame(alignment: .leading)
+                                        .foregroundStyle(.white)
+                                        .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen ? 12.5 : 10.5)
+                                    
+                                    Divider()
+                                        .background(.white)
+                                    
+                                    Text("Created \(self.creationDate)")
+                                        .frame(alignment: .trailing)
+                                        .foregroundStyle(.white)
+                                        .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen ? 12.5 : 10.5)
+                                }
+                                .frame(maxHeight: 13)
+                                .padding(.vertical)
+                                
+                                HStack {
+                                    Button(action: {
+                                        //self.categoryToDelete = self.categoryName
+                                        //self.categoryAlert = true
+                                        //self.alertType = .DeleteCategoryAlert
+                                    }) {
+                                        ZStack {
+                                            Image(systemName: "trash")
+                                                .resizable()
+                                                .frame(width: 20, height: 20)
+                                                .foregroundStyle(.red)
+                                        }
+                                        .frame(alignment: .leading)
+                                        .padding(.trailing, 10)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    /*.alert("Are you sure?", isPresented: $categoryAlert) {
+                                        Button(action: {
+                                            self.launchCategory = false
+                                            
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                                if self.categoryData.categoriesAndSets.count == 1 {
+                                                    self.categoryData.categoriesAndSets.removeAll()
+                                                    self.categoryData.setAndNotes.removeAll()
+                                                    self.categoryData.categoryCustomTextColors.removeAll()
+                                                    self.categoryData.categoryCustomColors.removeAll()
+                                                    self.categoryData.categoryDescriptions.removeAll()
+                                                } else {
+                                                    self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
+                                                    self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
+                                                    
+                                                    if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryToDelete) {
+                                                        self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryToDelete)
+                                                    }
+                                                    
+                                                    if self.categoryData.categoryCustomColors.keys.contains(self.categoryToDelete) {
+                                                        self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryToDelete)
+                                                    }
+                                                    
+                                                    if self.categoryData.categoryDescriptions.keys.contains(self.categoryToDelete) {
+                                                        self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryToDelete)
+                                                    }
+                                                }
+                                                
+                                                /* MARK: Ensure the cache is up to date. */
+                                                writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                                writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                                writeCategoryTextColors(categoryTextColors: self.categoryData.categoryCustomTextColors)
+                                                writeCategoryCustomColors(categoryCustomColors: self.categoryData.categoryCustomColors)
+                                                writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
+                                                
+                                                resetAlert()
+                                            }
+                                            
+                                            /* TODO: Add support for actually storing category information in the database. That will, thereby, prompt us to need to send a request to the server to delete the given category from the database. */
+                                        }) {
+                                            Text("Yes")
+                                        }
+                                        
+                                        Button(action: { resetAlert() }) { Text("No") }
+                                    } message: {
+                                        Text(self.alertType == .DeleteCategoryAlert
+                                             ? "Once deleted, the category **\"\(self.categoryToDelete)\"** will be removed from cloud or local storage and cannot be recovered."
+                                             : "") /* TODO: Finish this. There will presumably be more alert types. */
+                                    }*/
+                                    
+                                    Button(action: {
+                                        /*if self.categoryData.categoryDescriptions.keys.contains(self.categoryName) {
+                                            self.newCategoryDescription = self.categoryData.categoryDescriptions[self.categoryName]!
+                                        } else { self.newCategoryDescription = "" }
+                                        
+                                        if self.categoryData.categoryCustomColors.keys.contains(self.categoryName) {
+                                            self.newCategoryDisplayColor = self.categoryData.categoryCustomColors[self.categoryName]!
+                                        } else { self.newCategoryDisplayColor = Color.EZNotesOrange }
+                                        
+                                        if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryName) {
+                                            self.newCategoryTextColor = self.categoryData.categoryCustomTextColors[self.categoryName]!
+                                        } else { self.newCategoryTextColor = .white }
+                                        
+                                        self.categoryBeingEdited = self.categoryName
+                                        //self.categoryBeingEditedImage = self.categoryData.categoryImages[self.categoryName]!
+                                        self.editCategoryDetails = true*/
+                                    }) {
+                                        ZStack {
+                                            Image(systemName: "pencil")
+                                                .resizable()
+                                                .frame(width: 20, height: 20)
+                                                .foregroundStyle(Color.EZNotesBlue)
+                                        }
+                                        .frame(alignment: .leading)
+                                        .padding(.trailing, 10)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    //.padding(.trailing, 6)
+                                    /*.popover(isPresented: $editCategoryDetails) {
+                                        EditCategory(
+                                            prop: self.prop,
+                                            categoryBeingEditedImage: self.categoryBackground,
+                                            categoryBeingEdited: $categoryBeingEdited,
+                                            categoryLaunched: $categoryName,
+                                            categoryData: self.categoryData,
+                                            newCategoryDisplayColor: $newCategoryDisplayColor,
+                                            newCategoryTextColor: $newCategoryTextColor
+                                        )
+                                        .onDisappear {
+                                            self.categoryBackgroundColor = self.categoryData.categoryCustomColors[self.categoryName]
+                                            self.categoryTitleColor = self.categoryData.categoryCustomTextColors[self.categoryName]
+                                        }
+                                    }*/
+                                    
+                                    ShareLink(
+                                        item: self.categoryBackground,
+                                        subject: Text(self.categoryName),
+                                        message: Text(
+                                            self.categoryDescription != nil
+                                                ? "\(self.categoryDescription!)\n\nCreated with the support of **EZNotes**"
+                                                : ""
+                                        ),
+                                        preview: SharePreview(self.categoryName, image: self.categoryBackground))
+                                    {//(item: URL(string: "https://apps.apple.com/us/app/light-speedometer/id6447198696")!) {
+                                        Label("", systemImage: "square.and.arrow.up")
+                                            .foregroundStyle(Color.EZNotesBlue)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .center) /* MARK: `maxWidth` is in this as it's the last element in the HStack, thus pushing all the other content over. */
+                                    //.padding(.leading, 6)
+                                    
+                                    Button(action: { }) {
+                                        ZStack {
+                                            Image(systemName: "paperplane")
+                                                .resizable()
+                                                .frame(width: 20, height: 20)
+                                                .foregroundStyle(Color.EZNotesBlue)
+                                        }
+                                        .frame(alignment: .leading)
+                                        .padding(.trailing, 10)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    //.padding(.trailing, 6)
+                                    
+                                    Button(action: { self.showDescription = true }) {
+                                        ZStack {
+                                            Image(systemName: "info.square")
+                                                .resizable()
+                                                .frame(width: 20, height: 20)
+                                                .foregroundStyle(Color.EZNotesBlue)
+                                        }
+                                        .frame(alignment: .leading)
+                                        .padding(.trailing, 10)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                }
+                                .frame(maxWidth: prop.size.width - 120)
+                                .padding(.top)
+                                .padding(.vertical)
+                                
+                                Spacer()
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            
+                            
+                            /*VStack {
+                                HStack {
+                                    Button(action: { self.launchCategory = false }) {
+                                        Image(systemName: "arrow.left")
+                                            .resizable()
+                                            .frame(width: 15, height: 15)
+                                            .foregroundStyle(Color.EZNotesBlue)
+                                    }
+                                    .buttonStyle(NoLongPressButtonStyle())
+                                    .padding(12)
+                                    .background(
+                                        Circle()
+                                            .fill(Color.EZNotesBlack)
+                                    )
+                                    .padding([.leading], 20)
+                                    
+                                    Spacer()
+                                }
+                                .frame(maxHeight: prop.isLargerScreen || prop.isMediumScreen ? 50 : 40)
+                                .padding(.top, prop.isLargerScreen || prop.isMediumScreen ? 35 : 10)
+                                .padding(.bottom, 8)
+                                
+                                VStack {
+                                    self.categoryBackground
+                                        .resizable()
+                                        .frame(maxWidth: prop.size.width - 70, maxHeight: (prop.size.height / 2.5) - 120)
+                                        .aspectRatio(1, contentMode: .fill)
+                                        .cornerRadius(15)
+                                }
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .shadow(color: Color.black, radius: 2.5)
+                                )
+                                .padding(2.5)
+                                .padding(.top)
+                            }
+                            .padding(.top, prop.isLargerScreen || prop.isMediumScreen ? 30 : 15)*/
+                        }
+                        .frame(maxHeight: prop.size.height / 2.5)
+                        
+                        VStack {
+                            
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .background(Color.EZNotesBlack)

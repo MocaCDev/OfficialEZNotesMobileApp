@@ -26,6 +26,8 @@ struct UsersProfile: View {
     @Binding public var accountPopupSection: String
     @Binding public var showAccount: Bool
     @Binding public var addMoreTags: Bool
+    @Binding public var accountViewY: CGFloat
+    @Binding public var accountViewOpacity: CGFloat
     
     @State private var addTag: Bool = false
     @State private var addTagButtonRotationDegrees: CGFloat = 0
@@ -165,9 +167,18 @@ struct UsersProfile: View {
                                 }
                             } else {
                                 HStack {
-                                    Button(action: { self.showAccount = false }) {
+                                    Button(action: {
+                                        withAnimation(.smooth(duration: 0.55)) {
+                                            self.accountViewY = UIScreen.main.bounds.height
+                                            self.accountViewOpacity = 0
+                                        }
+                                        
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.53) {
+                                            self.showAccount = false
+                                        }
+                                    }) {
                                         ZStack {
-                                            Image(systemName: "arrow.backward")
+                                            Image(systemName: "multiply")
                                                 .resizable()
                                                 .frame(width: 15, height: 15)
                                                 .foregroundStyle(.white)

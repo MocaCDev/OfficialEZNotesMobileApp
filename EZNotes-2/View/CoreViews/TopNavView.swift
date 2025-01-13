@@ -2418,7 +2418,9 @@ struct TopNavChat: View {
                                                     usersFriends: self.usersFriendCount,
                                                     accountPopupSection: $launchedForUser, /* TODO: Figure something out with this, this is bad. */
                                                     showAccount: $launchUserPreview, /* TODO: Figure something out with this, this is bad. */
-                                                    addMoreTags: $launchUserPreview
+                                                    addMoreTags: $launchUserPreview,
+                                                    accountViewY: $errorPopupYOffset,
+                                                    accountViewOpacity: $errorPopupYOffset
                                                 )
                                                 .padding(.top, 8)
                                                 .padding(.bottom, 20)
