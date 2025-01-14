@@ -221,7 +221,7 @@ struct CategoryInternalsPlusButton: View {
             }
             
             HStack {
-                HStack {
+                /*HStack {
                     Button(action: {
                         self.categoryToDelete = self.categoryName
                         self.categoryAlert = true
@@ -380,7 +380,7 @@ struct CategoryInternalsPlusButton: View {
                 .padding(20)
                 .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
                 .cornerRadius(20)
-                .padding(.horizontal)
+                .padding(.horizontal)*/
                 //.clipShape(RoundedRectangle(cornerRadius: 20))
                 
                 Spacer()

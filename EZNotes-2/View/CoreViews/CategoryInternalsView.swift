@@ -270,6 +270,14 @@ struct CategoryInternalsView: View {
     @FocusState private var editDescriptionTextFocused: Bool
     @State private var generatingNewDescription: Bool = false
     
+    @State private var aiChat: Bool = false
+    @State private var topContentOpacity: CGFloat = 1
+    @State private var topContentHeight: CGFloat = UIScreen.main.bounds.height / 2.5
+    
+    @State private var secondaryNavbarOpacity: CGFloat = 0
+    
+    @State private var blurredImageHeight: CGFloat = UIScreen.main.bounds.height - 100
+    
     var body: some View {
         if !self.launchedSet {
             ZStack {
@@ -1814,13 +1822,116 @@ struct CategoryInternalsView: View {
                     createNewSetByImage: $createNewSetByImage
                 )
                 .padding(.bottom, 20)*/
-                VStack {
+                ZStack {
+                    if self.topContentOpacity == 0 {
+                        VStack {
+                            VStack {
+                                TopNavCategoryView(
+                                    prop: self.prop,
+                                    categoryName: self.categoryName,
+                                    numberOfSets: self.categoryData.categoriesAndSets[self.categoryName]!.count,
+                                    creationDate: self.creationDate,
+                                    categoryBackground: self.categoryBackground,
+                                    categoryBackgroundColor: self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesLightBlack,
+                                    totalSets: self.categoryData.categoriesAndSets[self.categoryName]!.count,
+                                    launchCategory: $launchCategory,
+                                    showTitle: $show_category_internal_title,
+                                    //tempChatHistory: $tempChatHistory,
+                                    //messages: $messages,
+                                    accountInfo: self.accountInfo,
+                                    topBanner: $topBanner,
+                                    images_to_upload: self.images_to_upload
+                                )
+                                .opacity(self.secondaryNavbarOpacity)
+                                .animation(.smooth(duration: 0.5), value: self.secondaryNavbarOpacity)
+                                
+                                if self.settings.displayUserCreatedSetsSeparately {
+                                    HStack {
+                                        ScrollView(.horizontal, showsIndicators: false) {
+                                            HStack {
+                                                Button(action: { self.selectedView = "generated" }) {
+                                                    HStack {
+                                                        Text("Generated")
+                                                            .frame(alignment: .center)
+                                                            .padding([.top, .bottom], 4)
+                                                            .padding([.leading, .trailing], 8.5)
+                                                            .background(
+                                                                RoundedRectangle(cornerRadius: 15)
+                                                                    .fill(self.selectedView == "generated" ? Color.EZNotesBlue : .clear)
+                                                            )
+                                                            .foregroundStyle(self.selectedView == "generated" ? .black : .secondary)
+                                                            .font(Font.custom("Poppins-SemiBold", size: 12))
+                                                    }
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                                
+                                                Button(action: { self.selectedView = "user_created" }) {
+                                                    HStack {
+                                                        Text("User Created")
+                                                            .frame(alignment: .center)
+                                                            .padding([.top, .bottom], 4)
+                                                            .padding([.leading, .trailing], 8.5)
+                                                            .background(
+                                                                RoundedRectangle(cornerRadius: 15)
+                                                                    .fill(self.selectedView == "user_created" ? Color.EZNotesBlue : .clear)
+                                                            )
+                                                            .foregroundStyle(self.selectedView == "user_created" ? .black : .secondary)
+                                                            .font(Font.custom("Poppins-SemiBold", size: 12))
+                                                    }
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 10)
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity, minHeight: 15)
+                                    .padding(.top, 10)
+                                    
+                                    VStack { }.frame(maxWidth: prop.size.width - 20, maxHeight: 1.5).padding(.vertical, 0.5).background(
+                                        MeshGradient(width: 3, height: 3, points: [
+                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                        ], colors: [
+                                            .indigo, .indigo, Color.EZNotesBlue,
+                                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                        ])
+                                    )
+                                    .cornerRadius(20)
+                                    .padding(.top, 5.5)
+                                    //.padding(.bottom, -30)
+                                }
+                            }
+                            .background(Color.EZNotesBlack)
+                            
+                            Spacer()
+                        }
+                        .zIndex(1)
+                    }
+                    
                     ScrollView(.vertical, showsIndicators: false) {
                         ZStack {
-                            self.categoryBackground
-                                .resizable()
-                                .scaledToFill()
-                                .overlay(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+                            //GeometryReader { g in
+                                self.categoryBackground
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(maxWidth: .infinity, maxHeight: prop.size.height / 2) /* MARK: The overall `ZStack` has a height of `prop.size.height / 2.5`, however to ensure the background image spans the entire top of the screen we divide by `2`, not `2.5`. */
+                                    .overlay(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+                                    /*.frame(maxWidth: .infinity, maxHeight: self.blurredImageHeight)
+                                    .scaledToFill()
+                                    .overlay(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+                                    .onAppear {
+                                        print(g.size.height)
+                                        if g.size.height < 288 {
+                                            self.blurredImageHeight = prop.size.height + 100
+                                        }
+                                    }*/
+                            //}
+                            //.frame(maxWidth: .infinity, maxHeight: self.blurredImageHeight)
                             
                             VStack {
                                 Spacer()
@@ -1828,31 +1939,152 @@ struct CategoryInternalsView: View {
                                 VStack {
                                     
                                 }
-                                .frame(maxHeight: 200)
+                                .frame(maxHeight: 240)
                                 
-                                self.categoryBackground
-                                    .resizable()
-                                    .frame(width: 95, height: 95)
-                                    .scaledToFit()
-                                    .cornerRadius(10)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .shadow(color: Color.black, radius: 2.5)
+                                //GeometryReader { geo in
+                                    HStack {
+                                        VStack {
+                                            Button(action: { self.launchCategory = false }) {
+                                                Image(systemName: "arrow.left")
+                                                    .resizable()
+                                                    .frame(width: 15, height: 15)
+                                                    .foregroundStyle(Color.EZNotesBlue)
+                                            }
+                                            .buttonStyle(NoLongPressButtonStyle())
+                                            .padding(12)
+                                            .background(
+                                                Circle()
+                                                    .fill(Color.EZNotesBlack)
+                                            )
+                                            .padding([.leading], 20)
+                                        }
+                                        .frame(maxWidth: 95, alignment: .leading)
+                                        
+                                        Spacer()
+                                        
+                                        self.categoryBackground
+                                            .resizable()
+                                            .frame(width: 95, height: 95)
+                                            .scaledToFit()
+                                            .cornerRadius(10)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 10)
+                                                    .shadow(color: Color.black, radius: 2.5)
+                                            )
+                                            .padding(2.5)
+                                        
+                                        Spacer()
+                                        
+                                        ZStack {
+                                            VStack {
+                                                Button(action: { self.aiChat = true }) {
+                                                    Image("AI-Chat-Icon")
+                                                        .resizable()
+                                                        .frame(
+                                                            width: 30,//prop.size.height / 2.5 > 300 ? 45 : 40,
+                                                            height: 30//prop.size.height / 2.5 > 300 ? 45 : 40
+                                                        )
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                                .popover(isPresented: $aiChat) {
+                                                    AIChat(
+                                                        prop: self.prop,
+                                                        accountInfo: self.accountInfo
+                                                    )
+                                                }
+                                            }
+                                            .frame(
+                                                width: 30,//prop.size.height / 2.5 > 300 ? 45 : 40,
+                                                height: 30//prop.size.height / 2.5 > 300 ? 45 : 40
+                                            )
+                                            .padding(6)
+                                            .background(
+                                                Circle()
+                                                    .fill(Color.EZNotesBlack)
+                                            )
+                                            .padding([.trailing], 20)
+                                        }.frame(maxWidth: 95, alignment: .trailing)
+                                    }
+                                    .frame(height: 95)
+                                    .overlay(
+                                        GeometryReader { geo in
+                                            Color.clear.onChange(of: geo.frame(in: .global).minY) {
+                                                if geo.frame(in: .global).minY < -120 {
+                                                    withAnimation(.smooth(duration: 0.5)) {
+                                                        self.topContentOpacity = 0
+                                                        self.topContentHeight = 0
+                                                        
+                                                        self.secondaryNavbarOpacity = 1
+                                                    }
+                                                } else {
+                                                    if self.topContentOpacity == 0 && geo.frame(in: .global).minY > -84 {
+                                                        withAnimation(.smooth(duration: 0.5)) {
+                                                            self.secondaryNavbarOpacity = 0
+                                                            
+                                                            self.topContentOpacity = 1
+                                                            self.topContentHeight = UIScreen.main.bounds.height / 2.5
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     )
-                                    .padding(2.5)
+                                    /*.onChange(of: geo.frame(in: .global).minY) {
+                                        
+                                        if geo.frame(in: .global).minY < -120 {
+                                            withAnimation(.smooth(duration: 0.5)) {
+                                                self.topContentOpacity = 0
+                                                self.topContentHeight = 0
+                                                
+                                                self.secondaryNavbarOpacity = 1
+                                            }
+                                        } else {
+                                            if self.topContentOpacity == 0 && geo.frame(in: .global).minY > -84 {
+                                                withAnimation(.smooth(duration: 0.5)) {
+                                                    self.secondaryNavbarOpacity = 0
+                                                    
+                                                    self.topContentOpacity = 1
+                                                    self.topContentHeight = UIScreen.main.bounds.height / 2.5
+                                                }
+                                            }
+                                        }
+                                    }*/
+                                //}
+                                //.frame(maxHeight: 125)
                                 
                                 Text(self.categoryName)
                                     .frame(maxWidth: prop.size.width - 40, alignment: .center)
                                     .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen || prop.isMediumScreen ? 30 : 26))
                                     .foregroundStyle(.white)
                                     .multilineTextAlignment(.center)
+                                    .lineLimit(1...4)
                                     .minimumScaleFactor(0.8)
+                                
+                                if self.topBanner.keys.contains(self.categoryName) && self.topBanner[self.categoryName]! != .None {
+                                    switch(self.topBanner[self.categoryName]!) {
+                                    case .LoadingUploads:
+                                        HStack {
+                                            Text("Uploading \(self.images_to_upload.images_to_upload.count) \(self.images_to_upload.images_to_upload.count > 1 ? "images" : "image")...")
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: prop.isLargerScreen ? 16 : 13))
+                                            
+                                            ProgressView()
+                                                .controlSize(.mini)
+                                                .tint(Color.EZNotesBlue)
+                                        }
+                                        .frame(maxWidth: prop.size.width - 120, alignment: .center)
+                                        .padding(.top, -16)
+                                        .padding(.bottom, -6)
+                                        //.padding(.top, prop.isLargerScreen || prop.isMediumScreen ? 25 : 10)
+                                    default: VStack { }.onAppear { self.topBanner[self.categoryName] = .None }
+                                    }
+                                }
                                 
                                 HStack {
                                     Text("\(self.categoryData.categoriesAndSets[self.categoryName]!.count) \(self.categoryData.categoriesAndSets[self.categoryName]!.count > 1 ? "Sets" : self.categoryData.categoriesAndSets[self.categoryName]!.count == 0 ? "Sets" : "Set")")
                                         .frame(alignment: .leading)
                                         .foregroundStyle(.white)
-                                        .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen ? 12.5 : 10.5)
+                                        .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen || prop.isMediumScreen ? 12.5 : 10.5)
                                     
                                     Divider()
                                         .background(.white)
@@ -1860,21 +2092,21 @@ struct CategoryInternalsView: View {
                                     Text("Created \(self.creationDate)")
                                         .frame(alignment: .trailing)
                                         .foregroundStyle(.white)
-                                        .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen ? 12.5 : 10.5)
+                                        .setFontSizeAndWeight(weight: .thin, size: prop.isLargerScreen || prop.isMediumScreen ? 12.5 : 10.5)
                                 }
                                 .frame(maxHeight: 13)
-                                .padding(.vertical)
+                                .padding(.bottom, prop.isLargerScreen || prop.isMediumScreen ? 16 : 8)
                                 
                                 HStack {
                                     Button(action: {
-                                        //self.categoryToDelete = self.categoryName
-                                        //self.categoryAlert = true
-                                        //self.alertType = .DeleteCategoryAlert
+                                        self.categoryToDelete = self.categoryName
+                                        self.categoryAlert = true
+                                        self.alertType = .DeleteCategoryAlert
                                     }) {
                                         ZStack {
                                             Image(systemName: "trash")
                                                 .resizable()
-                                                .frame(width: 20, height: 20)
+                                                .frame(width: prop.isLargerScreen || prop.isMediumScreen ? 20 : 17, height: prop.isLargerScreen || prop.isMediumScreen ? 20 : 17)
                                                 .foregroundStyle(.red)
                                         }
                                         .frame(alignment: .leading)
@@ -1882,7 +2114,7 @@ struct CategoryInternalsView: View {
                                     }
                                     .buttonStyle(NoLongPressButtonStyle())
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    /*.alert("Are you sure?", isPresented: $categoryAlert) {
+                                    .alert("Are you sure?", isPresented: $categoryAlert) {
                                         Button(action: {
                                             self.launchCategory = false
                                             
@@ -1930,10 +2162,10 @@ struct CategoryInternalsView: View {
                                         Text(self.alertType == .DeleteCategoryAlert
                                              ? "Once deleted, the category **\"\(self.categoryToDelete)\"** will be removed from cloud or local storage and cannot be recovered."
                                              : "") /* TODO: Finish this. There will presumably be more alert types. */
-                                    }*/
+                                    }
                                     
                                     Button(action: {
-                                        /*if self.categoryData.categoryDescriptions.keys.contains(self.categoryName) {
+                                        if self.categoryData.categoryDescriptions.keys.contains(self.categoryName) {
                                             self.newCategoryDescription = self.categoryData.categoryDescriptions[self.categoryName]!
                                         } else { self.newCategoryDescription = "" }
                                         
@@ -1947,12 +2179,12 @@ struct CategoryInternalsView: View {
                                         
                                         self.categoryBeingEdited = self.categoryName
                                         //self.categoryBeingEditedImage = self.categoryData.categoryImages[self.categoryName]!
-                                        self.editCategoryDetails = true*/
+                                        self.editCategoryDetails = true
                                     }) {
                                         ZStack {
                                             Image(systemName: "pencil")
                                                 .resizable()
-                                                .frame(width: 20, height: 20)
+                                                .frame(width: prop.isLargerScreen || prop.isMediumScreen ? 20 : 17, height: prop.isLargerScreen || prop.isMediumScreen ? 20 : 17)
                                                 .foregroundStyle(Color.EZNotesBlue)
                                         }
                                         .frame(alignment: .leading)
@@ -1961,7 +2193,7 @@ struct CategoryInternalsView: View {
                                     .buttonStyle(NoLongPressButtonStyle())
                                     .frame(maxWidth: .infinity, alignment: .center)
                                     //.padding(.trailing, 6)
-                                    /*.popover(isPresented: $editCategoryDetails) {
+                                    .popover(isPresented: $editCategoryDetails) {
                                         EditCategory(
                                             prop: self.prop,
                                             categoryBeingEditedImage: self.categoryBackground,
@@ -1975,7 +2207,7 @@ struct CategoryInternalsView: View {
                                             self.categoryBackgroundColor = self.categoryData.categoryCustomColors[self.categoryName]
                                             self.categoryTitleColor = self.categoryData.categoryCustomTextColors[self.categoryName]
                                         }
-                                    }*/
+                                    }
                                     
                                     ShareLink(
                                         item: self.categoryBackground,
@@ -1988,16 +2220,18 @@ struct CategoryInternalsView: View {
                                         preview: SharePreview(self.categoryName, image: self.categoryBackground))
                                     {//(item: URL(string: "https://apps.apple.com/us/app/light-speedometer/id6447198696")!) {
                                         Label("", systemImage: "square.and.arrow.up")
+                                            .font(prop.isLargerScreen || prop.isMediumScreen ? .title2 : .title3)
                                             .foregroundStyle(Color.EZNotesBlue)
                                     }
                                     .frame(maxWidth: .infinity, alignment: .center) /* MARK: `maxWidth` is in this as it's the last element in the HStack, thus pushing all the other content over. */
+                                    .padding(.bottom, 4)
                                     //.padding(.leading, 6)
                                     
                                     Button(action: { }) {
                                         ZStack {
                                             Image(systemName: "paperplane")
                                                 .resizable()
-                                                .frame(width: 20, height: 20)
+                                                .frame(width: prop.isLargerScreen || prop.isMediumScreen ? 20 : 18, height: prop.isLargerScreen || prop.isMediumScreen ? 20 : 18)
                                                 .foregroundStyle(Color.EZNotesBlue)
                                         }
                                         .frame(alignment: .leading)
@@ -2011,7 +2245,7 @@ struct CategoryInternalsView: View {
                                         ZStack {
                                             Image(systemName: "info.square")
                                                 .resizable()
-                                                .frame(width: 20, height: 20)
+                                                .frame(width: prop.isLargerScreen || prop.isMediumScreen ? 20 : 18, height: prop.isLargerScreen || prop.isMediumScreen ? 20 : 18)
                                                 .foregroundStyle(Color.EZNotesBlue)
                                         }
                                         .frame(alignment: .leading)
@@ -2021,13 +2255,15 @@ struct CategoryInternalsView: View {
                                     .frame(maxWidth: .infinity, alignment: .trailing)
                                 }
                                 .frame(maxWidth: prop.size.width - 120)
-                                .padding(.top)
+                                .padding(.top, prop.isLargerScreen || prop.isMediumScreen
+                                         ? self.topBanner.keys.contains(self.categoryName) && self.topBanner[self.categoryName]! != .None ? 0 : 16
+                                         : 0)
                                 .padding(.vertical)
                                 
                                 Spacer()
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            
+                            .padding(.top, 30)
                             
                             /*VStack {
                                 HStack {
@@ -2067,14 +2303,175 @@ struct CategoryInternalsView: View {
                             }
                             .padding(.top, prop.isLargerScreen || prop.isMediumScreen ? 30 : 15)*/
                         }
-                        .frame(maxHeight: prop.size.height / 2.5)
+                        .frame(maxHeight: self.topContentHeight)//prop.size.height / 2.5)
+                        .opacity(self.topContentOpacity)
+                        .animation(.smooth(duration: 0.5), value: self.topContentOpacity)
+                        .padding(.bottom, 20)//prop.isLargerScreen || prop.isMediumScreen ? 30 : 28)
                         
                         VStack {
+                            if self.settings.displayUserCreatedSetsSeparately {
+                                if self.topContentOpacity == 1 {
+                                    HStack {
+                                        ScrollView(.horizontal, showsIndicators: false) {
+                                            HStack {
+                                                Button(action: { self.selectedView = "generated" }) {
+                                                    HStack {
+                                                        Text("Generated")
+                                                            .frame(alignment: .center)
+                                                            .padding([.top, .bottom], 4)
+                                                            .padding([.leading, .trailing], 8.5)
+                                                            .background(
+                                                                RoundedRectangle(cornerRadius: 15)
+                                                                    .fill(self.selectedView == "generated" ? Color.EZNotesBlue : .clear)
+                                                            )
+                                                            .foregroundStyle(self.selectedView == "generated" ? .black : .secondary)
+                                                            .font(Font.custom("Poppins-SemiBold", size: 12))
+                                                    }
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                                
+                                                Button(action: { self.selectedView = "user_created" }) {
+                                                    HStack {
+                                                        Text("User Created")
+                                                            .frame(alignment: .center)
+                                                            .padding([.top, .bottom], 4)
+                                                            .padding([.leading, .trailing], 8.5)
+                                                            .background(
+                                                                RoundedRectangle(cornerRadius: 15)
+                                                                    .fill(self.selectedView == "user_created" ? Color.EZNotesBlue : .clear)
+                                                            )
+                                                            .foregroundStyle(self.selectedView == "user_created" ? .black : .secondary)
+                                                            .font(Font.custom("Poppins-SemiBold", size: 12))
+                                                    }
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.leading, 10)
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity, minHeight: 15)
+                                    .padding(.top, self.topContentOpacity == 1 ? -15 : -5)
+                                    
+                                    VStack { }.frame(maxWidth: prop.size.width - 20, maxHeight: 1.5).padding(.vertical, 0.5).background(
+                                        MeshGradient(width: 3, height: 3, points: [
+                                            .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                            .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                            .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                        ], colors: [
+                                            .indigo, .indigo, Color.EZNotesBlue,
+                                            Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                            .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                        ])
+                                    )
+                                    .cornerRadius(20)
+                                    .padding(.top, 5.5)
+                                    //.padding(.bottom, -30)
+                                }
+                            }
                             
+                            if self.settings.displayUserCreatedSetsSeparately {
+                                switch(self.selectedView) {
+                                case "generated":
+                                    if self.longerSetNames.isEmpty && self.shorterSetNames.isEmpty {
+                                        Text("No AI-generated sets or notes in this category.")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                            .minimumScaleFactor(0.5)
+                                            .multilineTextAlignment(.center)
+                                    } else {
+                                        ShowLongAndShortNameSets(
+                                            prop: self.prop,
+                                            categoryName: self.categoryName,
+                                            longerSetNames: self.longerSetNames,
+                                            shorterSetNames: self.shorterSetNames,
+                                            categoryTitleColor: self.categoryTitleColor,
+                                            categoryBackgroundColor: self.categoryBackgroundColor,
+                                            setName: $setName,
+                                            notesContent: $notesContent,
+                                            originalContet: $originalContet,
+                                            launchedSet: $launchedSet
+                                        )
+                                        .frame(maxWidth: prop.size.width - 30, maxHeight: .infinity)
+                                        .padding(.top, 10)
+                                    }
+                                case "user_created":
+                                    if self.userCreatedLongSetNames.isEmpty && self.userCreatedShortSetNames.isEmpty {
+                                        Text("No user created sets or notes in this category.")
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                            .foregroundStyle(.white)
+                                            .font(Font.custom("Poppins-Regular", size: 16))
+                                            .minimumScaleFactor(0.5)
+                                            .multilineTextAlignment(.center)
+                                    } else {
+                                        ShowLongAndShortNameSets(
+                                            prop: self.prop,
+                                            categoryName: self.categoryName,
+                                            longerSetNames: self.userCreatedLongSetNames,
+                                            shorterSetNames: self.userCreatedShortSetNames,
+                                            categoryTitleColor: self.categoryTitleColor,
+                                            categoryBackgroundColor: self.categoryBackgroundColor,
+                                            setName: $setName,
+                                            notesContent: $notesContent,
+                                            originalContet: $originalContet,
+                                            launchedSet: $launchedSet
+                                        )
+                                        .frame(maxWidth: prop.size.width - 30, maxHeight: .infinity)
+                                        .padding(.top, 10)
+                                    }
+                                default: VStack { }.onAppear { self.selectedView = "generated" }
+                                }
+                            } else {
+                                if self.categoryData.setAndNotes[self.categoryName]!.isEmpty {
+                                    Text("No sets or notes in this category.")
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                        .foregroundStyle(.white)
+                                        .font(Font.custom("Poppins-Regular", size: 16))
+                                        .minimumScaleFactor(0.5)
+                                        .multilineTextAlignment(.center)
+                                } else {
+                                    ShowLongAndShortNameSets(
+                                        prop: self.prop,
+                                        categoryName: self.categoryName,
+                                        longerSetNames: self.longerSetNames,
+                                        shorterSetNames: self.shorterSetNames,
+                                        categoryTitleColor: self.categoryTitleColor,
+                                        categoryBackgroundColor: self.categoryBackgroundColor,
+                                        setName: $setName,
+                                        notesContent: $notesContent,
+                                        originalContet: $originalContet,
+                                        launchedSet: $launchedSet
+                                    )
+                                    .frame(maxWidth: prop.size.width - 30, maxHeight: .infinity)
+                                    .padding(.top, 10)
+                                }
+                            }
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .padding(.top, self.topContentOpacity == 1 ? 0 :
+                                    prop.isLargerScreen ? 160 : prop.isMediumScreen ? 145 : 135)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .zIndex(1)
+                    
+                    CategoryInternalsPlusButton(
+                        prop: self.prop,
+                        categoryBackground: self.categoryBackground,
+                        categoryName: $categoryName,
+                        categoryDescription: $categoryDescription,
+                        launchCategory: $launchCategory,
+                        categoryBackgroundColor: $categoryBackgroundColor,
+                        categoryTitleColor: $categoryTitleColor,
+                        alertType: $alertType,
+                        showDescription: $showDescription,
+                        testPopup: $testPopup,
+                        createNewSet: $createNewSet,
+                        createNewSetByImage: $createNewSetByImage
+                    )
+                    .padding(.bottom, 20)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -2111,13 +2508,14 @@ struct CategoryInternalsView: View {
                 }
                 
                 for setData in self.categoryData.setAndNotes[self.categoryName]! {
-                    if setData.first!.key.count >= 15 && !self.userCreatedLongSetNames.contains(setData.first!.key) { self.longerSetNames.append(setData.first!.key) }
+                    if setData.first!.key.count >= 15 { self.longerSetNames.append(setData.first!.key) }
                     else {
-                        if !self.userCreatedShortSetNames.contains(setData.first!.key) { self.shorterSetNames.append(setData.first!.key) }
+                        self.shorterSetNames.append(setData.first!.key)
                     }
                     //if setData.first!.key.count >= 15 { self.longerSetNames.append(setData.first!.key) }
                     //else { self.shorterSetNames.append(setData.first!.key) }
                 }
+                
                 
                 /* TODO: Is this needed? Keep for now just in case. */
                 withAnimation(.easeIn(duration: 0.65)) {
