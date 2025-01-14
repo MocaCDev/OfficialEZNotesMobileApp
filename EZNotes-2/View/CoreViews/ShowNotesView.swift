@@ -696,6 +696,12 @@ struct ShowNotes: View {
         .indigo, Color.EZNotesGreen, Color.EZNotesBlue
     ])
     
+    @State private var studyTabTitleSize: CGFloat = 0
+    @State private var primaryTabTitleOpacity: CGFloat = 1
+    @State private var primaryTabTitleHeight: CGFloat = 20
+    @State private var secondaryTabTitleOpacity: CGFloat = 0
+    @State private var secondaryTabTitleHeight: CGFloat = 0
+    
     var body: some View {
         ZStack {
             VStack {
@@ -841,9 +847,92 @@ struct ShowNotes: View {
                     )
                 case "study":
                     VStack {
+                        HStack {
+                            Text("How Would You Like To Study?")
+                                .frame(maxWidth: .infinity, maxHeight: self.secondaryTabTitleHeight, alignment: .leading)
+                                .font(.system(size: self.studyTabTitleSize, weight: .bold, design: .rounded))
+                                .lineLimit(1...3)
+                                .multilineTextAlignment(.leading)
+                                .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
+                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                ], colors: [
+                                    .indigo, .indigo, Color.EZNotesBlue,
+                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                ]))
+                                .padding(.top)
+                                .opacity(self.secondaryTabTitleOpacity)
+                                .animation(.smooth(duration: 0.5), value: self.secondaryTabTitleOpacity)
+                                //.animation(.smooth(duration: 0.5), value: self.secondaryTabTitleHeight)
+                                //.animation(.smooth(duration: 0.5), value: self.studyTabTitleSize)
+                            
+                            if self.secondaryTabTitleOpacity == 1 { Spacer() }
+                        }
+                        .frame(maxWidth: prop.size.width - 40, minHeight: 0)
+                        .lineLimit(1...3)
                         
+                        ScrollView(.vertical, showsIndicators: false) {
+                            Text("How Would You Like To Study?")
+                                .frame(maxWidth: prop.size.width - 70, minHeight: self.primaryTabTitleHeight, alignment: .center)
+                                .font(.system(size: prop.isLargerScreen ? 45 : 40, weight: .bold, design: .rounded))
+                                .multilineTextAlignment(.center)
+                                .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
+                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
+                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
+                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
+                                ], colors: [
+                                    .indigo, .indigo, Color.EZNotesBlue,
+                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
+                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
+                                ]))
+                                .padding(.top, self.primaryTabTitleOpacity == 1 ? 16 : 0)
+                                .opacity(self.primaryTabTitleOpacity)
+                                .animation(.smooth(duration: 0.5), value: self.primaryTabTitleOpacity)
+                                .animation(.smooth(duration: 0.5), value: self.primaryTabTitleHeight)
+                                .overlay(
+                                    GeometryReader { geo in
+                                        Color.clear.onChange(of: geo.frame(in: .global).minY) {
+                                            if geo.frame(in: .global).minY < 131 {
+                                                withAnimation(.smooth(duration: 0.5)) {
+                                                    self.primaryTabTitleOpacity = 0
+                                                    self.primaryTabTitleHeight = 0
+                                                    
+                                                    self.secondaryTabTitleOpacity = 1
+                                                    self.secondaryTabTitleHeight = 20
+                                                    
+                                                    if prop.isLargerScreen || prop.isMediumScreen { self.studyTabTitleSize = 25 }
+                                                    else { self.studyTabTitleSize = 20 }
+                                                }
+                                            } else {
+                                                if self.primaryTabTitleOpacity == 0 && geo.frame(in: .global).minY > 240 {
+                                                    withAnimation(.smooth(duration: 0.5)) {
+                                                        self.secondaryTabTitleOpacity = 0
+                                                        //self.secondaryTabTitleHeight = 0
+                                                        
+                                                        self.primaryTabTitleHeight = 20
+                                                        self.primaryTabTitleOpacity = 1
+                                                    }
+                                                    
+                                                    //self.secondaryTabTitleHeight = 0
+                                                    //self.studyTabTitleSize = 0 /* MARK: We don't want to animate this, it looks ugly if we do. */
+                                                }
+                                                print(geo.frame(in: .global).minY)
+                                            }
+                                        }
+                                    }
+                                )
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        
+                        Spacer()
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onAppear {
+                        if prop.isLargerScreen || prop.isMediumScreen { self.studyTabTitleSize = 45 }
+                        else { self.studyTabTitleSize = 40 }
+                    }
                 case "change_font":
                     VStack {
                         ScrollView(.vertical, showsIndicators: false) {

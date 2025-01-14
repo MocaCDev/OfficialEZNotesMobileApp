@@ -1393,7 +1393,7 @@ struct TopNavCategoryView: View {
                     VStack {
                         Text(self.categoryName)
                             .frame(maxWidth: .infinity, alignment: .center)
-                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? 22 : 18))
+                            .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen ? self.categoryName.count < 22 ? 22 : 18 : self.categoryName.count < 22 ? 18 : 16))
                             .foregroundStyle(.white)
                             .lineLimit(1...2)
                             .multilineTextAlignment(.center)
@@ -1416,34 +1416,37 @@ struct TopNavCategoryView: View {
                         .frame(maxHeight: 13)
                         .padding(.top, -8)
                     }
-                    .padding(.top, prop.isLargerScreen ? 35 : prop.isMediumScreen ? 25 : 10)
+                    .padding(.top, prop.isLargerScreen ? self.categoryName.count < 22 ? 35 : 38 : prop.isMediumScreen ? 25 : 10)
                     .padding(.horizontal, 8)
                 }
                 
                 //Spacer()
                 
-                ZStack {
-                    Button(action: { self.aiChat = true }) {
-                        Image("AI-Chat-Icon")
-                            .resizable()
-                            .frame(
-                                width: 30,//prop.size.height / 2.5 > 300 ? 45 : 40,
-                                height: 30//prop.size.height / 2.5 > 300 ? 45 : 40
-                            )
+                VStack {
+                    ZStack {
+                        Button(action: { self.aiChat = true }) {
+                            Image("AI-Chat-Icon")
+                                .resizable()
+                                .frame(
+                                    width: 30,//prop.size.height / 2.5 > 300 ? 45 : 40,
+                                    height: 30//prop.size.height / 2.5 > 300 ? 45 : 40
+                                )
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
                     }
-                    .buttonStyle(NoLongPressButtonStyle())
+                    .frame(
+                        width: 30,//prop.size.height / 2.5 > 300 ? 45 : 40,
+                        height: 30//prop.size.height / 2.5 > 300 ? 45 : 40
+                    )
+                    .padding(6)
+                    .background(
+                        Circle()
+                            .fill(Color.EZNotesBlack)
+                    )
+                    .padding([.trailing], 20)
+                    .padding(.top, prop.isLargerScreen || prop.isMediumScreen ? 25 : 10)//-10)
                 }
-                .frame(
-                    width: 30,//prop.size.height / 2.5 > 300 ? 45 : 40,
-                    height: 30//prop.size.height / 2.5 > 300 ? 45 : 40
-                )
-                .padding(6)
-                .background(
-                    Circle()
-                        .fill(Color.EZNotesBlack)
-                )
-                .padding([.trailing], 20)
-                .padding(.top, prop.isLargerScreen || prop.isMediumScreen ? 25 : 10)//-10)
+                .frame(maxWidth: 50)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
