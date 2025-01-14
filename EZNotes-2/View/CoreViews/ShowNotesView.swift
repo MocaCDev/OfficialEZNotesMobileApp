@@ -573,6 +573,8 @@ struct EditableNotes: View {
 }
 
 struct ShowNotes: View {
+    @EnvironmentObject private var accountInfo: AccountDetails
+    
     var prop: Properties
     var categoryName: String
     var setName: String
@@ -696,11 +698,23 @@ struct ShowNotes: View {
         .indigo, Color.EZNotesGreen, Color.EZNotesBlue
     ])
     
+    /* MARK: `study` view variables. These variables are also used even if the `study` view is `Visualization`, as it will be with users using the app for purposes other than school. */
+    @State private var showStudyTabTitleInScrollView: Bool = true
     @State private var studyTabTitleSize: CGFloat = 0
     @State private var primaryTabTitleOpacity: CGFloat = 1
     @State private var primaryTabTitleHeight: CGFloat = 20
     @State private var secondaryTabTitleOpacity: CGFloat = 0
     @State private var secondaryTabTitleHeight: CGFloat = 0
+    
+    @State private var startBackupGeoReader: Bool = false
+    
+    @State private var viewingBottomCard: Bool = false
+    @State private var flashCardsTopCardZIndex: Double = 1
+    @State private var flashCardsTopCardY: CGFloat = 0
+    @State private var flashCardsTopCardX: CGFloat = 0
+    @State private var flashCardsTopCardDegrees: Double = 0
+    @State private var flashCardsBottomCardZIndex: Double = 0
+    @State private var flashCardsBottomCardHeight: CGFloat = 0
     
     var body: some View {
         ZStack {
@@ -758,7 +772,9 @@ struct ShowNotes: View {
                             
                             Button(action: { self.showNotesSection = "study" }) {
                                 HStack {
-                                    Text("Study")
+                                    Text(self.accountInfo.usage == "school"
+                                         ? "Study"
+                                         : "Visualize")
                                         .frame(alignment: .center)
                                         .padding([.top, .bottom], 4)
                                         .padding([.leading, .trailing], 8.5)
@@ -848,9 +864,11 @@ struct ShowNotes: View {
                 case "study":
                     VStack {
                         HStack {
-                            Text("How Would You Like To Study?")
+                            Text(self.accountInfo.usage == "school"
+                                 ? "How Would You Like To Study?"
+                                 : "How Would You Like To Visualize?")
                                 .frame(maxWidth: .infinity, maxHeight: self.secondaryTabTitleHeight, alignment: .leading)
-                                .font(.system(size: self.studyTabTitleSize, weight: .bold, design: .rounded))
+                                .font(.system(size: self.studyTabTitleSize, weight: .medium, design: .rounded))
                                 .lineLimit(1...3)
                                 .multilineTextAlignment(.leading)
                                 .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
@@ -870,12 +888,15 @@ struct ShowNotes: View {
                             
                             if self.secondaryTabTitleOpacity == 1 { Spacer() }
                         }
-                        .frame(maxWidth: prop.size.width - 40, minHeight: 0)
+                        .frame(maxWidth: prop.size.width - 40)
                         .lineLimit(1...3)
                         
                         ScrollView(.vertical, showsIndicators: false) {
-                            Text("How Would You Like To Study?")
-                                .frame(maxWidth: prop.size.width - 70, minHeight: self.primaryTabTitleHeight, alignment: .center)
+                            if self.showStudyTabTitleInScrollView {
+                                Text(self.accountInfo.usage == "school"
+                                     ? "How Would You Like To Study?"
+                                     : "How Would You Like To Visualize?")
+                                .frame(maxWidth: prop.size.width - 70, alignment: .center)
                                 .font(.system(size: prop.isLargerScreen ? 45 : 40, weight: .bold, design: .rounded))
                                 .multilineTextAlignment(.center)
                                 .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
@@ -897,7 +918,7 @@ struct ShowNotes: View {
                                             if geo.frame(in: .global).minY < 131 {
                                                 withAnimation(.smooth(duration: 0.5)) {
                                                     self.primaryTabTitleOpacity = 0
-                                                    self.primaryTabTitleHeight = 0
+                                                    //self.primaryTabTitleHeight = 0
                                                     
                                                     self.secondaryTabTitleOpacity = 1
                                                     self.secondaryTabTitleHeight = 20
@@ -905,8 +926,16 @@ struct ShowNotes: View {
                                                     if prop.isLargerScreen || prop.isMediumScreen { self.studyTabTitleSize = 25 }
                                                     else { self.studyTabTitleSize = 20 }
                                                 }
+                                                
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                                    self.showStudyTabTitleInScrollView = false
+                                                }
+                                                
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                                    self.startBackupGeoReader = true
+                                                }
                                             } else {
-                                                if self.primaryTabTitleOpacity == 0 && geo.frame(in: .global).minY > 240 {
+                                                /*if self.primaryTabTitleOpacity == 0 && geo.frame(in: .global).minY > 240 {
                                                     withAnimation(.smooth(duration: 0.5)) {
                                                         self.secondaryTabTitleOpacity = 0
                                                         //self.secondaryTabTitleHeight = 0
@@ -918,13 +947,349 @@ struct ShowNotes: View {
                                                     //self.secondaryTabTitleHeight = 0
                                                     //self.studyTabTitleSize = 0 /* MARK: We don't want to animate this, it looks ugly if we do. */
                                                 }
-                                                print(geo.frame(in: .global).minY)
+                                                print(geo.frame(in: .global).minY)*/
                                             }
                                         }
                                     }
                                 )
+                            }
+                            
+                            VStack {
+                                Text("Presentations")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen || prop.isMediumScreen ? 18 : 16))
+                                    .foregroundStyle(Color.EZNotesLightBlack)
+                                
+                                HStack {
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(.black)
+                                        .frame(maxWidth: .infinity)
+                                        .scaledToFit()
+                                        .overlay(
+                                            ZStack {
+                                                VStack {
+                                                    Spacer()
+                                                    
+                                                    VStack {
+                                                    }
+                                                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                                                    .background(
+                                                        Image("DefaultThemeBg2")
+                                                            .resizable()
+                                                            .scaledToFill()
+                                                    )
+                                                    .cornerRadius(15, corners: [.bottomLeft, .bottomRight])
+                                                }
+                                                
+                                                VStack {
+                                                    Spacer()
+                                                    
+                                                    Text("Flash-Cards")
+                                                        .frame(maxWidth: .infinity)
+                                                        .font(Font.custom("Poppins-Regular", size: 22))
+                                                        .foregroundStyle(.white)
+                                                    
+                                                    Spacer()
+                                                }
+                                            }
+                                        )
+                                    
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(.black)
+                                        .frame(maxWidth: .infinity)
+                                        .scaledToFit()
+                                        .overlay(
+                                            ZStack {
+                                                VStack {
+                                                    Spacer()
+                                                    
+                                                    VStack {
+                                                    }
+                                                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                                                    .background(
+                                                        Image("DefaultThemeBg2")
+                                                            .resizable()
+                                                            .scaledToFill()
+                                                    )
+                                                    .cornerRadius(15, corners: [.bottomLeft, .bottomRight])
+                                                }
+                                                
+                                                VStack {
+                                                    Spacer()
+                                                    
+                                                    Text("Slideshow")
+                                                        .frame(maxWidth: .infinity)
+                                                        .font(Font.custom("Poppins-Regular", size: 22))
+                                                        .foregroundStyle(.white)
+                                                    
+                                                    Spacer()
+                                                }
+                                            }
+                                        )
+                                    /*Image("FlashCardPreview")
+                                        .resizable()
+                                        .frame(width: prop.size.width / 2.5, height: prop.size.width / 2.5)
+                                        .scaledToFit()
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .shadow(color: Color.black, radius: 2.5)
+                                        )
+                                        .cornerRadius(15)
+                                        .padding(2.5)
+                                    
+                                    Image("FlashCardPreview")
+                                        .resizable()
+                                        .frame(width: prop.size.width / 2, height: prop.size.width / 2)
+                                        .scaledToFit()
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 15)
+                                                .shadow(color: Color.black, radius: 2.5)
+                                        )
+                                        .cornerRadius(15)
+                                        .padding(2.5)*/
+                                    
+                                }
+                                .padding(.bottom)
+                                
+                                Text("Test Yourself")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen || prop.isMediumScreen ? 18 : 16))
+                                    .foregroundStyle(Color.EZNotesLightBlack)
+                                
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(.black)
+                                    .frame(maxWidth: .infinity, maxHeight: 250)
+                                    .scaledToFit()
+                                    .overlay(
+                                        ZStack {
+                                            VStack {
+                                                Spacer()
+                                                
+                                                /*VStack {
+                                                }
+                                                .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                                                .background(
+                                                    Image("DefaultThemeBg2")
+                                                        .resizable()
+                                                        .scaledToFill()
+                                                )
+                                                .cornerRadius(15, corners: [.bottomLeft, .bottomRight])*/
+                                                HStack {
+                                                    Spacer()
+                                                    
+                                                    Circle()
+                                                        .fill(Color.EZNotesOrange)
+                                                        .frame(width: 90, height: 90)
+                                                        .shadow(color: Color.EZNotesOrange, radius: 6.5)
+                                                        .padding(4.5)
+                                                        .offset(x: 20, y: 20)
+                                                }
+                                            }
+                                            
+                                            VStack {
+                                                /*VStack {
+                                                }
+                                                .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                                                .background(
+                                                    Image("DefaultThemeBg2")
+                                                        .resizable()
+                                                        .scaledToFill()
+                                                )
+                                                .cornerRadius(15, corners: [.bottomLeft, .bottomRight])*/
+                                                HStack {
+                                                    Circle()
+                                                        .fill(Color.EZNotesBlue)
+                                                        .frame(width: 90, height: 90)
+                                                        .shadow(color: Color.EZNotesBlue, radius: 7.5)
+                                                        .padding(4.5)
+                                                        .offset(x: -20, y: -20)
+                                                    
+                                                    Spacer()
+                                                }
+                                                
+                                                Spacer()
+                                            }
+                                            
+                                            VStack {
+                                                Spacer()
+                                                
+                                                Text("Take A Quiz/Test")
+                                                    .frame(maxWidth: .infinity)
+                                                    .font(Font.custom("Poppins-Regular", size: 22))
+                                                    .foregroundStyle(.white)
+                                                
+                                                Text("Select between multiple choice, written answer, or a mix of both to test your knowledge over **\(self.categoryName)**")
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                    .multilineTextAlignment(.center)
+                                                    .font(Font.custom("Poppins-Light", size: 14))
+                                                    .foregroundStyle(.white)
+                                                    .padding(.horizontal)
+                                                
+                                                Spacer()
+                                            }
+                                        }
+                                            .cornerRadius(15)
+                                    )
+                                    .padding(.bottom, 20) /* MARK: Ensure space between end of scrollview and bottom of screen. */
+                            }
+                            .frame(maxWidth: prop.size.width - 40, maxHeight: .infinity)
+                            .overlay(
+                                GeometryReader { geo in
+                                    Color.clear.onChange(of: geo.frame(in: .global).minY) {
+                                        if self.startBackupGeoReader {
+                                            if self.primaryTabTitleOpacity == 0 && geo.frame(in: .global).minY > 290 {
+                                                self.showStudyTabTitleInScrollView = true
+                                                
+                                                withAnimation(.smooth(duration: 0.5)) {
+                                                    self.secondaryTabTitleOpacity = 0
+                                                    //self.secondaryTabTitleHeight = 0
+                                                    
+                                                    self.primaryTabTitleHeight = 20
+                                                    self.primaryTabTitleOpacity = 1
+                                                }
+                                                
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                                    self.startBackupGeoReader = false
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            )
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        /*Spacer()
+                        
+                        ZStack {
+                            if !self.viewingBottomCard {
+                                VStack {
+                                    Text("What do you call a mother with no legs?")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .font(.system(size: 24))
+                                        .multilineTextAlignment(.center)
+                                        .foregroundStyle(.white)
+                                }
+                                .frame(maxWidth: prop.size.width - 80, maxHeight: 250)
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(.black)
+                                        .shadow(color: Color.EZNotesOrange, radius: 3.5)
+                                )
+                                .padding(2.5)
+                                .cornerRadius(15)
+                                /*.offset(x: -60, y: -220)
+                                 .rotationEffect(Angle(degrees: -25))//(Angle(degrees: self.flashCardsTopCardDegrees))
+                                 .zIndex(self.flashCardsTopCardZIndex)*/
+                                .onTapGesture {
+                                    self.viewingBottomCard = true
+                                    /*if !self.viewingBottomCard {
+                                     self.viewingBottomCard = true
+                                     
+                                     withAnimation(.smooth(duration: 0.5)) {
+                                     self.flashCardsBottomCardHeight = 250
+                                     }
+                                     } else {
+                                     self.viewingBottomCard = false
+                                     
+                                     withAnimation(.smooth(duration: 0.5)) {
+                                     self.flashCardsBottomCardHeight = 0
+                                     }
+                                     }*/
+                                }
+                            } else {
+                                VStack {
+                                    Text("A faggot")
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .font(.system(size: 24))
+                                        .multilineTextAlignment(.center)
+                                        .foregroundStyle(.white)
+                                        .scaleEffect(x: -1, y: 1)
+                                }
+                                .frame(maxWidth: prop.size.width - 80, maxHeight: 250)
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 15)
+                                        .fill(Color.EZNotesOrange)
+                                        .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                                )
+                                .cornerRadius(15)
+                                .padding(2.5)
+                                .animation(.smooth(duration: 0.5), value: self.flashCardsBottomCardHeight)
+                                .zIndex(self.flashCardsBottomCardZIndex)
+                                .onTapGesture {
+                                    self.viewingBottomCard = false
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .rotation3DEffect(
+                            .degrees(self.viewingBottomCard ? 180 : 0), // Flip 180 degrees
+                                        axis: (x: 0, y: 1, z: 0),     // Around the Y-axis
+                                        anchor: .center,              // Anchor the flip at the center
+                                        perspective: 1
+                                    )
+                        .animation(.easeInOut(duration: 1), value: self.viewingBottomCard)
+                        
+                        Button(action: { }) {
+                            Text("Next Card")
+                                .frame(alignment: .center)
+                                .foregroundStyle(Color.EZNotesBlack)
+                                .font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .medium))
+
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .frame(maxWidth: prop.size.width - 180)
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 25)
+                                .fill(Color.EZNotesBlue)
+                                .shadow(color: Color.EZNotesBlue, radius: 6.5)//, x: 3, y: -6.5)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
+                        .padding(3)
+                        .padding(.horizontal)
+                        
+                        Button(action: { }) {
+                            Text("Add Card")
+                                .frame(alignment: .center)
+                                .foregroundStyle(Color.EZNotesBlack)
+                                .font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .medium))
+
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .frame(maxWidth: prop.size.width - 180)
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 25)
+                                .fill(Color.white)
+                                .shadow(color: Color.EZNotesBlue, radius: 6.5)//, x: 3, y: -6.5)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
+                        .padding(3)
+                        .padding(.horizontal)
+                        
+                        Button(action: { }) {
+                            Text("Delete Card")
+                                .frame(alignment: .center)
+                                .foregroundStyle(Color.EZNotesBlack)
+                                .font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .medium))
+
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .frame(maxWidth: prop.size.width - 180)
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 25)
+                                .fill(Color.EZNotesRed)
+                                //.shadow(color: Color.EZNotesBlue, radius: 6.5)//, x: 3, y: -6.5)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
+                        .padding(3)
+                        .padding(.horizontal)*/
                         
                         Spacer()
                     }
