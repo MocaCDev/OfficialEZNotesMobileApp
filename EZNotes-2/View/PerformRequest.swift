@@ -741,6 +741,14 @@ class RequestAction<T>: ObservableObject {
             case is GenerateFlashcardsData.Type:
                 guard let params: GenerateFlashcardsData = (parameters as? GenerateFlashcardsData) else { return }
                 request.addValue(params.Topic, forHTTPHeaderField: "Topic")
+            
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+                let data: [String: String] = [
+                    "Notes": params.Notes
+                ]
+                request.httpBody = try? JSONSerialization.data(withJSONObject: data)
+            
                 break
             default: break
         }

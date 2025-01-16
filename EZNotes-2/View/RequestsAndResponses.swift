@@ -19,6 +19,7 @@ struct ReqPlaceholder {}
 
 struct GenerateFlashcardsData {
     let Topic: String
+    let Notes: String
 }
 
 struct ReportProblemData {
@@ -654,6 +655,6 @@ let feedback_req: CSIARequest = CSIARequest(
 
 let generate_flashcards_req: CSIARequest = CSIARequest(
     url: "\(server)/generate_flashcards",
-    method: "get", /* MARK: Sends data in JSON format. */
+    method: "post", /* MARK: Sends data in JSON format. */
     reqData: GenerateFlashcardsData.self
 )

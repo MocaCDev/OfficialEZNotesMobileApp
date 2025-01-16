@@ -541,7 +541,7 @@ struct EditableNotes: View {
                             .padding(8.5)
                             .scrollDisabled(true)
                             .scrollContentBackground(.hidden)
-                            .background(Color.EZNotesBlack)
+                            //.background(Color.EZNotesBlack)
                             .focused($notePadFocus)
                             .font(Font.custom(self.fontConfiguration.fontPicked, size: self.fontConfiguration.fontSizePicked))
                             .multilineTextAlignment(self.fontConfiguration.fontTextAlignment)
@@ -736,43 +736,83 @@ struct ShowNotes: View {
     @State private var loadingFlashCards: Bool = false
     @State private var flashcards: [String: String] = [:]
     @State private var activeCard: Int = 0
-    @State private var viewingBottomCard: [Int: Bool] = [:]
+    @State private var viewingBottomCard: [String: Bool] = [:]
     
     var body: some View {
         ZStack {
             VStack {
-                HStack {
-                    Button(action: {
-                        /* MARK: When going back, check to see if the content in the TextEditor is the same as it was when the TextEditor loaded. If it is not, prompt an alert asking the user if they want to save. */
-                        /*if self.notesContent != self.originalContent {
-                            self.saveAlert = true
-                        }*/
-                        //self.notePadFocus = false
-                        self.noteChatDetails.reset()
-                        self.launchedSet = false
-                    }) {
-                        Image(systemName: "arrow.backward")
-                            .resizable()
-                            .frame(maxWidth: 15, maxHeight: 15)
-                            .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
+                if self.studyOrVisualizationSelection == .None {
+                    HStack {
+                        Button(action: {
+                            /* MARK: When going back, check to see if the content in the TextEditor is the same as it was when the TextEditor loaded. If it is not, prompt an alert asking the user if they want to save. */
+                            /*if self.notesContent != self.originalContent {
+                             self.saveAlert = true
+                             }*/
+                            //self.notePadFocus = false
+                            
+                            self.noteChatDetails.reset()
+                            self.launchedSet = false
+                        }) {
+                            Image(systemName: "arrow.backward")
+                                .resizable()
+                                .frame(maxWidth: 15, maxHeight: 15)
+                                .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .frame(maxWidth: 30, alignment: .leading)
+                        .padding(.leading, 15)
+                        
+                        Text(self.setName)
+                            .frame(maxWidth: .infinity)
+                            .padding([.top, .bottom], 4)
+                            .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)//(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
+                            .font(Font.custom("Poppins-SemiBold", size: 26))
+                            .minimumScaleFactor(0.5)
+                            .multilineTextAlignment(.center)
+                        
+                        ZStack {}.frame(maxWidth: 30, alignment: .trailing).padding(.trailing, 15)
                     }
-                    .buttonStyle(NoLongPressButtonStyle())
-                    .frame(maxWidth: 30, alignment: .leading)
-                    .padding(.leading, 15)
-                    
-                    Text(self.setName)
+                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 60 : 40)
+                    .background(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)//self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesBlack)
+                    .padding(.bottom, self.studyOrVisualizationSelection == .None ? 0 : -10)
+                } else {
+                    HStack {
+                        Button(action: {
+                            self.studyOrVisualizationSelection = .None
+                        }) {
+                            Image(systemName: "multiply")
+                                .resizable()
+                                .frame(maxWidth: 15, maxHeight: 15)
+                                .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
+                                .padding(12)
+                                .background(Circle().fill(Color.EZNotesLightBlack))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .frame(maxWidth: 42, alignment: .leading)
+                        .padding(.leading, 15)
+                        
+                        VStack {
+                            Text("\(self.setName)")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .lineLimit(1...3)
+                                .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen || prop.isMediumScreen ? 20 : 18))
+                                .foregroundStyle(.white)
+                                .multilineTextAlignment(.center)
+                            
+                            Text("FlashCards")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen || prop.isMediumScreen ? 14 : 12))
+                                .foregroundStyle(.white)
+                                .multilineTextAlignment(.center)
+                        }
                         .frame(maxWidth: .infinity)
-                        .padding([.top, .bottom], 4)
-                        .foregroundStyle(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)//(self.categoryTitleColor != nil ? self.categoryTitleColor! : .white)
-                        .font(Font.custom("Poppins-SemiBold", size: 26))
-                        .minimumScaleFactor(0.5)
-                        .multilineTextAlignment(.center)
-                    
-                    ZStack {}.frame(maxWidth: 30, alignment: .trailing).padding(.trailing, 15)
+                        .padding(.horizontal, 16 * 2)
+                        
+                        ZStack {}.frame(maxWidth: 42, alignment: .trailing).padding(.trailing, 15)
+                    }
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 60 : 40)
-                .background(self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesOrange)//self.categoryBackgroundColor != nil ? self.categoryBackgroundColor! : Color.EZNotesBlack)
-                .padding(.bottom, self.studyOrVisualizationSelection == .None ? 0 : -10)
                 
                 if self.studyOrVisualizationSelection == .None {
                     HStack {
@@ -873,6 +913,7 @@ struct ShowNotes: View {
                     }
                     .frame(maxWidth: .infinity, minHeight: 15)
                     .padding(.top, 5)
+                    .padding(.bottom, 8)
                 }
                 
                 switch(self.showNotesSection) {
@@ -893,19 +934,11 @@ struct ShowNotes: View {
                                 Text(self.accountInfo.usage == "school"
                                      ? "How Would You Like To Study?"
                                      : "How Would You Like To Visualize?")
-                                .frame(maxWidth: .infinity, maxHeight: self.secondaryTabTitleHeight, alignment: .leading)
-                                .font(.system(size: self.studyTabTitleSize, weight: .medium, design: .rounded))
+                                .frame(maxWidth: .infinity, minHeight: 0, maxHeight: self.secondaryTabTitleHeight, alignment: .leading)
+                                .font(Font.custom("Poppins-Bold", size: self.studyTabTitleSize))//(.system(size: self.studyTabTitleSize, weight: .medium, design: .rounded))
                                 .lineLimit(1...3)
                                 .multilineTextAlignment(.leading)
-                                .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
-                                    .init(0, 0), .init(0.3, 0), .init(1, 0),
-                                    .init(0.0, 0.3), .init(0.3, 0.5), .init(1, 0.5),
-                                    .init(0, 1), .init(0.5, 1), .init(1, 1)
-                                ], colors: [
-                                    .indigo, .indigo, Color.EZNotesBlue,
-                                    Color.EZNotesBlue, Color.EZNotesBlue, .purple,
-                                    .indigo, Color.EZNotesGreen, Color.EZNotesBlue
-                                ]))
+                                .foregroundStyle(.white)
                                 .padding(.top)
                                 .opacity(self.secondaryTabTitleOpacity)
                                 .animation(.smooth(duration: 0.5), value: self.secondaryTabTitleOpacity)
@@ -914,8 +947,14 @@ struct ShowNotes: View {
                                 
                                 if self.secondaryTabTitleOpacity == 1 { Spacer() }
                             }
-                            .frame(maxWidth: prop.size.width - 40)
+                            .frame(maxWidth: prop.size.width - 40, minHeight: 0, maxHeight: self.secondaryTabTitleHeight)
                             .lineLimit(1...3)
+                            
+                            if self.secondaryTabTitleHeight != 0 {
+                                EZNotesColoredDivider()
+                                    .frame(maxWidth: prop.size.width - 40)
+                                    .padding(.top, 4)
+                            }
                             
                             ScrollView(.vertical, showsIndicators: false) {
                                 //if self.showStudyTabTitleInScrollView {
@@ -923,7 +962,7 @@ struct ShowNotes: View {
                                      ? "How Would You Like To Study?"
                                      : "How Would You Like To Visualize?")
                                 .frame(maxWidth: prop.size.width - 70, maxHeight: self.primaryTabTitleHeight, alignment: .center)
-                                .font(.system(size: prop.isLargerScreen ? 45 : 40, weight: .bold, design: .rounded))
+                                .font(Font.custom("Poppins-Bold", size: prop.isLargerScreen ? 45 : 40))//.font(.system(size: prop.isLargerScreen ? 45 : 40, weight: .bold, design: .rounded))
                                 .multilineTextAlignment(.center)
                                 .foregroundStyle(MeshGradient(width: 3, height: 3, points: [
                                     .init(0, 0), .init(0.3, 0), .init(1, 0),
@@ -941,16 +980,16 @@ struct ShowNotes: View {
                                 .overlay(
                                     GeometryReader { geo in
                                         Color.clear.onChange(of: geo.frame(in: .global).minY) {
-                                            if geo.frame(in: .global).minY < 30 {
+                                            if geo.frame(in: .global).minY < -16 {
                                                 withAnimation(.smooth(duration: 0.5)) {
                                                     self.primaryTabTitleOpacity = 0
                                                     //self.primaryTabTitleHeight = 0
                                                     
                                                     self.secondaryTabTitleOpacity = 1
-                                                    self.secondaryTabTitleHeight = 20
+                                                    self.secondaryTabTitleHeight = 30
                                                     
-                                                    if prop.isLargerScreen || prop.isMediumScreen { self.studyTabTitleSize = 25 }
-                                                    else { self.studyTabTitleSize = 20 }
+                                                    if prop.isLargerScreen || prop.isMediumScreen { self.studyTabTitleSize = 22 }
+                                                    else { self.studyTabTitleSize = 18 }
                                                 }
                                                 
                                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
@@ -992,7 +1031,8 @@ struct ShowNotes: View {
                                             self.loadingFlashCards = true
                                             
                                             RequestAction<GenerateFlashcardsData>(parameters: GenerateFlashcardsData(
-                                                Topic: self.setName
+                                                Topic: self.setName,
+                                                Notes: self.notesContent
                                             )).perform(action: generate_flashcards_req) { statusCode, resp in
                                                 self.loadingFlashCards = false
                                                 
@@ -1012,7 +1052,7 @@ struct ShowNotes: View {
                                                 
                                                 self.flashcards = cards
                                                 
-                                                for i in 0...self.flashcards.count {
+                                                for i in self.flashcards.keys {
                                                     self.viewingBottomCard[i] = false
                                                 }
                                             }
@@ -1049,6 +1089,9 @@ struct ShowNotes: View {
                                                         }
                                                     }
                                                 )
+                                                .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                                                .padding(1.5)
+                                                .padding(.horizontal, 4)
                                         }.buttonStyle(NoLongPressButtonStyle())
                                         
                                         Button(action: { self.studyOrVisualizationSelection = .Slideshow }) {
@@ -1084,6 +1127,9 @@ struct ShowNotes: View {
                                                         }
                                                     }
                                                 )
+                                                .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                                                .padding(1.5)
+                                                .padding(.horizontal, 4)
                                         }.buttonStyle(NoLongPressButtonStyle())
                                         
                                         /*Image("FlashCardPreview")
@@ -1191,6 +1237,9 @@ struct ShowNotes: View {
                                                     }
                                                         .cornerRadius(15)
                                                 )
+                                                .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                                                .padding(1.5)
+                                                .padding(.horizontal, 4)
                                                 .padding(.bottom, 20) /* MARK: Ensure space between end of scrollview and bottom of screen. */
                                         }.buttonStyle(NoLongPressButtonStyle())
                                     }
@@ -1329,6 +1378,9 @@ struct ShowNotes: View {
                                                 }
                                                     .cornerRadius(15)
                                             )
+                                            .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                                            .padding(1.5)
+                                            .padding(.horizontal, 4)
                                     }.buttonStyle(NoLongPressButtonStyle())
                                     
                                     Button(action: { self.studyOrVisualizationSelection = .LineChart }) {
@@ -1455,6 +1507,9 @@ struct ShowNotes: View {
                                                 }
                                                     .cornerRadius(15)
                                             )
+                                            .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                                            .padding(1.5)
+                                            .padding(.horizontal, 4)
                                             .padding(.bottom, 20)
                                     }.buttonStyle(NoLongPressButtonStyle())
                                 }
@@ -1464,10 +1519,11 @@ struct ShowNotes: View {
                                     GeometryReader { geo in
                                         Color.clear.onChange(of: geo.frame(in: .global).minY) {
                                             if self.startBackupGeoReader {
-                                                if self.primaryTabTitleOpacity == 0 && geo.frame(in: .global).minY > 290 {
+                                                //print(geo.frame(in: .global).minY)
+                                                if self.primaryTabTitleOpacity == 0 && geo.frame(in: .global).minY > 302 {//290 {
                                                     withAnimation(.smooth(duration: 0.5)) {
                                                         self.secondaryTabTitleOpacity = 0
-                                                        //self.secondaryTabTitleHeight = 0
+                                                        self.secondaryTabTitleHeight = 0
                                                         
                                                         self.primaryTabTitleHeight = 185
                                                         self.primaryTabTitleOpacity = 1
@@ -1483,6 +1539,7 @@ struct ShowNotes: View {
                                 )//.offset(y: self.primaryTabTitleOpacity == 0 ? 138.6 : 0)
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(.top, self.secondaryTabTitleHeight == 0 ? -16 : -6)
                             /*Spacer()
                              
                              ZStack {
@@ -1707,17 +1764,17 @@ struct ShowNotes: View {
                                                 ScrollViewReader { proxy in
                                                     ScrollView(.horizontal, showsIndicators: false) {
                                                         HStack {
-                                                            ForEach(Array(self.flashcards.enumerated()), id: \.offset) { index, value in
+                                                            ForEach(Array(self.flashcards.keys.enumerated()), id: \.offset) { index, key in
                                                                 ZStack {
-                                                                    if !self.viewingBottomCard[index]! {
+                                                                    if !self.viewingBottomCard[key]! {
                                                                         VStack {
-                                                                            Text("\(value.key)")
+                                                                            Text(key)
                                                                                 .frame(maxWidth: .infinity, alignment: .center)
                                                                                 .font(.system(size: 24))
                                                                                 .multilineTextAlignment(.center)
                                                                                 .foregroundStyle(.white)
                                                                         }
-                                                                        .frame(maxWidth: prop.size.width - 80, maxHeight: 250)
+                                                                        .frame(minWidth: prop.size.width - 80, maxWidth: prop.size.width - 80, minHeight: 220, maxHeight: 250)
                                                                         .padding()
                                                                         .background(
                                                                             RoundedRectangle(cornerRadius: 15)
@@ -1730,9 +1787,7 @@ struct ShowNotes: View {
                                                                          .rotationEffect(Angle(degrees: -25))//(Angle(degrees: self.flashCardsTopCardDegrees))
                                                                          .zIndex(self.flashCardsTopCardZIndex)*/
                                                                         .onTapGesture {
-                                                                            self.viewingBottomCard[self.activeCard] = true
-                                                                            
-                                                                            return
+                                                                            self.viewingBottomCard[key] = true
                                                                             /*if !self.viewingBottomCard {
                                                                              self.viewingBottomCard = true
                                                                              
@@ -1749,14 +1804,14 @@ struct ShowNotes: View {
                                                                         }
                                                                     } else {
                                                                         VStack {
-                                                                            Text("\(value.value)")
+                                                                            Text("\(self.flashcards[key]!)")
                                                                                 .frame(maxWidth: .infinity, alignment: .center)
                                                                                 .font(.system(size: 24))
                                                                                 .multilineTextAlignment(.center)
                                                                                 .foregroundStyle(.white)
                                                                                 .scaleEffect(x: -1, y: 1)
                                                                         }
-                                                                        .frame(maxWidth: prop.size.width - 80, maxHeight: 250)
+                                                                        .frame(minWidth: prop.size.width - 80, maxWidth: prop.size.width - 80, minHeight: 220, maxHeight: 250)
                                                                         .padding()
                                                                         .background(
                                                                             RoundedRectangle(cornerRadius: 15)
@@ -1768,25 +1823,40 @@ struct ShowNotes: View {
                                                                         .animation(.smooth(duration: 0.5), value: self.flashCardsBottomCardHeight)
                                                                         .zIndex(self.flashCardsBottomCardZIndex)
                                                                         .onTapGesture {
-                                                                            self.viewingBottomCard[self.activeCard] = false
+                                                                            self.viewingBottomCard[key] = false
                                                                         }
                                                                     }
                                                                 }
                                                                 .frame(maxWidth: .infinity)
                                                                 .rotation3DEffect(
-                                                                    .degrees(index == self.activeCard && self.viewingBottomCard[index]! ? 180 : 0), // Flip 180 degrees
+                                                                    .degrees(self.viewingBottomCard[key]! ? 180 : 0), // Flip 180 degrees
                                                                     axis: (x: 0, y: 1, z: 0),     // Around the Y-axis
                                                                     anchor: .center,              // Anchor the flip at the center
                                                                     perspective: 1
                                                                 )
-                                                                .animation(.easeInOut(duration: 1), value: self.viewingBottomCard[index]!)
+                                                                .animation(.easeInOut(duration: 1), value: self.viewingBottomCard[key]!)
                                                                 .id(index)
                                                             }
                                                         }
+                                                        .padding(.vertical)
                                                     }
-                                                    .onAppear {
-                                                        proxy.scrollTo(0) // Keeps the scroll position locked
-                                                    }
+                                                    .scrollDisabled(true)
+                                                    .gesture(
+                                                        DragGesture()
+                                                            .onEnded { value in
+                                                                let dragAmount = value.translation
+                                                                
+                                                                if dragAmount.width > 0 {
+                                                                    if self.activeCard > 0 { self.activeCard -= 1 }
+                                                                } else if dragAmount.width < 0 {
+                                                                    self.activeCard += 1
+                                                                }
+                                                                
+                                                                withAnimation(.smooth(duration: 0.3)) {
+                                                                    proxy.scrollTo(self.activeCard, anchor: .center)
+                                                                }
+                                                            }
+                                                    )
                                                 }
                                             }
                                             
@@ -1880,13 +1950,7 @@ struct ShowNotes: View {
                                         .padding(.horizontal)*/
                                     }
                                     .frame(maxWidth: prop.size.width - 40, maxHeight: 250)
-                                    .padding(8)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(.black)
-                                    )
-                                    .cornerRadius(15)
-                                    //.onTapGesture { return }
+                                    .onTapGesture { return }
                                     
                                     Spacer()
                                 }
@@ -1896,9 +1960,9 @@ struct ShowNotes: View {
                                         .fill(.black.opacity(0.8))*/
                                     Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark)
                                 )
-                                /*.onTapGesture {
+                                .onTapGesture {
                                     self.studyOrVisualizationSelection = .None
-                                }*/
+                                }
                             default: VStack { }.onAppear { self.studyOrVisualizationSelection = .None } /* MARK: Should never happen. */
                             }
                         }
@@ -2740,7 +2804,7 @@ struct ShowNotes: View {
                 self.menuHeight = 60
             }
         }*/
-        .background(Color.EZNotesBlack)
+        //.background(Color.EZNotesBlack)
         .alert("Are you sure?", isPresented: $saveAlert) {
             Button(action: {
                 /* MARK: Update the "original" notes with the content of the updated notes. */
