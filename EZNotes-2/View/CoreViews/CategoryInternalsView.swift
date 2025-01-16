@@ -278,6 +278,8 @@ struct CategoryInternalsView: View {
     
     @State private var blurredImageHeight: CGFloat = UIScreen.main.bounds.height - 100
     
+    @State private var needsToolNavbar: Bool = false
+    
     var body: some View {
         if !self.launchedSet {
             ZStack {
@@ -2092,20 +2094,26 @@ struct CategoryInternalsView: View {
                                     .overlay(
                                         GeometryReader { geo in
                                             Color.clear.onChange(of: geo.frame(in: .global).minY) {
-                                                if geo.frame(in: .global).minY < -120 {
-                                                    withAnimation(.smooth(duration: 0.5)) {
-                                                        self.topContentOpacity = 0
-                                                        self.topContentHeight = 0
-                                                        
-                                                        self.secondaryNavbarOpacity = 1
-                                                    }
-                                                } else {
-                                                    if self.topContentOpacity == 0 && geo.frame(in: .global).minY > 77 {//-84 {
+                                                if !self.editCategoryDetails {
+                                                    if geo.frame(in: .global).minY < -120 {
                                                         withAnimation(.smooth(duration: 0.5)) {
-                                                            self.secondaryNavbarOpacity = 0
+                                                            self.topContentOpacity = 0
+                                                            self.topContentHeight = 0
                                                             
-                                                            self.topContentOpacity = 1
-                                                            self.topContentHeight = UIScreen.main.bounds.height / 2.5
+                                                            self.secondaryNavbarOpacity = 1
+                                                        }
+                                                        
+                                                        self.needsToolNavbar = true
+                                                    } else {
+                                                        if self.topContentOpacity == 0 && geo.frame(in: .global).minY > 77 {//-84 {
+                                                            withAnimation(.smooth(duration: 0.5)) {
+                                                                self.secondaryNavbarOpacity = 0
+                                                                
+                                                                self.topContentOpacity = 1
+                                                                self.topContentHeight = UIScreen.main.bounds.height / 2.5
+                                                            }
+                                                            
+                                                            self.needsToolNavbar = false
                                                         }
                                                     }
                                                 }
@@ -2559,11 +2567,14 @@ struct CategoryInternalsView: View {
                         launchCategory: $launchCategory,
                         categoryBackgroundColor: $categoryBackgroundColor,
                         categoryTitleColor: $categoryTitleColor,
+                        categoryBeingEdited: $categoryBeingEdited,
+                        editCategoryDetails: $editCategoryDetails,
                         alertType: $alertType,
                         showDescription: $showDescription,
                         testPopup: $testPopup,
                         createNewSet: $createNewSet,
-                        createNewSetByImage: $createNewSetByImage
+                        createNewSetByImage: $createNewSetByImage,
+                        needsToolNavbar: $needsToolNavbar
                     )
                     .padding(.bottom, 20)
                 }

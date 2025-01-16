@@ -738,6 +738,10 @@ class RequestAction<T>: ObservableObject {
                 
                 request.httpBody = try? JSONSerialization.data(withJSONObject: feedback)
                 break
+            case is GenerateFlashcardsData.Type:
+                guard let params: GenerateFlashcardsData = (parameters as? GenerateFlashcardsData) else { return }
+                request.addValue(params.Topic, forHTTPHeaderField: "Topic")
+                break
             default: break
         }
         

@@ -127,11 +127,12 @@ struct CategoryInternalsPlusButton: View {
     @Binding public var categoryBackgroundColor: Color?
     @Binding public var categoryTitleColor: Color?
     
-    @State private var categoryBeingEdited: String = ""
+    @Binding public var categoryBeingEdited: String// = ""
     @State private var newCategoryDescription: String = ""
     @State private var newCategoryDisplayColor: Color = Color.EZNotesLightBlack
     @State private var newCategoryTextColor: Color = .white
-    @State private var editCategoryDetails: Bool = false
+    /* MARK: This will get set when the "pencil" gets tapped. However, the popup is handled in `CategoryInternalsView`. */
+    @Binding public var editCategoryDetails: Bool
     
     @State private var categoryAlert: Bool = false
     @State private var categoryToDelete: String = ""
@@ -151,6 +152,7 @@ struct CategoryInternalsPlusButton: View {
     @Binding public var testPopup: Bool /* MARK: Rename this. This name is used in `HomeView.swift` as well. */
     @Binding public var createNewSet: Bool
     @Binding public var createNewSetByImage: Bool
+    @Binding public var needsToolNavbar: Bool
     
     var body: some View {
         VStack {
@@ -221,166 +223,169 @@ struct CategoryInternalsPlusButton: View {
             }
             
             HStack {
-                /*HStack {
-                    Button(action: {
-                        self.categoryToDelete = self.categoryName
-                        self.categoryAlert = true
-                        self.alertType = .DeleteCategoryAlert
-                    }) {
-                        ZStack {
-                            Image(systemName: "trash")
-                                .resizable()
-                                .frame(width: 20, height: 20)
-                                .foregroundStyle(.red)
-                        }
-                        .frame(alignment: .leading)
-                        .padding(.trailing, 10)
-                    }
-                    .buttonStyle(NoLongPressButtonStyle())
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .alert("Are you sure?", isPresented: $categoryAlert) {
+                if self.needsToolNavbar {
+                    HStack {
                         Button(action: {
-                            self.launchCategory = false
-                            
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                                if self.categoryData.categoriesAndSets.count == 1 {
-                                    self.categoryData.categoriesAndSets.removeAll()
-                                    self.categoryData.setAndNotes.removeAll()
-                                    self.categoryData.categoryCustomTextColors.removeAll()
-                                    self.categoryData.categoryCustomColors.removeAll()
-                                    self.categoryData.categoryDescriptions.removeAll()
-                                } else {
-                                    self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
-                                    self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
-                                    
-                                    if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryToDelete) {
-                                        self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryToDelete)
+                            self.categoryToDelete = self.categoryName
+                            self.categoryAlert = true
+                            self.alertType = .DeleteCategoryAlert
+                        }) {
+                            ZStack {
+                                Image(systemName: "trash")
+                                    .resizable()
+                                    .frame(width: 20, height: 20)
+                                    .foregroundStyle(.red)
+                            }
+                            .frame(alignment: .leading)
+                            .padding(.trailing, 10)
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .alert("Are you sure?", isPresented: $categoryAlert) {
+                            Button(action: {
+                                self.launchCategory = false
+                                
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                    if self.categoryData.categoriesAndSets.count == 1 {
+                                        self.categoryData.categoriesAndSets.removeAll()
+                                        self.categoryData.setAndNotes.removeAll()
+                                        self.categoryData.categoryCustomTextColors.removeAll()
+                                        self.categoryData.categoryCustomColors.removeAll()
+                                        self.categoryData.categoryDescriptions.removeAll()
+                                    } else {
+                                        self.categoryData.categoriesAndSets.removeValue(forKey: self.categoryToDelete)
+                                        self.categoryData.setAndNotes.removeValue(forKey: self.categoryToDelete)
+                                        
+                                        if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryToDelete) {
+                                            self.categoryData.categoryCustomTextColors.removeValue(forKey: self.categoryToDelete)
+                                        }
+                                        
+                                        if self.categoryData.categoryCustomColors.keys.contains(self.categoryToDelete) {
+                                            self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryToDelete)
+                                        }
+                                        
+                                        if self.categoryData.categoryDescriptions.keys.contains(self.categoryToDelete) {
+                                            self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryToDelete)
+                                        }
                                     }
                                     
-                                    if self.categoryData.categoryCustomColors.keys.contains(self.categoryToDelete) {
-                                        self.categoryData.categoryCustomColors.removeValue(forKey: self.categoryToDelete)
-                                    }
+                                    /* MARK: Ensure the cache is up to date. */
+                                    writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
+                                    writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
+                                    writeCategoryTextColors(categoryTextColors: self.categoryData.categoryCustomTextColors)
+                                    writeCategoryCustomColors(categoryCustomColors: self.categoryData.categoryCustomColors)
+                                    writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
                                     
-                                    if self.categoryData.categoryDescriptions.keys.contains(self.categoryToDelete) {
-                                        self.categoryData.categoryDescriptions.removeValue(forKey: self.categoryToDelete)
-                                    }
+                                    resetAlert()
                                 }
                                 
-                                /* MARK: Ensure the cache is up to date. */
-                                writeCategoryData(categoryData: self.categoryData.categoriesAndSets)
-                                writeSetsAndNotes(setsAndNotes: self.categoryData.setAndNotes)
-                                writeCategoryTextColors(categoryTextColors: self.categoryData.categoryCustomTextColors)
-                                writeCategoryCustomColors(categoryCustomColors: self.categoryData.categoryCustomColors)
-                                writeCategoryDescriptions(categoryDescriptions: self.categoryData.categoryDescriptions)
-                                
-                                resetAlert()
+                                /* TODO: Add support for actually storing category information in the database. That will, thereby, prompt us to need to send a request to the server to delete the given category from the database. */
+                            }) {
+                                Text("Yes")
                             }
                             
-                            /* TODO: Add support for actually storing category information in the database. That will, thereby, prompt us to need to send a request to the server to delete the given category from the database. */
+                            Button(action: { resetAlert() }) { Text("No") }
+                        } message: {
+                            Text(self.alertType == .DeleteCategoryAlert
+                                 ? "Once deleted, the category **\"\(self.categoryToDelete)\"** will be removed from cloud or local storage and cannot be recovered."
+                                 : "") /* TODO: Finish this. There will presumably be more alert types. */
+                        }
+                        
+                        Button(action: {
+                            if self.categoryData.categoryDescriptions.keys.contains(self.categoryName) {
+                                self.newCategoryDescription = self.categoryData.categoryDescriptions[self.categoryName]!
+                            } else { self.newCategoryDescription = "" }
+                            
+                            if self.categoryData.categoryCustomColors.keys.contains(self.categoryName) {
+                                self.newCategoryDisplayColor = self.categoryData.categoryCustomColors[self.categoryName]!
+                            } else { self.newCategoryDisplayColor = Color.EZNotesOrange }
+                            
+                            if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryName) {
+                                self.newCategoryTextColor = self.categoryData.categoryCustomTextColors[self.categoryName]!
+                            } else { self.newCategoryTextColor = .white }
+                            
+                            self.categoryBeingEdited = self.categoryName
+                            //self.categoryBeingEditedImage = self.categoryData.categoryImages[self.categoryName]!
+                            self.editCategoryDetails = true
                         }) {
-                            Text("Yes")
+                            ZStack {
+                                Image(systemName: "pencil")
+                                    .resizable()
+                                    .frame(width: 20, height: 20)
+                                    .foregroundStyle(Color.EZNotesBlue)
+                            }
+                            .frame(alignment: .leading)
+                            .padding(.trailing, 10)
                         }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        //.padding(.trailing, 6)
+                        /*.popover(isPresented: $editCategoryDetails) {
+                            EditCategory(
+                                prop: self.prop,
+                                categoryBeingEditedImage: self.categoryBackground,
+                                categoryBeingEdited: $categoryBeingEdited,
+                                categoryLaunched: $categoryName,
+                                categoryData: self.categoryData,
+                                newCategoryDisplayColor: $newCategoryDisplayColor,
+                                newCategoryTextColor: $newCategoryTextColor
+                            )
+                            .onDisappear {
+                                self.ecd = false
+                                self.categoryBackgroundColor = self.categoryData.categoryCustomColors[self.categoryName]
+                                self.categoryTitleColor = self.categoryData.categoryCustomTextColors[self.categoryName]
+                            }
+                        }*/
                         
-                        Button(action: { resetAlert() }) { Text("No") }
-                    } message: {
-                        Text(self.alertType == .DeleteCategoryAlert
-                             ? "Once deleted, the category **\"\(self.categoryToDelete)\"** will be removed from cloud or local storage and cannot be recovered."
-                             : "") /* TODO: Finish this. There will presumably be more alert types. */
-                    }
-                    
-                    Button(action: {
-                        if self.categoryData.categoryDescriptions.keys.contains(self.categoryName) {
-                            self.newCategoryDescription = self.categoryData.categoryDescriptions[self.categoryName]!
-                        } else { self.newCategoryDescription = "" }
-                        
-                        if self.categoryData.categoryCustomColors.keys.contains(self.categoryName) {
-                            self.newCategoryDisplayColor = self.categoryData.categoryCustomColors[self.categoryName]!
-                        } else { self.newCategoryDisplayColor = Color.EZNotesOrange }
-                        
-                        if self.categoryData.categoryCustomTextColors.keys.contains(self.categoryName) {
-                            self.newCategoryTextColor = self.categoryData.categoryCustomTextColors[self.categoryName]!
-                        } else { self.newCategoryTextColor = .white }
-                        
-                        self.categoryBeingEdited = self.categoryName
-                        //self.categoryBeingEditedImage = self.categoryData.categoryImages[self.categoryName]!
-                        self.editCategoryDetails = true
-                    }) {
-                        ZStack {
-                            Image(systemName: "pencil")
-                                .resizable()
-                                .frame(width: 20, height: 20)
-                                .foregroundStyle(Color.EZNotesBlue)
-                        }
-                        .frame(alignment: .leading)
-                        .padding(.trailing, 10)
-                    }
-                    .buttonStyle(NoLongPressButtonStyle())
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    //.padding(.trailing, 6)
-                    .popover(isPresented: $editCategoryDetails) {
-                        EditCategory(
-                            prop: self.prop,
-                            categoryBeingEditedImage: self.categoryBackground,
-                            categoryBeingEdited: $categoryBeingEdited,
-                            categoryLaunched: $categoryName,
-                            categoryData: self.categoryData,
-                            newCategoryDisplayColor: $newCategoryDisplayColor,
-                            newCategoryTextColor: $newCategoryTextColor
-                        )
-                        .onDisappear {
-                            self.categoryBackgroundColor = self.categoryData.categoryCustomColors[self.categoryName]
-                            self.categoryTitleColor = self.categoryData.categoryCustomTextColors[self.categoryName]
-                        }
-                    }
-                    
-                    ShareLink(
-                        item: self.categoryBackground,
-                        subject: Text(self.categoryName),
-                        message: Text(
-                            self.categoryDescription != nil
+                        ShareLink(
+                            item: self.categoryBackground,
+                            subject: Text(self.categoryName),
+                            message: Text(
+                                self.categoryDescription != nil
                                 ? "\(self.categoryDescription!)\n\nCreated with the support of **EZNotes**"
                                 : ""
-                        ),
-                        preview: SharePreview(self.categoryName, image: self.categoryBackground))
-                    {//(item: URL(string: "https://apps.apple.com/us/app/light-speedometer/id6447198696")!) {
-                        Label("", systemImage: "square.and.arrow.up")
-                            .foregroundStyle(Color.EZNotesBlue)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .center) /* MARK: `maxWidth` is in this as it's the last element in the HStack, thus pushing all the other content over. */
-                    //.padding(.leading, 6)
-                    
-                    Button(action: { }) {
-                        ZStack {
-                            Image(systemName: "paperplane")
-                                .resizable()
-                                .frame(width: 20, height: 20)
+                            ),
+                            preview: SharePreview(self.categoryName, image: self.categoryBackground))
+                        {//(item: URL(string: "https://apps.apple.com/us/app/light-speedometer/id6447198696")!) {
+                            Label("", systemImage: "square.and.arrow.up")
                                 .foregroundStyle(Color.EZNotesBlue)
                         }
-                        .frame(alignment: .leading)
-                        .padding(.trailing, 10)
-                    }
-                    .buttonStyle(NoLongPressButtonStyle())
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    //.padding(.trailing, 6)
-                    
-                    Button(action: { self.showDescription = true }) {
-                        ZStack {
-                            Image(systemName: "info.square")
-                                .resizable()
-                                .frame(width: 20, height: 20)
-                                .foregroundStyle(Color.EZNotesBlue)
+                        .frame(maxWidth: .infinity, alignment: .center) /* MARK: `maxWidth` is in this as it's the last element in the HStack, thus pushing all the other content over. */
+                        //.padding(.leading, 6)
+                        
+                        Button(action: { }) {
+                            ZStack {
+                                Image(systemName: "paperplane")
+                                    .resizable()
+                                    .frame(width: 20, height: 20)
+                                    .foregroundStyle(Color.EZNotesBlue)
+                            }
+                            .frame(alignment: .leading)
+                            .padding(.trailing, 10)
                         }
-                        .frame(alignment: .leading)
-                        .padding(.trailing, 10)
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        //.padding(.trailing, 6)
+                        
+                        Button(action: { self.showDescription = true }) {
+                            ZStack {
+                                Image(systemName: "info.square")
+                                    .resizable()
+                                    .frame(width: 20, height: 20)
+                                    .foregroundStyle(Color.EZNotesBlue)
+                            }
+                            .frame(alignment: .leading)
+                            .padding(.trailing, 10)
+                        }
+                        .buttonStyle(NoLongPressButtonStyle())
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                     }
-                    .buttonStyle(NoLongPressButtonStyle())
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .frame(maxWidth: .infinity)
+                    .padding(20)
+                    .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
+                    .cornerRadius(20)
+                    .padding(.horizontal)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(20)
-                .background(Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark))
-                .cornerRadius(20)
-                .padding(.horizontal)*/
                 //.clipShape(RoundedRectangle(cornerRadius: 20))
                 
                 Spacer()

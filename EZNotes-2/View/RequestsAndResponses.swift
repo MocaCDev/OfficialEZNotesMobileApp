@@ -9,13 +9,17 @@ import SwiftUI
 
 /* MARK: URLs used for requests. */
 //let server = "https://www.eznotes.space"
-let server = "http://10.0.0.19:8088"
+let server = "http://192.168.1.109:8088"
 
 /* MARK: Requestes structures for data to be given to the request header. */
 /* Exists just in case we are performing a request that requires no data
  * to be sent to the endpoint.
  * */
 struct ReqPlaceholder {}
+
+struct GenerateFlashcardsData {
+    let Topic: String
+}
 
 struct ReportProblemData {
     let AccountID: String
@@ -646,4 +650,10 @@ let feedback_req: CSIARequest = CSIARequest(
     url: "\(server)/feedback",
     method: "post", /* MARK: Sends data in JSON format. */
     reqData: ReportProblemData.self
+)
+
+let generate_flashcards_req: CSIARequest = CSIARequest(
+    url: "\(server)/generate_flashcards",
+    method: "get", /* MARK: Sends data in JSON format. */
+    reqData: GenerateFlashcardsData.self
 )
