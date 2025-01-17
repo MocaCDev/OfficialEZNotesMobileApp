@@ -734,9 +734,17 @@ struct ShowNotes: View {
     
     /* MARK: Data for flashcards. */
     @State private var loadingFlashCards: Bool = false
-    @State private var flashcards: [String: String] = [:]
+    //@State private var flashcards: [String: String] = [:]
     @State private var activeCard: Int = 0
     @State private var viewingBottomCard: [String: Bool] = [:]
+    
+    @State private var addingFlashcard: Bool = false
+    
+    @State private var newCardFront: String = ""
+    @FocusState private var newCardFrontFieldInFocus: Bool
+    
+    @State private var newCardBack: String = ""
+    @FocusState private var newCardBackFieldInFocus: Bool
     
     var body: some View {
         ZStack {
@@ -796,7 +804,7 @@ struct ShowNotes: View {
                             Text("\(self.setName)")
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .lineLimit(1...3)
-                                .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen || prop.isMediumScreen ? 20 : 18))
+                                .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen || prop.isMediumScreen ? 28 : 24))
                                 .foregroundStyle(.white)
                                 .multilineTextAlignment(.center)
                             
@@ -805,6 +813,7 @@ struct ShowNotes: View {
                                 .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen || prop.isMediumScreen ? 14 : 12))
                                 .foregroundStyle(.white)
                                 .multilineTextAlignment(.center)
+                                .padding(.bottom)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.horizontal, 16 * 2)
@@ -812,6 +821,7 @@ struct ShowNotes: View {
                         ZStack {}.frame(maxWidth: 42, alignment: .trailing).padding(.trailing, 15)
                     }
                     .frame(maxWidth: .infinity)
+                    .padding(.vertical)
                 }
                 
                 if self.studyOrVisualizationSelection == .None {
@@ -1027,34 +1037,45 @@ struct ShowNotes: View {
                                     
                                     HStack {
                                         Button(action: {
-                                            self.studyOrVisualizationSelection = .FlashCards
-                                            self.loadingFlashCards = true
-                                            
-                                            RequestAction<GenerateFlashcardsData>(parameters: GenerateFlashcardsData(
-                                                Topic: self.setName,
-                                                Notes: self.notesContent
-                                            )).perform(action: generate_flashcards_req) { statusCode, resp in
-                                                self.loadingFlashCards = false
+                                            if !self.categoryData.setFlashcards.keys.contains(self.setName) {
+                                                self.loadingFlashCards = true
                                                 
-                                                guard
-                                                    let resp = resp,
-                                                    statusCode == 200
-                                                else {
-                                                    if let resp = resp { print(resp) }
-                                                    return /* TODO: Handle errors. */
+                                                RequestAction<GenerateFlashcardsData>(parameters: GenerateFlashcardsData(
+                                                    Topic: self.setName,
+                                                    Notes: self.notesContent
+                                                )).perform(action: generate_flashcards_req) { statusCode, resp in
+                                                    self.loadingFlashCards = false
+                                                    
+                                                    guard
+                                                        let resp = resp,
+                                                        statusCode == 200
+                                                    else {
+                                                        if let resp = resp { print(resp) }
+                                                        self.studyOrVisualizationSelection = .FlashCards
+                                                        return /* TODO: Handle errors. */
+                                                    }
+                                                    
+                                                    guard
+                                                        let cards = resp as? [String: String]
+                                                    else {
+                                                        return
+                                                    }
+                                                    
+                                                    self.categoryData.setFlashcards[self.setName] = cards
+                                                    writeSetFlashcards(flashcards: self.categoryData.setFlashcards)
+                                                    
+                                                    for i in cards.keys {
+                                                        self.viewingBottomCard[i] = false
+                                                    }
+                                                    
+                                                    self.studyOrVisualizationSelection = .FlashCards
                                                 }
-                                                
-                                                guard
-                                                    let cards = resp as? [String: String]
-                                                else {
-                                                    return
-                                                }
-                                                
-                                                self.flashcards = cards
-                                                
-                                                for i in self.flashcards.keys {
+                                            } else {
+                                                for i in self.categoryData.setFlashcards[self.setName]!.keys {
                                                     self.viewingBottomCard[i] = false
                                                 }
+                                                
+                                                self.studyOrVisualizationSelection = .FlashCards
                                             }
                                         }) {
                                             RoundedRectangle(cornerRadius: 15)
@@ -1681,220 +1702,566 @@ struct ShowNotes: View {
                         if self.studyOrVisualizationSelection != .None {
                             switch(self.studyOrVisualizationSelection) {
                             case .FlashCards:
-                                VStack {
-                                    Spacer()
-                                    
+                                ZStack {
                                     VStack {
-                                        if self.loadingFlashCards {
-                                            LoadingView(message: "Generating Flashcards...")
-                                        } else {
-                                            /*ZStack {
-                                                if !self.viewingBottomCard {
-                                                    VStack {
-                                                        Text("What do you call a mother with no legs?")
-                                                            .frame(maxWidth: .infinity, alignment: .center)
-                                                            .font(.system(size: 24))
-                                                            .multilineTextAlignment(.center)
-                                                            .foregroundStyle(.white)
-                                                    }
-                                                    .frame(maxWidth: prop.size.width - 80, maxHeight: 250)
-                                                    .padding()
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 15)
-                                                            .fill(.black)
-                                                            .shadow(color: Color.EZNotesOrange, radius: 3.5)
-                                                    )
-                                                    .padding(2.5)
-                                                    .cornerRadius(15)
-                                                    /*.offset(x: -60, y: -220)
-                                                     .rotationEffect(Angle(degrees: -25))//(Angle(degrees: self.flashCardsTopCardDegrees))
-                                                     .zIndex(self.flashCardsTopCardZIndex)*/
-                                                    .onTapGesture {
-                                                        self.viewingBottomCard = true
-                                                        /*if !self.viewingBottomCard {
-                                                         self.viewingBottomCard = true
-                                                         
-                                                         withAnimation(.smooth(duration: 0.5)) {
-                                                         self.flashCardsBottomCardHeight = 250
-                                                         }
-                                                         } else {
-                                                         self.viewingBottomCard = false
-                                                         
-                                                         withAnimation(.smooth(duration: 0.5)) {
-                                                         self.flashCardsBottomCardHeight = 0
-                                                         }
-                                                         }*/
-                                                    }
-                                                } else {
-                                                    VStack {
-                                                        Text("A faggot")
-                                                            .frame(maxWidth: .infinity, alignment: .center)
-                                                            .font(.system(size: 24))
-                                                            .multilineTextAlignment(.center)
-                                                            .foregroundStyle(.white)
-                                                            .scaleEffect(x: -1, y: 1)
-                                                    }
-                                                    .frame(maxWidth: prop.size.width - 80, maxHeight: 250)
-                                                    .padding()
-                                                    .background(
-                                                        RoundedRectangle(cornerRadius: 15)
-                                                            .fill(Color.EZNotesOrange)
-                                                            .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
-                                                    )
-                                                    .cornerRadius(15)
-                                                    .padding(2.5)
-                                                    .animation(.smooth(duration: 0.5), value: self.flashCardsBottomCardHeight)
-                                                    .zIndex(self.flashCardsBottomCardZIndex)
-                                                    .onTapGesture {
-                                                        self.viewingBottomCard = false
-                                                    }
-                                                }
-                                            }
-                                            .frame(maxWidth: .infinity)
-                                            .rotation3DEffect(
-                                                .degrees(self.viewingBottomCard ? 180 : 0), // Flip 180 degrees
-                                                axis: (x: 0, y: 1, z: 0),     // Around the Y-axis
-                                                anchor: .center,              // Anchor the flip at the center
-                                                perspective: 1
-                                            )
-                                            .animation(.easeInOut(duration: 1), value: self.viewingBottomCard)*/
-                                            
-                                            
-                                            HStack {
-                                                ScrollViewReader { proxy in
-                                                    ScrollView(.horizontal, showsIndicators: false) {
-                                                        HStack {
-                                                            ForEach(Array(self.flashcards.keys.enumerated()), id: \.offset) { index, key in
-                                                                ZStack {
-                                                                    if !self.viewingBottomCard[key]! {
-                                                                        VStack {
-                                                                            Text(key)
-                                                                                .frame(maxWidth: .infinity, alignment: .center)
-                                                                                .font(.system(size: 24))
-                                                                                .multilineTextAlignment(.center)
-                                                                                .foregroundStyle(.white)
-                                                                        }
-                                                                        .frame(minWidth: prop.size.width - 80, maxWidth: prop.size.width - 80, minHeight: 220, maxHeight: 250)
-                                                                        .padding()
-                                                                        .background(
-                                                                            RoundedRectangle(cornerRadius: 15)
-                                                                                .fill(.black)
-                                                                                .shadow(color: Color.EZNotesOrange, radius: 3.5)
-                                                                        )
-                                                                        .padding(2.5)
-                                                                        .cornerRadius(15)
-                                                                        /*.offset(x: -60, y: -220)
-                                                                         .rotationEffect(Angle(degrees: -25))//(Angle(degrees: self.flashCardsTopCardDegrees))
-                                                                         .zIndex(self.flashCardsTopCardZIndex)*/
-                                                                        .onTapGesture {
-                                                                            self.viewingBottomCard[key] = true
-                                                                            /*if !self.viewingBottomCard {
-                                                                             self.viewingBottomCard = true
-                                                                             
-                                                                             withAnimation(.smooth(duration: 0.5)) {
-                                                                             self.flashCardsBottomCardHeight = 250
-                                                                             }
-                                                                             } else {
-                                                                             self.viewingBottomCard = false
-                                                                             
-                                                                             withAnimation(.smooth(duration: 0.5)) {
-                                                                             self.flashCardsBottomCardHeight = 0
-                                                                             }
-                                                                             }*/
-                                                                        }
-                                                                    } else {
-                                                                        VStack {
-                                                                            Text("\(self.flashcards[key]!)")
-                                                                                .frame(maxWidth: .infinity, alignment: .center)
-                                                                                .font(.system(size: 24))
-                                                                                .multilineTextAlignment(.center)
-                                                                                .foregroundStyle(.white)
-                                                                                .scaleEffect(x: -1, y: 1)
-                                                                        }
-                                                                        .frame(minWidth: prop.size.width - 80, maxWidth: prop.size.width - 80, minHeight: 220, maxHeight: 250)
-                                                                        .padding()
-                                                                        .background(
-                                                                            RoundedRectangle(cornerRadius: 15)
-                                                                                .fill(Color.EZNotesOrange)
-                                                                                .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
-                                                                        )
-                                                                        .cornerRadius(15)
-                                                                        .padding(2.5)
-                                                                        .animation(.smooth(duration: 0.5), value: self.flashCardsBottomCardHeight)
-                                                                        .zIndex(self.flashCardsBottomCardZIndex)
-                                                                        .onTapGesture {
-                                                                            self.viewingBottomCard[key] = false
+                                        Spacer()
+                                        
+                                        VStack {
+                                            if self.loadingFlashCards {
+                                                LoadingView(message: "Generating Flashcards...")
+                                            } else {
+                                                /*ZStack {
+                                                 if !self.viewingBottomCard {
+                                                 VStack {
+                                                 Text("What do you call a mother with no legs?")
+                                                 .frame(maxWidth: .infinity, alignment: .center)
+                                                 .font(.system(size: 24))
+                                                 .multilineTextAlignment(.center)
+                                                 .foregroundStyle(.white)
+                                                 }
+                                                 .frame(maxWidth: prop.size.width - 80, maxHeight: 250)
+                                                 .padding()
+                                                 .background(
+                                                 RoundedRectangle(cornerRadius: 15)
+                                                 .fill(.black)
+                                                 .shadow(color: Color.EZNotesOrange, radius: 3.5)
+                                                 )
+                                                 .padding(2.5)
+                                                 .cornerRadius(15)
+                                                 /*.offset(x: -60, y: -220)
+                                                  .rotationEffect(Angle(degrees: -25))//(Angle(degrees: self.flashCardsTopCardDegrees))
+                                                  .zIndex(self.flashCardsTopCardZIndex)*/
+                                                 .onTapGesture {
+                                                 self.viewingBottomCard = true
+                                                 /*if !self.viewingBottomCard {
+                                                  self.viewingBottomCard = true
+                                                  
+                                                  withAnimation(.smooth(duration: 0.5)) {
+                                                  self.flashCardsBottomCardHeight = 250
+                                                  }
+                                                  } else {
+                                                  self.viewingBottomCard = false
+                                                  
+                                                  withAnimation(.smooth(duration: 0.5)) {
+                                                  self.flashCardsBottomCardHeight = 0
+                                                  }
+                                                  }*/
+                                                 }
+                                                 } else {
+                                                 VStack {
+                                                 Text("A faggot")
+                                                 .frame(maxWidth: .infinity, alignment: .center)
+                                                 .font(.system(size: 24))
+                                                 .multilineTextAlignment(.center)
+                                                 .foregroundStyle(.white)
+                                                 .scaleEffect(x: -1, y: 1)
+                                                 }
+                                                 .frame(maxWidth: prop.size.width - 80, maxHeight: 250)
+                                                 .padding()
+                                                 .background(
+                                                 RoundedRectangle(cornerRadius: 15)
+                                                 .fill(Color.EZNotesOrange)
+                                                 .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                                                 )
+                                                 .cornerRadius(15)
+                                                 .padding(2.5)
+                                                 .animation(.smooth(duration: 0.5), value: self.flashCardsBottomCardHeight)
+                                                 .zIndex(self.flashCardsBottomCardZIndex)
+                                                 .onTapGesture {
+                                                 self.viewingBottomCard = false
+                                                 }
+                                                 }
+                                                 }
+                                                 .frame(maxWidth: .infinity)
+                                                 .rotation3DEffect(
+                                                 .degrees(self.viewingBottomCard ? 180 : 0), // Flip 180 degrees
+                                                 axis: (x: 0, y: 1, z: 0),     // Around the Y-axis
+                                                 anchor: .center,              // Anchor the flip at the center
+                                                 perspective: 1
+                                                 )
+                                                 .animation(.easeInOut(duration: 1), value: self.viewingBottomCard)*/
+                                                
+                                                HStack {
+                                                    ScrollViewReader { proxy in
+                                                        ScrollView(.horizontal, showsIndicators: false) {
+                                                            HStack {
+                                                                ForEach(Array(self.categoryData.setFlashcards[self.setName]!.keys.enumerated()), id: \.offset) { index, key in
+                                                                    ZStack {
+                                                                        if !self.viewingBottomCard[key]! {
+                                                                            VStack {
+                                                                                Text(key)
+                                                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                                                    .font(.system(size: 24))
+                                                                                    .multilineTextAlignment(.center)
+                                                                                    .foregroundStyle(.white)
+                                                                            }
+                                                                            .frame(minWidth: prop.size.width - 80, maxWidth: prop.size.width - 80, minHeight: 220, maxHeight: 250)
+                                                                            .padding()
+                                                                            .background(
+                                                                                RoundedRectangle(cornerRadius: 15)
+                                                                                    .fill(.black)
+                                                                                    .shadow(color: Color.EZNotesOrange, radius: 3.5)
+                                                                            )
+                                                                            .padding(2.5)
+                                                                            .cornerRadius(15)
+                                                                            /*.offset(x: -60, y: -220)
+                                                                             .rotationEffect(Angle(degrees: -25))//(Angle(degrees: self.flashCardsTopCardDegrees))
+                                                                             .zIndex(self.flashCardsTopCardZIndex)*/
+                                                                            .onTapGesture {
+                                                                                self.viewingBottomCard[key] = true
+                                                                                /*if !self.viewingBottomCard {
+                                                                                 self.viewingBottomCard = true
+                                                                                 
+                                                                                 withAnimation(.smooth(duration: 0.5)) {
+                                                                                 self.flashCardsBottomCardHeight = 250
+                                                                                 }
+                                                                                 } else {
+                                                                                 self.viewingBottomCard = false
+                                                                                 
+                                                                                 withAnimation(.smooth(duration: 0.5)) {
+                                                                                 self.flashCardsBottomCardHeight = 0
+                                                                                 }
+                                                                                 }*/
+                                                                            }
+                                                                        } else {
+                                                                            VStack {
+                                                                                Text("\(self.categoryData.setFlashcards[self.setName]![key]!)")
+                                                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                                                    .font(.system(size: 24))
+                                                                                    .multilineTextAlignment(.center)
+                                                                                    .foregroundStyle(.white)
+                                                                                    .scaleEffect(x: -1, y: 1)
+                                                                            }
+                                                                            .frame(minWidth: prop.size.width - 80, maxWidth: prop.size.width - 80, minHeight: 220, maxHeight: 250)
+                                                                            .padding()
+                                                                            .background(
+                                                                                RoundedRectangle(cornerRadius: 15)
+                                                                                    .fill(Color.EZNotesOrange)
+                                                                                    .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                                                                            )
+                                                                            .cornerRadius(15)
+                                                                            .padding(2.5)
+                                                                            .animation(.smooth(duration: 0.5), value: self.flashCardsBottomCardHeight)
+                                                                            .zIndex(self.flashCardsBottomCardZIndex)
+                                                                            .onTapGesture {
+                                                                                self.viewingBottomCard[key] = false
+                                                                            }
                                                                         }
                                                                     }
+                                                                    .frame(maxWidth: .infinity)
+                                                                    .rotation3DEffect(
+                                                                        .degrees(self.viewingBottomCard[key]! ? 180 : 0), // Flip 180 degrees
+                                                                        axis: (x: 0, y: 1, z: 0),     // Around the Y-axis
+                                                                        anchor: .center,              // Anchor the flip at the center
+                                                                        perspective: 1
+                                                                    )
+                                                                    .animation(.easeInOut(duration: 1), value: self.viewingBottomCard[key]!)
+                                                                    .id(index)
                                                                 }
-                                                                .frame(maxWidth: .infinity)
-                                                                .rotation3DEffect(
-                                                                    .degrees(self.viewingBottomCard[key]! ? 180 : 0), // Flip 180 degrees
-                                                                    axis: (x: 0, y: 1, z: 0),     // Around the Y-axis
-                                                                    anchor: .center,              // Anchor the flip at the center
-                                                                    perspective: 1
-                                                                )
-                                                                .animation(.easeInOut(duration: 1), value: self.viewingBottomCard[key]!)
-                                                                .id(index)
+                                                                
+                                                                if self.addingFlashcard {
+                                                                    
+                                                                }
+                                                            }
+                                                            .padding(.vertical)
+                                                        }
+                                                        .scrollDisabled(true)
+                                                        .gesture(
+                                                            DragGesture()
+                                                                .onEnded { value in
+                                                                    let dragAmount = value.translation
+                                                                    
+                                                                    if dragAmount.width > 0 {
+                                                                        if self.activeCard > 0 { self.activeCard -= 1 }
+                                                                    } else if dragAmount.width < 0 {
+                                                                        self.activeCard += 1
+                                                                    }
+                                                                }
+                                                        )
+                                                        .onChange(of: self.activeCard) {
+                                                            withAnimation(.smooth(duration: 0.3)) {
+                                                                proxy.scrollTo(self.activeCard, anchor: .center)
                                                             }
                                                         }
-                                                        .padding(.vertical)
                                                     }
-                                                    .scrollDisabled(true)
-                                                    .gesture(
-                                                        DragGesture()
-                                                            .onEnded { value in
-                                                                let dragAmount = value.translation
-                                                                
-                                                                if dragAmount.width > 0 {
-                                                                    if self.activeCard > 0 { self.activeCard -= 1 }
-                                                                } else if dragAmount.width < 0 {
-                                                                    self.activeCard += 1
-                                                                }
-                                                                
-                                                                withAnimation(.smooth(duration: 0.3)) {
-                                                                    proxy.scrollTo(self.activeCard, anchor: .center)
-                                                                }
+                                                }
+                                                
+                                                HStack {
+                                                    VStack {
+                                                        Button(action: {
+                                                            if self.activeCard > 0 { self.activeCard -= 1 }
+                                                        }) {
+                                                            Image(systemName: "chevron.left")
+                                                                .resizable()
+                                                                .frame(width: 10, height: 18)
+                                                        }
+                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                        
+                                                        Text("Back")
+                                                            .frame(alignment: .center)
+                                                            .font(Font.custom("Poppins-Light", size: 12))
+                                                            .foregroundStyle(.white)
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                    
+                                                    /*VStack {
+                                                     Button(action: { }) {
+                                                     Text("Generate New Cards")
+                                                     .frame(maxWidth: .infinity, alignment: .center)
+                                                     .padding([.top, .bottom], 8)
+                                                     .foregroundStyle(.black)
+                                                     .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                     .minimumScaleFactor(0.5)
+                                                     }
+                                                     .frame(maxWidth: prop.size.width - 40)
+                                                     .background(
+                                                     RoundedRectangle(cornerRadius: 15)
+                                                     .fill(Color.EZNotesBlue)
+                                                     )
+                                                     .cornerRadius(15)
+                                                     }
+                                                     .frame(maxWidth: .infinity)
+                                                     .padding(.horizontal)
+                                                     .padding(.bottom, 12)*/
+                                                    VStack {
+                                                        Button(action: { }) {
+                                                            Image(systemName: "trash")
+                                                                .resizable()
+                                                                .frame(width: 20, height: 20)
+                                                                .foregroundStyle(Color.EZNotesRed)
+                                                        }
+                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                        
+                                                        Text("Delete")
+                                                            .frame(alignment: .center)
+                                                            .font(Font.custom("Poppins-Light", size: 12))
+                                                            .foregroundStyle(.white)
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                    
+                                                    VStack {
+                                                        Button(action: { self.addingFlashcard = true }) {
+                                                            Image(systemName: "plus")
+                                                                .resizable()
+                                                                .frame(width: 20, height: 20)
+                                                                .foregroundStyle(.white)
+                                                            
+                                                            Text("Add")
+                                                                .frame(alignment: .center)
+                                                                .font(Font.custom("Poppins-Light", size: 12))
+                                                                .foregroundStyle(.white)
+                                                        }
+                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                    
+                                                    VStack {
+                                                        Button(action: {
+                                                            
+                                                        }) {
+                                                            Image(systemName: "pencil")
+                                                                .resizable()
+                                                                .frame(width: 20, height: 20)
+                                                                .foregroundStyle(.white)
+                                                            
+                                                            Text("Edit")
+                                                                .frame(alignment: .center)
+                                                                .font(Font.custom("Poppins-Light", size: 12))
+                                                                .foregroundStyle(.white)
+                                                        }
+                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                    
+                                                    VStack {
+                                                        Button(action: {
+                                                            if self.activeCard + 1 < self.categoryData.setFlashcards[self.setName]!.count {
+                                                                self.activeCard += 1
                                                             }
+                                                        }) {
+                                                            Image(systemName: "chevron.right")
+                                                                .resizable()
+                                                                .frame(width: 10, height: 18)
+                                                        }
+                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                        
+                                                        Text("Next")
+                                                            .frame(alignment: .center)
+                                                            .font(Font.custom("Poppins-Light", size: 12))
+                                                            .foregroundStyle(.white)
+                                                    }
+                                                    .frame(maxWidth: .infinity)
+                                                }
+                                                .frame(maxWidth: .infinity)
+                                                .padding(.bottom)
+                                                
+                                                VStack {
+                                                    Button(action: {
+                                                        self.loadingFlashCards = true
+                                                        
+                                                        self.categoryData.setFlashcards[self.setName]!.removeAll()
+                                                        
+                                                        RequestAction<GenerateFlashcardsData>(parameters: GenerateFlashcardsData(
+                                                            Topic: self.setName,
+                                                            Notes: self.notesContent
+                                                        )).perform(action: generate_flashcards_req) { statusCode, resp in
+                                                            guard
+                                                                let resp = resp,
+                                                                statusCode == 200
+                                                            else {
+                                                                if let resp = resp { print(resp) }
+                                                                self.studyOrVisualizationSelection = .FlashCards
+                                                                return /* TODO: Handle errors. */
+                                                            }
+                                                            
+                                                            guard
+                                                                let cards = resp as? [String: String]
+                                                            else {
+                                                                return
+                                                            }
+                                                            
+                                                            self.categoryData.setFlashcards[self.setName] = cards
+                                                            writeSetFlashcards(flashcards: self.categoryData.setFlashcards)
+                                                            
+                                                            for i in cards.keys {
+                                                                self.viewingBottomCard[i] = false
+                                                            }
+                                                            
+                                                            self.loadingFlashCards = false
+                                                        }
+                                                    }) {
+                                                        Text("Generate New Cards")
+                                                            .frame(maxWidth: .infinity, alignment: .center)
+                                                            .padding([.top, .bottom], 8)
+                                                            .foregroundStyle(.black)
+                                                            .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                            .minimumScaleFactor(0.5)
+                                                    }
+                                                    .frame(maxWidth: prop.size.width - 40)
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 15)
+                                                            .fill(Color.EZNotesBlue)
                                                     )
+                                                    .cornerRadius(15)
                                                 }
-                                            }
-                                            
-                                            /*HStack {
-                                                VStack {
-                                                    Button(action: { }) {
-                                                        Image(systemName: "chevron.left")
-                                                            .resizable()
-                                                            .frame(width: 10, height: 18)
-                                                    }
-                                                    .buttonStyle(NoLongPressButtonStyle())
-                                                    
-                                                    Text("Back")
-                                                        .frame(alignment: .center)
-                                                        .font(Font.custom("Poppins-Light", size: 12))
-                                                        .foregroundStyle(.white)
-                                                }
+                                                .frame(maxWidth: .infinity)
+                                                .padding(.horizontal)
+                                                .padding(.bottom, 12)
                                                 
-                                                Spacer()
+                                                /*HStack {
+                                                 //ZStack { }.frame(maxWidth: 20, alignment: .leading)
+                                                 
+                                                 //HStack {
+                                                 VStack {
+                                                 Button(action: { }) {
+                                                 Image(systemName: "trash")
+                                                 .resizable()
+                                                 .frame(width: 20, height: 20)
+                                                 .foregroundStyle(Color.EZNotesRed)
+                                                 }
+                                                 .buttonStyle(NoLongPressButtonStyle())
+                                                 
+                                                 Text("Delete")
+                                                 .frame(maxWidth: .infinity, alignment: .center)
+                                                 .font(Font.custom("Poppins-Regular", size: 13))
+                                                 .foregroundStyle(.white)
+                                                 }
+                                                 
+                                                 VStack {
+                                                 Image(systemName: "plus")
+                                                 .resizable()
+                                                 .frame(width: 20, height: 20)
+                                                 .foregroundStyle(.white)
+                                                 
+                                                 Text("Add")
+                                                 .frame(maxWidth: .infinity, alignment: .center)
+                                                 .font(Font.custom("Poppins-Regular", size: 13))
+                                                 .foregroundStyle(.white)
+                                                 }
+                                                 
+                                                 VStack {
+                                                 Image(systemName: "pencil")
+                                                 .resizable()
+                                                 .frame(width: 20, height: 20)
+                                                 .foregroundStyle(.white)
+                                                 
+                                                 Text("Edit")
+                                                 .frame(maxWidth: .infinity, alignment: .center)
+                                                 .font(Font.custom("Poppins-Regular", size: 13))
+                                                 .foregroundStyle(.white)
+                                                 }
+                                                 //}
+                                                 //.frame(maxWidth: .infinity)
+                                                 
+                                                 //ZStack { }.frame(maxWidth: 20, alignment: .trailing)
+                                                 }*/
                                                 
-                                                VStack {
-                                                    Button(action: { }) {
-                                                        Image(systemName: "chevron.right")
-                                                            .resizable()
-                                                            .frame(width: 10, height: 18)
-                                                    }
-                                                    .buttonStyle(NoLongPressButtonStyle())
-                                                    
-                                                    Text("Next")
-                                                        .frame(alignment: .center)
-                                                        .font(Font.custom("Poppins-Light", size: 12))
-                                                        .foregroundStyle(.white)
-                                                }
+                                                /*Button(action: { }) {
+                                                 Text("Next Card")
+                                                 .frame(maxWidth: .infinity, alignment: .center)
+                                                 .padding([.top, .bottom], 8)
+                                                 .foregroundStyle(.black)
+                                                 .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                 .minimumScaleFactor(0.5)
+                                                 }
+                                                 .frame(maxWidth: prop.size.width - 40)
+                                                 .background(
+                                                 RoundedRectangle(cornerRadius: 15)
+                                                 .fill(Color.EZNotesBlue)
+                                                 )
+                                                 .cornerRadius(15)*/
                                             }
-                                            .frame(maxWidth: .infinity)*/
                                             
                                             /*Button(action: { }) {
-                                                Text("Next Card")
+                                             Text("Add Card")
+                                             .frame(alignment: .center)
+                                             .foregroundStyle(Color.EZNotesBlack)
+                                             .font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .medium))
+                                             
+                                             }
+                                             .buttonStyle(NoLongPressButtonStyle())
+                                             .frame(maxWidth: prop.size.width - 180)
+                                             .buttonStyle(NoLongPressButtonStyle())
+                                             .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
+                                             .background(
+                                             RoundedRectangle(cornerRadius: 25)
+                                             .fill(Color.white)
+                                             .shadow(color: Color.EZNotesBlue, radius: 6.5)//, x: 3, y: -6.5)
+                                             )
+                                             .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
+                                             .padding(3)
+                                             .padding(.horizontal)
+                                             
+                                             Button(action: { }) {
+                                             Text("Delete Card")
+                                             .frame(alignment: .center)
+                                             .foregroundStyle(Color.EZNotesBlack)
+                                             .font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .medium))
+                                             
+                                             }
+                                             .buttonStyle(NoLongPressButtonStyle())
+                                             .frame(maxWidth: prop.size.width - 180)
+                                             .buttonStyle(NoLongPressButtonStyle())
+                                             .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
+                                             .background(
+                                             RoundedRectangle(cornerRadius: 25)
+                                             .fill(Color.EZNotesRed)
+                                             //.shadow(color: Color.EZNotesBlue, radius: 6.5)//, x: 3, y: -6.5)
+                                             )
+                                             .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
+                                             .padding(3)
+                                             .padding(.horizontal)*/
+                                        }
+                                        .frame(maxWidth: prop.size.width - 40, maxHeight: 250)
+                                        .onTapGesture { return }
+                                        
+                                        Spacer()
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .background(
+                                        /*RoundedRectangle(cornerRadius: 15)
+                                         .fill(.black.opacity(0.8))*/
+                                        Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark)
+                                    )
+                                    .padding(.top, -8)
+                                    .onTapGesture {
+                                        self.studyOrVisualizationSelection = .None
+                                    }
+                                    .zIndex(!self.addingFlashcard ? 1 : 0)
+                                    
+                                    if self.addingFlashcard {
+                                        VStack {
+                                            VStack {
+                                                TextField("", text: $newCardFront, axis: .vertical)
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                                    .multilineTextAlignment(.center)
+                                                    .lineLimit(1...5)
+                                                    .font(.system(size: 24))
+                                                    .foregroundStyle(.white)
+                                                    .focused($newCardFrontFieldInFocus)
+                                                    .overlay(
+                                                        VStack {
+                                                            if self.newCardFront.isEmpty && !self.newCardFrontFieldInFocus {
+                                                                Text("Front Of Card")
+                                                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                                    .font(.system(size: 24))
+                                                                    .foregroundStyle(.white)
+                                                                    .onTapGesture { self.newCardFrontFieldInFocus = true }
+                                                            } else {
+                                                                if self.newCardFront.isEmpty {
+                                                                    Text("Front Of Card")
+                                                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                                        .font(.system(size: 24))
+                                                                        .foregroundStyle(.white)
+                                                                        .onTapGesture { self.newCardFrontFieldInFocus = true }
+                                                                }
+                                                            }
+                                                        }
+                                                    )
+                                            }
+                                            .frame(minWidth: prop.size.width - 80, maxWidth: prop.size.width - 80, minHeight: 220, maxHeight: 250)
+                                            .padding()
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.black)
+                                                    .shadow(color: Color.EZNotesOrange, radius: 3.5)
+                                            )
+                                            .padding(2.5)
+                                            .cornerRadius(15)
+                                            .onTapGesture {
+                                                return
+                                            }
+                                            
+                                            VStack {
+                                                TextField("", text: $newCardBack, axis: .vertical)
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                                    .multilineTextAlignment(.center)
+                                                    .lineLimit(1...5)
+                                                    .font(.system(size: 24))
+                                                    .foregroundStyle(.white)
+                                                    .focused($newCardBackFieldInFocus)
+                                                    .overlay(
+                                                        VStack {
+                                                            if self.newCardBack.isEmpty && !self.newCardBackFieldInFocus {
+                                                                Text("Back Of Card")
+                                                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                                    .font(.system(size: 24))
+                                                                    .foregroundStyle(.white)
+                                                                    .onTapGesture { self.newCardBackFieldInFocus = true }
+                                                            } else {
+                                                                if self.newCardBack.isEmpty {
+                                                                    Text("Back Of Card")
+                                                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                                        .font(.system(size: 24))
+                                                                        .foregroundStyle(.white)
+                                                                        .onTapGesture { self.newCardBackFieldInFocus = true }
+                                                                }
+                                                            }
+                                                        }
+                                                    )
+                                            }
+                                            .frame(minWidth: prop.size.width - 80, maxWidth: prop.size.width - 80, minHeight: 220, maxHeight: 250)
+                                            .padding()
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(Color.EZNotesOrange)
+                                                    .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                                            )
+                                            .cornerRadius(15)
+                                            .padding(2.5)
+                                            .onTapGesture {
+                                                return
+                                            }
+                                            
+                                            Button(action: {
+                                                if self.newCardBack.isEmpty || self.newCardFront.isEmpty {
+                                                    return
+                                                }
+                                                
+                                                self.categoryData.setFlashcards[self.setName]![self.newCardFront] = self.newCardBack
+                                                writeSetFlashcards(flashcards: self.categoryData.setFlashcards)
+                                            }) {
+                                                Text("Add Flashcard")
                                                     .frame(maxWidth: .infinity, alignment: .center)
                                                     .padding([.top, .bottom], 8)
                                                     .foregroundStyle(.black)
@@ -1906,62 +2273,40 @@ struct ShowNotes: View {
                                                 RoundedRectangle(cornerRadius: 15)
                                                     .fill(Color.EZNotesBlue)
                                             )
-                                            .cornerRadius(15)*/
+                                            .cornerRadius(15)
+                                            
+                                            Button(action: {
+                                                self.newCardFront.removeAll()
+                                                self.newCardBack.removeAll()
+                                                
+                                                self.addingFlashcard = false
+                                            }) {
+                                                Text("Cancel")
+                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                    .padding([.top, .bottom], 8)
+                                                    .foregroundStyle(.black)
+                                                    .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                    .minimumScaleFactor(0.5)
+                                            }
+                                            .frame(maxWidth: prop.size.width - 40)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.white)
+                                            )
+                                            .cornerRadius(15)
                                         }
-                                        
-                                        /*Button(action: { }) {
-                                        Text("Add Card")
-                                        .frame(alignment: .center)
-                                        .foregroundStyle(Color.EZNotesBlack)
-                                        .font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .medium))
-                                        
-                                        }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        .frame(maxWidth: prop.size.width - 180)
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         .background(
-                                        RoundedRectangle(cornerRadius: 25)
-                                        .fill(Color.white)
-                                        .shadow(color: Color.EZNotesBlue, radius: 6.5)//, x: 3, y: -6.5)
+                                            /*RoundedRectangle(cornerRadius: 15)
+                                             .fill(.black.opacity(0.8))*/
+                                            Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark)
                                         )
-                                        .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
-                                        .padding(3)
-                                        .padding(.horizontal)
-                                        
-                                        Button(action: { }) {
-                                        Text("Delete Card")
-                                        .frame(alignment: .center)
-                                        .foregroundStyle(Color.EZNotesBlack)
-                                        .font(.system(size: prop.isLargerScreen ? 20 : 16, weight: .medium))
-                                        
+                                        .padding(.top, -8)
+                                        .zIndex(1)
+                                        .onTapGesture {
+                                            self.addingFlashcard = false
                                         }
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        .frame(maxWidth: prop.size.width - 180)
-                                        .buttonStyle(NoLongPressButtonStyle())
-                                        .padding(prop.isLargerScreen || prop.isMediumScreen ? 12 : 10)
-                                        .background(
-                                        RoundedRectangle(cornerRadius: 25)
-                                        .fill(Color.EZNotesRed)
-                                        //.shadow(color: Color.EZNotesBlue, radius: 6.5)//, x: 3, y: -6.5)
-                                        )
-                                        .clipShape(RoundedRectangle(cornerRadius: 25))//.cornerRadius(25)
-                                        .padding(3)
-                                        .padding(.horizontal)*/
                                     }
-                                    .frame(maxWidth: prop.size.width - 40, maxHeight: 250)
-                                    .onTapGesture { return }
-                                    
-                                    Spacer()
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .background(
-                                    /*RoundedRectangle(cornerRadius: 15)
-                                        .fill(.black.opacity(0.8))*/
-                                    Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark)
-                                )
-                                .onTapGesture {
-                                    self.studyOrVisualizationSelection = .None
                                 }
                             default: VStack { }.onAppear { self.studyOrVisualizationSelection = .None } /* MARK: Should never happen. */
                             }

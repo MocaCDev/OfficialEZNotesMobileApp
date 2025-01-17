@@ -198,6 +198,13 @@ func writeUserCreatedSetNames(userCreatedSetNames: Array<String>) -> Void {
     }
 }
 
+public func writeSetFlashcards(flashcards: [String: [String: String]]) -> Void {
+    guard let _ = try? writeJSON(data: flashcards, filename: "set_flashcards.json") else {
+        print("[writeSetFlashcards] -> Failed to write \(flashcards) to cache")
+        return
+    }
+}
+
 public func getSettings() -> [String: Bool] {
     if let result = try? obtainJSON(type: [String: Bool].self, filename: "settings.json") { return result }
     else {
@@ -320,6 +327,15 @@ func getUserCreatedSetNames() -> Array<String> {
     guard let result = try? obtainJSON(type: Array<String>.self, filename: "user_created_sets.json") else {
         print("[getUserCreatedSetNames] -> Failed to get user created categories from cache")
         return []
+    }
+    
+    return result
+}
+
+func getSetFlashcards() -> [String: [String: String]] {
+    guard let result = try? obtainJSON(type: [String: [String: String]].self, filename: "set_flashcards.json") else {
+        print("[getSetFlashcards] -> Failed to get flashcard data for setes from cache")
+        return [:]
     }
     
     return result

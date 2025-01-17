@@ -22,6 +22,11 @@ struct GenerateFlashcardsData {
     let Notes: String
 }
 
+struct GenerateSlideshowData {
+    let Topic: String
+    let Notes: String
+}
+
 struct ReportProblemData {
     let AccountID: String
     let ContactEmail: String
@@ -657,4 +662,10 @@ let generate_flashcards_req: CSIARequest = CSIARequest(
     url: "\(server)/generate_flashcards",
     method: "post", /* MARK: Sends data in JSON format. */
     reqData: GenerateFlashcardsData.self
+)
+
+let generate_slideshow_req: CSIARequest = CSIARequest(
+    url: "\(server)/generate_slideshow",
+    method: "post", /* MARK: Sends data in JSON format. */
+    reqData: GenerateSlideshowData.self
 )

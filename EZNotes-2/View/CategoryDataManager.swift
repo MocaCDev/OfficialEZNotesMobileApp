@@ -23,6 +23,7 @@ import SwiftUI
     @Published public var sets: Array<String> = []
     @Published public var briefDescriptions: Array<String> = []
     @Published public var photos: Array<String> = []
+    @Published public var setFlashcards: [String: [String: String]] = [:] /* MARK: Key will be the set name, value (dictionary) will be all the flashcard data. */
     
     /* MARK: Data over user-created categories/sets. */
     @Published public var userCreatedCategoryNames: Array<String> = []
@@ -38,6 +39,7 @@ import SwiftUI
         self.categoryCustomTextColors = getCategoryCustomTextColors()
         self.userCreatedCategoryNames = getUserCreatedCategoryNames()
         self.userCreatedSetNames = getUserCreatedSetNames()
+        self.setFlashcards = getSetFlashcards()
     }
     
     /* MARK: Method used to figure out whether or not a number needs to be appended to the end of a set name. */
