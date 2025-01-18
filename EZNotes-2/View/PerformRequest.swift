@@ -750,6 +750,18 @@ class RequestAction<T>: ObservableObject {
                 request.httpBody = try? JSONSerialization.data(withJSONObject: data)
             
                 break
+            case is GenerateSlideshowData.Type:
+                guard let params: GenerateSlideshowData = (parameters as? GenerateSlideshowData) else { return }
+                request.addValue(params.Topic, forHTTPHeaderField: "Topic")
+            
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            
+                let data: [String: String] = [
+                    "Notes": params.Notes
+                ]
+                request.httpBody = try? JSONSerialization.data(withJSONObject: data)
+            
+                break
             default: break
         }
         

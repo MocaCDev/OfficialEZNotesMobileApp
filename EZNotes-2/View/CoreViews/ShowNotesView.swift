@@ -5,6 +5,19 @@
 //  Created by Aidan White on 11/14/24.
 //
 import SwiftUI
+import WebKit
+
+struct HTMLView: UIViewRepresentable {
+    let htmlContent: String
+
+    func makeUIView(context: Context) -> WKWebView {
+        WKWebView()
+    }
+
+    func updateUIView(_ uiView: WKWebView, context: Context) {
+        uiView.loadHTMLString(htmlContent, baseURL: nil)
+    }
+}
 
 class FontConfiguration: ObservableObject {
     @Published public var fontPicked: String
@@ -740,11 +753,16 @@ struct ShowNotes: View {
     
     @State private var addingFlashcard: Bool = false
     
+    @State private var addingFlashcardViewingBack: Bool = false
+    
     @State private var newCardFront: String = ""
     @FocusState private var newCardFrontFieldInFocus: Bool
     
     @State private var newCardBack: String = ""
     @FocusState private var newCardBackFieldInFocus: Bool
+    
+    @State private var loadingSlideshow: Bool = false
+    @State private var HTML: String = ""
     
     var body: some View {
         ZStack {
@@ -808,7 +826,7 @@ struct ShowNotes: View {
                                 .foregroundStyle(.white)
                                 .multilineTextAlignment(.center)
                             
-                            Text("FlashCards")
+                            Text(self.studyOrVisualizationSelection == .FlashCards ? "FlashCards" : "Guide")
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen || prop.isMediumScreen ? 14 : 12))
                                 .foregroundStyle(.white)
@@ -821,7 +839,8 @@ struct ShowNotes: View {
                         ZStack {}.frame(maxWidth: 42, alignment: .trailing).padding(.trailing, 15)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical)
+                    .padding(.vertical, !prop.isSmallScreen ? 16 : 8)
+                    .background(.black)
                 }
                 
                 if self.studyOrVisualizationSelection == .None {
@@ -1115,7 +1134,42 @@ struct ShowNotes: View {
                                                 .padding(.horizontal, 4)
                                         }.buttonStyle(NoLongPressButtonStyle())
                                         
-                                        Button(action: { self.studyOrVisualizationSelection = .Slideshow }) {
+                                        Button(action: {
+                                            //if !self.categoryData.setSlideshows.keys.contains(self.setName) {
+                                                self.loadingSlideshow = true
+                                                
+                                                RequestAction<GenerateSlideshowData>(parameters: GenerateSlideshowData(
+                                                    Topic: self.setName,
+                                                    Notes: self.notesContent
+                                                )).perform(action: generate_slideshow_req) { statusCode, resp in
+                                                    self.loadingSlideshow = false
+                                                    
+                                                    guard
+                                                        let resp = resp,
+                                                        resp.keys.contains("HTML"),
+                                                        statusCode == 200
+                                                    else {
+                                                        if let resp = resp { print(resp) }
+                                                        self.studyOrVisualizationSelection = .Slideshow
+                                                        return /* TODO: Handle errors. */
+                                                    }
+                                                    
+                                                    guard
+                                                        let HTML = resp["HTML"] as? String//let slides = resp as? [String: String]
+                                                    else {
+                                                        return
+                                                    }
+                                                    
+                                                    self.HTML = HTML
+                                                    //self.categoryData.setSlideshows[self.setName] = slides
+                                                    //writeSetSlideshows(slideshows: self.categoryData.setSlideshows)
+                                                    
+                                                    self.studyOrVisualizationSelection = .Slideshow
+                                                }
+                                            //} else {
+                                            //    self.studyOrVisualizationSelection = .Slideshow
+                                            //}
+                                        }) {
                                             RoundedRectangle(cornerRadius: 15)
                                                 .fill(.black)
                                                 .frame(maxWidth: .infinity)
@@ -1139,7 +1193,7 @@ struct ShowNotes: View {
                                                         VStack {
                                                             Spacer()
                                                             
-                                                            Text("Slideshow")
+                                                            Text("Guide")
                                                                 .frame(maxWidth: .infinity)
                                                                 .font(Font.custom("Poppins-Regular", size: prop.isLargerScreen || prop.isMediumScreen ? 22 : 18))
                                                                 .foregroundStyle(.white)
@@ -1151,7 +1205,7 @@ struct ShowNotes: View {
                                                 .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
                                                 .padding(1.5)
                                                 .padding(.horizontal, 4)
-                                        }.buttonStyle(NoLongPressButtonStyle())
+                                        }//.buttonStyle(NoLongPressButtonStyle())
                                         
                                         /*Image("FlashCardPreview")
                                          .resizable()
@@ -1178,91 +1232,93 @@ struct ShowNotes: View {
                                     }
                                     
                                     if self.accountInfo.usage == "school" {
-                                        Text("Test Yourself")
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen || prop.isMediumScreen ? 20 : 18))
-                                            .foregroundStyle(Color.EZNotesLightBlack)
-                                        
-                                        Button(action: { self.studyOrVisualizationSelection = .TestOrQuiz }) {
-                                            RoundedRectangle(cornerRadius: 15)
-                                                .fill(.black)
-                                                .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen || prop.isMediumScreen ? 250 : 200)
-                                                .scaledToFit()
-                                                .overlay(
-                                                    ZStack {
-                                                        VStack {
-                                                            Spacer()
-                                                            
-                                                            /*VStack {
-                                                             }
-                                                             .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
-                                                             .background(
-                                                             Image("DefaultThemeBg2")
-                                                             .resizable()
-                                                             .scaledToFill()
-                                                             )
-                                                             .cornerRadius(15, corners: [.bottomLeft, .bottomRight])*/
-                                                            HStack {
+                                        VStack {
+                                            Text("Test Yourself")
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                                .font(Font.custom("Poppins-SemiBold", size: prop.isLargerScreen || prop.isMediumScreen ? 20 : 18))
+                                                .foregroundStyle(Color.EZNotesLightBlack)
+                                            
+                                            Button(action: { self.studyOrVisualizationSelection = .TestOrQuiz }) {
+                                                RoundedRectangle(cornerRadius: 15)
+                                                    .fill(.black)
+                                                    .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen || prop.isMediumScreen ? 250 : 200)
+                                                    .scaledToFit()
+                                                    .overlay(
+                                                        ZStack {
+                                                            VStack {
                                                                 Spacer()
                                                                 
-                                                                Circle()
-                                                                    .fill(Color.EZNotesOrange)
-                                                                    .frame(width: 90, height: 90)
-                                                                    .shadow(color: Color.EZNotesOrange, radius: 6.5)
-                                                                    .padding(4.5)
-                                                                    .offset(x: 20, y: 20)
+                                                                /*VStack {
+                                                                 }
+                                                                 .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                                                                 .background(
+                                                                 Image("DefaultThemeBg2")
+                                                                 .resizable()
+                                                                 .scaledToFill()
+                                                                 )
+                                                                 .cornerRadius(15, corners: [.bottomLeft, .bottomRight])*/
+                                                                HStack {
+                                                                    Spacer()
+                                                                    
+                                                                    Circle()
+                                                                        .fill(Color.EZNotesOrange)
+                                                                        .frame(width: 90, height: 90)
+                                                                        .shadow(color: Color.EZNotesOrange, radius: 6.5)
+                                                                        .padding(4.5)
+                                                                        .offset(x: !prop.isSmallScreen ? 20 : 40, y: !prop.isSmallScreen ? 20 : 40)
+                                                                }
                                                             }
-                                                        }
-                                                        
-                                                        VStack {
-                                                            /*VStack {
-                                                             }
-                                                             .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
-                                                             .background(
-                                                             Image("DefaultThemeBg2")
-                                                             .resizable()
-                                                             .scaledToFill()
-                                                             )
-                                                             .cornerRadius(15, corners: [.bottomLeft, .bottomRight])*/
-                                                            HStack {
-                                                                Circle()
-                                                                    .fill(Color.EZNotesBlue)
-                                                                    .frame(width: 90, height: 90)
-                                                                    .shadow(color: Color.EZNotesBlue, radius: 7.5)
-                                                                    .padding(4.5)
-                                                                    .offset(x: -20, y: -20)
+                                                            
+                                                            VStack {
+                                                                /*VStack {
+                                                                 }
+                                                                 .frame(maxWidth: .infinity, maxHeight: prop.isLargerScreen ? 80 : 60)
+                                                                 .background(
+                                                                 Image("DefaultThemeBg2")
+                                                                 .resizable()
+                                                                 .scaledToFill()
+                                                                 )
+                                                                 .cornerRadius(15, corners: [.bottomLeft, .bottomRight])*/
+                                                                HStack {
+                                                                    Circle()
+                                                                        .fill(Color.EZNotesBlue)
+                                                                        .frame(width: 90, height: 90)
+                                                                        .shadow(color: Color.EZNotesBlue, radius: 7.5)
+                                                                        .padding(4.5)
+                                                                        .offset(x: !prop.isSmallScreen ? -20 : -40, y: !prop.isSmallScreen ? -20 : -40)
+                                                                    
+                                                                    Spacer()
+                                                                }
                                                                 
                                                                 Spacer()
                                                             }
                                                             
-                                                            Spacer()
+                                                            VStack {
+                                                                Spacer()
+                                                                
+                                                                Text("Take A Quiz/Test")
+                                                                    .frame(maxWidth: .infinity)
+                                                                    .font(Font.custom("Poppins-Regular", size: 22))
+                                                                    .foregroundStyle(.white)
+                                                                
+                                                                Text("Select between multiple choice, written answer, or a mix of both to test your knowledge over **\(self.setName)**")
+                                                                    .frame(maxWidth: .infinity, alignment: .center)
+                                                                    .multilineTextAlignment(.center)
+                                                                    .font(Font.custom("Poppins-Light", size: 14))
+                                                                    .foregroundStyle(.white)
+                                                                    .padding(.horizontal)
+                                                                
+                                                                Spacer()
+                                                            }
                                                         }
-                                                        
-                                                        VStack {
-                                                            Spacer()
-                                                            
-                                                            Text("Take A Quiz/Test")
-                                                                .frame(maxWidth: .infinity)
-                                                                .font(Font.custom("Poppins-Regular", size: 22))
-                                                                .foregroundStyle(.white)
-                                                            
-                                                            Text("Select between multiple choice, written answer, or a mix of both to test your knowledge over **\(self.categoryName)**")
-                                                                .frame(maxWidth: .infinity, alignment: .center)
-                                                                .multilineTextAlignment(.center)
-                                                                .font(Font.custom("Poppins-Light", size: 14))
-                                                                .foregroundStyle(.white)
-                                                                .padding(.horizontal)
-                                                            
-                                                            Spacer()
-                                                        }
-                                                    }
-                                                        .cornerRadius(15)
-                                                )
-                                                .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
-                                                .padding(1.5)
-                                                .padding(.horizontal, 4)
-                                                .padding(.bottom, 20) /* MARK: Ensure space between end of scrollview and bottom of screen. */
-                                        }.buttonStyle(NoLongPressButtonStyle())
+                                                            .cornerRadius(15)
+                                                    )
+                                                    .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                                                    .padding(1.5)
+                                                    .padding(.horizontal, 4)
+                                            }.buttonStyle(NoLongPressButtonStyle())
+                                        }
+                                        .padding(.vertical)
                                     }
                                     
                                     Text("Graphs")
@@ -1858,10 +1914,6 @@ struct ShowNotes: View {
                                                                     .animation(.easeInOut(duration: 1), value: self.viewingBottomCard[key]!)
                                                                     .id(index)
                                                                 }
-                                                                
-                                                                if self.addingFlashcard {
-                                                                    
-                                                                }
                                                             }
                                                             .padding(.vertical)
                                                         }
@@ -1887,22 +1939,23 @@ struct ShowNotes: View {
                                                 }
                                                 
                                                 HStack {
-                                                    VStack {
-                                                        Button(action: {
-                                                            if self.activeCard > 0 { self.activeCard -= 1 }
-                                                        }) {
+                                                    Button(action: {
+                                                        if self.activeCard > 0 { self.activeCard -= 1 }
+                                                    }) {
+                                                        VStack {
                                                             Image(systemName: "chevron.left")
                                                                 .resizable()
                                                                 .frame(width: 10, height: 18)
+                                                                .foregroundStyle(.white)
+                                                            
+                                                            Text("Back")
+                                                                .frame(alignment: .center)
+                                                                .font(Font.custom("Poppins-Light", size: 12))
+                                                                .foregroundStyle(.white)
                                                         }
-                                                        .buttonStyle(NoLongPressButtonStyle())
-                                                        
-                                                        Text("Back")
-                                                            .frame(alignment: .center)
-                                                            .font(Font.custom("Poppins-Light", size: 12))
-                                                            .foregroundStyle(.white)
+                                                        .frame(maxWidth: .infinity)
                                                     }
-                                                    .frame(maxWidth: .infinity)
+                                                    .buttonStyle(NoLongPressButtonStyle())
                                                     
                                                     /*VStack {
                                                      Button(action: { }) {
@@ -1923,24 +1976,31 @@ struct ShowNotes: View {
                                                      .frame(maxWidth: .infinity)
                                                      .padding(.horizontal)
                                                      .padding(.bottom, 12)*/
-                                                    VStack {
-                                                        Button(action: { }) {
+                                                    Button(action: {
+                                                        for (i, v) in self.categoryData.setFlashcards[self.setName]!.keys.enumerated() {
+                                                            if i == self.activeCard {
+                                                                self.categoryData.setFlashcards[self.setName]!.removeValue(forKey: v)
+                                                                writeSetFlashcards(flashcards: self.categoryData.setFlashcards)
+                                                            }
+                                                        }
+                                                    }) {
+                                                        VStack {
                                                             Image(systemName: "trash")
                                                                 .resizable()
                                                                 .frame(width: 20, height: 20)
                                                                 .foregroundStyle(Color.EZNotesRed)
+                                                            
+                                                            Text("Delete")
+                                                                .frame(alignment: .center)
+                                                                .font(Font.custom("Poppins-Light", size: 12))
+                                                                .foregroundStyle(.white)
                                                         }
-                                                        .buttonStyle(NoLongPressButtonStyle())
-                                                        
-                                                        Text("Delete")
-                                                            .frame(alignment: .center)
-                                                            .font(Font.custom("Poppins-Light", size: 12))
-                                                            .foregroundStyle(.white)
+                                                        .frame(maxWidth: .infinity)
                                                     }
-                                                    .frame(maxWidth: .infinity)
+                                                    .buttonStyle(NoLongPressButtonStyle())
                                                     
-                                                    VStack {
-                                                        Button(action: { self.addingFlashcard = true }) {
+                                                    Button(action: { self.addingFlashcard = true }) {
+                                                        VStack {
                                                             Image(systemName: "plus")
                                                                 .resizable()
                                                                 .frame(width: 20, height: 20)
@@ -1950,15 +2010,16 @@ struct ShowNotes: View {
                                                                 .frame(alignment: .center)
                                                                 .font(Font.custom("Poppins-Light", size: 12))
                                                                 .foregroundStyle(.white)
-                                                        }
-                                                        .buttonStyle(NoLongPressButtonStyle())
-                                                    }
-                                                    .frame(maxWidth: .infinity)
-                                                    
-                                                    VStack {
-                                                        Button(action: {
                                                             
-                                                        }) {
+                                                        }
+                                                        .frame(maxWidth: .infinity)
+                                                    }
+                                                    .buttonStyle(NoLongPressButtonStyle())
+                                                    
+                                                    Button(action: {
+                                                        
+                                                    }) {
+                                                        VStack {
                                                             Image(systemName: "pencil")
                                                                 .resizable()
                                                                 .frame(width: 20, height: 20)
@@ -1969,9 +2030,9 @@ struct ShowNotes: View {
                                                                 .font(Font.custom("Poppins-Light", size: 12))
                                                                 .foregroundStyle(.white)
                                                         }
-                                                        .buttonStyle(NoLongPressButtonStyle())
+                                                        .frame(maxWidth: .infinity)
                                                     }
-                                                    .frame(maxWidth: .infinity)
+                                                    .buttonStyle(NoLongPressButtonStyle())
                                                     
                                                     VStack {
                                                         Button(action: {
@@ -1982,6 +2043,7 @@ struct ShowNotes: View {
                                                             Image(systemName: "chevron.right")
                                                                 .resizable()
                                                                 .frame(width: 10, height: 18)
+                                                                .foregroundStyle(.white)
                                                         }
                                                         .buttonStyle(NoLongPressButtonStyle())
                                                         
@@ -2152,7 +2214,7 @@ struct ShowNotes: View {
                                              .padding(3)
                                              .padding(.horizontal)*/
                                         }
-                                        .frame(maxWidth: prop.size.width - 40, maxHeight: 250)
+                                        .frame(maxWidth: prop.size.width - 40, minHeight: !prop.isSmallScreen ? 220 : 170, maxHeight: !prop.isSmallScreen ? 250 : 200)
                                         .onTapGesture { return }
                                         
                                         Spacer()
@@ -2171,129 +2233,178 @@ struct ShowNotes: View {
                                     
                                     if self.addingFlashcard {
                                         VStack {
-                                            VStack {
-                                                TextField("", text: $newCardFront, axis: .vertical)
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                                    .multilineTextAlignment(.center)
-                                                    .lineLimit(1...5)
-                                                    .font(.system(size: 24))
-                                                    .foregroundStyle(.white)
-                                                    .focused($newCardFrontFieldInFocus)
-                                                    .overlay(
-                                                        VStack {
-                                                            if self.newCardFront.isEmpty && !self.newCardFrontFieldInFocus {
-                                                                Text("Front Of Card")
-                                                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                                                    .font(.system(size: 24))
-                                                                    .foregroundStyle(.white)
-                                                                    .onTapGesture { self.newCardFrontFieldInFocus = true }
-                                                            } else {
-                                                                if self.newCardFront.isEmpty {
-                                                                    Text("Front Of Card")
-                                                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                                                        .font(.system(size: 24))
-                                                                        .foregroundStyle(.white)
-                                                                        .onTapGesture { self.newCardFrontFieldInFocus = true }
-                                                                }
-                                                            }
-                                                        }
-                                                    )
-                                            }
-                                            .frame(minWidth: prop.size.width - 80, maxWidth: prop.size.width - 80, minHeight: 220, maxHeight: 250)
-                                            .padding()
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 15)
-                                                    .fill(.black)
-                                                    .shadow(color: Color.EZNotesOrange, radius: 3.5)
-                                            )
-                                            .padding(2.5)
-                                            .cornerRadius(15)
-                                            .onTapGesture {
-                                                return
-                                            }
+                                            Text("Add New Card")
+                                                .frame(maxWidth: prop.size.width - 40, alignment: .leading)
+                                                .font(Font.custom("Poppins-SemiBold", size: !prop.isSmallScreen ? 26 : 22))
+                                                .foregroundStyle(.white)
+                                                .padding(.top, !prop.isSmallScreen ? 30 : 20)
                                             
-                                            VStack {
-                                                TextField("", text: $newCardBack, axis: .vertical)
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                                                    .multilineTextAlignment(.center)
-                                                    .lineLimit(1...5)
-                                                    .font(.system(size: 24))
-                                                    .foregroundStyle(.white)
-                                                    .focused($newCardBackFieldInFocus)
-                                                    .overlay(
-                                                        VStack {
-                                                            if self.newCardBack.isEmpty && !self.newCardBackFieldInFocus {
-                                                                Text("Back Of Card")
-                                                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                                                    .font(.system(size: 24))
-                                                                    .foregroundStyle(.white)
-                                                                    .onTapGesture { self.newCardBackFieldInFocus = true }
-                                                            } else {
-                                                                if self.newCardBack.isEmpty {
-                                                                    Text("Back Of Card")
-                                                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                                                        .font(.system(size: 24))
-                                                                        .foregroundStyle(.white)
-                                                                        .onTapGesture { self.newCardBackFieldInFocus = true }
+                                            ZStack {
+                                                if !self.addingFlashcardViewingBack {
+                                                    VStack {
+                                                        TextField("", text: $newCardFront, axis: .vertical)
+                                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                                            .multilineTextAlignment(.center)
+                                                            .lineLimit(1...5)
+                                                            .font(.system(size: 24))
+                                                            .foregroundStyle(.white)
+                                                            .focused($newCardFrontFieldInFocus)
+                                                            .overlay(
+                                                                VStack {
+                                                                    if self.newCardFront.isEmpty && !self.newCardFrontFieldInFocus {
+                                                                        Text("Front Of Card")
+                                                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                                            .font(.system(size: 24))
+                                                                            .foregroundStyle(.white)
+                                                                            .onTapGesture { self.newCardFrontFieldInFocus = true }
+                                                                    } else {
+                                                                        if self.newCardFront.isEmpty {
+                                                                            Text("Front Of Card")
+                                                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                                                .font(.system(size: 24))
+                                                                                .foregroundStyle(.white)
+                                                                                .onTapGesture { self.newCardFrontFieldInFocus = true }
+                                                                        }
+                                                                    }
                                                                 }
-                                                            }
-                                                        }
+                                                            )
+                                                    }
+                                                    .frame(minWidth: prop.size.width - 80, maxWidth: prop.size.width - 80, minHeight: !prop.isSmallScreen ? 220 : 160, maxHeight: !prop.isSmallScreen ? 250 : 160)
+                                                    .padding()
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 15)
+                                                            .fill(.black)
+                                                            .shadow(color: Color.EZNotesOrange, radius: 3.5)
                                                     )
-                                            }
-                                            .frame(minWidth: prop.size.width - 80, maxWidth: prop.size.width - 80, minHeight: 220, maxHeight: 250)
-                                            .padding()
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 15)
-                                                    .fill(Color.EZNotesOrange)
-                                                    .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
-                                            )
-                                            .cornerRadius(15)
-                                            .padding(2.5)
-                                            .onTapGesture {
-                                                return
-                                            }
-                                            
-                                            Button(action: {
-                                                if self.newCardBack.isEmpty || self.newCardFront.isEmpty {
-                                                    return
+                                                    .padding(2.5)
+                                                    .cornerRadius(15)
+                                                    .onTapGesture {
+                                                        self.addingFlashcardViewingBack = true
+                                                    }
+                                                } else {
+                                                    VStack {
+                                                        TextField("", text: $newCardBack, axis: .vertical)
+                                                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                                                            .multilineTextAlignment(.center)
+                                                            .lineLimit(1...5)
+                                                            .font(.system(size: 24))
+                                                            .foregroundStyle(.white)
+                                                            .focused($newCardBackFieldInFocus)
+                                                            .overlay(
+                                                                VStack {
+                                                                    if self.newCardBack.isEmpty && !self.newCardBackFieldInFocus {
+                                                                        Text("Back Of Card")
+                                                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                                            .font(.system(size: 24))
+                                                                            .foregroundStyle(.white)
+                                                                            .onTapGesture { self.newCardBackFieldInFocus = true }
+                                                                    } else {
+                                                                        if self.newCardBack.isEmpty {
+                                                                            Text("Back Of Card")
+                                                                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                                                .font(.system(size: 24))
+                                                                                .foregroundStyle(.white)
+                                                                                .onTapGesture { self.newCardBackFieldInFocus = true }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            )
+                                                    }
+                                                    .frame(minWidth: prop.size.width - 80, maxWidth: prop.size.width - 80, minHeight: !prop.isSmallScreen ? 220 : 160, maxHeight: !prop.isSmallScreen ? 250 : 160)
+                                                    .padding()
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 15)
+                                                            .fill(Color.EZNotesOrange)
+                                                            .shadow(color: Color.EZNotesLightBlack, radius: 2.5)
+                                                    )
+                                                    .cornerRadius(15)
+                                                    .padding(2.5)
+                                                    .scaleEffect(x: -1, y: 1)
+                                                    .onTapGesture {
+                                                        self.addingFlashcardViewingBack = false
+                                                    }
                                                 }
-                                                
-                                                self.categoryData.setFlashcards[self.setName]![self.newCardFront] = self.newCardBack
-                                                writeSetFlashcards(flashcards: self.categoryData.setFlashcards)
-                                            }) {
-                                                Text("Add Flashcard")
-                                                    .frame(maxWidth: .infinity, alignment: .center)
-                                                    .padding([.top, .bottom], 8)
-                                                    .foregroundStyle(.black)
-                                                    .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                    .minimumScaleFactor(0.5)
                                             }
-                                            .frame(maxWidth: prop.size.width - 40)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 15)
-                                                    .fill(Color.EZNotesBlue)
+                                            .rotation3DEffect(
+                                                .degrees(self.addingFlashcardViewingBack ? 180 : 0), // Flip 180 degrees
+                                                axis: (x: 0, y: 1, z: 0),     // Around the Y-axis
+                                                anchor: .center,              // Anchor the flip at the center
+                                                perspective: 1
                                             )
-                                            .cornerRadius(15)
+                                            .animation(.easeInOut(duration: 1), value: self.addingFlashcardViewingBack)
+                                            .onTapGesture {
+                                                return
+                                            }
                                             
-                                            Button(action: {
-                                                self.newCardFront.removeAll()
-                                                self.newCardBack.removeAll()
+                                            if !self.newCardFrontFieldInFocus && !self.newCardBackFieldInFocus {
+                                                Button(action: {
+                                                    if self.newCardBack.isEmpty || self.newCardFront.isEmpty {
+                                                        return
+                                                    }
+                                                    
+                                                    self.categoryData.setFlashcards[self.setName]![self.newCardFront] = self.newCardBack
+                                                    writeSetFlashcards(flashcards: self.categoryData.setFlashcards)
+                                                    
+                                                    self.viewingBottomCard[self.newCardFront] = false
+                                                    
+                                                    self.newCardFront.removeAll()
+                                                    self.newCardBack.removeAll()
+                                                }) {
+                                                    Text("Add Flashcard")
+                                                        .frame(maxWidth: .infinity, alignment: .center)
+                                                        .padding([.top, .bottom], 8)
+                                                        .foregroundStyle(.black)
+                                                        .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                        .minimumScaleFactor(0.5)
+                                                }
+                                                .frame(maxWidth: prop.size.width - 40)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(Color.EZNotesBlue)
+                                                )
+                                                .cornerRadius(15)
                                                 
-                                                self.addingFlashcard = false
-                                            }) {
-                                                Text("Cancel")
-                                                    .frame(maxWidth: .infinity, alignment: .center)
-                                                    .padding([.top, .bottom], 8)
-                                                    .foregroundStyle(.black)
-                                                    .setFontSizeAndWeight(weight: .bold, size: 18)
-                                                    .minimumScaleFactor(0.5)
+                                                Button(action: {
+                                                    self.newCardFront.removeAll()
+                                                    self.newCardBack.removeAll()
+                                                    
+                                                    self.addingFlashcard = false
+                                                }) {
+                                                    Text("Cancel")
+                                                        .frame(maxWidth: .infinity, alignment: .center)
+                                                        .padding([.top, .bottom], 8)
+                                                        .foregroundStyle(.black)
+                                                        .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                        .minimumScaleFactor(0.5)
+                                                }
+                                                .frame(maxWidth: prop.size.width - 40)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(.white)
+                                                )
+                                                .cornerRadius(15)
+                                            } else {
+                                                Button(action: {
+                                                    if self.newCardFrontFieldInFocus { self.newCardFrontFieldInFocus = false }
+                                                    else { self.newCardBackFieldInFocus = false }
+                                                }) {
+                                                    Text("Done")
+                                                        .frame(maxWidth: .infinity, alignment: .center)
+                                                        .padding([.top, .bottom], 8)
+                                                        .foregroundStyle(.black)
+                                                        .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                        .minimumScaleFactor(0.5)
+                                                }
+                                                .buttonStyle(NoLongPressButtonStyle())
+                                                .frame(maxWidth: prop.size.width - 40)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 15)
+                                                        .fill(.white)
+                                                )
+                                                .cornerRadius(15)
                                             }
-                                            .frame(maxWidth: prop.size.width - 40)
-                                            .background(
-                                                RoundedRectangle(cornerRadius: 15)
-                                                    .fill(.white)
-                                            )
-                                            .cornerRadius(15)
+                                            
+                                            Spacer()
                                         }
                                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         .background(
@@ -2304,9 +2415,168 @@ struct ShowNotes: View {
                                         .padding(.top, -8)
                                         .zIndex(1)
                                         .onTapGesture {
+                                            if self.newCardBackFieldInFocus { self.newCardBackFieldInFocus = false; return }
+                                            if self.newCardFrontFieldInFocus { self.newCardFrontFieldInFocus = false; return }
                                             self.addingFlashcard = false
                                         }
                                     }
+                                }
+                            case .Slideshow:
+                                ZStack {
+                                    VStack {
+                                        if self.loadingSlideshow {
+                                            LoadingView(message: "Generating Slideshow...")
+                                        } else {
+                                            /*VStack {
+                                                ScrollView(.vertical, showsIndicators: false) {
+                                                    ForEach(Array(self.categoryData.setSlideshows[self.setName]!.keys.enumerated()), id: \.offset) { index, key in
+                                                        VStack {
+                                                            Text(key)
+                                                                .frame(maxWidth: .infinity, alignment: .center)
+                                                                .font(.system(size: 24))
+                                                                .multilineTextAlignment(.center)
+                                                                .foregroundStyle(.white)
+                                                        }
+                                                        .frame(minWidth: prop.size.width - 80, maxWidth: prop.size.width - 80, minHeight: 220, maxHeight: 250)
+                                                        .padding()
+                                                        .background(
+                                                            RoundedRectangle(cornerRadius: 15)
+                                                                .fill(.black)
+                                                                .shadow(color: Color.EZNotesOrange, radius: 3.5)
+                                                        )
+                                                        .padding(2.5)
+                                                        .cornerRadius(15)
+                                                        .id(index)
+                                                        .padding(.bottom, index == self.categoryData.setSlideshows[self.setName]!.keys.count - 1 ? 30 : 0)
+                                                    }
+                                                }
+                                            }
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)*/
+                                            HTMLView(htmlContent: /*"""
+                                                        <!DOCTYPE html>
+                                                        <html lang="en">
+                                                        <head>
+                                                            <meta charset="UTF-8">
+                                                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                                            <title>LMFAO: A Comprehensive Study</title>
+                                                            <style>
+                                                                body {
+                                                                    font-family: 'Arial', sans-serif;
+                                                                    line-height: 1.6;
+                                                                    margin: 0;
+                                                                    padding: 0;
+                                                                    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                                                                }
+
+                                                                header {
+                                                                    background-color: #2c3e50;
+                                                                    color: white;
+                                                                    text-align: center;
+                                                                    padding: 2rem;
+                                                                    margin-bottom: 2rem;
+                                                                }
+
+                                                                .container {
+                                                                    max-width: 1200px;
+                                                                    margin: 0 auto;
+                                                                    padding: 0 2rem;
+                                                                }
+
+                                                                .section {
+                                                                    background-color: white;
+                                                                    border-radius: 10px;
+                                                                    padding: 2rem;
+                                                                    margin-bottom: 2rem;
+                                                                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                                                                }
+
+                                                                h1 {
+                                                                    font-size: 2.5rem;
+                                                                    margin-bottom: 1rem;
+                                                                }
+
+                                                                h2 {
+                                                                    color: #2c3e50;
+                                                                    border-bottom: 2px solid #3498db;
+                                                                    padding-bottom: 0.5rem;
+                                                                }
+
+                                                                .highlight {
+                                                                    background-color: #f1c40f;
+                                                                    padding: 0.2rem 0.5rem;
+                                                                    border-radius: 3px;
+                                                                }
+
+                                                                .discography {
+                                                                    display: grid;
+                                                                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                                                                    gap: 2rem;
+                                                                }
+
+                                                                .album {
+                                                                    background-color: #f8f9fa;
+                                                                    padding: 1rem;
+                                                                    border-radius: 5px;
+                                                                }
+
+                                                                footer {
+                                                                    text-align: center;
+                                                                    padding: 2rem;
+                                                                    background-color: #2c3e50;
+                                                                    color: white;
+                                                                    margin-top: 2rem;
+                                                                }
+                                                            </style>
+                                                        </head>
+                                                        <body>
+                                                            <header>
+                                                                <h1>LMFAO: Party Rock Revolution</h1>
+                                                                <p>An In-Depth Look at the Electronic Dance Music Duo</p>
+                                                            </header>
+
+                                                            <div class="container">
+                                                                <div class="section">
+                                                                    <h2>Background</h2>
+                                                                    <p>LMFAO was an American electronic dance music duo consisting of uncle-nephew duo Redfoo (Stefan Kendal Gordy) and SkyBlu (Skyler Austen Gordy). The group was formed in 2006 in Los Angeles, California, and became known for their energetic party anthems and distinctive visual style.</p>
+                                                                </div>
+
+                                                                <div class="section">
+                                                                    <h2>Musical Style</h2>
+                                                                    <p>Their music combines elements of:</p>
+                                                                    <ul>
+                                                                        <li>Electronic Dance Music (EDM)</li>
+                                                                        <li>Hip Hop</li>
+                                                                        <li>Pop Music</li>
+                                                                        <li>Dance-Pop</li>
+                                                                        <li>Electropop</li>
+                                                                    </ul>
+                                                                </div>
+
+                                                                <div class="section">
+                                                                    <h2>Major Hits</h2>
+                                                                    <div class="discography">
+                                                                        <div class="album">
+                                                                            <h3>Party Rock Anthem</h3>
+                                                                            <p>Released: 2011</p>
+                                                                            <p>Peak Position: #1 in multiple countries</p>
+                                                                            <p>Featuring Lauren Bennett and GoonRock</p>
+                                                                        </div>
+                                                                        <div class="album">
+                                                                            <h3>Sexy and I Know It</h3>
+                                                                            <p>Released: 2011</p>
+                                                                            <p>Peak Position: #1 on Billboard Hot 100</p>
+
+                                                                   """*/self.HTML)
+                                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .background(
+                                        /*RoundedRectangle(cornerRadius: 15)
+                                         .fill(.black.opacity(0.8))*/
+                                        Color.clear.background(.ultraThinMaterial).environment(\.colorScheme, .dark)
+                                    )
+                                    .padding(.top, -8)
                                 }
                             default: VStack { }.onAppear { self.studyOrVisualizationSelection = .None } /* MARK: Should never happen. */
                             }
@@ -3149,6 +3419,7 @@ struct ShowNotes: View {
                 self.menuHeight = 60
             }
         }*/
+        .background(.black)
         //.background(Color.EZNotesBlack)
         .alert("Are you sure?", isPresented: $saveAlert) {
             Button(action: {

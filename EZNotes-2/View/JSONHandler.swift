@@ -205,6 +205,14 @@ public func writeSetFlashcards(flashcards: [String: [String: String]]) -> Void {
     }
 }
 
+public func writeSetSlideshows(slideshows: [String: [String: String]]) -> Void {
+    guard let _ = try? writeJSON(data: slideshows, filename: "set_slideshows.json") else {
+        print("[writeSetSlideshows] -> Failed to write \(slideshows) to cache")
+        return
+    }
+}
+
+
 public func getSettings() -> [String: Bool] {
     if let result = try? obtainJSON(type: [String: Bool].self, filename: "settings.json") { return result }
     else {
@@ -334,7 +342,16 @@ func getUserCreatedSetNames() -> Array<String> {
 
 func getSetFlashcards() -> [String: [String: String]] {
     guard let result = try? obtainJSON(type: [String: [String: String]].self, filename: "set_flashcards.json") else {
-        print("[getSetFlashcards] -> Failed to get flashcard data for setes from cache")
+        print("[getSetFlashcards] -> Failed to get flashcard data for sets from cache")
+        return [:]
+    }
+    
+    return result
+}
+
+func getSetSlideshows() -> [String: [String: String]] {
+    guard let result = try? obtainJSON(type: [String: [String: String]].self, filename: "set_slideshows.json") else {
+        print("[getSetSlideshows] -> Failed to get slideshow data for sets from cache")
         return [:]
     }
     
