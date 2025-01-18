@@ -20,7 +20,7 @@
     "_applicationInternalID" : "6737569574",
     "_developerTeamID" : "2A9LMA2ACD",
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 754602415.61315298,
+    "_lastSynchronizedDate" : 758928907.58159995,
     "_locale" : "en_US",
     "_storefront" : "USA",
     "_storeKitErrors" : [
@@ -88,7 +88,7 @@
           ],
           "displayPrice" : "126.99",
           "familyShareable" : false,
-          "groupNumber" : 2,
+          "groupNumber" : 4,
           "internalID" : "6738790740",
           "introductoryOffer" : null,
           "localizations" : [
@@ -116,7 +116,7 @@
           ],
           "displayPrice" : "12.99",
           "familyShareable" : false,
-          "groupNumber" : 1,
+          "groupNumber" : 3,
           "internalID" : "6738785315",
           "introductoryOffer" : null,
           "localizations" : [
@@ -142,9 +142,93 @@
           "codeOffers" : [
 
           ],
+          "displayPrice" : "14.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6740733937",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Tier 1 of EZNotes Basic Plan.",
+              "displayName" : "EZNotes Basic Plan - Tier 1",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "eznotes.basic.plan.tier.1",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "EZNotes Basic Plan Tier 1",
+          "subscriptionGroupID" : "21592573",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "17.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6740734012",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Tier 2 of EZNotes Basic Plan",
+              "displayName" : "EZNotes Basic Plan - Tier 2",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "eznotes.basic.plan.tier.2",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "EZNotes Basic Plan Tier 2",
+          "subscriptionGroupID" : "21592573",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "22.99",
+          "familyShareable" : false,
+          "groupNumber" : 7,
+          "internalID" : "6740733848",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Tier 3 of EZNotes Basic Plan",
+              "displayName" : "EZNotes Basic Plan - Tier 3",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "eznotes.basic.plan.tier.3",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "EZNotes Basic Plan Tier 3",
+          "subscriptionGroupID" : "21592573",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
           "displayPrice" : "170.99",
           "familyShareable" : false,
-          "groupNumber" : 4,
+          "groupNumber" : 6,
           "internalID" : "6738847669",
           "introductoryOffer" : null,
           "localizations" : [
@@ -172,7 +256,7 @@
           ],
           "displayPrice" : "17.99",
           "familyShareable" : false,
-          "groupNumber" : 3,
+          "groupNumber" : 5,
           "internalID" : "6738847528",
           "introductoryOffer" : null,
           "localizations" : [

@@ -741,6 +741,8 @@ class RequestAction<T>: ObservableObject {
             case is GenerateFlashcardsData.Type:
                 guard let params: GenerateFlashcardsData = (parameters as? GenerateFlashcardsData) else { return }
                 request.addValue(params.Topic, forHTTPHeaderField: "Topic")
+                request.addValue(params.ScreenWidth, forHTTPHeaderField: "Screen-Width")
+                request.addValue(params.ScreenHeight, forHTTPHeaderField: "Screen-Height")
             
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             
@@ -753,6 +755,8 @@ class RequestAction<T>: ObservableObject {
             case is GenerateSlideshowData.Type:
                 guard let params: GenerateSlideshowData = (parameters as? GenerateSlideshowData) else { return }
                 request.addValue(params.Topic, forHTTPHeaderField: "Topic")
+                request.addValue(params.ScreenWidth, forHTTPHeaderField: "Screen-Width")
+                request.addValue(params.ScreenHeight, forHTTPHeaderField: "Screen-Height")
             
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             

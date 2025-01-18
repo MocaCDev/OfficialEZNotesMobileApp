@@ -23,8 +23,8 @@ import SwiftUI
     @Published public var sets: Array<String> = []
     @Published public var briefDescriptions: Array<String> = []
     @Published public var photos: Array<String> = []
-    @Published public var setFlashcards: [String: [String: String]] = [:] /* MARK: Key will be the set name, value (dictionary) will be all the flashcard data. */
-    @Published public var setSlideshows: [String: [String: String]] = [:]
+    @Published public var setFlashcards: [String: String] = [:]//[String: [String: String]] = [:] /* MARK: Key will be the set name, value (dictionary) will be all the flashcard data. */
+    @Published public var setSlideshows: [String: String] = [:]//[String: [String: String]] = [:]
     
     /* MARK: Data over user-created categories/sets. */
     @Published public var userCreatedCategoryNames: Array<String> = []

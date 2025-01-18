@@ -198,14 +198,14 @@ func writeUserCreatedSetNames(userCreatedSetNames: Array<String>) -> Void {
     }
 }
 
-public func writeSetFlashcards(flashcards: [String: [String: String]]) -> Void {
+public func writeSetFlashcards(flashcards: [String: String]) -> Void {
     guard let _ = try? writeJSON(data: flashcards, filename: "set_flashcards.json") else {
         print("[writeSetFlashcards] -> Failed to write \(flashcards) to cache")
         return
     }
 }
 
-public func writeSetSlideshows(slideshows: [String: [String: String]]) -> Void {
+public func writeSetSlideshows(slideshows: [String: String]) -> Void {
     guard let _ = try? writeJSON(data: slideshows, filename: "set_slideshows.json") else {
         print("[writeSetSlideshows] -> Failed to write \(slideshows) to cache")
         return
@@ -340,8 +340,8 @@ func getUserCreatedSetNames() -> Array<String> {
     return result
 }
 
-func getSetFlashcards() -> [String: [String: String]] {
-    guard let result = try? obtainJSON(type: [String: [String: String]].self, filename: "set_flashcards.json") else {
+func getSetFlashcards() -> [String: String] {//[String: [String: String]] {
+    guard let result = try? obtainJSON(type: [String: String].self, filename: "set_flashcards.json") else {
         print("[getSetFlashcards] -> Failed to get flashcard data for sets from cache")
         return [:]
     }
@@ -349,8 +349,8 @@ func getSetFlashcards() -> [String: [String: String]] {
     return result
 }
 
-func getSetSlideshows() -> [String: [String: String]] {
-    guard let result = try? obtainJSON(type: [String: [String: String]].self, filename: "set_slideshows.json") else {
+func getSetSlideshows() -> [String: String] {//[String: [String: String]] {
+    guard let result = try? obtainJSON(type: [String: String].self, filename: "set_slideshows.json") else {
         print("[getSetSlideshows] -> Failed to get slideshow data for sets from cache")
         return [:]
     }

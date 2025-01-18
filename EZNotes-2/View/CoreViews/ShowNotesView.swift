@@ -9,12 +9,19 @@ import WebKit
 
 struct HTMLView: UIViewRepresentable {
     let htmlContent: String
+    var disableScroll: Bool = false
 
     func makeUIView(context: Context) -> WKWebView {
         WKWebView()
     }
 
     func updateUIView(_ uiView: WKWebView, context: Context) {
+        
+        if self.disableScroll {
+            uiView.scrollView.isScrollEnabled = false
+            uiView.scrollView.pinchGestureRecognizer?.isEnabled = false
+        }
+        
         uiView.loadHTMLString(htmlContent, baseURL: nil)
     }
 }
@@ -590,7 +597,7 @@ enum StudyOrVisualizationSelection {
     
     /* MARK: For presentations - for any usecase. */
     case FlashCards
-    case Slideshow
+    case Guide
     
     /* MARK: For test yourself - for "school" usecase. */
     case TestOrQuiz
@@ -598,6 +605,23 @@ enum StudyOrVisualizationSelection {
     /* MARK: For graphing - for any usecase. */
     case ScatterGraph
     case LineChart
+}
+
+enum StudyOrVisualizationSelectionError {
+    case None
+    
+    /* MARK: For presentations. */
+    case ErrorLoadingFlashcards
+    case ErrorLoadingGuide
+    
+    /* MARK: For test yourself. */
+    case ErrorLoadingTestOrQuiz
+    
+    /* MARK: For graphing. */
+    case ErrorLoadingScatterPlot
+    case InsufficientDataForScatterPlot
+    case ErrorLoadingLineChart
+    case InsufficientDataForLineChart
 }
 
 struct ShowNotes: View {
@@ -744,6 +768,7 @@ struct ShowNotes: View {
     @State private var flashCardsBottomCardHeight: CGFloat = 0
     
     @State private var studyOrVisualizationSelection: StudyOrVisualizationSelection = .None
+    @State private var studyOrVisualizationError: StudyOrVisualizationSelectionError = .None
     
     /* MARK: Data for flashcards. */
     @State private var loadingFlashCards: Bool = false
@@ -761,8 +786,9 @@ struct ShowNotes: View {
     @State private var newCardBack: String = ""
     @FocusState private var newCardBackFieldInFocus: Bool
     
-    @State private var loadingSlideshow: Bool = false
+    @State private var loadingGuide: Bool = false
     @State private var HTML: String = ""
+    @State private var flashcardsHTML: String = ""
     
     var body: some View {
         ZStack {
@@ -1056,46 +1082,54 @@ struct ShowNotes: View {
                                     
                                     HStack {
                                         Button(action: {
+                                            self.loadingFlashCards = true
+                                            self.studyOrVisualizationSelection = .FlashCards
+                                            
                                             if !self.categoryData.setFlashcards.keys.contains(self.setName) {
-                                                self.loadingFlashCards = true
-                                                
                                                 RequestAction<GenerateFlashcardsData>(parameters: GenerateFlashcardsData(
                                                     Topic: self.setName,
-                                                    Notes: self.notesContent
+                                                    Notes: self.notesContent,
+                                                    ScreenWidth: "\(UIScreen.main.bounds.width)",
+                                                    ScreenHeight: "\(UIScreen.main.bounds.height)"
                                                 )).perform(action: generate_flashcards_req) { statusCode, resp in
                                                     self.loadingFlashCards = false
                                                     
                                                     guard
                                                         let resp = resp,
+                                                        resp.keys.contains("HTML"),
                                                         statusCode == 200
                                                     else {
                                                         if let resp = resp { print(resp) }
-                                                        self.studyOrVisualizationSelection = .FlashCards
+                                                        self.studyOrVisualizationError = .ErrorLoadingFlashcards
                                                         return /* TODO: Handle errors. */
                                                     }
                                                     
                                                     guard
-                                                        let cards = resp as? [String: String]
+                                                        let flashcardsHTML = resp["HTML"] as? String//let cards = resp as? [String: String]
                                                     else {
+                                                        self.studyOrVisualizationError = .ErrorLoadingFlashcards
                                                         return
                                                     }
                                                     
-                                                    self.categoryData.setFlashcards[self.setName] = cards
+                                                    self.categoryData.setFlashcards[self.setName] = flashcardsHTML
                                                     writeSetFlashcards(flashcards: self.categoryData.setFlashcards)
                                                     
-                                                    for i in cards.keys {
-                                                        self.viewingBottomCard[i] = false
-                                                    }
+                                                    /*for i in cards.keys {
+                                                     self.viewingBottomCard[i] = false
+                                                     }*/
                                                     
                                                     self.studyOrVisualizationSelection = .FlashCards
                                                 }
                                             } else {
+                                                self.loadingFlashCards = false
+                                            }
+                                            /*} else {
                                                 for i in self.categoryData.setFlashcards[self.setName]!.keys {
                                                     self.viewingBottomCard[i] = false
                                                 }
                                                 
                                                 self.studyOrVisualizationSelection = .FlashCards
-                                            }
+                                            }*/
                                         }) {
                                             RoundedRectangle(cornerRadius: 15)
                                                 .fill(.black)
@@ -1135,14 +1169,17 @@ struct ShowNotes: View {
                                         }.buttonStyle(NoLongPressButtonStyle())
                                         
                                         Button(action: {
-                                            //if !self.categoryData.setSlideshows.keys.contains(self.setName) {
-                                                self.loadingSlideshow = true
-                                                
+                                            self.loadingGuide = true
+                                            self.studyOrVisualizationSelection = .Guide
+                                            
+                                            if !self.categoryData.setSlideshows.keys.contains(self.setName) {
                                                 RequestAction<GenerateSlideshowData>(parameters: GenerateSlideshowData(
                                                     Topic: self.setName,
-                                                    Notes: self.notesContent
+                                                    Notes: self.notesContent,
+                                                    ScreenWidth: "\(UIScreen.main.bounds.width)",
+                                                    ScreenHeight: "\(UIScreen.main.bounds.height)"
                                                 )).perform(action: generate_slideshow_req) { statusCode, resp in
-                                                    self.loadingSlideshow = false
+                                                    self.loadingGuide = false
                                                     
                                                     guard
                                                         let resp = resp,
@@ -1150,25 +1187,24 @@ struct ShowNotes: View {
                                                         statusCode == 200
                                                     else {
                                                         if let resp = resp { print(resp) }
-                                                        self.studyOrVisualizationSelection = .Slideshow
+                                                        self.studyOrVisualizationError = .ErrorLoadingGuide
                                                         return /* TODO: Handle errors. */
                                                     }
                                                     
                                                     guard
                                                         let HTML = resp["HTML"] as? String//let slides = resp as? [String: String]
                                                     else {
+                                                        self.studyOrVisualizationError = .ErrorLoadingGuide
                                                         return
                                                     }
                                                     
-                                                    self.HTML = HTML
-                                                    //self.categoryData.setSlideshows[self.setName] = slides
-                                                    //writeSetSlideshows(slideshows: self.categoryData.setSlideshows)
-                                                    
-                                                    self.studyOrVisualizationSelection = .Slideshow
+                                                    //self.HTML = HTML
+                                                    self.categoryData.setSlideshows[self.setName] = HTML
+                                                    writeSetSlideshows(slideshows: self.categoryData.setSlideshows)
                                                 }
-                                            //} else {
-                                            //    self.studyOrVisualizationSelection = .Slideshow
-                                            //}
+                                            } else {
+                                                self.loadingGuide = false
+                                            }
                                         }) {
                                             RoundedRectangle(cornerRadius: 15)
                                                 .fill(.black)
@@ -1760,12 +1796,37 @@ struct ShowNotes: View {
                             case .FlashCards:
                                 ZStack {
                                     VStack {
-                                        Spacer()
+                                        //Spacer()
                                         
                                         VStack {
                                             if self.loadingFlashCards {
                                                 LoadingView(message: "Generating Flashcards...")
                                             } else {
+                                                if self.studyOrVisualizationError != .None {
+                                                    ErrorMessage(
+                                                        prop: prop,
+                                                        placement: .center,
+                                                        message: self.studyOrVisualizationError == .ErrorLoadingFlashcards ? "Something went wrong loading flashcards for \(self.setName)" : "",
+                                                        showReportProblemButton: true,
+                                                        bottomPadding: 0
+                                                    )
+                                                } else {
+                                                    if self.categoryData.setFlashcards.keys.contains(self.setName) {
+                                                        HTMLView(
+                                                            htmlContent: self.categoryData.setFlashcards[self.setName]!,
+                                                            disableScroll: true
+                                                        )
+                                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                    } else {
+                                                        ErrorMessage(
+                                                            prop: prop,
+                                                            placement: .center,
+                                                            message: "No flashcards found for \(self.setName)",
+                                                            showReportProblemButton: true,
+                                                            bottomPadding: 0
+                                                        )
+                                                    }
+                                                }
                                                 /*ZStack {
                                                  if !self.viewingBottomCard {
                                                  VStack {
@@ -1837,7 +1898,7 @@ struct ShowNotes: View {
                                                  )
                                                  .animation(.easeInOut(duration: 1), value: self.viewingBottomCard)*/
                                                 
-                                                HStack {
+                                                /*HStack {
                                                     ScrollViewReader { proxy in
                                                         ScrollView(.horizontal, showsIndicators: false) {
                                                             HStack {
@@ -2171,7 +2232,7 @@ struct ShowNotes: View {
                                                  RoundedRectangle(cornerRadius: 15)
                                                  .fill(Color.EZNotesBlue)
                                                  )
-                                                 .cornerRadius(15)*/
+                                                 .cornerRadius(15)*/*/
                                             }
                                             
                                             /*Button(action: { }) {
@@ -2214,10 +2275,11 @@ struct ShowNotes: View {
                                              .padding(3)
                                              .padding(.horizontal)*/
                                         }
-                                        .frame(maxWidth: prop.size.width - 40, minHeight: !prop.isSmallScreen ? 220 : 170, maxHeight: !prop.isSmallScreen ? 250 : 200)
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                        //.frame(maxWidth: prop.size.width - 40, minHeight: !prop.isSmallScreen ? 220 : 170, maxHeight: !prop.isSmallScreen ? 250 : 200)
                                         .onTapGesture { return }
                                         
-                                        Spacer()
+                                        //Spacer()
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                                     .background(
@@ -2231,7 +2293,7 @@ struct ShowNotes: View {
                                     }
                                     .zIndex(!self.addingFlashcard ? 1 : 0)
                                     
-                                    if self.addingFlashcard {
+                                    /*if self.addingFlashcard {
                                         VStack {
                                             Text("Add New Card")
                                                 .frame(maxWidth: prop.size.width - 40, alignment: .leading)
@@ -2419,14 +2481,80 @@ struct ShowNotes: View {
                                             if self.newCardFrontFieldInFocus { self.newCardFrontFieldInFocus = false; return }
                                             self.addingFlashcard = false
                                         }
-                                    }
+                                    }*/
                                 }
-                            case .Slideshow:
+                                .background(.black)
+                            case .Guide:
                                 ZStack {
                                     VStack {
-                                        if self.loadingSlideshow {
-                                            LoadingView(message: "Generating Slideshow...")
+                                        if self.loadingGuide {
+                                            LoadingView(message: "Generating \(self.accountInfo.usage == "school" ? "Study" : "") Guide...")
                                         } else {
+                                            if self.studyOrVisualizationError != .None {
+                                                ErrorMessage(
+                                                    prop: prop,
+                                                    placement: .center,
+                                                    message: self.studyOrVisualizationError == .ErrorLoadingGuide ? "Something went wrong loading guide for \(self.setName)" : "",
+                                                    showReportProblemButton: true,
+                                                    bottomPadding: 0
+                                                )
+                                            } else {
+                                                if !self.categoryData.setSlideshows.keys.contains(self.setName) {
+                                                    
+                                                } else {
+                                                    HTMLView(htmlContent: self.categoryData.setSlideshows[self.setName]!)
+                                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                                    
+                                                    Button(action: {
+                                                        self.loadingGuide = true
+                                                        
+                                                        RequestAction<GenerateSlideshowData>(parameters: GenerateSlideshowData(
+                                                            Topic: self.setName,
+                                                            Notes: self.notesContent,
+                                                            ScreenWidth: "\(UIScreen.main.bounds.width)",
+                                                            ScreenHeight: "\(UIScreen.main.bounds.height)"
+                                                        )).perform(action: generate_slideshow_req) { statusCode, resp in
+                                                            self.loadingGuide = false
+                                                            
+                                                            guard
+                                                                let resp = resp,
+                                                                resp.keys.contains("HTML"),
+                                                                statusCode == 200
+                                                            else {
+                                                                if let resp = resp { print(resp) }
+                                                                self.studyOrVisualizationError = .ErrorLoadingGuide
+                                                                return /* TODO: Handle errors. */
+                                                            }
+                                                            
+                                                            guard
+                                                                let HTML = resp["HTML"] as? String//let slides = resp as? [String: String]
+                                                            else {
+                                                                self.studyOrVisualizationError = .ErrorLoadingGuide
+                                                                return
+                                                            }
+                                                            
+                                                            //self.HTML = HTML
+                                                            self.categoryData.setSlideshows[self.setName] = HTML
+                                                            writeSetSlideshows(slideshows: self.categoryData.setSlideshows)
+                                                        }
+                                                    }) {
+                                                        Text("Generate New Guide")
+                                                            .frame(maxWidth: .infinity, alignment: .center)
+                                                            .padding([.top, .bottom], 8)
+                                                            .foregroundStyle(.black)
+                                                            .setFontSizeAndWeight(weight: .bold, size: 18)
+                                                            .minimumScaleFactor(0.5)
+                                                    }
+                                                    .frame(maxWidth: prop.size.width - 40)
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 15)
+                                                            .fill(Color.EZNotesBlue)
+                                                    )
+                                                    .cornerRadius(15)
+                                                    .padding(.bottom, 30)
+                                                    .padding(.top, 10)
+                                                }
+                                            }
                                             /*VStack {
                                                 ScrollView(.vertical, showsIndicators: false) {
                                                     ForEach(Array(self.categoryData.setSlideshows[self.setName]!.keys.enumerated()), id: \.offset) { index, key in
@@ -2452,122 +2580,6 @@ struct ShowNotes: View {
                                                 }
                                             }
                                             .frame(maxWidth: .infinity, maxHeight: .infinity)*/
-                                            HTMLView(htmlContent: /*"""
-                                                        <!DOCTYPE html>
-                                                        <html lang="en">
-                                                        <head>
-                                                            <meta charset="UTF-8">
-                                                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                                            <title>LMFAO: A Comprehensive Study</title>
-                                                            <style>
-                                                                body {
-                                                                    font-family: 'Arial', sans-serif;
-                                                                    line-height: 1.6;
-                                                                    margin: 0;
-                                                                    padding: 0;
-                                                                    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-                                                                }
-
-                                                                header {
-                                                                    background-color: #2c3e50;
-                                                                    color: white;
-                                                                    text-align: center;
-                                                                    padding: 2rem;
-                                                                    margin-bottom: 2rem;
-                                                                }
-
-                                                                .container {
-                                                                    max-width: 1200px;
-                                                                    margin: 0 auto;
-                                                                    padding: 0 2rem;
-                                                                }
-
-                                                                .section {
-                                                                    background-color: white;
-                                                                    border-radius: 10px;
-                                                                    padding: 2rem;
-                                                                    margin-bottom: 2rem;
-                                                                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                                                                }
-
-                                                                h1 {
-                                                                    font-size: 2.5rem;
-                                                                    margin-bottom: 1rem;
-                                                                }
-
-                                                                h2 {
-                                                                    color: #2c3e50;
-                                                                    border-bottom: 2px solid #3498db;
-                                                                    padding-bottom: 0.5rem;
-                                                                }
-
-                                                                .highlight {
-                                                                    background-color: #f1c40f;
-                                                                    padding: 0.2rem 0.5rem;
-                                                                    border-radius: 3px;
-                                                                }
-
-                                                                .discography {
-                                                                    display: grid;
-                                                                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                                                                    gap: 2rem;
-                                                                }
-
-                                                                .album {
-                                                                    background-color: #f8f9fa;
-                                                                    padding: 1rem;
-                                                                    border-radius: 5px;
-                                                                }
-
-                                                                footer {
-                                                                    text-align: center;
-                                                                    padding: 2rem;
-                                                                    background-color: #2c3e50;
-                                                                    color: white;
-                                                                    margin-top: 2rem;
-                                                                }
-                                                            </style>
-                                                        </head>
-                                                        <body>
-                                                            <header>
-                                                                <h1>LMFAO: Party Rock Revolution</h1>
-                                                                <p>An In-Depth Look at the Electronic Dance Music Duo</p>
-                                                            </header>
-
-                                                            <div class="container">
-                                                                <div class="section">
-                                                                    <h2>Background</h2>
-                                                                    <p>LMFAO was an American electronic dance music duo consisting of uncle-nephew duo Redfoo (Stefan Kendal Gordy) and SkyBlu (Skyler Austen Gordy). The group was formed in 2006 in Los Angeles, California, and became known for their energetic party anthems and distinctive visual style.</p>
-                                                                </div>
-
-                                                                <div class="section">
-                                                                    <h2>Musical Style</h2>
-                                                                    <p>Their music combines elements of:</p>
-                                                                    <ul>
-                                                                        <li>Electronic Dance Music (EDM)</li>
-                                                                        <li>Hip Hop</li>
-                                                                        <li>Pop Music</li>
-                                                                        <li>Dance-Pop</li>
-                                                                        <li>Electropop</li>
-                                                                    </ul>
-                                                                </div>
-
-                                                                <div class="section">
-                                                                    <h2>Major Hits</h2>
-                                                                    <div class="discography">
-                                                                        <div class="album">
-                                                                            <h3>Party Rock Anthem</h3>
-                                                                            <p>Released: 2011</p>
-                                                                            <p>Peak Position: #1 in multiple countries</p>
-                                                                            <p>Featuring Lauren Bennett and GoonRock</p>
-                                                                        </div>
-                                                                        <div class="album">
-                                                                            <h3>Sexy and I Know It</h3>
-                                                                            <p>Released: 2011</p>
-                                                                            <p>Peak Position: #1 on Billboard Hot 100</p>
-
-                                                                   """*/self.HTML)
-                                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                                         }
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)

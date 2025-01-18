@@ -20,11 +20,15 @@ struct ReqPlaceholder {}
 struct GenerateFlashcardsData {
     let Topic: String
     let Notes: String
+    let ScreenWidth: String
+    let ScreenHeight: String
 }
 
 struct GenerateSlideshowData {
     let Topic: String
     let Notes: String
+    let ScreenWidth: String
+    let ScreenHeight: String
 }
 
 struct ReportProblemData {
